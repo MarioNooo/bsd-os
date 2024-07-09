@@ -1,0 +1,1424 @@
+dnl
+dnl Copyright (c) 2003 Qualcomm Incorporated.  All rights reserved.
+dnl The file License.txt specifies the terms for use, modification,
+dnl and redistribution.
+dnl
+dnl
+dnl File:       configure.in
+dnl Project:    Qpopper Server
+dnl Revisions:
+dnl
+dnl   02/03/03   [rg]
+dnl          - Added '--enable-32-bit' and 'enable-64-bit'.
+dnl   01/17/03   [rg]
+dnl          - Fixed library checks for SCO (hopefully).
+dnl   01/13/03   [rg]
+dnl          - Added checks for additional libraries for gethostbyname
+dnl   04/03/01   [rg]
+dnl          - Added some checks to compile cleanly on Darwin/Mac OS X.
+dnl   03/14/01   [rg]
+dnl          - Added 'enable-poppassd' to generate poppassd.
+dnl   02/20/01   [rg]
+dnl          - Don't insist on libkrb4 if '--with-kerberos5' specified.
+dnl   02/09/01   [rg]
+dnl          - Checking for lk5crypto/lcrrypto when using Kerberos 5.
+dnl   01/25/01   [rg]
+dnl          - Added '--enable-chunky-writes=0|1|2' to set default for
+dnl            pooling of network writes.
+dnl   01/10/01   [rg]
+dnl          - USE_REG_STRUCT_RET now has three possible values: yes, no,
+dnl            and default.  Fixed default case.
+dnl   01/02/00   [rg]
+dnl          - Fix setting of SPEC_POP_AUTH.
+dnl          - Fix check for -lsec on HPUX.
+dnl   12/28/00   [rg]
+dnl          - Set --enable-specialauth default based on getspnam().
+dnl   12/21/00   [rg]
+dnl          - Added '--disable-hash-dir-check' to not check for or
+dnl            create hash spool directories if they don't exist.
+dnl          - --enable-specialauth is now the default.
+dnl   12/15/00   [rg]
+dnl          - Added '--without-gdbm' to avoid it.
+dnl   11/26/00   [rg]
+dnl          - Adjustments for 'make install' support.
+dnl   11/13/00   [rg]
+dnl          - Added check if gcc supports __attribute__ (format).
+dnl   11/03/00   [rg]
+dnl          - Only add 'idirafter' if '/usr/local/include/gdbm.h' present.
+dnl   10/29/00   [rg]
+dnl          - Added '--with-openssl' for use with OpenSSL.
+dnl          - Added check for /dev/urandom.
+dnl          - Changed '--enable-drac' to '--with-drac'.
+dnl          - Changed '--with-new-bulls' to '--enable-new-bulls'.
+dnl          - Changed '--with-popuid=pop' to '--enable-popuid=pop'.
+dnl          - Changed '--with-log-facility' to '--enable-log-facility'
+dnl   10/18/00   [rg]
+dnl          - Added '--with-sslplus' for use with Certicom's SSL Plus.
+dnl          - Added '--with-sslplus-crypto' also for use with SSL Plus.
+dnl   10/04/00   [rg]
+dnl          - Only add 'idirafter' when using gcc.
+dnl   10/02/00   [rg]
+dnl          - Added '--enable-fast-update' to reduce I/O during update
+dnl            at end of session in server mode.  Note that use of this
+dnl            option may cause utilities which access the spool (such
+dnl            as biff or the shell's mail check) to not function
+dnl            properly.  This option should only be used when all spool
+dnl            access is through POP (other than the local delivery agent).
+dnl   09/27/00   [rg]
+dnl          - Added '--disable-update-abort' to set NOUPDATEONABORT.
+dnl          - Moved UnixWare case before default.
+dnl          - Added check for select.h and sys/select.h.
+dnl   09/20/00   [rg]
+dbl          - Add --enable-cache-dir=path' to set path for cache files.
+dnl   09/14/00   [rg]
+dnl          - Add '-idirafter /usr/local/include' since some systems
+dnl            (often BSD) don't search there by default, yet gdbm
+dnl            puts files there.
+dnl   09/06/00   [rg]
+dnl          - Added check for UnixWare.
+dnl          - Added a few misc. checks.
+dnl   09/01/00   [rg]
+dnl          - Added check for libdl and libpam.
+dnl          - Added --enable-auth-file and --enable-nonauth-file.
+dnl   08/23/00   [rg]
+dnl          - Added --enable-low-debug for low-level debugging.
+dnl   08/16/00   [rg]
+dnl          - Added 'enable-standalone' option to create standalone
+dnl            POP3 daemon instead of using inetd.
+dnl          - Added check for usleep().
+dnl          - Added check for gettimeofday()
+dnl          - Added check for sys/time.h
+dnl          - Added check for setproctitle(3).
+dnl   07/12/00   [rg]
+dnl          - Added patch from Ken Hornstein for Kerberos v5 et al.
+dnl          - Added '--enable-kuserok' to use kuserok() to vet users.
+dnl          - Added '--enable-ksockinst' to use getsockinst() for Kerberos
+dnl            instance.
+dnl   07/05/00   [rg]
+dnl          - Added check for srandom for old OSes (*sigh*).
+dnl   06/30/00   [rg]
+dnl          - Added --disable-optimizations to turn off optimizations.
+dnl          - Changed gperf stuff to avoid problems on systems without
+dnl            gperf.
+dnl   06/20/00   [rg]
+dnl          - Added --enable-secure-nis-plus for use with secure NIS+.
+dnl   06/16/00   [rg]
+dnl          - Added --disable-old-spool-loc to not check for old
+dnl            .user.pop files in old locations.
+dnl          - Added --enable-server-mode-group-include and
+dnl            --enable-server-mode-group-exclude to set or reset
+dnl            server mode by default for users in the specified
+dnl            group.
+dnl   06/10/00   [rg]
+dnl          - Added --disable-check-pw-max to stop check for expired
+dnl            passwords.
+dnl          - Now checking for spool in /var before /usr.
+dnl          - Added '-ls' to LIBS for AIX.
+dnl   06/08/00   [rg]
+dnl          - Added --enable-old-uidl to encode UIDLs in old (pre-3.x)
+dnl            style.  Only useful if NO_STATUS is defined and you have
+dnl            users with existing pre-3.x spools.
+dnl          - Added --status to to permit writing 'Status' and 'X-UIDL'
+dnl            headers to the spool.  This defaults to on, so to set
+dnl            NO_STATUS you disable this.
+dnl          - Added --keep-temp-drop to prevent deleting the temp drop.
+dnl   06/05/00   [rg]
+dnl          - Added --enable-drac.  Based on patches by Mike McHenry,
+dnl            Forrest Aldrich, Steven Champeon, and others
+dnl   05/16/00   [rg]
+dnl          - Added --enable-spool-dir to specify location of spool
+dnl            files instead of searching.
+dnl          - Added --enable-timing to write log records with elapsed
+dnl            time for authentication, initialization, and cleanup.
+dnl   04/28/00   [rg]
+dnl          - Added checks for SCO.
+dnl   03/20/00   [rg]
+dnl          - Fixed use of 'DEFS' instead of 'OS_DEFS'.
+dnl   03/11/00   [rg]
+dnl          - Changed 'test -r' to 'test -f'.
+dnl   03/09/00   [rg]
+dnl          - Changed AUTH to SPEC_POP_AUTH.
+dnl          - Changed 'test -x' to 'test -r' because not all systems
+dnl            support '-x' (*sigh*)
+dnl   03/03/00   [rg]
+dnl          - Add --enable-group-bulls to show bulletins by groups
+dnl            (group name is second element in bulletin name).
+dnl   02/16/00   [rg]
+dnl          - Add --enable-uw-kludge to check for and hide UW
+dnl            'Folder Internal Data' messages.
+dnl   02/04/00   [rg]
+dnl          - Restore check for gperf, but warn (not error) if not found.
+dnl   02/03/00   [rg]
+dnl          - Added '-Ae' flag when using HP's C compiler.
+dnl   02/02/00   [rg]
+dnl          - Made changes suggested by Jacques Distler for NEXT systems.
+dnl   01/28/00   [rg]
+dnl          - Fixed --enable-home-dir-mail=Mailbox.
+dnl   01/20/00   [rg]
+dnl          - Added check for snprintf() and vsnprintf().
+dnl   01/18/00   [rg]
+dnl          - Added check for hstrerror().
+dnl          - Don't look for or link with *dbm unless BULLDB, APOP, or SCAM
+dnl            used.
+dnl          - Added --enable-popbulldir to specify alternate location for
+dnl            users' popbull files.
+dnl   01/15/00   [rg]
+dnl          - Added --with-log-facility to specify the log facility.
+dnl   01/07/00   [rg]
+dnl          - Added --enable-hash-spool to use hashed spool directories.
+dnl          - Made POP_DROP and related directories depend on spool dir.
+dnl          - Added --enable-home-dir-mail to use spool files in user's
+dnl            home directory.
+dnl          - Added --enable-temp-drop-dir to specify directory for temporary
+dnl            drop files.
+dnl   12/29/99   [rg]
+dnl          - Fitted German Poo's patch adding --with-pam to 
+dnl            support PAM.
+dnl          - Removed -fstrength-reduce (included in -o2)
+dnl          - Added check for BSDI-style DBM (BSD44_DBM)
+dnl          - Removed -DBSD, since BSD param.h defines it as year and month
+dnl          - Only check for gperf if mmangle/etags.c doesn't exist.
+dnl          - Remove useless doc/Makefile and man/Makefile.
+dnl   12/21/99   [rg]
+dnl          - Added --enable-bulldb as alternative to 
+dnl            --enable-bulletins to use bulletin database for 
+dnl            tracking bulletins.
+dnl          - Added --with-new-bulls to specify max bulletins
+dnl            for new users.
+dnl   12/17/99   [rg]
+dnl          - Added check if ar chokes on -r.
+dnl          - Added --with-warnings for extra compiler warnings.
+dnl          - If gcc version 2.7.2.3 is detected, remove -O2 flag.
+dnl          - Added -lsec to $LIBS when --enable-specialauth is
+dnl            used on HP.
+dnl   12/10/99   [rg]
+dnl          - Added --enable-warnings for extra compiler warnings.
+dbl          - Deleted unused --enable-mangle.
+dnl   12/08/99   [rg]
+dnl          - Added NeXTStep to OS section.
+dnl          - Added USE_REG_STRUCT_RETURN for FreeBSD and NeXTStep.
+dnl            This causes -freg-struct-return to be passed to gcc
+dnl            instead of -fpcc-struct-return.
+dnl   12/07/99   [rg]
+dnl          - Modify to use 'ar r' instead of 'ar -r', and to call
+dnl            ranlib, on SunOS4.
+dnl   12/02/99   [rg]
+dnl          - Add --enable-shy to hide qpopper version number.
+dnl   11/24/99   [rg]
+dnl          - Change MAILOCK to SYS_MAILLOCK.
+dnl   05/21/99   [rg]
+dnl          - Add --enable-auto-delete to automatically delete
+dnl            RETRd msgs.
+dnl   05/03/99   [rg]
+dnl          - Add FREEBSD and AC_DECL_SYS_SIGLIST
+dnl          - Add --enable-log-login to log successful logins
+dnl   09/30/98   [rg]
+dnl          - Edits for QPopper 3.0 version.
+dnl   05/06/98   [py]
+dnl          - Added AC_CHECK_SIZE for UINT4 in md5.h for 64bit OS.
+dnl   04/04/98   [py]
+dnl          - Added options for bulletins, servermode, specialauth 
+dnl            (for systems with shadow passwords and Trusted 
+dnl            systems), APOP,MANGLE.
+dnl   05/05/97   [py]
+dnl          - Added.
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl
+
+AC_INIT(common/flock.c)
+AC_CONFIG_HEADER(config.h)
+
+
+dnl
+dnl ---------- Checks for programs. ----------
+dnl
+
+AC_PROG_MAKE_SET
+AC_PROG_CC
+AC_ISC_POSIX
+AC_PROG_YACC
+AC_PROG_LEX
+AC_CHECK_PROGS(AR,    ar,          AC_ERROR("Unable to find ar"))
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+AC_CHECK_PROGS(GPERF, gperf cperf, AC_MSG_WARN("Unable to find gperf/cperf"))
+
+if test -n "$GPERF"
+then
+    GPERFCMD="\${GPERF} -tpacCg -k"*" -N etags_lookup -H etags_hash -K enriched_tag etags.gperf > etags.c"
+else
+    GPERFCMD="touch etags.c"
+fi
+
+if test "$ISC" = "yes"
+then
+    AC_CHECK_LIB( cposix, main )
+    AC_CHECK_LIB( inet, bzero, NETWORK_LIBS="$NETWORK_LIBS -linet" )
+fi
+
+
+dnl
+dnl ---------- Make sure /usr/local/include gets searched ----------
+dnl
+
+if test -r /usr/local/include/gdbm.h -a "$GCC" = yes
+then
+    CFLAGS="$CFLAGS -idirafter /usr/local/include"
+    CPPFLAGS="$CPPFLAGS -idirafter /usr/local/include"
+fi
+
+
+dnl
+dnl ---------- gcc 2.7.2.3 optimizer emits bad code ----------
+dnl       reports Brian McCauley <B.A.McCauley@bham.ac.uk>
+dnl
+if test "$GCC" = yes
+then
+        AC_MSG_CHECKING([for gcc version 2.7.2.3])
+        if gcc --version | grep "2\.7\.2\.3" > /dev/null
+        then
+                AC_MSG_RESULT(yes)
+                AC_MSG_RESULT(CFLAGS was $CFLAGS)
+                CFLAGS=`echo "$CFLAGS" | sed 's/-O2//'`
+                AC_MSG_RESULT(CFLAGS now $CFLAGS)
+        else
+                AC_MSG_RESULT(no)
+        fi
+fi
+
+
+dnl
+dnl ---------- check if gcc supports '__attribute__ (format)' ----------
+dnl
+AC_MSG_CHECKING( [if gcc supports __attribute__ (format)] )
+AC_TRY_COMPILE( [ #include <stdarg.h> ],
+                [ char *fmt(char *c,...) __attribute__ ((format (printf, 1, 2)));
+                  char *p = fmt("test"); ],
+                AC_MSG_RESULT([yes]); AC_DEFINE(SUPPORT_ATTRIBUTE_FORMAT),
+                AC_MSG_RESULT(no) )
+
+
+dnl
+dnl ---------- See if ar chokes on '-r' ----------
+dnl
+AC_MSG_CHECKING([if ar chokes on -r])
+if ar -r junque.ar ${srcdir}/configure.in 2>/dev/null
+then
+        AR_FLAG=" -r "
+        RANLIB_CMD=""
+        rm -f junque.ar
+        AC_MSG_RESULT(no)
+elif ar r junque.ar ${srcdir}/configure.in 2>/dev/null
+then
+        AR_FLAG=" r "
+        RANLIB_CMD="	\${RANLIB} \$@"
+        rm -f junque.ar
+        AC_MSG_RESULT(yes)
+else
+        AC_MSG_RESULT(ar fails)
+        AC_ERROR(ar doesn't work)
+        AR_FLAG=" r "
+        RANLIB_CMD="	\${RANLIB} \$@"
+fi
+AC_SUBST(AR_FLAG)
+
+
+dnl
+dnl ---------- Need to check for getspnam() before we process options ----------
+dnl
+AC_CHECK_FUNC( getspnam, found_spnam="yes", found_spnam="no" )
+if test "$found_spnam" != "yes"; then
+    AC_CHECK_LIB( shadow, getspnam, found_spnam="yes", found_spnam="no" )
+    if test "$found_spnam" = "yes"; then
+        LIBS="$LIBS -lshadow"
+    fi
+fi
+if test "$found_spnam" = "yes"; then
+    AC_MSG_RESULT( Found getspnam(); using shadow passwords by default )
+fi
+
+
+dnl
+dnl ---------- Check for configure options ----------
+dnl
+
+dnl
+dnl (old forms of some options are still supported for backwards compatibility)
+dnl
+AC_ARG_WITH(new-bulls, , newbullcnt="$withval", newbullcnt="no")
+AC_ARG_WITH(popuid, , popuid=$withval, popuid="no")
+AC_ARG_WITH(log-facility, , logid="$withval", logid="no")
+AC_ARG_ENABLE(drac, , dracauth="$enableval", dracauth="no")
+
+
+AC_ARG_ENABLE(debugging, [ --enable-debugging       Compile in debugging code ], 
+              debugging="$enableval", debugging="no")
+if test "$debugging" != "no"; then
+    AC_MSG_RESULT(Turning on debugging code)
+    AC_DEFINE(DEBUG)
+else
+    AC_MSG_RESULT(Will NOT compile in debugging code)
+fi
+
+
+AC_ARG_ENABLE(low_debug, [ --enable-low-debug       Low-level heavy-duty debugging only.], 
+              _debugging="$enableval", _debugging="no")
+if test "$_debugging" != "no"; then
+    AC_MSG_RESULT(Low-level heavy-duty debugging enabled!)
+    AC_DEFINE(_DEBUG)
+    CFLAGS=`echo "$CFLAGS" | sed 's/-O2//'`
+fi
+
+
+AC_ARG_ENABLE(servermode, [ --enable-servermode      Enable SERVER_MODE ], 
+              servermode="$enableval", servermode="no")
+if test "$servermode" != "no"; then
+    AC_MSG_RESULT(Enabled SERVER_MODE)
+    AC_DEFINE(SERVER_MODE)
+fi
+
+
+AC_ARG_ENABLE(bulletins, [ --enable-bulletins=directory 
+                          Set the path for bulletin directory [/var/spool/bulls] ], 
+              bulletins="$enableval", bulletins="no")
+if test "$bulletins" != "no" ; then
+    AC_MSG_RESULT(Bulletin support is enabled)
+    if test "$bulletins" != "yes" ; then 
+        AC_DEFINE_UNQUOTED(BULLDIR, "$bulletins")
+    else  
+        AC_DEFINE_UNQUOTED(BULLDIR, "/var/spool/bulls") 
+    fi
+fi
+
+
+AC_ARG_ENABLE(bulldb, [ --enable-bulldb=path     Set the path for bulletin directory and use database to
+                              track bulletins [/var/spool/bulls] ], 
+              bulldb="$enableval", bulldb="no")
+if test "$bulldb" != "no" ; then
+    need_db=yes
+    AC_MSG_RESULT(Bulletin database support is enabled)
+    AC_DEFINE(BULLDB)
+    if test "$bulldb" != "yes" ; then 
+        AC_DEFINE_UNQUOTED(BULLDIR,"$bulldb")
+    elif test "$bulletins" = "no" ; then
+        AC_DEFINE_UNQUOTED(BULLDIR, "/var/spool/bulls") 
+    fi
+fi
+
+
+AC_ARG_ENABLE(new-bulls, [ --enable-new-bulls=count Specify the maximum number of bulletins for new users [10] ], 
+              newbullcnt="$enableval")
+if test "$newbullcnt" != "no" ; then
+    if test "$newbullcnt" != "yes" ; then 
+        AC_MSG_RESULT(Maximum bulletins for new users=$newbullcnt)
+        AC_DEFINE_UNQUOTED(NEWBULLCNT, $newbullcnt)
+    else  
+        AC_MSG_RESULT(Maximum bulletins for new users=10)
+        AC_DEFINE_UNQUOTED(NEWBULLCNT, 10) 
+    fi
+fi
+
+
+AC_ARG_ENABLE(popbulldir, [ --enable-popbulldir=path Specify alternate directory for popbull files],
+              popbulldir="$enableval", popbulldir="no")
+if test "$popbulldir" != "no" -a "$popbulldir" != "yes" ; then 
+    AC_DEFINE_UNQUOTED(POPBULLDIR, "$popbulldir")
+    AC_MSG_RESULT(User's popbull files are in $popbulldir)
+fi
+
+
+AC_ARG_ENABLE(specialauth, [ --enable-specialauth     Enable secure crypt or shadow passwords ],
+              specialauth="$enableval", specialauth="$found_spnam")
+if test "$specialauth" = "yes"; then
+    AC_MSG_RESULT(Defining SPEC_POP_AUTH)
+    AC_DEFINE(SPEC_POP_AUTH)
+fi
+
+
+AC_ARG_WITH(pam, [ --with-pam=service-name  Use PAM authentication [pop3]],
+            use_pam=$withval, use_pam="no")
+if test "$use_pam" != "no"; then
+    if test "$use_pam" != "yes"; then
+        AC_DEFINE_UNQUOTED(USE_PAM, "$use_pam")
+        AC_MSG_RESULT(Enabling PAM with service name "$use_pam" and defining SPC_POP_AUTH)
+    else
+        AC_DEFINE_UNQUOTED(USE_PAM, "pop3")
+        AC_MSG_RESULT(Enabling PAM with service name "pop3" and defining SPEC_POP_AUTH)
+    fi
+    AC_DEFINE(SPEC_POP_AUTH)
+fi
+
+
+AC_ARG_ENABLE(apop,  [ --enable-apop=path       Set the pop.auth file path [/etc/pop.auth]], 
+              apop="$enableval", apop="no")
+if test "$apop" != "no" ; then
+    need_db=yes
+    AC_MSG_RESULT(APOP is enabled.)
+    POPAUTH="popauth"
+    if test "$apop" != "yes" ; then 
+        AC_DEFINE_UNQUOTED(APOP, "$apop")
+    else  
+        AC_DEFINE_UNQUOTED(APOP, "/etc/pop.auth") 
+    fi
+fi
+
+
+AC_ARG_ENABLE(scram, [ --enable-scram=path      Include scram capability with AUTHDB file [/etc/pop.auth]], 
+              scram="$enableval", scram="no")
+if test "$scram" != "no" ; then
+    need_db=yes
+    pop_target="popauth"
+    if test "$scram" != "yes" ; then 
+        AC_DEFINE_UNQUOTED(SCRAM, "$scram")
+    else  
+        AC_DEFINE_UNQUOTED(SCRAM, "/etc/pop.auth") 
+    fi
+fi
+
+
+AC_ARG_ENABLE(popuid, [ --enable-popuid=pop      Set the owner of the pop.auth file. [pop]], 
+              popuid=$enableval, popuid="no" )
+if test "${popuid}" != "no" ; then
+    if test "${popuid}" != "yes" ; then
+        APOP_UID="$popuid"
+        AC_DEFINE_UNQUOTED(POPUID, "$popuid")
+    else
+        APOP_UID="pop"
+        AC_DEFINE_UNQUOTED(POPUID,"pop") 
+    fi
+else
+    if test "$apop" != "no" -o "$scram" != "no" ; then
+        APOP_UID="pop"
+        AC_DEFINE_UNQUOTED(POPUID, "pop")
+    fi
+fi
+
+
+AC_ARG_ENABLE(log-login, [ --enable-log-login       Log successful user authentications ],
+              logloginmode="$enableval", logloginmode="no")
+if test "$logloginmode" != "no"; then
+    AC_MSG_RESULT(Enabled LOG-LOGIN)
+    AC_DEFINE(LOG_LOGIN)
+fi
+
+
+AC_ARG_ENABLE(auto-delete, [ --enable-auto-delete     Automatically delete downloaded msgs ],
+              autodelmode="$enableval", autodelmode="no")
+if test "$autodelmode" != "no"; then
+    AC_MSG_RESULT(Enabled AUTO-DELETE and NOUPDATEONABORT)
+    AC_DEFINE(AUTO_DELETE)
+    AC_DEFINE(NOUPDATEONABORT)
+fi
+
+
+AC_ARG_ENABLE(shy, [ --enable-shy             Hide qpopper version number ],
+              shymode="$enableval", shymode="no")
+if test "$shymode" != "no"; then
+        AC_MSG_RESULT(Enabled SHY)
+        AC_DEFINE(SHY)
+fi
+
+
+AC_ARG_ENABLE(warnings, [ --enable-warnings        Enable additional compiler warnings ],
+              extrawarnings="$enableval", extrawarnings="no")
+if test "$extrawarnings" != "no" -a "$GCC" = yes; then
+        AC_MSG_RESULT(Extra compiler warnings requested)
+        CFLAGS="$CFLAGS -W -Wall "
+        CFLAGS="$CFLAGS -Wpointer-arith -Wcast-align "
+fi
+
+
+AC_ARG_ENABLE(hash-spool, [ --enable-hash-spool=1|2  Enable hashed spool directories [2] ], 
+              hashspool="$enableval", hashspool="no")
+if test "$hashspool" != "no"; then
+    if test "$hashspool" = "1" -o "$hashspool" = "2" ; then 
+        AC_MSG_RESULT(Using hashed spool directory method $hashspool)
+        AC_DEFINE_UNQUOTED(HASH_SPOOL, $hashspool)
+    else  
+        AC_MSG_RESULT(Using hashed spool directory method 2)
+        AC_DEFINE_UNQUOTED(HASH_SPOOL, 2) 
+    fi
+fi
+
+
+AC_ARG_ENABLE(home-dir-mail, [ --enable-home-dir-mail=spool file
+                          Mail spool file is in home directory [.mail] ], 
+              homedirmail="$enableval", homedirmail="no")
+if test "$homedirmail" != "no"; then
+    if test "$homedirmail" != "yes" ; then 
+        AC_MSG_RESULT(Spool files are in user's home directory: $homedirmail)
+        AC_DEFINE_UNQUOTED(HOMEDIRMAIL, "$homedirmail")
+    else  
+        AC_MSG_RESULT(Spool files are in user's home directory: .mail)
+        AC_DEFINE(HOMEDIRMAIL, ".mail") 
+    fi
+fi
+
+
+AC_ARG_ENABLE(spool-dir, [ --enable-spool-dir=path  Spool directory [(search for it)] ], 
+              spooldir="$enableval", spooldir="no")
+if test "$spooldir" != "no" -a "$spooldir" != "yes" ; then 
+    AC_MSG_RESULT(The mail spools are in: $spooldir)
+    AC_DEFINE_UNQUOTED(POP_MAILDIR, "$spooldir")
+fi
+
+
+AC_ARG_ENABLE(temp-drop-dir, [ --enable-temp-drop-dir=path   
+                          Directory for temporary mail drop [(spool directory)] ], 
+              tempdropdir="$enableval", tempdropdir="no")
+if test "$tempdropdir" != "no"; then
+    if test "$tempdropdir" != "yes" ; then 
+        AC_MSG_RESULT(Temporary drop files are in: $tempdropdir)
+        AC_DEFINE_UNQUOTED(POP_DROP_DIR, "$tempdropdir")
+    else  
+        AC_MSG_RESULT(Temporary drop files are in spool directory)
+        AC_DEFINE_UNQUOTED(POP_DROP_DIR, POP_MAILDIR) 
+    fi
+fi
+
+
+AC_ARG_ENABLE(cache-dir, [ --enable-cache-dir=path  Directory for cache files [(temp drop directory)] ], 
+              cachedir="$enableval", cachedir="no")
+if test "$cachedir" != "no"; then
+    if test "$cachedir" != "yes" ; then 
+        AC_MSG_RESULT(Cache files are in: $cachedir)
+        AC_DEFINE_UNQUOTED(POP_CACHE_DIR, "$cachedir")
+    else  
+        AC_MSG_RESULT(Cache files are in spool directory)
+        AC_DEFINE_UNQUOTED(POP_CACHE_DIR, POP_DROP_DIR) 
+    fi
+fi
+
+
+AC_ARG_ENABLE(log-facility, [ --enable-log-facility=name   
+                          Log to specified facility [LOG_MAIL or LOG_LOCAL1] ], 
+            logid="$enableval" )
+if test "$logid" != "no"; then
+    AC_MSG_RESULT(Will log using ${withval})
+fi
+
+
+AC_ARG_ENABLE(uw-kludge, [ --enable-uw-kludge       Check for and hide UW 'Folder Internal Data' messages ],
+              uwkludge="$enableval", uwkludge="no")
+if test "$uwkludge" != "no"; then
+    AC_MSG_RESULT(Will hide UW 'Folder Internal Data' messages)
+    AC_DEFINE(CHECK_UW_KLUDGE)
+fi
+
+
+AC_ARG_ENABLE(group-bulls, [ --enable-group-bulls     Group name is second part of bulletin file names ],
+              groupbulls="$enableval", groupbulls="no")
+if test "$groupbulls" != "no"; then
+    AC_MSG_RESULT(Bulletins go to groups; group name is second part of bulletin name)
+    AC_DEFINE(USE_BULL_GROUPS)
+fi
+
+
+AC_ARG_WITH(kerberos5, [ --with-kerberos5=dir     Enable Kerberos 5 support],
+           krb5_prefix=${withval},krb5_prefix="no")
+if test $krb5_prefix != "no"; then
+    AC_MSG_RESULT(Enabling Kerberos V5 support)
+    dnl --
+    dnl -- If the withval was something other than "yes" then
+    dnl -- assume it's a prefix to the kerberos stuff.
+    dnl --
+    if test $krb5_prefix != "yes"
+    then
+       OS_DEFS="$OS_DEFS -I${krb5_prefix}/include"
+       KERBEROS_LIBS="$KERBEROS_LIBS -L${krb5_prefix}/lib"
+    fi
+    AC_DEFINE(KERBEROS)
+    AC_DEFINE(KRB5)
+    AC_DEFINE(KRB5_KRB4_COMPAT)
+    KERBEROS_LIBS="$KERBEROS_LIBS -lkrb5util -lkrb5 -ldes425 -lcom_err"
+    AC_CHECK_LIB( k5crypto, krb5_c_string_to_key, KERBEROS_LIBS="$KERBEROS_LIBS -lk5crypto" )
+    AC_CHECK_LIB( crypto,   krb5_c_string_to_key, KERBEROS_LIBS="$KERBEROS_LIBS -lcrypto"   )
+    AC_CHECK_LIB( krb4,     krb_create_ticket,    KERBEROS_LIBS="$KERBEROS_LIBS -lkrb4"     )
+    dnl Do we need -lgen for compile/step?
+    AC_CHECK_LIB(gen, compile)
+fi
+
+
+AC_ARG_ENABLE(any-kerberos-principal, [ --enable-any-kerberos-principal
+                          Accept any Kerberos principal in POP request],
+              anyKprinc="$enableval", anyKprinc="no")
+if test "$anyKprinc" != "no"; then
+    AC_MSG_RESULT(Setting ACCEPT_ANY_PRINCIPAL)
+    AC_DEFINE(ACCEPT_ANY_PRINCIPAL)
+fi
+
+
+AC_ARG_ENABLE(kuserok, [ --enable-kuserok         Use kuserok() to vet users],
+              kuserok="$enableval", kuserok="no")
+if test "$kuserok" != "no"; then
+    AC_MSG_RESULT(Will use kuserok)
+    AC_DEFINE(KUSEROK)
+fi
+
+
+AC_ARG_ENABLE(ksockinst, [ --enable-ksockinst       Use getsockinst() for Kerberos instance],
+              ksockinst="$enableval", ksockinst="no")
+if test "$ksockinst" != "no"; then
+    AC_MSG_RESULT(Will use getsockinst)
+    AC_DEFINE(K_GETSOCKINST)
+fi
+
+
+AC_ARG_ENABLE(timing, [ --enable-timing          Report elapsed time for login, init, and cleanup ],
+              timing="$enableval", timing="no")
+if test "$timing" != "no"; then
+    AC_MSG_RESULT(Will report timing info)
+    AC_DEFINE(DO_TIMING)
+fi
+
+
+AC_ARG_WITH(drac, [ --with-drac=lib-path     Compile in DRAC support],
+              dracauth="$withval" )
+if test "$dracauth" != "no"; then
+    AC_MSG_RESULT(Compiling in DRAC support)
+    AC_DEFINE(DRAC_AUTH)
+    if test "$dracauth" != "yes"; then
+        LIBS="$LIBS -L$dracauth -ldrac"
+    else
+        LIBS="$LIBS -ldrac"
+    fi
+fi
+
+
+AC_ARG_ENABLE(old-uidl, [ --enable-old-uidl        Use old UID encoding ],
+              olduid="$enableval", olduid="no")
+if test "$olduid" != "no"; then
+    AC_MSG_RESULT(Will encode UIDs using old (pre-3.x) style)
+    AC_DEFINE(OLD_STYLE_UIDL)
+fi
+
+
+AC_ARG_ENABLE(status, [ --disable-status         Don't write 'Status' or 'X-UIDL' headers ],
+              statusok="$enableval", statusok="yes")
+if test "$statusok" != "yes"; then
+    AC_MSG_RESULT(Will NOT write 'Status' or 'X-UIDL' headers; UIDs must be recalculated each time)
+    AC_DEFINE(NO_STATUS)
+fi
+
+
+AC_ARG_ENABLE(keep-temp-drop, [ --enable-keep-temp-drop  Don't delete temp drop files ],
+              keeptemp="$enableval", keeptemp="no")
+if test "$keeptemp" != "no"; then
+    AC_MSG_RESULT(Will NOT delete temp drop files)
+    AC_DEFINE(KEEP_TEMP_DROP)
+fi
+
+
+AC_ARG_ENABLE(check-pw-max, [ --disable-check-pw-max   Don't check for expired passwords ],
+              checkpwmax="$enableval", checkpwmax="yes")
+if test "$checkpwmax" != "yes"; then
+    AC_MSG_RESULT(Will NOT check for expired passwords)
+    AC_DEFINE(DONT_CHECK_SP_MAX)
+fi
+
+
+AC_ARG_ENABLE(old-spool-loc, [ --disable-old-spool-loc  Don't check for old spools in old location ],
+              checkoldloc="$enableval", checkoldloc="yes")
+if test "$checkoldloc" != "yes"; then
+    AC_MSG_RESULT(Will NOT check for old spools in old locations)
+    AC_DEFINE(DONT_CHECK_OLD_SPOOL)
+fi
+
+
+AC_ARG_ENABLE(server-mode-group-include, [ --enable-server-mode-group-include=group
+                          Server mode set for users in this group ], 
+              servergrp="$enableval", servergrp="no")
+if test "$servergrp" != "no" -a "$servergrp" != "yes" ; then 
+        AC_MSG_RESULT(SERVER_MODE set for users in group: $servergrp)
+        AC_DEFINE_UNQUOTED(SERVER_MODE_GROUP_INCL, "$servergrp")
+fi
+
+
+AC_ARG_ENABLE(server-mode-group-exclude, [ --enable-server-mode-group-exclude=group
+                          Server mode off for users in this group ], 
+              servergrpex="$enableval", servergrpex="no")
+if test "$servergrpex" != "no" -a "$servergrpex" != "yes" ; then 
+        AC_MSG_RESULT(SERVER_MODE set OFF for users in group: $servergrpex)
+        AC_DEFINE_UNQUOTED(SERVER_MODE_GROUP_EXCL, "$servergrpex")
+fi
+
+
+AC_ARG_ENABLE(secure-nis-plus, [ --enable-secure-nis-plus For use with secure NIS+ ],
+              secnisplus="$enableval", secnisplus="no")
+if test "$secnisplus" != "no"; then
+    AC_MSG_RESULT(Enabling secure NIS+)
+    AC_DEFINE(SECURENISPLUS)
+fi
+
+
+AC_ARG_ENABLE(optimizations, [ --disable-optimizations  Turns off compiler optimizations ],
+              optimize="$enableval", optimize="yes")
+if test "$optimize" != "yes" -o "$_debugging" = "yes"; then
+    CFLAGS=`echo "$CFLAGS" | sed 's/-O2//'`
+    AC_MSG_RESULT(Compiling WITHOUT optimizations)
+fi
+
+
+AC_ARG_ENABLE(standalone, [ --enable-standalone      Makes a standalone POP3 daemon instead of using inetd ],
+              standalone="$enableval", standalone="no")
+if test "$standalone" != "no"; then
+    AC_MSG_RESULT(Compiling as standalone POP3 daemon -- NOT using inetd)
+    AC_DEFINE(STANDALONE)
+fi
+
+
+AC_ARG_ENABLE(auth-file, [ --enable-auth-file=path  Only users listed in the specified file have access ],
+              authfile="$enableval", authfile="no")
+if test "$authfile" != "no"; then
+    if test "$authfile" = "yes"; then
+        authfile="/etc/authfile"
+    fi
+    AC_MSG_RESULT(Restricting access to only users listed in $authfile)
+    AC_DEFINE_UNQUOTED(AUTHFILE, "$authfile")
+fi
+
+
+AC_ARG_ENABLE(nonauth-file, [ --enable-nonauth-file=path
+                          Deny access to users listed in the specified file ],
+              nonauthfile="$enableval", nonauthfile="no")
+if test "$nonauthfile" != "no"; then
+    if test "$nonauthfile" = "yes"; then
+        nonauthfile="/etc/nonauthfile"
+    fi
+    AC_MSG_RESULT(Denying access to users listed in $nonauthfile)
+    AC_DEFINE_UNQUOTED(NONAUTHFILE, "$nonauthfile")
+fi
+
+
+AC_ARG_ENABLE(update-abort, [ --disable-update-abort   Don't enter UPDATE state on abort ],
+              updateabort="$enableval", updateabort="yes")
+if test "$updateabort" = "no" -a "$autodelmode" = "no"; then
+    AC_MSG_RESULT(Enabled NOUPDATEONABORT)
+    AC_DEFINE(NOUPDATEONABORT)
+fi
+
+
+AC_ARG_ENABLE(fast-update, [ --enable-fast-update     Reduce I/O during server-mode updates ],
+              fastupdate="$enableval", fastupdate="no")
+if test "$fastupdate" != "no" ; then
+    AC_MSG_RESULT(Using reduced I/O technique during server mode updates)
+    AC_DEFINE(FAST_UPDATE)
+fi
+
+
+AC_ARG_WITH(sslplus, [ --with-sslplus=path      Use SSL Plus from Certicom [/usr/local/sslplus] ],
+            sslplus="$withval", sslplus="no")
+if test "$sslplus" != "no" ; then
+    if test "$sslplus" = "yes"; then
+        sslplus="/usr/local/sslplus"
+    fi
+    AC_MSG_RESULT(Attempting to use Certicom's SSL Plus in "$sslplus")
+    AC_DEFINE_UNQUOTED(QPOP_SSLPLUS, "$sslplus")
+    AC_DEFINE(QPOP_SSL)
+    SSL_DIR_INC="-I${sslplus}/include"
+    SSL_LIB_PROT="${sslplus}/lib"
+fi
+
+
+AC_ARG_WITH(sslplus-crypto, [ --with-sslplus-crypto=path
+                          Crypto library to use with SSL Plus [securitybuilder] ],
+            sslplus_crypto="$withval", sslplus_crypto="no")
+if test "$sslplus_crypto" = "no" -a "$sslplus" != "no"; then
+    sslplus_crypto="yes"
+fi
+if test "$sslplus_crypto" != "no" ; then
+    if test "$sslplus_crypto" = "yes"; then
+        sslplus_crypto="securitybuilder"
+    fi
+    AC_MSG_RESULT(Attempting to use "$sslplus_crypto" with Certicom's SSL Plus)
+fi
+
+
+AC_ARG_WITH(openssl, [ --with-openssl=path      Use OpenSSL [/usr/local/ssl] ],
+            openssl="$withval", openssl="no")
+if test "$openssl" != "no" ; then
+    if test "$openssl" = "yes"; then
+        openssl="/usr/local/ssl"
+    fi
+    AC_MSG_RESULT(Attempting to use OpenSSL in "$openssl")
+    AC_DEFINE_UNQUOTED(QPOP_OPENSSL, "$openssl")
+    AC_DEFINE(QPOP_SSL)
+    SSL_DIR_INC="-I${openssl}/include"
+    SSL_LIBS="-L${openssl}/lib -lssl -lcrypto"
+fi
+
+
+AC_ARG_WITH(gdbm, [ --with-gdbm=path         Use GDBM ],
+            use_gdbm="$withval", use_gdbm="yes")
+
+
+AC_ARG_ENABLE(hash-dir-check, [ --disable-hash-dir-check Don't check if hashed spool dirs exist ],
+              checkhashdir="$enableval", checkhashdir="yes")
+if test "$checkhashdir" != "yes"; then
+    AC_MSG_RESULT(Will NOT check for or create hashed spool directories)
+    AC_DEFINE(DONT_CHECK_HASH_SPOOL_DIR)
+fi
+
+
+AC_ARG_ENABLE(chunky-writes, [ --enable-chunky-writes=0|1|2
+                          Set default network write pooling [0] ],
+              chunky_writes="$enableval", chunky_writes="yes")
+if test "$chunky_writes" != "yes"; then
+    if test "$chunky_writes" = "0" -o \
+            "$chunky_writes" = "1" -o \
+            "$chunky_writes" = "2"; then
+        AC_MSG_RESULT(Set CHUNKY_WRITES to $chunky_writes)
+        AC_DEFINE_UNQUOTED( CHUNKY_WRITES, $chunky_writes )
+    elif test "$chunky_writes" = "no"; then
+        AC_MSG_RESULT([Set CHUNKY_WRITES to never (2)])
+        AC_DEFINE_UNQUOTED( CHUNKY_WRITES, 2 )
+    else
+        AC_MSG_RESULT(Unknown CHUNKY_WRITES value: $chunky_writes)
+    fi
+else
+    AC_DEFINE_UNQUOTED( CHUNKY_WRITES, 0 )
+fi
+
+
+AC_ARG_ENABLE(poppassd, [ --enable-poppassd        Generate poppassd password-change daemon ],
+              poppassd="$enableval", poppassd="no")
+if test "$poppassd" != "no"; then
+    AC_MSG_RESULT(Generating password/poppassd password-change daemon)
+    POPPASSD="poppassd"
+fi
+
+
+AC_ARG_ENABLE(32-bit, [ --enable-32-bit          Generate code for a 32-bit environment],
+              b32="$enableval", b32="no")
+if test "$b32" != "no"; then
+    AC_MSG_RESULT(Building 32-bit binary)
+    LDFLAGS="-m32 $LDFLAGS"
+fi
+
+
+AC_ARG_ENABLE(64-bit, [ --enable-64-bit          Generate code for a 64-bit environment],
+              b64="$enableval", b64="no")
+if test "$b64" != "no"; then
+    AC_MSG_RESULT(Building 64-bit binary)
+    LDFLAGS="-m64 $LDFLAGS"
+fi
+
+
+
+dnl
+dnl ---------- Query for OS options ----------
+dnl
+
+USE_REG_STRUCT_RET="default"
+
+SYS_NAME="`uname -sr 2>/dev/null | sed 1q`"
+if test -z "\$SYS_NAME"; then SYS_NAME=unknown;fi
+ 
+OS_NAME="`echo $SYS_NAME 2>/dev/null | sed -e 's/[ ].*//'`"
+OS_VERSION="`echo $SYS_NAME 2>/dev/null | sed -e 's/.*[ ]//'`"
+
+AC_MSG_RESULT(System name: $OS_NAME; System version: $OS_VERSION)
+
+SSL_OS_NAME="unknown"
+
+case $OS_NAME in
+
+    SunOS)
+           case $OS_VERSION in
+               [5]*) OS_DEFS="$OS_DEFS -DSOLARIS2 -DGNU_PASS"
+                     OS_DEFS="$OS_DEFS -DNO_GETLINE -DCONTENT_LENGTH=1"
+                     if test $krb5_prefix != "no" -a $krb5_prefix != "yes"; then
+                         KERBEROS_LIBS="$KERBEROS_LIBS -R${krb5_prefix}/lib"
+                     fi;;
+               [4]*) OS_DEFS="$OS_DEFS -DSUNOS4" 
+                         IS_SUNOS4=yes;;
+                  *) ;;
+           esac
+
+           USE_REG_STRUCT_RET="no"
+dnl
+dnl        /Bug: place-holder for testing until I get a real Solaris
+dnl        SSL Plus package from Certicom.
+dnl
+           SSL_OS_NAME="linux"
+           ;;
+
+    OSF1)  OS_DEFS="$OS_DEFS -DOSF1" 
+           if test "$logid" = "no" -o "$logid" = "yes" ; then
+               logid="LOG_MAIL"
+           fi
+           ;;
+
+    HP*)   OS_DEFS="$OS_DEFS -DHPUX -DSPEC_POP_AUTH" 
+           OS_VERSION="`echo $OS_VERSION 2>/dev/null | sed -e 's/..//'`"
+           case $OS_VERSION in
+                [1][0]*) OS_DEFS="$OS_DEFS -DHPUX10" ;;
+                      *) ;;
+           esac 
+dnl        -- add '-lsec' to LIBS if available.
+           AC_CHECK_LIB( sec, bigcrypt, LIBS="$LIBS -lsec" )
+
+dnl
+dnl        Add flag for HP's C compiler to get it to work better
+dnl
+           if test "$GCC" != yes; then
+               CFLAGS="$CFLAGS -Ae"
+           fi
+dnl
+dnl        If requested, add flag for warnings
+dnl
+           if test "$extrawarnings" != "no" -a "$GCC" != yes; then
+               CFLAGS="$CFLAGS +w1"
+           fi
+           ;;
+
+    AIX*)  OS_DEFS="$OS_DEFS -DAIX" 
+           IS_AIX=yes
+           if test "$specialauth" != "no"; then
+               LIBS="$LIBS -ls"
+           fi
+           ;;
+
+    IRIX*) OS_DEFS="$OS_DEFS -DIRIX"
+           ;;
+
+    FreeBSD*)  
+           OS_DEFS="$OS_DEFS -DFREEBSD" 
+           USE_REG_STRUCT_RET="yes"
+           ;;
+
+    OpenBSD*)
+           OS_DEFS="$OS_DEFS -DOPENBSD" 
+           USE_REG_STRUCT_RET="default"
+           ;;
+
+    NetBSD*)
+           OS_DEFS="$OS_DEFS -DNETBSD" 
+           USE_REG_STRUCT_RET="default"
+           ;;
+
+    Linux*)
+           OS_DEFS="$OS_DEFS -DLINUX"
+           if test "$logid" = "no" -o "$logid" = "yes" ; then
+               logid="LOG_MAIL"
+           fi
+           SSL_OS_NAME="linux"
+           ;;
+
+    NeXTStep*) 
+dnl
+dnl        Jacques Distler says we need -D_POSIX_SOURCE and -traditional-cpp
+dnl
+           OS_DEFS="$OS_DEFS -DNEXTSTEP -DNEXT -D_POSIX_SOURCE"
+           if test "$GCC" = yes
+           then
+               CFLAGS="$CFLAGS -traditional-cpp"
+           fi
+           USE_REG_STRUCT_RET="yes"
+           ;;
+
+    SCO_SV*)
+          OS_DEFS="$OS_DEFS -DPOPSCO"
+
+dnl
+dnl       On SCO, we may need to link with lprot to get getprpwnam; lprot may
+dnl       require lx, lcurses, and perhaps even lm and lsocket.  Note we don't
+dnl       try all permutations to find the smallest set.
+dnl
+          AC_CHECK_LIB( prot, getprpwnam, , , )
+          if test "$ac_cv_lib_prot_getprpwnam" != "yes"; then
+              unset ac_cv_lib_prot_getprpwnam
+              AC_CHECK_LIB( prot, getprpwnam, , , -lx )
+          fi
+          if test "$ac_cv_lib_prot_getprpwnam" != "yes"; then
+              unset ac_cv_lib_prot_getprpwnam
+              AC_CHECK_LIB( prot, getprpwnam, LIBS="-lcurses -lx $LIBS", ,
+                            -lcurses -lx )
+          fi
+          if test "$ac_cv_lib_prot_getprpwnam" != "yes"; then
+              unset ac_cv_lib_prot_getprpwnam
+              AC_CHECK_LIB( prot, getprpwnam,
+                            LIBS="-lcurses -lsocket -lx $LIBS" , ,
+                            -lcurses -lsocket -lx )
+          fi
+          if test "$ac_cv_lib_prot_getprpwnam" != "yes"; then
+              unset ac_cv_lib_prot_getprpwnam
+              AC_CHECK_LIB( prot, getprpwnam,
+                            LIBS="-lsocket -lprot -lcurses -lm -lx $LIBS", ,
+                            -lsocket -lprot -lcurses -lm -lx )
+          fi
+          ;;
+
+    UnixWare*)
+          OS_DEFS="$OS_DEFS -DUNIXWARE"
+          LIBS="$LIBS -lgen"
+          ;;
+
+    Darwin)
+          OS_DEFS="$OS_DEFS -DDARWIN"
+          cc -v 2> TMP_CC_V
+          if grep -i "Apple" TMP_CC_V >/dev/null
+          then
+               CFLAGS="$CFLAGS -traditional-cpp"
+          fi
+          rm -f TMP_CC_V
+          AR_FLAG=" -r "
+          RANLIB_CMD="	\${RANLIB} \$@"
+          AC_SUBST(AR_FLAG)
+          ;;
+
+    *)
+           MACHINE="`uname -m 2>/dev/null`"
+           case $MACHINE in
+               DS/90*) OS_DEFS="$OS_DEFS -DUXPDS -DSPEC_POP_AUTH";;
+           esac
+           ;;
+
+
+esac
+
+OS_DEFS="$OS_DEFS -DUNIX"
+AC_MSG_RESULT(Set OS_DEFS = \"$OS_DEFS\")
+
+if test "$sslplus" != "no"; then
+    SSL_LIB_PROT="${SSL_LIB_PROT}/${SSL_OS_NAME}/libsslplus.complete.a"
+    SSL_LIB_CRYP="${sslplus}/tools/${sslplus_crypto}/${SSL_OS_NAME}/lib/*.a"
+    SSL_LIBS="$SSL_LIB_PROT $SSL_LIB_CRYP"
+fi
+
+
+dnl
+dnl ---------  Set the logging facility based on request or ----------
+dnl ---------  OS specificics or default                    ----------
+dnl
+if test "$logid" = "no" -o "$logid" = "yes" ; then
+       logid="LOG_LOCAL0"
+fi
+AC_MSG_RESULT(Logging to facility: $logid)
+AC_DEFINE_UNQUOTED(POP_FACILITY, $logid)
+
+
+dnl
+dnl ---------- Set compiler flags specially for some OSes ----------
+dnl
+
+if test "$GCC" = yes
+then
+        if test "$USE_REG_STRUCT_RET" = "yes"
+        then
+                CFLAGS="$CFLAGS -freg-struct-return "
+        elif test "$USE_REG_STRUCT_RET" = "no"
+        then
+                CFLAGS="$CFLAGS -fpcc-struct-return "
+        fi
+fi
+
+
+dnl
+dnl ---------- Substitute flags  ----------
+dnl
+
+AC_SUBST(CC)
+AC_SUBST(CFLAGS)
+
+AC_SUBST(RANLIB)
+AC_SUBST(RANLIB_CMD)
+AC_MSG_RESULT(Set AR_FLAG = \"$AR_FLAG\"; RANLIB_CMD = \"$RANLIB_CMD\")
+
+AC_SUBST(POPAUTH)
+AC_SUBST(APOP_UID)
+AC_SUBST(POPPASSD)
+
+
+dnl
+dnl ---------- Checks for mail stuff ----------
+dnl
+
+AC_MSG_CHECKING([for sendmail program])
+if test -f ${sbindir}/sendmail
+then
+    AC_DEFINE(MAIL_COMMAND, "${sbindir}/sendmail")
+    AC_MSG_RESULT([found at ${sbindir}/sendmail])
+elif test -f /usr/sbin/sendmail
+then
+    AC_DEFINE(MAIL_COMMAND, "/usr/sbin/sendmail")
+    AC_MSG_RESULT([found at /usr/sbin/sendmail])
+elif test -f /usr/lib/sendmail 
+then
+    AC_DEFINE(MAIL_COMMAND, "/usr/lib/sendmail")
+    AC_MSG_RESULT([found at /usr/lib/sendmail])
+elif test -f /usr/ucblib/sendmail
+then
+    AC_DEFINE(MAIL_COMMAND, "/usr/ucblib/sendmail")
+    AC_MSG_RESULT([found at /usr/ucblib/sendmail])
+else
+    AC_MSG_RESULT([ERROR: The sendmail program cannot be located])
+    exit 1
+fi
+if test "$spooldir" = "no" -o "$spooldir" = "yes" ; then
+    AC_MSG_CHECKING([for mail spool directory])
+    if test -d /var/mail
+    then
+        pop_maildir="/var/mail"
+    elif test -d /var/spool/mail
+    then
+        pop_maildir="/var/spool/mail"
+    elif test -d /usr/mail 
+    then
+        pop_maildir="/usr/mail"
+    elif test -d /usr/spool/mail
+    then
+        pop_maildir="/usr/spool/mail"
+    else
+        AC_MSG_RESULT([ERROR: Couln't locate the mail spool])
+        exit 1
+    fi
+    AC_MSG_RESULT("found at $pop_maildir")
+    AC_DEFINE_UNQUOTED(POP_MAILDIR, "$pop_maildir")
+fi
+
+AC_DEFINE(POP_DROP,    ".%s.pop")
+AC_DEFINE(POP_CACHE,   ".%s.cache")
+AC_DEFINE(POP_TMPDROP, "tmpXXXXXX")
+AC_DEFINE(POP_TMPXMIT, "xmitXXXXXX")
+
+if test "$tempdropdir" = "no"
+then
+    AC_DEFINE_UNQUOTED(POP_DROP_DIR, POP_MAILDIR)
+fi
+
+if test "$cachedir" = "no"
+then
+    AC_DEFINE_UNQUOTED(POP_CACHE_DIR, POP_DROP_DIR)
+fi
+
+
+dnl
+dnl ---------- Checks for header files ----------
+dnl
+
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_DECL_SYS_SIGLIST
+AC_CHECK_HEADERS( \
+prot.h \
+fcntl.h \
+limits.h \
+strings.h \
+sys/param.h \
+sys/file.h \
+sys/security.h \
+sys/syslog.h \
+sys/types.h \
+sys/fcntl.h \
+sys/select.h \
+sys/stat.h \
+sys/unistd.h \
+sys/netinet/in.h \
+sys/time.h \
+syslog.h \
+net/errno.h \
+unistd.h \
+netinet/in.h \
+maillock.h \
+select.h \
+shadow.h \
+security/pam_appl.h \
+)
+
+AC_CHECK_HEADER( ndbm.h, NDBM_H="yes"; AC_DEFINE(HAVE_NDBM_H), NDBM_H="no" )
+AC_CHECK_HEADER( gdbm.h, GDBM_H="yes"; AC_DEFINE(HAVE_GDBM_H), GDBM_H="no" )
+AC_CHECK_HEADER(  dbm.h,  DBM_H="yes"; AC_DEFINE(HAVE_DBM_H),   DBM_H="no" )
+
+
+
+dnl ---------- Checks for libraries ----------
+dnl
+AC_CHECK_LIB(nsl, t_accept, NETWORK_LIBS="$NETWORK_LIBS -lnsl")
+AC_CHECK_LIB(socket, socket, NETWORK_LIBS="$NETWORK_LIBS -lsocket")
+AC_CHECK_LIB(resolv, res_init, NETWORK_LIBS="$NETWORK_LIBS -lresolv")
+AC_CHECK_LIB(mail, maillock, NETWORK_LIBS="$NETWORK_LIBS -lmail"; AC_DEFINE(SYS_MAILLOCK))
+AC_CHECK_LIB(krb, krb_recvauth, KERBEROS_LIBS="$KERBEROS_LIBS -lkrb")
+AC_CHECK_LIB(posix4, clock_gettime, LIBS="$LIBS -lposix4"; AC_DEFINE(HAVE_CLOCK_GETTIME))
+
+AC_CHECK_LIB(security, set_auth_parameters, LIBS="$LIBS -lsecurity")
+
+if test "$use_pam" = "no"; then
+    AC_CHECK_LIB(crypt, crypt, LIBS="$LIBS -lcrypt")
+else
+    AC_CHECK_LIB(dl, dlopen, LIBS="$LIBS -ldl")
+    AC_CHECK_LIB(pam, pam_authenticate, LIBS="$LIBS -lpam",
+                 AC_MSG_RESULT([Can't use PAM: can't find libpam]);exit 1)
+fi
+
+if test "$dracauth" != "no"; then
+    AC_CHECK_LIB(drac, dracauth, ,AC_MSG_RESULT([Can't use DRAC: dracauth not found in -ldrac]);exit 1)
+fi
+
+dnl
+dnl ---------- Special checks for *DBM files ----------
+dnl
+
+if test "$need_db" = "yes"; then
+    AC_MSG_CHECKING( which database manager to use )
+
+    if test "$use_gdbm" != "no"; then
+        AC_MSG_CHECKING( gdbm )
+        AC_CHECK_LIB( gdbm, gdbm_open, GDBM_LIB="yes", GDBM_LIB="no" )
+        if test "$GDBM_H" = "yes" -a "$GDBM_LIB" = "yes"; then
+            DBM_LIBS="-lgdbm"
+            AC_MSG_RESULT( found gdbm )
+            AC_DEFINE(GDBM)
+        elif test "$GDBM_H" = "yes" -a "$GDBM_LIB" = "no"; then
+            AC_MSG_RESULT( found gdbm header file but not library )
+        elif test "$GDBM_H" = "no" -a "$GDBM_LIB" = "yes"; then
+            AC_MSG_RESULT( found gdbm library but not header file )
+        else
+            AC_MSG_RESULT( didn't find gdbm )
+        fi
+    fi
+
+    if test -z "$DBM_LIBS"; then
+        AC_MSG_CHECKING( ndbm )
+        AC_CHECK_LIB( ndbm, dbm_open, NDBM_LIB="yes", NDBM_LIB="no" )
+        if test "$NDBM_H" = "yes" -a "$NDBM_LIB" = "yes"; then
+            DBM_LIBS="-lndbm"
+            AC_MSG_RESULT( found ndbm )
+            AC_DEFINE(NDBM)
+        elif test "$NDBM_H" = "yes" -a "$NDBM_LIB" = "no"; then
+            AC_MSG_RESULT( found ndbm header file but not library )
+        elif test "$NDBM_H" = "no" -a "$NDBM_LIB" = "yes"; then
+            AC_MSG_RESULT( found ndbm library but not header file )
+        else
+            AC_MSG_RESULT( didn't find ndbm )
+        fi
+
+        AC_MSG_CHECKING([if BSD DBM])
+        AC_EGREP_CPP(yes,
+                     [#include <ndbm.h>
+#ifdef DBM_SUFFIX
+                        yes_it_is
+#endif
+                     ], 
+                     AC_MSG_RESULT([yes]);AC_DEFINE(BSD44_DBM),
+                     AC_MSG_RESULT([no]) )
+    fi
+    if test -z "$DBM_LIBS"; then
+        AC_MSG_CHECKING( dbm )
+        AC_CHECK_LIB( dbm, dbm_open, DBM_LIB="yes", DBM_LIB="no" )
+        if test "$DBM_H" = "yes" -a "$DBM_LIB" = "yes"; then
+            DBM_LIBS="-ldbm"
+            AC_MSG_RESULT( found dbm )
+        elif test "$DBM_H" = "yes" -a "$DBM_LIB" = "no"; then
+            AC_MSG_RESULT( found dbm header file but not library )
+        elif test "$DBM_H" = "no" -a "$DBM_LIB" = "yes"; then
+            AC_MSG_RESULT( found dbm library but not header file )
+        else
+            AC_MSG_RESULT( didn't find dbm )
+        fi
+    fi
+fi
+
+
+dnl
+dnl ---------- Substitute library values ----------
+dnl
+
+AC_SUBST(NETWORK_LIBS)
+AC_SUBST(KERBEROS_LIBS)
+AC_SUBST(DBM_LIBS)
+AC_SUBST(LIBS)
+
+
+dnl
+dnl ---------- Checks for typedefs, structures, and compiler ----------
+dnl ---------- characteristics                               ----------
+dnl
+
+AC_C_CONST
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_DECL_SYS_SIGLIST
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+
+dnl
+dnl ---------- Checks for library functions ----------
+dnl
+
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_FUNC_UTIME_NULL
+AC_FUNC_VPRINTF
+AC_FUNC_WAIT3
+
+AC_CHECK_FUNCS( \
+gethostname \
+gethostbyname \
+gettimeofday \
+getusershell \
+mkdir \
+socket \
+strdup \
+strerror \
+strstr \
+bcopy \
+index \
+flock  \
+set_auth_parameters \
+pw_encrypt \
+hstrerror \
+snprintf \
+vsnprintf \
+srandom \
+srand \
+usleep \
+setproctitle
+)
+
+
+dnl
+dnl ---------- Check other libraries for networking functions ----------
+dnl
+
+    AC_SEARCH_LIBS( gethostbyname, nsl bsd net socket )
+
+
+dnl
+dnl ---------- Check for sizes ----------
+dnl
+
+AC_CHECK_SIZEOF( unsigned long int, 4 )
+
+
+dnl
+dnl ---------- Check for /dev/urandom ----------
+dnl
+AC_MSG_CHECKING( [for /dev/urandom] )
+if test -r /dev/urandom
+then
+    AC_DEFINE( HAVE_DEV_URANDOM )
+    AC_MSG_RESULT( [yes] )
+else
+    AC_MSG_RESULT( [no] )
+fi
+
+
+dnl
+dnl ---------- Substitute other values ----------
+dnl
+
+AC_SUBST(OS_DEFS)
+AC_SUBST(CDEFS)
+AC_SUBST(GPERFCMD)
+
+
+AC_SUBST(SSL_DIR_INC)
+AC_SUBST(SSL_LIBS)
+
+AC_OUTPUT(Makefile common/Makefile popper/Makefile mmangle/Makefile password/Makefile)

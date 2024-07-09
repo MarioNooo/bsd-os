@@ -1,0 +1,287 @@
+.\"	BSDI wanic500.8,v 1.1 1999/07/29 16:15:57 cp Exp
+.\"
+.Dd July 28, 1999
+.Os
+.Dt N2SETUP 8
+.Sh NAME
+.Nm wanic500
+.Nd configure SDL Communications WANic 500-Series interfaces
+.Sh SYNOPSIS
+.Nm 
+.Op Fl u Ar unit-number
+.Op Ar input-file
+.Sh DESCRIPTION
+The WANic 500-Series of communications controllers
+are dual channel interface controllers.
+.Pp
+The only option available is
+.Fl u .
+The 
+.Ar unit-number
+argument specifies which 
+.Xr ntwo 4
+unit is to be operated on. The primary purpose of
+.Nm wanic500
+is to configure the built in CSU. 
+.Pp
+.Nm Wanic500
+takes input from
+from stdin unless a
+.Ar input-file
+argument is supplied on the command line.
+
+.Sh INPUT GRAMMAR
+Input to
+.Nm 
+is made up of some number of individual statements. Each statement
+consists of four parts:
+.Bl -enum 
+.It
+A
+.Em variable
+to be set. The variable name may consist of one or more words.
+.It
+An
+.Em equal sign
+which separates the variable to be set from the
+value to be assigned to it.
+.It
+A
+.Em value
+to be assigned to the variable. The value to be set may consist of one
+or more words.
+.It
+A
+.Em semicolon
+which terminates the statement.
+.El
+.Pp
+In addition a 
+.Em pound sign
+can be used to delimit the start of a comment. From the 
+.Em pound sign
+to the next end of line is treated as comment. The input grammar is
+totally case insensitive.
+Following are a few example statements:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+active channels = all;       # all sub-channels are active
+active channels=all;         # spaces optional
+active channels = 1,2,7,9;   # sub-channels 1, 2, 7 and 9 are active 
+active channels=1, 2, 7, 9;  # spaces optional
+line build out = 22.5db;     # attenuate transmit signal 22.5db
+line build out = 22.5Db;     # upper case
+.Ed
+
+.Sh COMMMANDS SPECIFIC TO THE T1 CSU
+This following commands available to configure 
+T1 CSU ports. Determination of the
+correct values to use is beyond the scope of this document. The
+SDL Communications document appropriate for the particular hardware
+should be referenced to determine how to setup the CSU for
+a particular service provider.
+.Bl -enum 
+.It
+.Dq active channels
+This is used to setup which T1 sub-channels will be used. 
+Legal values are:
+.Bl -bullet -compact
+.It 
+.Dq all
+This will select channels 1 to 24. This results in operation at full
+T1 speed.
+.Pq Default value
+.It
+.Dq 1, 2, 3, ..., 24
+A comma separated listed is used when a fraction of the full T1 channel
+is to be used. 
+.El
+.It 
+.Dq line coding
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq b8zs
+.Pq Default value 
+.It
+.Dq ami
+.El
+.It
+.Dq rate multiplier
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 56
+.It
+.Dq 64
+.Pq Default value 
+.El 
+.It
+.Dq framing mode. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq d4
+.Pq Default value 
+.It
+.Dq esf
+.El 
+.It
+.Dq line build out
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 0 Db
+.Pq Default value 
+.It
+.Dq 7.5 Db
+.It
+.Dq 15 Db
+.It
+.Dq 22.5 Db
+.El
+.It
+.Dq clock source
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq external
+.Pq Default value 
+.It
+.Dq internal
+.El
+.It
+.Dq equalizer gain limit
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq on
+.Pq Default value
+.It
+.Dq off
+.El
+.It
+.Dq csu data polarity
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq normal
+.Pq Default value
+.It
+.Dq invert
+.El
+.It
+.Dq ansi t1.403 messages generated
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq ansi t1.403 c/r address bit of transmitted prms
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq ansi t1.403 c/r address bit of received prms
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq fdl idle code
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq flag
+.Pq Default value
+.It
+.Dq mark
+.El
+.It
+.Dq at&t 54016 target address match
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq a or z
+.Pq Default value
+This value is the full string 
+.Dq a or z .
+.It
+.Dq b or y
+This value is the full string 
+.Dq b or y .
+.El
+.El
+.Sh COMMANDS FOR V35 PORTS
+.Bl -enum 
+.It
+.Dq clock mode
+This allows the hardware to appear as a DCE or DTE device or
+to run in symmetric mode. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq dte
+.Pq Default value 
+.It
+.Dq dce
+.It
+.Dq symmetric
+.El
+.It
+.Dq baud rate
+This is only need when two N2 ports are connected together without
+a CSU/DSU. 
+.El
+.Sh COMMANDS USED WITH ALL PORTS
+.Bl -enum 
+.It
+.Dq data carrier detect
+It is necessary to ignore DCD when X.21 modems are 
+used. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq use dcd
+.Pq Default value 
+.It
+.Dq ignore dcd
+.El
+.It
+.Bl -enum
+.Dq transmit buffers
+By default 5 transmit buffers are assigned. This
+also determines how many packets will be queued
+to the hardware for transmission. Once queued
+to the hardware high priority packets can not be
+slipped in front of the queued packets.
+To better schedule high priority
+packets this number may be decreased.
+.El
+.Sh EXAMPLES
+The following is the input to configure a typical full T1 channel:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+active channels = all; 
+line build out = 7.5db;
+rate multiplier = 56;
+framing mode = d4;
+equalizer gain limit=on;
+csu data polarity = invert;	# almost always needed with d4
+.Ed
+.Sh SEE ALSO
+.Xr ifconfig 8
+.Xr netstat 1

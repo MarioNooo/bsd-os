@@ -1,0 +1,38 @@
+.TH RADIUSC 8 "20 May 1998"
+.SH NAME
+radiusc \- Remote Authentication Dial In User Service daemon control program
+.SH SYNOPSIS
+.B radiusc install|kill|start|stop
+.SH DESCRIPTION
+The
+.B radiusc
+control program controls the radiusd server.
+The following commands may be given:
+.TP
+.BI install
+Installs the generic configuration files in
+.IR /etc/raddb .
+.TP
+.BI kill
+Kills the current running radius server as specified by the
+.IR /etc/raddb/radiusd.pid
+file.
+.TP
+.BI start
+Enables the radius server by adding (or uncommenting) the radius line in
+.IR /etc/inetd.conf
+and then sending inetd a SIGHUP.
+.TP
+.BI stop
+Disables the radius server by commenting out the radius line in
+.IR /etc/inetd.conf
+and then sending inetd a SIGHUP.  This does not kill the current
+running radius server.
+.SH SEE ALSO
+.LP
+.BR clients (5),
+.BR dictionary (5),
+.BR users (5),
+.BR inetd.conf (5),
+.BR inetd (8) ,
+.BR radiusd (8)

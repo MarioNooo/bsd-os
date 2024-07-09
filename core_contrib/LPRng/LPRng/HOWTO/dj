@@ -1,0 +1,87 @@
+<sect1>HP Deskjet
+<p>
+<tscreen>
+<verb>
+From: jarausch@igpm.rwth-aachen.de (Helmut Jarausch)
+Subject: Re: Using gs (GhostScript) as a filter? 
+To: lprng@lprng.com
+>> 
+>> Hello All:
+>> 
+>> I would like to use LPRng 3.1.4 with an HP LaserJet 4P.  I'd like to be
+>> able to use gs to convert PostScript files so that I can print them on my
+>> HP 4P.  Can I do this with LPRng?  If so, could someone send me a printcap
+>> entry?  I'd appreciate it.  I am not sure how I will be connecting the
+>> printer yet, but I am thinking either serial or network.  Probably serial
+>> though.  Thanks for any help.
+</verb>
+</tscreen>
+<p>
+This printcap works for my Deskjet:
+<tscreen>
+<verb>
+djps
+    :cm=Local Deskjet(GhostScript)
+    :sd=/var/spool/djps:sf:sh:mx=0
+    :lp=/dev/plp
+    :if=-$ /usr/local/bin/gs -sDEVICE=cdj550 -sPAPERSIZE=a4 \
+		-sOutputFile=- -q -r300 - 
+
+Helmut Jarausch
+Lehrstuhl f. Numerische Mathematik
+Institute of Technology
+RWTH Aachen
+D 52056 Aachen, Germany
+</verb>
+</tscreen>
+<sect1>HP LaserJet IIISiMX
+<p>
+<tscreen>
+<verb>
+> To: lprng@lprng.org
+> Subject: [LPRng] problems printing PS-level2 jobs on LjIIsi's...
+> Date: Mon, 31 Aug 1998 15:06:22 -0400
+> From: "John Saroglou" <johny@yorku.ca>
+>
+> Greetings...
+>
+> I'm wondering if someone got around the problem of printing
+> Postscript(R) Level 2  jobs on Laser Jet IIIsi printers.
+> Our printers are direct network printers talking to a
+> print server running solaris 2.6 and lprng-3.5.1.
+>
+> Is there a fix (possible drivers?) for such problem?
+>
+> Thanks in advance.
+</verb>
+</tscreen>
+<p>
+The LaserJet IIISi does not support PostScript level 2, only level 1
+(really, it is called 3SiMX).
+The Windows (you are under Windows, right?) HP driver for 3Si/3Si MX
+PostScript should produce only PS level 1.
+<p>
+Beware: latest version of Adobe Windows PS driver produces *ONLY* PS
+level 2.
+So if you have (or receive) level 2 files, read them using GhostScript
+and print a screen dump :-) or as a bitmap. 
+<p>
+You can also convert them into PDF (using either Adobe distiller or
+GhostScript's ps2pdf) then use <it/acroread/ to print the result.
+<it/Acroread/ can
+produce either level 1 or level 2 PostScript. THE definite solution!
+<p>
+This trouble has nothing to do with the way they are connected,
+it is only a driver problem.
+I believe that HP had once a PS level2 update, but the price was so high
+that buying a new printer was a better solution!
+<tscreen>
+<verb>
+Bertrand
+-- 
+| Bertrand DECOUTY              | mailto:Bertrand.Decouty@irisa.fr   |
+| IRISA - INRIA (Atelier)       | PHONE : 0299847346 / 0299847100    |
+| Campus de Beaulieu            | FAX   : +33 (0) 299842534          |
+| F-35042 Rennes Cedex - FRANCE | http://www.irisa.fr/               |
+</verb>
+</tscreen>

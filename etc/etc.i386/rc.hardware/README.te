@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README.te,v 1.1 1996/06/26 21:16:13 ewv Exp
+ */
+
+Hardware setup files for the SMC TokenCard Elite are named as
+follows "x.te.y". The leading x is a numeric used to choose when
+in the hardware initialization sequence the te microcode will be
+loaded.  As there are no known reasons to run tesetup early or late
+in the sequence of setting up hardware it is suggested that it be
+run in the middle. Assigning the configuration file the first digit
+as a "5" will accomplish this. The trailing digit is the unit number
+of the te interface which is to be configured.
+
+To set up a new card copy proto.te to 5.te.n, where n is the interface
+number of the card to be set up.

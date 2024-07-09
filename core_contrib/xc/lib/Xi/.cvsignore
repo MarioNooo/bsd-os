@@ -1,0 +1,4 @@
+Makefile
+unshared
+libXi.so.6.0
+.depend

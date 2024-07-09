@@ -1,0 +1,101 @@
+.\"	BSDI bad144.5,v 2.1 1995/07/25 22:20:00 torek Exp
+.\"
+.\" Copyright (c) 1980, 1988, 1991 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd April 2, 1995
+.Dt BAD144 5
+.Os
+.Sh NAME
+.Nm bad144
+.Nd DEC STD 144 bad block format
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/dkbad.h>
+.Sh DESCRIPTION
+The
+.Nm bad144
+format is used by some disk drivers
+to provide replacement sectors for faulty areas on a drive.
+Such drivers include the
+.Xr wd 4
+driver on
+.ie t Intel\(rg
+.el Intel (R)
+systems and the
+.Xr hk 4
+and
+.Xr hp 4
+drivers on
+.ie t \s-2VAX\s0\(rg
+.el VAX (R)
+systems.
+.Pp
+The bad sector information is located in the first 5 even numbered sectors
+of the last track of the disk pack.  There are five identical copies of
+the information, described by the
+.Ar dkbad
+structure.
+.Pp
+Replacement sectors are allocated starting with the first sector before
+the bad sector information and working backwards towards the beginning
+of the disk.  A maximum of 126 bad sectors are supported.  The position
+of the bad sector in the bad sector table determines the replacement
+sector to which it corresponds.
+The bad sectors must be listed in ascending order.
+.Pp
+The bad sector information and replacement sectors are conventionally
+only accessible through the ``c'' file system partition of the disk.  If
+that partition is used for a file system, the user is responsible for
+making sure that it does not overlap the bad sector information or any
+replacement sectors.
+Thus, one track plus 126 sectors must be reserved to allow use
+of all of the possible bad sector replacements.
+.Pp
+The bad sector structure is as follows:
+.Bd -literal
+struct dkbad {
+	long	bt_csn;		 /* cartridge serial number */
+	u_short	bt_mbz;		 /* unused; should be 0 */
+	u_short	bt_flag;	 /* -1 => alignment cartridge */
+	struct bt_bad {
+	      u_short bt_cyl;    /* bad sector cylinder number */
+	      u_short bt_trksec; /* track and sector number */
+	} bt_bad[126];
+};
+.Ed
+.Pp
+Unused slots in the
+.Ar bt_bad
+array are filled with all bits set, a putatively
+illegal value.
+.Sh SEE ALSO
+.Xr diskdefect 8

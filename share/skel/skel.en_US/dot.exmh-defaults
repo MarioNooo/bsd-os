@@ -1,0 +1,189 @@
+!*Mops.ubuttonlist: myrepla myrepl mycomp
+!*Mops.myrepl.text: Rep_Quote
+!*Mops.myrepl.command: Msg_Reply -form replcomps_pgp -filter youwrite
+!*Mops.myrepla.text: Rep_All_Quote
+!*Mops.myrepla.command: Msg_Reply -form replcomps_pgp_all -filter youwrite
+!*Mops.mycomp.text: Comp
+!*Mops.mycomp.command: Msg_Compose -form comp_pgp
+
+!!! Lines below here automatically added
+!!! Sun Sep  1 16:14:02 EDT 1996
+!!! Do not edit below here
+*userLibrary:	~/.tk/exmh
+*logEnabled:	0
+*logLines:	1000
+*flistDebug:	0
+*scanProc:	scan
+*sendType:	wait
+*xtermCmd:	xterm -g 80x5
+*delPrefix:	#
+*purgeAge:	9999
+*replPrefix:	> 
+*seditFormatMail:	1
+*seditAttemptMhn:	0
+*seditKeepOnSend:	0
+*seditQuotedPrintable:	automatic
+*seditLineLength:	79
+*seditAutoSign:	1
+*seditSigDashes:	1
+*seditSignatureFile:	~/.signature
+*seditColorize:	0
+*seditISO:	1
+*seditCharset:	iso-8859-1
+*seditSpell:	spell
+*seditSpellCustom:	exmh-async xterm -e ispell
+*editCmd:	sedit
+*edit2Cmd:	exmh-async xterm -e vi
+*seditOverride:	0
+*seditAfterAsync:	0
+*spellCmd:	exmh-async xterm -e ispell
+*mhnCmd:	mhn
+*printCmd:	lpr $file
+*psPrintCmd:	lpr $file
+*unixCmd:	cat $file > /dev/null
+*ftextLines:	5
+*impliedDirection:	1
+*nextGuard:	0
+*autoCommit:	0
+*commitDialog:	1
+*autoPack:	1
+*autoSort:	0
+*autoSortType:	date
+*autoSortCrit:	-textfield keywords
+*ftocShowNew:	0
+*advanceOnLink:	0
+*skipMarked:	1
+*cycleBack:	1
+*scanWidth:	100
+*scanSize:	100
+*mimeEnabled:	1
+*mimeShowType:	0
+*mimeShowPrelude:	0
+*mimeFullHeaders:	0
+*mimeMaxSubpartsDisplayed:	5
+*ftpMethod:	expect
+*ftpCommand:	ftp
+*showRichCmnds:	0
+*showSeparator:	1
+*showImage:	1
+*mimeFontSize:	120
+*mimeTitleSize:	120
+*mimeNoteSize:	100
+*uriScanForXURIs:	1
+*uriScanForURIs:	1
+*uriScanLimit:	1000
+*uriScanSoftLimit:	1000
+*uriViewer:	Mosaic
+*mimeShowHtml:	1
+*uriMosaicApp:	Mosaic
+*uriNetscapeFlags:	-install
+*uriViewerApp:	Mosaic $xuri
+*uriLogOnEnter:	1
+*incStyle:	inbox
+*incOnStartup:	1
+*incOnMapping:	0
+*incSortFeedback:	1
+*xnsGetMail:	0
+*scrollbarSide:	left
+*scrollSpeed:	1
+*scrollAccel:	4
+*textConstrainScroll:	0
+*textConstrainFtoc:	0
+*textContextLines:	2
+*textSmoothScroll:	1
+*textSelectDelay:	50
+*placeToplevel:	1
+*fcacheLines:	0
+*fcacheSticky:	inbox
+*fcacheStickyOff:	0
+*fcacheNickNames:	1
+*fdispLines:	1
+*fl_toplevel:	0
+*fdispPopdownStyle:	polygon
+*fdispPopdownAction:	navbutton
+*fdispPopdownRemove:	leave
+*soundEnabled:	1
+*soundMultiFile:	0
+*soundBell:	0
+*soundCmd:	/usr/bin/vplay
+*soundNewMsg:	/usr/contrib/lib/exmh-1.6.5/drip.au
+*soundError:	clink.au
+*xfaceProg:	
+*facesEnabled:	0
+*facesRow:	0
+*facesDefer:	1
+*facesPalette:	
+*glimpseCaseSensitive:	1
+*glimpseWholeWord:	1
+*glimpseSearchRange:	all
+*glimpseMaxHits:	10
+*glimpseMaxErrors:	none
+*bgAsync:	0
+*sendHack:	0
+*bgAction:	inc
+*bgPeriod:	10
+*bgSpool:	/var/mail/$USER
+*fileselectBigDirHas:	32
+*fileselectDotsByDefault:	0
+*fileselectHome:	
+*busyStyle:	cursor
+*busyCursor:	watch
+*busyBitmap:	@hourglass2.bitmap
+!!! End Preferences State
+!!! Saved Window Positions
+!!! Sun Sep  1 16:15:17 EDT 1996
+!!! Do not edit below here
+*edit3.position:	+503+397
+*pgphelp.position:	+248+192
+*pref.position:	+158+0
+*pref0.position:	+173+133
+*pref1.position:	+173+133
+*pref2.position:	+132+33
+*pref4.position:	+132+33
+*pref6.position:	+82+6
+*pref7.position:	+82+6
+*pref8.position:	+82+6
+*prefhelplong8.position:	+874+464
+*pref9.position:	+82+6
+*pref10.position:	+82+6
+*pref11.position:	+82+6
+*pref12.position:	+82+6
+*pref13.position:	+82+6
+*pref14.position:	+82+6
+*pref15.position:	+82+6
+*pref16.position:	+82+6
+*prefhelplong16.position:	+1000+631
+*pref17.position:	+82+6
+*pref18.position:	+597+578
+*prefhelplong1.position:	+553+225
+*pref3.position:	+132+33
+*pref5.position:	+132+6
+*key.position:	+492+124
+*helpIntro.position:	+28+9
+*helpFAQ.position:	+145+115
+*edit2.position:	+44+29
+*bindpref.position:	+47+18
+*aliaspref.position:	+74+89
+*helpReply.position:	+214+67
+*helpLists.position:	+14+29
+*compose.position:	+29+59
+*seditpref.position:	+44+89
+*prefhelplong3.position:	+14+33
+*prefhelplong6.position:	+29+14
+*sedit3.position:	+92+80
+*helpSedit.position:	+59+33
+*pick.position:	+118+0
+*glimpse.position:	+38+66
+*find.position:	+119+119
+*newf.position:	+134+149
+*prefhelplong10.position:	+117+33
+*sedit4.position:	+59+88
+*sedit5.position:	+89+59
+*sedit6.position:	+103+75
+*helpAliases.position:	+14+33
+*sedit7.position:	+89+88
+*sedit8.position:	+117+59
+*prefhelplong15.position:	+14+33
+*exwinPaths:	.edit3 .pgphelp .pref .pref0 .pref1 .pref2 .pref4 .pref6 .pref7 .pref8 .prefhelplong8 .pref9 .pref10 .pref11 .pref12 .pref13 .pref14 .pref15 .pref16 .prefhelplong16 .pref17 .pref18 .prefhelplong1 .pref3 .pref5 .key .helpIntro .helpFAQ .edit2 .bindpref .aliaspref .helpReply .helpLists .compose .seditpref .prefhelplong3 .prefhelplong6 .sedit3 .helpSedit .pick .glimpse .find .newf .prefhelplong10 .sedit4 .sedit5 .sedit6 .helpAliases .sedit7 .sedit8 .prefhelplong15
+exmh.geometry:	491x450+136+1
+!!! End Positions

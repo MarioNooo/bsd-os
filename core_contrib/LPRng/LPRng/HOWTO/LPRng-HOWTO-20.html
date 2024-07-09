@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Development Test Configuration</TITLE>
+ <LINK HREF="LPRng-HOWTO-21.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-19.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc20" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-21.html">Next</A>
+<A HREF="LPRng-HOWTO-19.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc20">Contents</A>
+<HR>
+<H2><A NAME="s20">20. Development Test Configuration</A></H2>
+
+<P>The LPRng code has the ability to run as non-setuid software,
+and to use the non-default TCP/IP ports for communication.
+This facility allows a <EM>Test Version</EM> to be run in parallel with the
+normal LPRng software.
+<P>To simplify testing and portability issues,
+a simple test version of the spool queues and jobs has been supplied with the
+LPRng distribution.
+These queues can be placed in a suitable location
+(<CODE>/tmp</CODE> is common) and the LPRng software tested.
+<P>The test version of the software will use the <CODE>LPD_CONF</CODE>
+environment variable to specify the location of the configuration file.
+It will read this configuration file on startup and use the values
+to override the normal defaults.
+Since a user could maliciously set up their own configuration files
+with values that could compromise system security,
+it is strongly recommended that the test version is not made SETUID root.
+In fact,
+the LPRng code will chatter messages when the LPD_CONF ability is enabled
+and it is run as root.
+<H2><A NAME="ss20.1">20.1 Compiling the Test Version</A>
+</H2>
+
+<P>Edit <CODE>src/Makefile</CODE>, and uncomment the indicated line.
+Then run <CODE>make</CODE> to regenerate the distribution.
+<BLOCKQUOTE><CODE>
+<PRE>
+#### ****** TESTING AND SECURITY LOOPHOLE ******************************
+# Define GETENV to allow the LPD_CONFIG environment
+#  variable to be used as the name of a configuration file.  In non-testing
+#  systems,  this is a security loophole.
+#CF := $(CF) -DGETENV
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss20.2">20.2 Setting Up The Test Version Spool Queues</A>
+</H2>
+
+<P>The LPRng <CODE>TESTSUPPORT</CODE> directory contains a set of shell scripts
+and files that need to be installed in the appropriate directory.
+The following steps are used.
+<OL>
+<LI>First,
+you need to set up your <CODE>HOST</CODE> environment variable to the fully
+qualified domain name of your host
+and your <CODE>USER</CODE> environment variable to your user name.
+This is done in order to get values to put into the Test Version configuration files.</LI>
+<LI>In the <CODE>TESTSUPPORT</CODE> directory,
+edit the <CODE>Makefile</CODE>,
+and specify the location of the <CODE>Test Version</CODE> spool queues.
+The default location is <CODE>/tmp</CODE>;
+since on most systems these files are deleted or are available to everybody,
+a more secure location should most likely be used.
+<B>DO NOT USE THE RAW TESTFILE DIRECTORY</B>.
+These files need to be copied and placed in another directory.</LI>
+<LI>The <CODE>LPD_CONF</CODE> environment variable should be set to the
+location of the installed <CODE>lpd.conf</CODE> file.</LI>
+<LI>In the <CODE>TESTSUPPORT</CODE> directory,
+run <CODE>make</CODE>.
+This will copy and install the necessary files.</LI>
+</OL>
+<P>Example:
+<BLOCKQUOTE><CODE>
+<PRE>
+  CSH:
+    setenv HOST {fully qualified domain name};
+    setenv USER `whoami`
+    setenv LPD_CONF /tmp/LPD/lpd.conf
+    set path=( /tmp/LPD $path )
+    unsetenv PRINTER
+   Example:
+      setenv HOST astart1.astart.com
+      setenv USER papowell
+      setenv LPD_CONF /tmp/LPD/lpd.conf
+      set path=( /tmp/LPD $path )
+      unsetenv PRINTER
+  Bourne Shell:
+    HOST={fully qualified domain name}; export HOST;
+    USER='whoami'; export USER
+    LPD_CONF=/tmp/LPD/lpd.conf.$HOST; export LPD_CONF
+    PATH=/tmp/LPD:$PATH; export PATH
+    PRINTER=; export PRINTER
+   Example:
+      HOST=astart1.astart.com; export HOST
+      USER=papowell; export USER
+      LPD_CONF=/tmp/LPD/lpd.conf.$HOST; export LPD_CONF
+      PATH=/tmp/LPD:$PATH; export PATH
+      PRINTER=; export PRINTER
+  cd TESTSUPPORT
+  make
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss20.3">20.3 Running the Test Version Software</A>
+</H2>
+
+<P>Set your current directory to the location of the compiled <CODE>Test Version</CODE>
+executables.
+Execute the various executables using <CODE>./cmd</CODE>,
+or set <CODE>.</CODE> <B> as the first entry in the PATH </B>.
+If it is not the first entry,
+then the standard system executables will be used.
+<OL>
+<LI> Run <CODE>./checkpc</CODE>.
+this will print out the various values for the spool queues in the <CODE>Test Version</CODE>
+setup.
+If the <CODE>t1</CODE>, <CODE>t2</CODE>,... spool queues are not displayed,
+make sure that the LPD_CONF environment variable is set correctly and that you
+are using the <CODE>Test Version</CODE> executable.</LI>
+<LI>Run <CODE>./checkpc -f</CODE>.
+This will fix up the (deliberately introduced) problems in the spool queues.</LI>
+<LI>Next,  run <CODE>./lpd -F</CODE> in one window,
+and then run <CODE>./lpq -a </CODE> in another window.
+This will check that the server is working.</LI>
+<LI>You can now amuse yourself by sending jobs,
+setting up permissions checking,
+and other chores.</LI>
+<LI>When everything appears to be working correctly,
+you can then remove the <CODE>Test Version</CODE> flag from the
+<CODE>src/Makefile</CODE>, recompile,
+and install the LPRng software.</LI>
+</OL>
+<HR>
+<A HREF="LPRng-HOWTO-21.html">Next</A>
+<A HREF="LPRng-HOWTO-19.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc20">Contents</A>
+</BODY>
+</HTML>

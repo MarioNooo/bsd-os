@@ -1,0 +1,390 @@
+.\"	BSDI n2setup.8,v 1.2 1997/07/24 13:50:32 cp Exp
+.\"
+.Dd July 19, 1995
+.Os
+.Dt N2SETUP 8
+.Sh NAME
+.Nm n2setup
+.Nd configure SDL Communications RISCom/N2 family of interfaces
+.Sh SYNOPSIS
+.Nm 
+.Op Fl u Ar unit-number
+.Op Ar input-file
+.Sh DESCRIPTION
+The RICScom/N2 family of communications controllers
+(see also
+.Xr ntwo 4 )
+are dual channel interface controllers.
+There are three major variations on the RISCom/N2 communications
+interface. The first is referred herein to as a N2 card. This card
+has two up to T1 DSU ports.
+There is a single interface version of this board where the
+second interface has been de-populated. This board still appears
+as a dual interface board, but only the first channel
+is functional. With utilities such as
+.Xr netstat 1
+the second channel will still appear. If there are multiple
+RISCom/N2 boards in a system these non-functional channels
+will show up were the second channels would appear if it were
+there. Since only the receivers and transmitters are missing
+it is even possible to
+.Xr ifconfig 8
+one of these channels up.
+.Pp
+The second version
+.Pq referred herein to has a N2csu
+is similar to
+the standard N2 except that the second
+channel on the board has a built in T1 CSU.
+.Pp
+The third version
+.Pq referred herein to as a N2dds
+is also similar to the standard N2 except that the second channel
+on the board as a built in 56K CSU.
+.Pp
+The only option available is
+.Fl u .
+The 
+.Ar unit-number
+argument specifies which 
+.Xr ntwo 4
+unit is to be operated on. The primary purpose of
+.Nm n2setup
+is to configure the built in CSU. Since the CSU
+interface is the second interface on the board it will be
+necessary to specify this flag to accomplish this.
+.Pp
+.Nm N2setup
+takes input from
+from stdin unless a
+.Ar input-file
+argument is supplied on the command line.
+
+.Sh INPUT GRAMMAR
+Input to
+.Nm 
+is made up of some number of individual statements. Each statement
+consists of four parts:
+.Bl -enum 
+.It
+A
+.Em variable
+to be set. The variable name may consist of one or more words.
+.It
+An
+.Em equal sign
+which separates the variable to be set from the
+value to be assigned to it.
+.It
+A
+.Em value
+to be assigned to the variable. The value to be set may consist of one
+or more words.
+.It
+A
+.Em semicolon
+which terminates the statement.
+.El
+.Pp
+In addition a 
+.Em pound sign
+can be used to delimit the start of a comment. From the 
+.Em pound sign
+to the next end of line is treated as comment. The input grammar is
+totally case insensitive.
+Following are a few example statements:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+active channels = all;       # all sub-channels are active
+active channels=all;         # spaces optional
+active channels = 1,2,7,9;   # sub-channels 1, 2, 7 and 9 are active 
+active channels=1, 2, 7, 9;  # spaces optional
+line build out = 22.5db;     # attenuate transmit signal 22.5db
+line build out = 22.5Db;     # upper case
+.Ed
+
+.Sh COMMMANDS SPECIFIC TO THE N2CSU
+This document details the commands available to configure
+CSU on the various N2 boards. Determination of the
+correct values to use is beyond the scope of this document. The
+SDL Communications document appropriate for the particular hardware
+should be referenced to determine how to setup the CSU for
+a particular service provider.
+.Bl -enum 
+.It
+.Dq active channels
+This is used to setup which T1 sub-channels will be used. No channels
+are selected by default which means that this must always be
+specified for a N2CSU.
+Legal values are:
+.Bl -bullet -compact
+.It 
+.Dq all
+This will select channels 1 to 24. This results in operation at full
+T1 speed.
+.It
+.Dq 1, 2, 3, ..., 24
+A comma separated listed is used when a fraction of the full T1 channel
+is to be used. 
+.El
+.It 
+.Dq line coding
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq b8zs
+.Pq Default value 
+.It
+.Dq ami
+.El
+.It
+.Dq rate multiplier
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 56
+.It
+.Dq 64
+.Pq Default value 
+.El 
+.It
+.Dq framing mode. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq d4
+.Pq Default value 
+.It
+.Dq esf
+.El 
+.It
+.Dq line build out
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 0 Db
+.Pq Default value 
+.It
+.Dq 7.5 Db
+.It
+.Dq 15 Db
+.It
+.Dq 22.5 Db
+.El
+.It
+.Dq clock source
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq external
+.Pq Default value 
+.It
+.Dq internal
+.El
+.It
+.Dq equalizer gain limit
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq off
+.Pq Default value
+.It
+.Dq on
+.El
+.It
+.Dq csu data polarity
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq normal
+.Pq Default value
+.It
+.Dq invert
+.El
+.It
+.Dq ansi t1.403 messages generated
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq ansi t1.403 c/r address bit of transmitted prms
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq ansi t1.403 c/r address bit of received prms
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value
+.It
+.Dq yes
+.El
+.It
+.Dq fdl idle code
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq flag
+.Pq Default value
+.It
+.Dq mark
+.El
+.It
+.Dq at&t 54016 target address match
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq a or z
+.Pq Default value
+This value is the full string 
+.Dq a or z .
+.It
+.Dq b or y
+This value is the full string 
+.Dq b or y .
+.El
+.El
+.Sh COMMMANDS SPECIFIC TO THE N2DDS
+.Bl -enum 
+.It
+.Dq clock source
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq external
+.Pq Default value 
+.It
+.Dq internal
+.El
+.It
+.Dq transmission frequency
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 56 Kb
+.Pq Default value 
+.It
+.Dq 72 Kb
+.El
+.El
+.Sh COMMMANDS FOR THE STANDARD PORTS 
+Standard ports are DSU interfaces. They are unit 0 on all boards as well
+as unit 1 on N2 cards.
+.Bl -enum 
+.It
+.Dq transmit clock source
+Gating the receive clock to the transmit clock is only needed with an X.21
+CSU/DSU using standard cables rather than the SDL specified cross over
+cables. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq transmit clock
+.Pq Default value 
+.It
+.Dq receive clock
+.El
+
+.It
+.Dq source clock
+This is only need when two N2 ports are connected together without
+a CSU/DSU.
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq no
+.Pq Default value 
+.It
+.Dq yes
+.El
+.It
+.Dq baud rate table entry
+This is only need when two N2 ports are connected together without
+a CSU/DSU. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq 0 
+Selects 56000 baud.
+.Pq Default value 
+.It
+.Dq 1 
+Selects 9600 baud.
+.It
+.Dq 2 
+Selects 19200 baud.
+.It
+.Dq 3 
+Selects 38400 baud.
+.It
+.Dq 4 
+Selects 65000 baud.
+.It
+.Dq 5 
+Selects 500000 baud.
+.It
+.Dq 6 
+Selects 1000000 baud.
+.It
+.Dq 7 
+Selects 1500000 baud.
+.El
+.El
+.Sh COMMANDS USED WITH ALL PORTS
+.Bl -enum 
+.It
+.Dq data carrier detect
+It is necessary to ignore DCD when X.21 modems are 
+used. 
+Legal values are:
+.Bl -bullet -compact
+.It
+.Dq use dcd
+.Pq Default value 
+.It
+.Dq ignore dcd
+.El
+.El
+.Sh EXAMPLES
+The following is the input to configure a typical full T1 channel:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+active channels = all; 
+line build out = 7.5db;
+rate multiplier = 56;
+framing mode = d4;
+equalizer gain limit=on;
+csu data polarity = invert;	# almost always needed with d4
+.Ed
+.Pp
+The following is an example of setting on a standard line to talk
+to a X.21 modem:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+data carrier detect = ignore dcd;
+transmit clock source = receive clock;
+.Ed
+.Pp
+The following is an example of setting up a N2dds CSU:
+.if n .Bd -literal
+.if t .Bd -literal -offset indent
+clock source = external;
+transmission frequency = 64 Kb;
+
+
+.Sh SEE ALSO
+.Xr ntwo 4
+.Xr ifconfig 8
+.Xr netstat 1

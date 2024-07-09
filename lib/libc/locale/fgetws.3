@@ -1,0 +1,48 @@
+.\"     BSDI    fgetws.3,v 2.2 1997/12/18 18:07:09 bostic Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd December 9, 1997
+.Dt FGETWS 3
+.Os
+.Sh NAME
+.Nm fgetws
+.Nd read wide-character string from a stream
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Fd #include <wchar.h>
+.Ft wchar_t *
+.Fn fgetws "wchar_t *ws, int n, FILE *stream"
+.Sh DESCRIPTION
+The
+.Fn fgetws
+function
+is similar to the
+.Xr fgets 3
+function, but rather than reading a string of byte sized characters,
+it uses
+.Xr fgetrune 3
+to read multi-byte characters and convert them into wide-character codes.
+.Sh RETURN VALUES
+The
+.Fn fgetws
+function
+returns
+.Ar ws
+on success and
+.Li NULL
+on error.
+.Sh SEE ALSO
+.Xr fgetrune 3 ,
+.Xr fgets 3
+.Sh BUGS
+If an invalid multi-byte sequence is encountered then
+.Li NULL
+is returned,
+.Va errno
+is set to
+.Ev EILSEQ
+and all the valid characters up to that point are lost.
+So saith the standard.

@@ -1,0 +1,243 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH AUTHFILE 5 "15 May 1998"
+.SH NAME
+authfile \- Merit \s-2AAA\s+2 server realm to authentication-type mapping file
+.SH SYNOPSIS
+.B ../raddb/authfile
+.SH DESCRIPTION
+.LP
+The
+.I authfile
+file resides in the Merit \s-2AAA\s+2 server configuration directory (named
+.I .../raddb
+somewhere).  It contains a list of realm names which the Merit \s-2AAA\s+2
+server uses to authenticate incoming \s-2RADIUS\s+2 requests with the
+.I user@realm
+pattern as the user name (in the User-Name attribute of \s-2RADIUS\s+2).
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+The file contains one line of information for each realm entry.
+Each entry has several, white-space delimited fields.
+The syntax of each entry is as follows:
+.IP
+.I <realm-name>
+[(
+.I <alias>
+[,
+.IR " <alias>" "])] ["
+.IR \-<protocol> ]
+.I <type>
+[
+.IR <realm/\s-2DNS\s+2/file> "] ["
+.IR <filter-id> ]
+.LP
+For example:
+.IP
+.ft B
+umich.edu                 \s-2AFS-KRB\s+2       \s-2UMICH.EDU\s+2          umich
+.sp
+.ft B
+flatland.org                \s-2FILE\s+2           flatland
+.sp
+.ft R
+where the latter is only available with the Merit ehnanced server license.
+.LP
+The
+.I <realm-name>
+is any appropriate symbol or name for the realm to which the user "belongs."
+Note that this does not have to be a Domain Name System (\s-2DNS\s+2) host
+name, although it is highly recommended that the realm name match a domain
+name so the user recognizes the
+.I user@realm
+syntax which resembles their email address.
+A single, final
+.B \s-2DEFAULT\s+2
+entry may be included in the file which indicates how to handle
+authentication requests specifying authenticating realms not found in
+this file.
+Usually, a remote \s-2RADIUS\s+2 server will handle these requests which
+this server will relay to the remote server.
+A user is not allowed to use the name
+.B \s-2DEFAULT\s+2
+as their actual realm name.
+The
+.B \s-2NULL\s+2
+entry may be used to indicate how to handle user names without an attached
+realm name.
+.LP
+There is also a "wild card" syntax,
+.IR *.realm ,
+which may be included as the primary (non-alias) realm name on an entry in
+the authfile.
+Its purpose is to provide a shorthand way of indicating several related
+realms which are to be handled by one entry (one authentication type) in
+the authfile.
+For example, a company may have several branches, eastern.foobah.com,
+western.foobah.com and central.foobah.com, so that an entry *.foobah.com
+would "match" all three of these realms.
+It is highly recommended that any such wild card entry be listed toward
+the end of the authfile.  This allows for preceding, specific entries to
+override the wild card entry.
+.LP
+The
+.I <alias>
+field is an optional, comma separated list of realm names enclosed within
+parentheses.
+Each realm alias is equivalent to the "main" realm name and may be provided
+for user convenience or other purposes, such as to save typing.
+Aliases are allowed on wild card entries and are interpreted as meaning
+.I *.alias
+rather than
+.I alias.realm
+or just
+.IR alias.
+.LP
+The
+.I <protocol>
+field is one of
+.BR \s-2\-PW\s+2 ,
+.BR \s-2\-CHAP\s+2 ,
+or
+.BR \s-2\-DFLT\s+2 .
+It may be used to force the processing order of
+.I authfile
+entries which would otherwise be identical.
+.LP
+Valid authentication
+.IR <type> s
+include
+.BR \s-2PASSWD\s+2 ,
+.BR \s-2UNIX-PW\s+2 ,
+.BR \s-2BSD-AUTH\s+2 ,
+.BR \s-2RADIUS\s+2 ,
+.BR \s-2MIT-KRB\s+2 ,
+.BR \s-2AFS-KRB\s+2 ,
+.BR \s-2FILE\s+2 ,
+.BR \s-2TACACS\s+2 ,
+.BR \s-2TACPLUS\s+2 ,
+and
+.BR \s-2KCHAP\s+2 .
+These authentication types are case insensitive.
+The \s-2FILE\s+2 and \s-2TACPLUS\s+2 types are only available with the Merit
+enhanced server license.
+.LP
+The
+.B \s-2PASSWD\s+2
+.I <type>
+is the same as the
+.B \s-2UNIX-PW\s+2
+.IR <type> .
+Either refers to authentication using the \s-2UNIX\s+2 password file (usually
+found in the
+.I /etc/passwd
+file).
+The Merit \s-2AAA\s+2 server checks to see if the
+.I <realm/\s-2DNS\s+2/file>
+field contains the host identifier as returned by the
+.IR hostname (1)
+command or is blank, in either case the request is handled as a
+local \s-2UNIX\s+2 request.
+.LP
+The
+.B \s-2BSD-AUTH\s+2
+.I <type>
+refers to authentication using \s-2BSD\s+2 Authentication.
+The \s-2RADIUS\s+2 class entry in the
+.I /etc/login.conf
+file determines the available types of authentication which may be used.
+When \s-2BSD\s+2 Authentication is being used the authentication style
+may be supplied by appending it to the username with a colon
+.RB (' : ')
+character, for example:
+.IP
+.I user:style
+.LP
+The
+.B \s-2RADIUS\s+2
+.I <type>
+indicates the authentication is to be performed by
+a remote \s-2RADIUS\s+2 server.
+The authorization Attribute/Value Pairs returned by the remote \s-2RADIUS\s+2
+server are propagated back to the requesting \s-2RADIUS\s+2 system.
+See the
+.BR dictionary (5)
+man page.
+.LP
+For the remaining
+.IR <type> s,
+the entries in the
+.I <realm/\s-2DNS\s+2/file>
+field depend on how the Merit \s-2AAA\s+2 server was configured.
+For servers built to use the Kerberos model for authentication, these
+entries correspond to the Kerberos realm name which helps select which
+Kerberos server to contact for that realm.
+Note that the
+.I /etc/krb.conf
+file must have valid entries for the various supported Kerberos realms.
+For servers built to use the \s-2FILE\s+2 model, this field contains
+the "prefix" of a compound file name:
+.I prefix
+.I <period>
+.I users
+(for example,
+.IR flatland.users ).
+The \s-2FILE\s+2 type is only available with the Merit enhanced server license.
+.LP
+The optional
+.IR <filter-id> s
+are names of packet filters to be returned to the requesting \s-2RADIUS\s+2
+system.
+This filter name, if present, overrides any filter name a remote
+\s-2RADIUS\s+2 server may have set in its reply to this server.
+.LP
+The optional server strings, \s-2DEFAULT_RADIUS_SERVER\s+2 and
+\s-2DEFAULT_RADIUS_SERVER\s+2 specify default server names to use for
+Authentication-Type entries of type \s-2RADIUS\s+2 or \s-2TACACS\s+2
+and \s-2TACPLUS\s+2, respectively.
+Note that the second string serves to identify both \s-2TACACS\s+2 and
+\s-2TACACS+\s+2 servers.
+It is felt that it is unlikely to need both \s-2TACACS\s+2 client \s-2AATV\s+2s
+(both of which need to point to different \s-2TACACS\s+2 servers)
+operating in one Merit \s-2AAA\s+2 server simultaneously.
+These strings override the corresponding C pre-processor
+.I #define
+directives in the
+.I radius.h
+include file.
+Normally, these two lines may be left commented out.
+.LP
+The
+.I authfile
+file is read by
+.B radiusd
+at startup and whenever a \s-2HUP\s+2 signal is received by
+.BR radiusd .
+The Merit \s-2AAA\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+This file is maintained by the system administrator using a text editor.
+.SH FILES
+.PD 0
+.TP
+.I ../raddb/authfile
+.TP
+.I ../raddb/dictionary
+.TP
+.I ../raddb/users
+.TP
+.I /etc/krb.conf
+.TP
+.I /etc/minostab
+.PD
+.SH "SEE ALSO"
+.BR hostname (1),
+.BR signal (3),
+.BR dictionary (5),
+.BR users (5),
+.BR radiusd (8),
+.BR radcheck (8),
+.BR radpwtst (8)

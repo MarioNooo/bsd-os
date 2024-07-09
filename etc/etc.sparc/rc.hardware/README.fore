@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 1998 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README.fore,v 1.1 1998/12/02 21:59:07 jch Exp
+ */
+
+The Fore ATM adaptor prototype file is proto.fore.  As there are no
+known reasons to load the Fore ATM adaptor microcode early or late in
+the sequence of setting up hardware it is suggested that it be run in
+the middle.  Assigning the first digit as a "5" will accomplish this.
+
+To cause the microcode to be loaded into a Fore ATM adaptor copy the
+prototype file to a file with the named formed as follows:
+
+5.fore.0
+
+This causes Fore ATM adaptor unit 0 (hfa0) to be initialized. The
+following command sequence would accomplish this:
+
+	cd /etc/rc.hardware
+	cp proto.fore 5.fore.0
+
+Make sure that you have created the device entry for each Fore ATM
+adaptor you are using.  The following sequence of commands will
+accomplish this for unit 0 (hfa0):
+
+	cd /dev
+	./MAKEDEV hfa0

@@ -1,0 +1,40 @@
+Date: Thu, 2 Jan 1992 12:21:18 -0800 (PST)
+From: Laurence Lundblade <lgl@cac.washington.edu>
+Sender: Laurence Lundblade <lgl@cac.washington.edu>
+Reply-To: Laurence Lundblade <lgl@cac.washington.edu>
+Subject: Pine source distribution
+To: Bill Bathurst <bill@cpac.washington.edu>
+yyy: extra header
+xx: extra header
+MIME-Version: 1.0
+Content-type: text/html
+
+
+<HTML>
+<TITLE>
+sldkfj
+</TITLE>
+<BODY>
+This should be displayed...<p>
+
+<PRE>
+ t 
+  h
+   i
+    s
+</PRE>
+
+this
+is
+text
+<br>
+and so
+is 
+this
+&AMP
+&aacute
+&Ograve
+
+<P>
+</BODY>
+</HTML>

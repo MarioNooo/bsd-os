@@ -1,0 +1,8 @@
+#!/bin/sh -
+#
+#	BSDI daily.local,v 2.5 1997/01/14 19:49:53 bostic Exp
+#
+# daily.local
+#
+
+exit 0

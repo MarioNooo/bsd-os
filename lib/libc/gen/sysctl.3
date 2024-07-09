@@ -1,0 +1,1233 @@
+.\"	BSDI sysctl.3,v 2.29 2000/03/10 22:35:25 jch Exp
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
+.\"
+.Dd "November 29, 1997"
+.Dt SYSCTL 3
+.Os
+.Sh NAME
+.Nm sysctl
+.Nd get or set system information
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/sysctl.h>
+.Ft int
+.Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "const void *newp" "size_t newlen"
+.Sh DESCRIPTION
+The
+.Nm
+function retrieves system information and allows processes with
+appropriate privileges to set system information.
+The information available from
+.Nm
+consists of integers, strings, and tables.
+Information may be retrieved and set from the command interface
+using the 
+.Xr sysctl 8
+utility.
+.Pp
+Unless explicitly noted below,
+.Nm
+returns a consistent snapshot of the data requested.
+Consistency is obtained by locking the destination
+buffer into memory so that the data may be copied out without blocking.
+Calls to
+.Nm
+are serialized to avoid deadlock.
+.Pp
+The state is described using a ``Management Information Base'' (MIB)
+style name, listed in
+.Fa name ,
+which is a
+.Fa namelen
+length array of integers.
+.Pp
+The information is copied into the buffer specified by
+.Fa oldp .
+The size of the buffer is given by the location specified by
+.Fa oldlenp
+before the call,
+and that location gives the amount of data copied after a successful call.
+(The data copied for strings includes a trailing null byte.)
+If the amount of data available is greater
+than the size of the buffer supplied,
+the call supplies as much data as will fit in the buffer provided
+and returns with the error code 
+.Er ENOMEM .
+If the old value is not desired,
+.Fa oldp
+and
+.Fa oldlenp
+should be set to NULL.
+.Pp
+To determine the size of the available data, call
+.Nm
+with a NULL parameter for
+.Fa oldp .
+The size of the available data will then be returned in the location
+pointed to by
+.Fa oldlenp .
+For some operations, the amount of space may change from one call to the next.
+For these operations,
+the system attempts to round up so that the returned size is
+large enough for a subsequent call (where the data size may be larger).
+.Pp
+To set a new value,
+.Fa newp
+is set to point to a buffer of length
+.Fa newlen
+from which the requested value is to be taken.
+If a new value is not to be set,
+.Fa newp
+should be set to NULL and
+.Fa newlen
+set to 0.
+.Pp
+The top level names are defined with a CTL_ prefix in
+.Pa /usr/include/sys/sysctl.h ,
+and are found below.
+The next and subsequent levels down are found in the include files
+listed here, and described in separate sections as follows:
+.Pp
+.Bl -column CTLXMACHDEPXXX "Next level namesXXX"
+.It Sy Pa Name	Next level names	Description
+.It CTL\_DEBUG	sys/sysctl.h	Debugging
+.It CTL\_VFS	sys/mount.h	Filesystem
+.It CTL\_HW	sys/sysctl.h	Generic CPU, I/O
+.It CTL\_KERN	sys/sysctl.h	High kernel limits
+.It CTL\_MACHDEP	sys/sysctl.h	Machine dependent
+.It CTL\_NET	sys/socket.h	Networking
+.It CTL\_USER	sys/sysctl.h	User-level
+.It CTL\_VM	vm/vm_param.h	Virtual memory
+.El
+.Pp
+For example, the following retrieves the maximum number of processes allowed
+in the system:
+.Bd -literal -offset indent -compact
+int mib[2], maxproc;
+size_t len;
+.sp
+mib[0] = CTL_KERN;
+mib[1] = KERN_MAXPROC;
+len = sizeof(maxproc);
+sysctl(mib, 2, &maxproc, &len, NULL, 0);
+.Ed
+.sp
+To retrieve the standard search path for the system utilities:
+.Bd -literal -offset indent -compact
+int mib[2];
+size_t len;
+char *p;
+.sp
+mib[0] = CTL_USER;
+mib[1] = USER_CS_PATH;
+sysctl(mib, 2, NULL, &len, NULL, 0);
+p = malloc(len);
+sysctl(mib, 2, p, &len, NULL, 0);
+.Ed
+.Sh CTL_DEBUG
+The debugging variables vary from system to system.  A debugging
+variable may be added or deleted without need to recompile
+.Nm
+to know about it.
+Each time it runs,
+.Nm
+gets the list of debugging variables and their names from the kernel
+and displays their current values.
+.Pp
+In the kernel programming environment twenty 
+.Ns Pq Va struct ctldebug
+variables named 
+.Va debug0
+through
+.Va debug19
+are defined.
+They are declared as separate variables so that they can be
+individually initialized at the location of their associated variable.
+The loader prevents multiple use of the same variable by issuing errors
+if a variable is initialized in more than one place.
+For example, to export the variable
+.Va dospecialcheck
+as a debugging variable, the following declaration would be used:
+.Bd -literal -offset indent
+int dospecialcheck = 1;
+struct ctldebug debug5 = { "dospecialcheck", &dospecialcheck };
+.Ed
+.Sh CTL_VFS
+The second level name is either the distinguished value VFS_GENERIC for
+generic information about filesystem types, or a valid filesystem
+type identifier as returned by
+.Xr getvfsbyname 3
+or
+.Xr statfs 2 .
+Third level names for specific valid filesystem types
+.Pq if any
+are described in filesystem-type-specific documentation.
+.Pp
+The remaining third level identifiers for 
+.Li VFS_GENERIC
+are detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "Third level nameXXX" "struct ttydevice_tmpXXX"
+.It Sy Pa Third level name	Type	Changeable
+.It VFS\_MAXTYPENUM	integer	no
+.It VFS\_CONF	node	not applicable
+.It VFS\_SYNCDELAY	integer	yes
+.It VFS\_MAXSYNCDELAY	integer	no
+.El
+.Bl -tag -width "123456"
+.It Li VFS\_MAXTYPENUM
+Returns the maximum valid filesystem type number as an integer.
+.It Li VFS\_CONF
+Returns the configuration information
+.Po
+.Va struct vfsconf
+as described in
+.Xr getvfsbyname 3
+.Pc
+for the filesystem type number provided as the fourth level name.
+.It Li VFS\_SYNCDELAY
+Specifies the maximum interval at which volatile cached filesystem
+data is written to disk
+.Po
+see
+.Xr update 4
+for more info
+.Ns Pc .
+.It Li VFS\_MAXSYNCDELAY
+Specifies the maximum value to which
+.Li VFS\_MAXSYNCDELAY
+may be set.
+.El
+.Pp
+To learn all of the valid filesystem type numbers, issue a
+.Li VFS_CONF
+.Xr sysctl 3
+for all type numbers from one to
+the maximum type number returned by
+.Li VFS_MAXTYPENUM ,
+ignoring type numbers for which
+.Xr sysctl 3
+returns
+.Er EOPNOTSUPP .
+.Sh CTL_HW
+The string and integer information available for the CTL_HW level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "Second level nameXXXXX" "struct ttydevice_tmpXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It HW\_BYTEORDER	integer	no
+.It HW\_DISKNAMES	strings	no
+.It HW\_DISKSTATS	struct diskstats	no
+.It HW\_MACHINE	string	no
+.It HW\_MODEL	string	no
+.It HW\_NCPU	integer	no
+.It HW\_PAGESIZE	integer	no
+.It HW\_PHYSMEM	integer	no
+.It HW\_USERMEM	integer	no
+.It HW\_TTYNAMES_TMP	struct ttydevice_tmp	no
+.It HW\_TTYSTATS_TMP	struct tty	no
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li HW_BYTEORDER
+The byte order (4321 or 1234).
+.It Li HW_DISKNAMES
+Returns a concatenated set of null-terminated strings consisting of the
+name and unit numbers of all disk devices recognized by the kernel.
+.It Li HW_DISKSTATS
+Returns statistics on all the disk devices recognized by the system.
+An array of
+.Va struct diskstats
+structures is returned.  There is a one-to-one correspondence with the strings
+returned by
+.Li HW_DISKNAMES .
+The
+.Va struct diskstats
+structure is defined in
+.Pa /usr/include/sys/diskstats.h .
+.It Li HW_MACHINE
+The machine class.
+.It Li HW_MODEL
+The machine model.
+.It Li HW_NCPU
+The number of CPUs.
+.It Li HW_PAGESIZE
+The software page size.
+.It Li HW_PHYSMEM
+The bytes of physical memory.
+.It Li HW_TTYNAMES_TMP
+Returns a table of all tty devices or multiplexors recognized by the
+system, including pseudo-devices such as those described in
+.Xr pty 4 .
+An array of
+.Va struct ttydevice_tmp
+structures is returned.
+The
+.Va struct ttydevice_tmp
+is defined in
+.Pa /usr/include/sys/ttystats.h .
+.It Li HW_TTYSTATS_TMP
+Returns a table of state and statistics for all tty devices in the
+system.  
+An array of
+.Va struct tty
+structures is returned.
+There is a correspondence between the structures returned by
+.Li HW_TTYSTATS_TMP
+and the structures returned by
+.Li HW_TTYNAMES_TMP ,
+but note that a multiplexor entry listed in the array returned by
+.Li HW_TTYNAMES_TMP
+may define more than one
+.Va struct tty
+structure.
+The
+.Va struct tty
+structure is defined in
+.Pa /usr/include/sys/tty.h .
+.It Li HW_USERMEM
+The bytes of non-kernel memory.
+.El
+.Sh CTL_KERN
+The string and integer information available for the CTL_KERN level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+The types of data currently available are process information,
+system vnodes, the open file entries
+virtual memory statistics, load average history, and clock rate
+information.
+.Bl -column "KERNXCHOWNXRESTRICTEDXXX" "struct clockrateXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It KERN\_ARGMAX	integer	no
+.It KERN\_BOOTTIME	struct timeval	no
+.It KERN\_CLOCKRATE	struct clockinfo	no
+.It KERN\_CORESFOLLOWLINKS	integer	yes
+.It KERN\_CPUSTATS	struct cpustats	no
+.It KERN\_MP_CPUSTATS	struct cpustats *	no
+.It KERN\_MPCPUSTATS	struct mpcpustats *	no
+.It KERN\_DEADMANTIMER	integer	yes
+.It KERN\_FILES	struct file	no
+.It KERN\_HOSTID	integer	yes
+.It KERN\_HOSTNAME	string	yes
+.It KERN\_JOB\_CONTROL	integer	no
+.It KERN\_KMEMBUCKETS	struct kmembuckets	no
+.It KERN\_KMEMSTATS	struct kmemstats	no
+.It KERN\_LICENSE	string	yes
+.It KERN\_LICENSE\_FLAGS	integer	no
+.It KERN\_LICENSE\_USERS	integer	no
+.It KERN\_MAXFILES	integer	yes
+.It KERN\_MAXPROC	integer	yes
+.It KERN\_MAXSYMLINKS	integer	yes
+.It KERN\_MAXVNODES	integer	yes
+.It KERN\_NCHSTATS	struct nchstats	no
+.It KERN\_NGROUPS	integer	no
+.It KERN\_NISDOMAINNAME	string	yes
+.It KERN\_OSRELEASE	string	no
+.It KERN\_OSREV	integer	no
+.It KERN\_OSTYPE	string	no
+.It KERN\_POSIX1	integer	no
+.It KERN\_PROC	struct proc	no
+.It KERN\_PROF	node	not applicable
+.It KERN\_SAVED\_IDS	integer	no
+.It KERN\_SECURELVL	integer	raise only
+.It KERN\_SYSVIPC	node	not applicable 
+.It KERN\_TTYTOTALS	struct ttytotals	no
+.It KERN\_VERSION	string	no
+.It KERN\_VNODE	struct vnode	no
+.It KERN\_AUTONICETIME	integer	yes
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li KERN_ARGMAX
+The maximum bytes of argument to
+.Xr exec 2 .
+.It Li KERN_BOOTTIME
+A
+.Va struct timeval
+structure is returned.  This structure contains the time that the
+system was booted and is defined in
+.Pa /usr/include/sys/time.h .
+.It Li KERN_CLOCKRATE
+A
+.Va struct clockinfo
+structure is returned.
+This structure contains the clock, statistics clock and profiling clock
+frequencies, and the number of micro-seconds per Hz tick.
+The
+.Va struct clockinfo
+structure is defined in
+.Pa /usr/include/sys/time.h .
+.It Li KERN_CORESFOLLOWLINKS
+For security reasons setuid or setgid programs will not generate a
+memory image if the last element of the path name is a symbolic link unless
+this integer is non-zero.
+.It Li KERN_CPUSTATS
+A
+.Va struct cpustats
+structure is returned.  This structure contains statistics on how much
+time (in clock ticks) that the processor spends in various
+states.
+The
+.Va struct cpustats
+structure is defined in
+.Pa /usr/include/sys/cpustats.h .
+On multiprocessor systems running in SMP mode,
+KERN_CPUSTATS returns a summation of the statistics across all
+active processors.
+.It Li KERN_MP_CPUSTATS
+This interface is deprecated, use
+.Ns Li KERN_MPCPUSTATS .
+.It Li KERN_MPCPUSTATS
+A linked list of a
+.Va struct mpcpustats
+structures is returned.  
+Each structure within the array contains per-processor
+statistics on how much time (in clock ticks) that the processor spends in
+various stats.
+The
+.Va struct mpcpustats
+structure is defined in
+.Pa /usr/include/sys/cpustats.h .
+.It Li KERN_DEADMANTIMER
+Return the value of the kernel deadman timer.  When the timer is
+active the value returned will be the number of system clock ticks
+remaining before the system panics and reboots.  This variable is
+normally used by periodically resetting it to a large value; if the
+system hangs it will automatically reboot.  Setting this value to zero
+will disable the deadman timer.
+.B "Warning:"
+.Em "Setting this value to a nonzero value will cause a system panic"
+unless arrangements are made to cancel the timer or to increase its value
+before it expires.
+.It Li KERN_FILES
+Return the entire file table.
+The returned data consists of an array of
+.Va struct file
+structures representing each open file in the system,
+with each structure's
+.Va f_filef
+field replaced with its own address rather than that of the next file.
+The
+.Va struct file
+structure is defined in
+.Pa /usr/include/sys/file.h .
+.It Li KERN_HOSTID
+Get or set the host id.
+.It Li KERN_HOSTNAME
+Get or set the host name.
+.It Li KERN_JOB_CONTROL
+Return 1 if job control is available on this system, otherwise 0.
+.It Li KERN_KMEMBUCKETS
+An array of
+.Va struct kmembuckets
+structures is returned providing statistics on the usage of the
+various sizes of kernel memory.
+The
+.Va struct kmembuckets
+structure is defined in
+.Pa /usr/include/sys/malloc.h .
+.It Li KERN_KMEMSTATS
+An array of
+.Va struct kmemstats
+structures is returned providing statistics on the usage of kernel
+memory by various kernel subsystems.
+The
+.Va struct kmemstats
+structure is defined in
+.Pa /usr/include/sys/malloc.h .
+.It Li KERN_LICENSE
+An array of 9
+.Va u_chars
+which represent the encoded value of the license.
+A license contains the host id (viewable through
+.Li KERN_HOSTID ) ,
+the maximum number of users (viewable and settable through
+.Li KERN_LICENSE_USERS ) ,
+and the license flags (viewable through
+.Li KERN_LICENSE_FLAGS ).
+.It Li KERN_LICENSE_FLAGS
+A set of flags describing this license, as defined in
+.Pa /usr/include/sys/license.h .
+.It Li KERN_LICENSE_USERS
+The maximum number of licensed users for this machine.
+A value of 0 implies this machine has an unlimited user license.
+.It Li KERN_MAXFILES
+The maximum number of files that may be open in the system.
+.It Li KERN_MAXPROC
+The maximum number of simultaneous processes the system will allow.
+.It Li KERN_MAXSYMLINKS
+The maximum number of symbolic links that will be followed before
+an error is generated.
+.It Li KERN_MAXVNODES
+The maximum number of vnodes available on the system.
+.It Li KERN_NCHSTATS
+A
+.Va struct nchstats
+structure is returned containing statistics on the
+system pathname to inode translation cache.
+The
+.Va struct nchstats
+structure is defined in
+.Pa /usr/include/sys/namei.h .
+.It Li KERN_NGROUPS
+The maximum number of supplemental groups.
+.It Li KERN_NISDOMAINNAME
+Get or set the NIS domain name.
+.It Li KERN_OSRELEASE
+The system release string.
+.It Li KERN_OSREV
+The system revision string.
+.It Li KERN_OSTYPE
+The system type string.
+.It Li KERN_POSIX1
+The version of IEEE Std1003.1 (``POSIX'') with which the system attempts
+to comply.
+.It Li KERN_PROC
+Return the entire process table, or a subset of it.
+An array of
+.Va struct kinfo_proc
+structures is returned,
+whose size depends on the current number of such objects in the system.
+The third and fourth level names are as follows:
+.Bl -column "Third level name:XXXX" "Fourth level is:XXX"
+.It Pa Third level name:	Fourth level is:
+.It KERN\_PROC\_ALL	None
+.It KERN\_PROC\_PID	A process ID
+.It KERN\_PROC\_PGRP	A process group
+.It KERN\_PROC\_TTY	A tty device
+.It KERN\_PROC\_UID	A user ID
+.It KERN\_PROC\_RUID	A real user ID
+.El
+.It Li KERN_PROF
+Return profiling information about the kernel.
+If the kernel is not compiled for profiling,
+attempts to retrieve any of the KERN_PROF values will
+fail with 
+.Er EOPNOTSUPP .
+The third level names for the string and integer profiling information 
+is detailed below.
+The changeable column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX"
+.It Sy Pa Third level name	Type	Changeable
+.It GPROF\_COUNT	u_short[\|]	yes
+.It GPROF\_FROMS	u_short[\|]	yes
+.It GPROF\_GMONPARAM	struct gmonparam	no
+.It GPROF\_STATE	integer	yes
+.It GPROF\_TOS	struct tostruct	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li GPROF_COUNT
+Array of statistical program counter counts.
+.It Li GPROF_FROMS
+Array indexed by program counter of call-from points.
+.It Li GPROF_GMONPARAM
+Structure giving the sizes of the above arrays.
+.It Li GPROF_STATE
+Returns GMON_PROF_ON or GMON_PROF_OFF to show that profiling
+is running or stopped.
+.It Li GPROF_TOS
+Array of
+.Va struct tostruct
+structures describing destination of calls and their counts.
+.El
+.Pp
+The
+.Va struct gmonparam
+and
+.Va struct tostruct
+structures are defined in
+.Pa /usr/include/sys/gmon.h .
+.It Li KERN_SAVED_IDS
+Returns 1 if saved set-group and saved set-user ID is available.
+.It Li KERN_SECURELVL
+The system security level.
+This level may be raised by processes with appropriate privileges.
+It may only be lowered by process 1.
+.It Li KERN_SYSVIPC
+Return information about the SYSV IPC compatibility
+shared memory, message queue and semaphore subsystems in the kernel.
+The preferred method for retrieving this information is by using
+.Xr ipcs 1 .
+The third level names for the data structures returned 
+are detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "SYSVIPCXMSGXXXX" "struct msginfoXX"
+.It Sy Pa Third level name	Type	Changeable
+.It SYSVIPC\_MSGINFO	struct msginfo	no
+.It SYSVIPC\_MSQIDS	struct msqids[\|]	no
+.It SYSVIPC\_SEMINFO	struct seminfo	no
+.It SYSVIPC\_SEMIDS	struct sema[\|]	no
+.It SYSVIPC\_SHMINFO	struct shminfo	no
+.It SYSVIPC\_SHMSEGS	struct shmsegs[\|]	no
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li SYSVIPC\_MSGINFO
+Structure defining the limits and sizes with which the SYSV message queue
+subsystem has been configured.  This structure is defined in 
+.Pa /usr/include/sys/msg.h .
+.It Li SYSVIPC\_MSQIDS
+An array of 
+.Va struct msqids
+describing the current state of the message queue identifiers configured
+into the system.  This structure is defined in 
+.Pa /usr/include/sys/msg.h .
+.It Li SYSVIPC\_SEMINFO
+Structure defining the limits and sizes with which the SYSV semaphore 
+subsystem has been configured.  This structure is defined in 
+.Pa /usr/include/sys/sem.h .
+.It Li SYSVIPC\_SEMIDS
+An array of 
+.Va struct sema
+describing the current state of the semaphores configured
+into the system.  This structure is defined in 
+.Pa /usr/include/sys/sem.h .
+.It Li SYSVIPC\_SHMINFO
+Structure defining the limits and sizes with which the SYSV shared memory
+subsystem has been configured.  This structure is defined in 
+.Pa /usr/include/sys/shm.h .
+.It Li SYSVIPC\_SHMSEGS
+An array of 
+.Va struct shmsegs
+describing the current state of the shared memory segments configured
+into the system.  This structure is defined in 
+.Pa /usr/include/sys/shm.h .
+.El
+.It Li KERN_TTYTOTALS
+A
+.Va struct ttytotals
+structure is returned.
+This structure contains global statistics on characters sent and
+received on tty devices.
+The
+.Va struct ttytotals
+structure is defined in
+.Pa /usr/include/sys/ttystats.h .
+.It Li KERN_VERSION
+The system version string.
+.It Li KERN_VNODE
+Returns the entire vnode table.
+Note, the vnode table is not necessarily a consistent snapshot of
+the system.
+The returned data consists of an array whose size depends on the
+current number of such objects in the system.
+Each element of the array contains the kernel address of a vnode
+.Va struct vnode *
+followed by the vnode itself
+.Va struct vnode .
+The
+.Va struct vnode
+structure is defined in
+.Pa /usr/include/sys/vnode.h .
+.It Li KERN_AUTONICETIME
+The number of seconds after which a process which is still running will
+begin to have its 
+.Em "nice"
+value automatically adjusted upward resulting in a decrease in priority with
+respect to other processes. A value of zero disables this feature.
+See also
+.Xr setpriority 2 .
+.El
+.Sh CTL_MACHDEP
+The set of variables defined is architecture dependent.
+Most architectures define at least the following variables.
+.Bl -column "CPU_PARITYERRORPANICXXX" "integerXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It CPU\_CONSDEV	dev\_t	no
+.El
+.Pp
+The following variables are available on one or more architectures.
+.Bl -column "CPU_PARITYERRORPANICXXX" "integerXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It CPU\_BIOS	node	no
+.It CPU\_CNTLALTDEL	integer	yes
+.It CPU\_CNTLALTDELCORE	integer	yes
+.It CPU\_PARITYERRORPANIC	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li CPU_BIOS
+A set of variables specific to the system
+.Tn BIOS .
+The following third-level variables are currently defined.
+.Bl -column "BIOS_DISKGEOMXXX"	"integerXXX"
+.It Sy Pa Third level name	Type	Changeable
+.It BIOS\_DISKGEOM	struct biosgeom	no
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li BIOS_DISKGEOM
+Returns 
+.Tn BIOS
+disk geometry information as an array of
+.Va struct biosgeom
+structures as defined in
+.Pa /usr/include/machine/cpu.h .
+.El
+.It Li CPU_CNTLALTDEL
+If non-zero, it enables the CNTL-ALT-DEL keyboard sequence to cause a
+system reboot after requesting confirmation.  If zero, the CNTL-ALT-DEL
+sequence will be treated as normal input.
+.It Li CPU_CNTLALTDELCORE
+If non-zero, it causes the system to prompt on the console about
+generating a core dump when being rebooted by the CNTL-ALT-DEL
+sequence.  If zero, no core dump will be taken.
+.It Li CPU_CONSDEV
+The returned data consists of a
+.Va dev_t
+identifying the device being used as the system console.
+.It Li CPU_PARITYERRORPANIC
+When non-zero, a hardware parity error or I/O channel error interrupt
+will cause the system to panic and reboot after logging a descriptive
+message.  When zero, a message will be logged, but the system will
+not panic.
+This value should be set to a non-zero value on systems with parity
+memory unless spurious errors cause crashes.
+If the value is zero, memory errors are logged, but can cause
+unpredictable behavior by the system and user programs.
+.El
+.Sh CTL_NET
+The string and integer information available for the CTL_NET level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "Second level nameXXX" "link layer interfacesXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It PF\_INET	internet values	yes
+.It PF\_ROUTE	packet forwarding	yes
+.It PF\_LINK	link layer interfaces	yes
+.It PF\_UNSPEC	socket layer values	yes
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li PF_ROUTE
+Get or set information about the packet forwarding layer.  
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "NET_ROUTE_NETCLONEXX" "TypeXXXX" "Changeable"
+.It Sy Pa Third level name	Type	Changeable
+.It NET\_ROUTE\_ARP	node	no
+.It NET\_ROUTE\_IDLE	integer	yes
+.It NET\_ROUTE\_NETCLONE	integer	yes
+.It NET\_ROUTE\_STATS	struct	not
+.It NET\_ROUTE\_TABLE	node	no
+.El
+.Bl -tag -width "123456"
+.It Li NET_ROUTE_ARP
+The variables supporting the
+.Tn ARP
+protocol are documented in
+.Ns Xr arp 4 .
+.It Li NET_ROUTE_IDLE
+Returns the number of seconds before an
+.Dq idle
+cloned route is deleted.
+.It Li NET_ROUTE_NETCLONE
+Returns one if networks are cloned to host routes when
+referenced locally.
+.It Li NET_ROUTE_STATS
+Returns the
+.Va struct rtstat
+which contains statistics relating to the forwarding table.
+.It Li NET_ROUTE_TABLE
+Return the entire routing table or a subset of it.
+The data is returned as a sequence of routing messages (see
+.Xr route 4
+for the header file, format and meaning).
+The length of each message is contained in the message header.
+.Pp
+The fourth-level name is an address family, which may be set to 0 to
+select all address families.
+The fifth- and sixth-level names are as follows:
+.Bl -column "Fifth levelXXXX" "Sixth levelXXX" "TableXXX"
+.It Pa Fifth level	Sixth level	Table
+.It NET\_RT\_DUMP	None	Routing
+.It NET\_RT\_FLAGS	rtflags	Routing (by flags)
+.It NET\_RT\_IFLIST	None	Interface list
+.El
+.El
+.It Li PF_LINK
+Get or set information about the link-layer interfaces.
+.cm
+If the second-level parameter is 0, the information described is
+global to a specific type of interface, according to the type
+named in the third-level parameter.
+Interface types are defined in the header file
+.Pa /usr/include/net/if_types.h .
+Currently, the interface types IFT_PPP (\c
+.Xr ppp 4 )
+and IFT_PROPMUX (\c
+.Xr pif 4 )
+each support a single option to set the number of interfaces
+for that type.
+The fourth parameter is zero, and the value is an integer.
+The value may be increased, but cannot be decreased.
+.Pp
+If the second-level parameter is non-zero, it is an interface index
+number as used in a
+.Li sockaddr_dl
+structure.
+The third-level parameter specifies one of the following:
+.Bl -column "CTL_LINK_GENERICXX" "Type"
+.It Sy Pa Third level name	Type
+.It CTL\_LINK\_GENERIC	Generic link operations
+.It CTL\_LINK\_LINKTYPE	Link-type specific operations
+.It CTL\_LINK\_HWTYPE	Hardware specific operations
+.It CTL\_LINK\_PROTOTYPE	Protocol specific operations
+.El
+.Bl -tag -width "123456"
+.It Li CTL_LINK_GENERIC
+Specifies generic link operations.  Fourth-level
+names available are as follows:
+.Bl -column "LINK_GENERIC_DATAXX" "TypeXXX" "Changeable"
+.It Sy Pa Fourth level name	Type	Changeable
+.It LINK\_GENERIC\_DATA	struct if\_data	no
+.El
+.Bl -tag -width "123456"
+.It Li LINK_GENERIC_DATA
+Returns the 
+.Li if_data
+structure which contains statistics and generic configuration
+information about the specified interface.
+.El
+.It Li CTL_LINK_LINKTYPE
+Specifies operations dependent on the interface type, as enumerated in
+.Pa /usr/include/net/if_types.h .
+The fourth-level name is the defined value of the interface type
+.Pq i.e. IFT_ETHER
+although an interface type of 0
+.Pq zero
+may be used to specify the current type of the specified interface.
+Operations specific to an interface type 
+.Pq if any
+are documented in the man page
+describing the specific interface.  For example, 
+.Xr ether 4 ,
+.Xr fddi 4
+and
+.Xr tokenring 4 .
+.It Li CTL_LINK_HWTYPE
+Specifies operations dependent on the hardware type
+.Pq i.e. device driver .
+Operations specific to a device driver are documented in the man page
+for that device driver
+.Pq i.e. Xr cisco_hdlc 4 .
+.It Li CTL_LINK_PROTOTYPE
+Specifies operations specific to a protocol family running on the specified
+interface.  The protocol family is specified as the fourth-level name.
+.Bl -tag -width "123456"
+.It Li PF_INET
+Get or set various Internet specific interface parameters.  These
+variables are described in
+.Xr ip 4 .
+.El
+.El
+.It Li PF_UNSPEC
+Get or set various bits of global information about the socket layer.
+The string and integer information available for the PF_UNSPEC level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "SOCTL_NMBCLUSTERSXXX" "integerXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It SOCTL\_MAXCONN	integer	yes
+.It SOCTL\_NMBCLUSTERS	integer	yes
+.It SOCTL\_SBMAX	integer	yes
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li SOCTL_MAXCONN
+Specifies the maximum allowable backlog of pending
+connections on a socket that is accepting connections via
+.Xr listen 2 .
+.It Li SOCTL_NMBCLUSTERS
+Specifies the maximum number of mbuf clusters (the larger of two
+types of network buffers) that can be created
+by the network subsystem.
+This value can be increased to a value not larger than an internal system limit
+(either pre-configured for the kernel, or
+a default value depending on memory size).
+See the
+.Fl m
+option to
+.Xr netstat 8
+for information about printing the current usage and limit.
+The default size of mbuf clusters is given by the macro
+.Dv MCLBYTES
+in the header file
+.Pa /usr/include/machine/param.h .
+.It Li SOCTL_SBMAX
+Specifies the maximum queue limit that may be requested for any socket
+send or receive buffer.  See the
+.Dv SO_SNDBUF
+and
+.Dv SO_RCVBUF
+parameters to
+.Xr setsockopt 2
+for more information.
+.El
+.It Li PF_INET
+Get or set various bits of global information about the internet protocols.
+The
+third-level name is the protocol:
+.Bl -tag -width "123456"
+.It Li IPPROTO_IP
+The variables at the
+.Tn IP
+layer are described in
+.Ns Xr ip 4 .
+.It Li IPPROTO_ICMP
+The variables at the
+.Tn ICMP
+layer are described in
+.Ns Xr icmp 4 .
+.It Li IPPROTO_IGMP
+The variables at the
+.Tn IGMP
+layer are described in
+.Ns Xr igmp 4 .
+.It Li IPPROTO_TCP
+The variables at the
+.Tn TCMP
+layer are described in
+.Ns Xr tcp 4 .
+.It Li IPPROTO_UDP
+The variables at the
+.Tn UDP
+layer are described in
+.Ns Xr udp 4 .
+.El
+.El
+.Sh CTL_USER
+The string and integer information available for the CTL_USER level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "USER_COLL_WEIGHTS_MAXXXX" "integerXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It USER\_BC\_BASE\_MAX	integer	no
+.It USER\_BC\_DIM\_MAX	integer	no
+.It USER\_BC\_SCALE\_MAX	integer	no
+.It USER\_BC\_STRING\_MAX	integer	no
+.It USER\_COLL\_WEIGHTS\_MAX	integer	no
+.It USER\_CS\_PATH	string	no
+.It USER\_EXPR\_NEST\_MAX	integer	no
+.It USER\_LINE\_MAX	integer	no
+.It USER\_POSIX2\_CHAR\_TERM	integer	no
+.It USER\_POSIX2\_C\_BIND	integer	no
+.It USER\_POSIX2\_C\_DEV	integer	no
+.It USER\_POSIX2\_FORT\_DEV	integer	no
+.It USER\_POSIX2\_FORT\_RUN	integer	no
+.It USER\_POSIX2\_LOCALEDEF	integer	no
+.It USER\_POSIX2\_SW\_DEV	integer	no
+.It USER\_POSIX2\_UPE	integer	no
+.It USER\_POSIX2\_VERSION	integer	no
+.It USER\_RE\_DUP\_MAX	integer	no
+.It USER\_STREAM\_MAX	integer	no
+.It USER\_TZNAME\_MAX	integer	no
+.El
+.Bl -tag -width "123456"
+.Pp
+.It Li USER_BC_BASE_MAX
+The maximum ibase/obase values in the
+.Xr bc 1
+utility.
+.It Li USER_BC_DIM_MAX
+The maximum array size in the
+.Xr bc 1
+utility.
+.It Li USER_BC_SCALE_MAX
+The maximum scale value in the
+.Xr bc 1
+utility.
+.It Li USER_BC_STRING_MAX
+The maximum string length in the
+.Xr bc 1
+utility.
+.It Li USER_COLL_WEIGHTS_MAX
+The maximum number of weights that can be assigned to any entry of
+the LC_COLLATE order keyword in the locale definition file.
+.It Li USER_CS_PATH
+Return a value for the
+.Ev PATH
+environment variable that finds all the standard utilities.
+.It Li USER_EXPR_NEST_MAX
+The maximum number of expressions that can be nested within
+parenthesis by the
+.Xr expr 1
+utility.
+.It Li USER_LINE_MAX
+The maximum length in bytes of a text-processing utility's input
+line.
+.It Li USER_POSIX2_CHAR_TERM
+Return 1 if the system supports at least one terminal type capable of
+all operations described in IEEE Std1003.2 (``POSIX''), otherwise 0.
+.It Li USER_POSIX2_C_BIND
+Return 1 if the system's C-language development facilities support the
+C-Language Bindings Option, otherwise 0.
+.It Li USER_POSIX2_C_DEV
+Return 1 if the system supports the C-Language Development Utilities Option,
+otherwise 0.
+.It Li USER_POSIX2_FORT_DEV
+Return 1 if the system supports the FORTRAN Development Utilities Option,
+otherwise 0.
+.It Li USER_POSIX2_FORT_RUN
+Return 1 if the system supports the FORTRAN Runtime Utilities Option,
+otherwise 0.
+.It Li USER_POSIX2_LOCALEDEF
+Return 1 if the system supports the creation of locales, otherwise 0.
+.It Li USER_POSIX2_SW_DEV
+Return 1 if the system supports the Software Development Utilities Option,
+otherwise 0.
+.It Li USER_POSIX2_UPE
+Return 1 if the system supports the User Portability Utilities Option,
+otherwise 0.
+.It Li USER_POSIX2_VERSION
+The version of IEEE Std1003.2 (``POSIX'') with which the system attempts
+to comply.
+.It Li USER_RE_DUP_MAX
+The maximum number of repeated occurrences of a regular expression
+permitted when using interval notation.
+.It Li USER_STREAM_MAX
+The maximum number of streams that a process may have open
+at any one time.
+.It Li USER_TZNAME_MAX
+The maximum length (in characters) supported for the name of a time
+zone.
+.El
+.Sh CTL_VM
+The string and integer information available for the CTL_VM level
+is detailed below.
+The 
+.Sy Pa changeable
+column shows whether a process with appropriate
+privilege may change the value.
+.Bl -column "VM_MAXMAPENTRIESXXX" "struct loadavgXXX"
+.It Sy Pa Second level name	Type	Changeable
+.It VM\_CNT	struct vmmeter	no
+.It VM\_LOADAVG	struct loadavg	no
+.It VM\_MAXDSIZE	integer	yes
+.It VM\_MAXMAPENTRIES	integer	yes
+.It VM\_MAXSSIZE	integer	yes
+.It VM\_TOTAL	struct vmtotal	no
+.It VM\_SWAPRESERVE	integer	yes
+.It VM\_SWAPSTATS	struct swapstats	no
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li VM_CNT
+Return various event counters and pages in various states.  
+The
+returned data consists of a
+.Va struct vmmeter
+structure as defined in
+.Pa /usr/include/sys/vmmeter.h .
+.It Li VM_LOADAVG
+Return the load average history.
+The returned data consists of a
+.Va struct loadavg 
+structure as defined in
+.Pa /usr/include/sys/resource.h .
+.It Li VM_MAXDSIZE
+Returns the hard limit for the maximum size (in bytes) of the data
+segment for a process.  See
+the
+.Dv RLIMIT_DATA
+resource parameter to
+.Xr getrlimit 2 .
+.It Li VM_MAXMAPENTRIES
+Returns the map entry threshold.
+The segments of the address space of a process are
+described by map entry structures,
+which the kernel allocates from a common pool.
+If a non-root process requires so many map entries that
+it reaches the map entry threshold,
+the system prevents the process from using
+.Xr mmap 2 ,
+.Xr mprotect 2
+or
+.Xr munmap 2
+in ways that would cause it to allocate more map entries to the process,
+until the process falls below the threshold again.
+The system calls fail with
+.Va errno
+set to
+.Dv ENOMEM
+in this situation.
+This limit is designed to prevent processes from
+acquiring all of a common resource and starving other processes.
+.It Li VM_MAXSSIZE
+Returns the hard limit for the maximum size (in bytes) of the stack
+segment for a process.  See
+the
+.Dv RLIMIT_STACK
+resource parameter to
+.Xr getrlimit 2 .
+.It Li VM_TOTAL
+Return system statistics of processes in various states, and physical
+and virtual memory usage in pages.
+The returned data consists of a
+.Va struct vmtotal
+structure as defined in
+.Pa /usr/include/sys/vmmeter.h .
+.It Li VM_SWAPRESERVE
+Indicates the amount of swap space (in units of 512-byte blocks) to be
+reserved for programs that are already running.  When less than this
+amount of swap space remains, the system will not promise additional
+virtual memory by allowing programs to fork or to allocate additional
+memory.
+.It Li VM_SWAPSTATS
+Return the system wide statistics on swap usage.
+The returned data consists of a
+.Va struct swapstats
+structure as defined in
+.Pa /usr/include/vm/swap_pager.h .
+.El
+.Sh RETURN VALUES
+If the call to
+.Nm
+is successful,
+.Nm
+returns 0;
+otherwise it returns \-1 and sets
+.Va errno
+appropriately.
+.Sh ERRORS
+The following errors may be reported:
+.Bl -tag -width EOPNOTSUPPXX
+.It Bq Er EFAULT
+The buffer
+.Fa name ,
+.Fa oldp ,
+.Fa newp ,
+or length pointer
+.Fa oldlenp
+contains an invalid address.
+.It Bq Er EINVAL
+The
+.Fa name
+array is less than two or greater than CTL_MAXNAME.
+.It Bq Er EINVAL
+A non-null
+.Fa newp
+is given and its specified length in
+.Fa newlen
+is too large or too small.
+.It Bq Er ENOMEM
+The length pointed to by
+.Fa oldlenp
+is too short to hold the requested value.
+.It Bq Er ENOTDIR
+The
+.Fa name
+array specifies an intermediate rather than terminal name.
+.It Bq Er EOPNOTSUPP
+The
+.Fa name
+array specifies a value that is unknown.
+.It Bq Er EPERM
+An attempt is made to set a read-only value.
+.It Bq Er EPERM
+A process without appropriate privilege attempts to set a value.
+.El
+.Sh FILES
+.Bl -tag -width <netinet/icmpXvar.h> -compact
+.It Pa <sys/sysctl.h>
+definitions for top level identifiers, second level kernel and hardware
+identifiers, and user level identifiers
+.It Pa <sys/socket.h>
+definitions for second level network identifiers
+.It Pa <sys/gmon.h>
+definitions for third level profiling identifiers
+.It Pa <vm/vm_param.h>
+definitions for second level virtual memory identifiers
+.It Pa <netinet/in.h>
+definitions for third level Internet identifiers and
+fourth level IP identifiers
+.It Pa <netinet/icmp_var.h>
+definitions for fourth level ICMP identifiers
+.It Pa <netinet/igmp_var.h>
+definitions for forth level IGMP identifiers
+.It Pa <netinet/tcp.h>
+definitions for fourth level TCP identifiers
+.It Pa <netinet/udp_var.h>
+definitions for fourth level UDP identifiers
+.It Pa <netinet/tcp.h>
+definitions for fourth level TCP identifiers
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ether 4 ,
+.Xr fddi 4 ,
+.Xr icmp 4 ,
+.Xr igmp 4 ,
+.Xr ip 4 ,
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr token 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+function first appeared in 4.4BSD.
+.Pp
+KERN_MP_CPUSTATS was a hack added by Jeff Kellem <composer@Beyond.Dreams.ORG>
+to obtain per-processor statistics.

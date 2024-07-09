@@ -1,0 +1,127 @@
+#
+# Copyright [C] The Regents of the University of Michigan and Merit Network,
+# Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+#
+# RCSID:	$Id: authfile,v 1.6 1998/01/30 17:03:16 web Exp $
+
+#	This file provides information which is required if any entry in
+#	the "users" file specifies "Authentication-Type = Realm as the type
+#	of authentication to be performed.
+
+#	This file contains a list of "realm" names which represent separate
+#	authentication methods which may be used to authenticate a user.
+#	Normally the user specifies the realm where authentication is to
+#	be performed by appending a realm name to his/her user id.  For
+#	example, "joe@xyz" indicates that user joe wants to be authenticated
+#	by realm xyz.  It is the purpose of this file to map the realm name
+#	"xyz" to the authentication type used to authenticate users in this
+#	realm.  For example, for the RADIUS authentication type, this would
+#	also require the actual DNS name of the authentication system while
+#	for other authentication types, possibly an optional authentication
+#	protocol to be used.
+
+#	The first field of each line is a realm name to be mapped.
+#	Two optional entries may be placed between the realm name and the
+#	"second" field.  The realm name may be followed by a parenthesized
+#	list of aliases for the preferred authentication realm name.
+#	It may also be followed by an optional indicator (marked with a
+#	leading hyphen) of the authentication protocol to which the entry
+#	is applicable.  By default, an entry applies to both password and
+#	CHAP authentication, but an optional -CHAP or -PW indicates this
+#	entry applies only to the specific protocol.  The default is -DFLT
+#	which matches either protocol type.  The entries are searched in
+#	order, so a -CHAP or -PW entry preceeding a -DFLT entry will take
+#	precedence.
+#
+#	The second field identifies the type of authentication to be performed
+#	for this realm name.  This field may contain one of the following
+#	keywords:
+#
+#	Unix-PW - Indicating the local Unix /etc/passwd file is to be used;
+#	Passwd  - Same as Unix-PW;
+#	AFS-Krb - For AFS Kerberos authentication at the default Kerberos realm;
+#	MIT-Krb - For MIT Kerberos authentication at the default Kerberos realm;
+#	RADIUS  - The request is to be relayed to the specified RADIUS server;
+#	FILE    - flat file lookup with encrypted passwords in "users" format;
+#	TACACS  - Make an extended (and encrypted) request to the specified
+#		  TACACS server;
+#	TACPLUS - Make an extended (and encrypted) request to the specified
+#		  TACACS+ server;
+#	KCHAP   - Kerberos CHAP database lookup to be done in this machine;
+#	MNET    - Strange and archaic Merit authentiation.
+#
+#	The third field is dependent upon the authentication type.
+#	For KRB servers, the third field is the Kerberos realm name to
+#	be used.  Note that the /etc/krb.conf file must have valid entries
+#	for the realm.   For MNET servers, the third field is the name of
+#	the /etc/minostab entry to use for the server.  For TACACS and TACPLUS,
+#	it is the DNS name of the machine running the appropriate TACACS or
+#	TACACS+ server.
+#
+#	The RADIUS type indicates the authentication is to be performed
+#	by a remote RADIUS server.  The attribute value-pairs returned
+#	by the remote RADIUS server are propagated back to the requesting
+#	system, be it NAS or proxy server.  Merit RADIUS servers check to
+#	see if the third field contains their host name as returned by the
+#	hostname(1) command, in which case the request is handled as a local
+#	or "Unix-PW" request.
+#
+#	The last field, the filter ID, allows the optional specification
+#	of a packet filter name to be associated with authentication via
+#	this realm name.  It will override any explicit filter name specified
+#	in the "users" file or arriving in replies from remote RADIUS servers.
+#
+#	A "DEFAULT" entry may be included in this file which indicates how
+#	to handle authentication requests specifying realm names not explicitly 
+#	included in this file.  Usually it will specify a remote RADIUS server
+#	to which to relay the request.
+
+#	A "NULL" entry may also be included in this file which indicates how
+#	to handle authentication requests that don't specify a realm name,
+#	but which are being authenticated using Authentication-Type = Realm.
+
+#	The following two lines specify default server names to use for
+#	Authentication-Type entries of RADIUS or TACACS/TACPLUS, respectively,
+#	which may be configured in a "users" file.  Note that the one string
+#	DEFAULT_TACACS_SERVER applies to both TACACS and TACACS+ servers.
+#	These override the corresponding C pre-processor #define directives
+#	in the radius.h include file.  Normally, these two lines may be left
+#	commented out.
+
+#DEFAULT_RADIUS_SERVER  radius.server.dns.name
+#DEFAULT_TACACS_SERVER  tacacs.server.dns.name
+
+#
+#	The seven examples below should be commented out and replaced
+#	with one (or more) entries which match your installation choices.
+#
+
+#Realm [(alias[,alias])]  [-prot]  Type    REALM/DNS address	Filter ID
+#-----------------------  -------  ----    -----------------	---------
+
+#	Authentication requests for realm "umich.edu" which contain CHAP
+#	protocol information are handled by the first entry.  Non-CHAP
+#	requests for umich.edu are all handled by the second entry.
+
+# umich.edu (umich, test)   -CHAP    RADIUS  krbdb.merit.EDU	umich
+# umich.edu (umich)		   AFS-KRB UMICH.EDU		umich
+
+# merit.edu (merit, mrt )		   RADIUS  merit.edu		
+
+# tacacs (ta, vms)		   TACACS  vms.system.merit.edu
+ 
+#	The following entry will typically be configured in the authfile for
+#	the RADIUS server running on the system with the matching DNS name.
+#	It says to use the UNIX password file (/etc/passwd) for authentication.
+
+# your.realm.name			   UNIX-PW
+
+#	This entry says to pass requests with authentication realm names,
+#	which didn't appear in this file, along to another RADIUS server.
+
+# DEFAULT				   RADIUS  main-radius.server.net
+
+#	This next entry says to handle requests, which don't have a realm
+#	name appended to the user identifier, as local user identifiers.
+
+NULL				   BSD-Auth

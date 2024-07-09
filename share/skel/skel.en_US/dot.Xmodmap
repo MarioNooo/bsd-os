@@ -1,0 +1,25 @@
+!!!!! PC key mapping modifications
+!!!!!
+!!!!! To enable a section, uncomment the lines following the description
+
+!!!!!
+!!!!! Swap Caps_Lock and Control_R
+!!!!!
+! remove Lock = Caps_Lock
+! remove Control = Control_R
+! keysym Control_R = Caps_Lock
+! keysym Caps_Lock = Control_R
+! add Lock = Caps_Lock
+! add Control = Control_R
+
+!!!!! move around the escape key (PC only!)
+!!!!! `/~ key does Escape (shifted, ~)
+! keycode 49 = Escape asciitilde
+
+!!!!! make backspace be ` and ~
+! keysym BackSpace = quoteleft asciitilde
+! keycode 22 = quoteleft asciitilde
+
+!!!!! make Next do Linefeed
+! keysym Next = Linefeed
+! keycode 105 = Linefeed

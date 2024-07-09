@@ -1,0 +1,823 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ppp.sys.5,v 2.28 2001/10/03 17:29:57 polk Exp
+.Dd January 16, 1997
+.Dt PPP.SYS 5
+.Os
+.Sh NAME
+.Nm ppp.sys
+.Nd PPP and SLIP remote host description file
+.Sh SYNOPSIS
+.Nm /etc/ppp.sys
+.Sh DESCRIPTION
+The
+.Pa /etc/ppp.sys
+file contains the configuration parameters for use by the
+.Xr ppp 8
+daemon when establishing PPP or SLIP connections.
+The entries fall into several major categories:
+.Bl -bullet
+.It
+General configuration options
+.It
+SLIP only options (currently there are none)
+.It
+PPP options read before authentication
+.It
+PPP options read after authentication
+.It
+Dialing options (these will be deprecated in a future release)
+.El
+.Pp
+Earlier versions of
+.Xr ppp 8
+used the old style two letter option names.
+Most of the two letter options have now been replaced by more
+descriptive names, though the old two letter option names still work.
+.Pp
+Generic options:
+.Bl -column ZZZZZZZZZZZZZZZ SCRIPTZZ
+.Sy Option	Type	Description
+.It Li "device (dv)" Ta Nm STR Ta
+Device to be used to call out.
+If the name is a the name of a synchronous interface (e.g.,
+.Li ntwo0 )
+then the
+.Xr ppp 8
+utility will use this interface to establish sync PPP.
+If the device is a full path name to an asynchronous serial device (e.g.,
+.Li /dev/tty00 )
+then the
+.Xr ppp 8
+utility will use this device to establish async PPP.
+.It Li "dialin (di)" Ta Nm BOOL Ta
+Mark this entry as dial-in
+.It Li "dialout (do)" Ta Nm BOOL Ta
+Mark this entry as dial-out
+.It Li direct Ta Nm BOOL Ta
+Indicate that this is a directly connected line.
+.It Li "link-down (ld)" Ta Nm SCRIPT Ta
+This script is called whenever the link goes into a down state for
+normal sessions and when
+.Xr ppp 8
+is about to exit (due to a SIGHUP or SIGINT) for dial on demand sessions.
+It is called as:
+.sp
+.Li link-down link-options Ar sysname interface local-addr remote-addr
+.sp
+If not specified then the command:
+.sp
+.Li ifconfig Ar interface Li -alias Ar local-addr Li "-link0 -link1 -link2"
+.sp
+will be run.
+.It Li "link-failed (lf)" Ta Nm SCRIPT Ta
+This script is called when 
+.Nm
+was unable to initialize the link.
+It is intended to undo any effects of the
+.Li link-init
+script.
+It is called as:
+.sp
+.Li link-failed link-options Ar sysname interface
+.sp
+If neither of the
+.Li link-failed
+and
+.Li link-down
+scripts are specified then the command:
+.sp
+.Li ifconfig Ar interface Li -alias Ar local-addr Li "-link0 -link1 -link2"
+.sp
+will be run on initialization failure.
+.It Li "link-init (li)" Ta Nm SCRIPT Ta
+This script is called once LCP negotiation and authentication are complete,
+but prior to IPCP negotiation.
+Dial on demand sessions do not wait for LCP negotiation and execute this
+script immediately.
+See the notes below on authentication.
+It is called as:
+.sp
+.Li link-init link-options Ar sysname interface
+.sp
+The
+.Li link-init
+should initialize the interface with a local and remote IP address
+(unless this is a PPP session and the addresses are expected to
+be provided by the remote system).
+If not specified then the following command will be run:
+.sp
+.Li ifconfig Ar interface local-addr remote-addr
+.sp
+This script is required for SLIP.
+.It Li "link-options (so)" Ta Nm STR Ta
+A list of options to pass to the various link scripts.
+Currently the only valid option is
+.Fl debug .
+.It Li "link-up (lu)" Ta Nm SCRIPT Ta
+This script is run once IPCP negotiation has been completed,
+The
+.Li link-up
+should do any routing or ARP work which needs to be done for
+this session (dial on demand sessions should do the routing
+in the
+.Li link-init
+script).
+Use of this script is not limited to those cases.  For instance,
+the
+.Li link-up
+might cause the mail queue to be processed so any queued mail will be
+sent.  It might also invoke some command that will cause the remote
+system to process its mail queue.  (There is no standard method of
+causing the remote system to process its mail queue.  The solution is
+left as an exercise for the reader.)
+It is called as:
+.sp
+.Li link-up link-options Ar "sysname interface local-addr remote-addr"
+.sp
+.It Li proxy Ta Nm SCRIPT Ta
+Specify a proxy program (typically
+.Pa /usr/libexec/ppp_proxy )
+to proxy the request to
+.Xr gettyd 8 .
+The script is called as:
+.sp
+.Li proxy
+.Op Fl x
+.Op Fl s Ar ppp.sys-file
+.Ar sysname
+.sp
+.It Li "phone-number (pn)" Ta Nm STR Ta
+A list of phone numbers separated by a vertical bar (|).
+These numbers will be passed to
+.Xr gettyd 8
+which will cycle through them until a connection is established
+or the list is exhausted.
+.It Li "slip (sl)" Ta Nm BOOL Ta
+Indicate that the SLIP protocol should be used to establish the
+connection instead of the PPP protocol.
+.It Li "speed (br)" Ta Nm NUM Ta
+Desired DTE speed of the line
+.It Li "stty-modes (ms)" Ta Nm CSV Ta
+If the terminal port requires special options,
+hardware flow control for example,
+this string can be set to a comma separated
+.Xr stty 1 - Ns style
+option set.  For example:
+.br
+.in +.5i
+.Li :stty-modes=cts_oflow,rts_iflow:
+.in -.5i
+.br
+This has no meaning for sync lines.
+If a proxy is being used, this entry will be forwarded to the proxy
+within the request destined for
+.Xr gettyd 8 .
+.El
+.sp
+The following options enable various debugging features (mostly for PPP)
+.sp
+.Bl -column ZZZZZZZZZZZZZZZ SCRIPTZZ
+.Sy Option	Type	Description
+.It Li debug-all Ta Nm BOOL Ta
+Turn on all debugging.
+.It Li debug-int Ta Nm BOOL Ta
+Turn on internal debugging messages.
+.It Li debug-packet Ta Nm BOOL Ta
+Turn on one line control packet tracing.
+.It Li debug-phase Ta Nm BOOL Ta
+Turn on major phase change debugging.
+.It Li debug-state Ta Nm BOOL Ta
+Turn on state change debugging.
+.It Li packet-dump Ta Nm BOOL Ta
+Print hex dump of every control packet.
+.It Li trace Ta Nm BOOL Ta
+Print a detailed trace of control packets.
+.El
+.Pp
+If the
+.Xr ppp_proxy 8
+utility is used, it will use the following entries:
+.Bl -column ZZZZZZZZZZZZZZZ SCRIPTZZ
+.Sy Option	Type	Description
+.It Li "s0 - s9" Ta Nm STR Ta
+String to send on the n-th step of log-in sequence.
+.It Li "e0 - e9" Ta Nm STR Ta
+String to wait for on the n-th step of log-in sequence.
+.It Li "t0 - t9" Ta Nm STR Ta
+Timeout (in seconds) for receiving the expected string on the n-th
+step of log-in sequence.  The default timeout is 15 seconds.
+.It Li "f0 - f9" Ta Nm STR Ta
+Auxiliary string to send on the n-th step of login sequence in case
+the corresponding expected string was not received.
+.El
+.sp
+The following options are only used on PPP connections:
+.Bl -column ZZZZZZZZZZZZZZZZ SCRIPTZZ
+.Sy Option	Type	Description
+.It Li "acfc (pf)" Ta Nm BOOL Ta
+Enable address and control fields compression.
+This option reduces the size of a PPP packet header by two bytes, which
+can be useful on slow links but can cause computational overhead on fast
+synchronous links.  This option is the default on asynchronous lines.
+.It Li allow-addr-change Ta Nm BOOL Ta
+Allow IPCP negotiation of IP addresses.
+.It Li auth-retries Ta Nm NUM Ta
+Number of times authentication attempts are allowed before the
+connection is dropped.
+.It Li chap Ta Nm BOOL Ta
+Require CHAP authentication from the remote system (server side).
+.It Li chap-allow Ta Nm BOOL Ta
+Indicate that the local system is willing to authenticate to the
+remote system using CHAP authentication (client side).
+.It Li chap-mode Ta Nm NUM Ta
+The numeric chap mode to use during CHAP authentication.
+.It Li chap-name Ta Nm STR Ta
+The name used to identify the CHAP user.
+.It Li chap-secret Ta Nm STR Ta
+The name used to lookup the chap secret.
+Normally the name received from the remote system is used to
+look up the secret.
+.Li chap-secret
+is to be used when the name of the remote system is non-deterministic
+or not unique (i.e., there are two or more remote machines which return
+the same name).
+For direct dial-in clients the
+.Li chap-secret
+field will need to be in the
+.Li ppp_direct
+entry.
+.It Li chap-script Ta Nm STR Ta
+The script to use to perform CHAP authentication.
+The script is called in the following modes:
+.br
+.Li chap-script
+.in +.5i
+Produce a challenge on stdout
+.in -.5i
+.sp
+.Li chap-script Ar user id
+.sp
+.in +.5i
+Given a
+.Ar user
+and
+.Ar id ,
+read a challenge from stdin and produce a response on stdout.
+.in -.5i
+.sp
+.Li chap-script -v Ar user id
+.sp
+.in +.5i
+Given a
+.Ar user
+and
+.Ar id ,
+read the response and the challenge from stdin.
+The script should exit with a 0 if the response matched the challenge.
+If the response was incorrect, the script should exit with a non-zero
+value and issue the reason to stderr.
+The input read on stdin is a single byte which contains the number
+of bytes in the response, which follows immediately.  The challenge
+follows the response (there is no length byte for the challenge,
+the challenge is assumed to continue until EOF).
+.in -.5i
+.It Li "cmap (cm)" Ta Nm CMAP Ta
+Map of the special characters which should be avoided in
+case the equipment uses some of them for flow control or link
+control or inserts the characters for time fill.  The map can be
+specified as a 32-bit hexadecimal or octal number (if it starts
+from 0x or 0 respectively) in which case the least significant
+bit corresponds to the null character and the most significant
+bit to the character with code 037 (US).  Alternatively, it can
+be specified as the string of letters corresponding the control
+characters, for example ``:cmap= QS:'' will represent a mask with
+bits 0, 17 and 19 set.  The default all-zero mask will allow
+transmission of all control characters.  The usage of ``@'' to
+represent null (0) will not work if ``@'' directly follows ``=''. Use
+`` '' (space) instead.
+See
+.Xr cgetstr 3
+for more information.
+.It Li "rx-cmap" Ta Nm CMAP Ta
+Same as
+.Li cmap ,
+just more verbose that it is the receive cmap.
+.It Li "tx-cmap" Ta Nm CMAP Ta
+Specify the minimum set of bits we will accept for the
+transmit cmap.  It is specified in the same manner that
+.Li cmap
+is specified.
+.It Li echo-freq Ta Nm TIME Ta
+The interval at which to send out LCP echo requests.
+If no echo response is received for 3 consecutive requests
+the the line is determined to be dead and the session is dropped.
+If not specified no LCP echo requests will be sent.
+.It Li ed-802.1 Ta Nm ADDR_802 Ta
+Specify an 802.1 MAC Address to send as an Endpoint Discriminator.
+.It Li ed-ip Ta Nm ADDR Ta
+Specify an IP Address to send as an Endpoint Discriminator.
+.It Li ed-local Ta Nm BOOL Ta
+Send a Local class Endpoint Discriminator.
+The value sent is determined automatically based
+on the system boot time and the host name.
+Though this format is deprecated (because uniqueness is not
+guaranteed), it is useful when neither an 802.1 or static IP
+address is available.
+.It Li ed-null Ta Nm BOOL Ta
+Send a Null class Endpoint Discriminator.
+Though this is the default value for the Endpoint Discriminator,
+it is not recommended; instead either the
+.Li ed-802.1
+or
+.Li ed-ip
+options should be used.
+.It Li first-idle Ta Nm BOOL Ta
+When sending a packet on a multi-link session, have the PIF
+interface always scan from the beginning of the list
+to find the first idle interface.
+.It Li first-up Ta Nm BOOL Ta
+When sending a packet on a multi-link session, have the PIF
+interface always scan from the beginning of the list
+to find the first interface that is up, ignoring whether
+or not it is currently active doing output.
+.It Li "ftel (pf)" Ta Nm BOOL Ta
+Enable high-priority queueing of ``interactive'' TCP packets
+(with source or destination ports assigned to services like telnet
+or control connection of ftp(1)),  effectively giving them precedence
+over all other IP packets.  This can reduce response time on links with
+mixed file transfer and interactive traffic.  This function is a temporary
+and limited substitute for the still unsupported IP low delay TOS
+(type of service).  This option is the default on asynchronous lines.
+.It Li "idle-timeout (id)" Ta Nm TIME Ta
+Set the idle timer to drop the connection if no outgoing
+data packets were processed during the specified number of seconds
+(the maximum time is 32767 seconds).
+.It Li "immediate (im)" Ta Nm BOOL Ta
+Immediate connection.  If connection is lost try to reconnect
+without waiting for network traffic.  Be sure to set
+.Li idle-timeout
+to zero when using this option.
+.It Li "interface (in)" Ta Nm NUM Ta
+The interface number for the system.  Interface names for
+the asynchronous PPP links are composed from the prefix ``ppp''
+and the decimal number of the interface, for example ``ppp7''. If
+interface number is not specified the first interface which is
+down will be allocated.  You need to allocate as many ppp interfaces
+as you have dial-in and dial on demand entries
+(or else there will be conflicts).
+.It Li "ipv4" Ta Nm BOOL Ta
+.It Li "ipv6" Ta Nm BOOL Ta
+By specifying
+.Li ipv4
+and/or
+.Li ipv6 ,
+you can control which IP layer protocol
+.Nm
+will negotiate.
+If neither is specified, the default action is to negotiate IPv4.
+.It Li local-addr Ta Nm ADDR Ta
+If the
+.Li link-init
+script does not assign a local IP address to the interface, use this
+value as the local address.
+.It Li "mru (mr)" Ta Nm NUM Ta
+Specify the maximum packet size the local side is willing
+to receive.  This option can be useful on packet-switching
+links to prevent link-level packet fragmentation or in case
+of problems with hardware flow control.  The default value
+for mru is 1500 bytes.
+.It Li mrru Ta Nm NUM Ta
+Specify the maximum packet size the local side is willing
+to reconstruct.
+Specifying this option will also enable PPP Multi-link Protocol,
+so the
+.Li multilink
+option doesn't need to be specified.
+The default value for mrru is 1600 bytes.
+.It Li multilink Ta Nm BOOL Ta
+Enable PPP Multi-link Protocol.  The
+default
+.Li mrru
+value will be used.
+.It Li nolastlog Ta Nm BOOL Ta
+This option disables updating of the lastlog database for the user.
+This option only applies to PAP and CHAP logins and can only be
+enabled on the ppp_direct entry. The default action is to update
+the lastlog database entry for the user when authenticating via
+PAP or CHAP.
+.It Li next-idle Ta Nm BOOL Ta
+When sending a packet on a multi-link session, have the PIF
+interface use a round-robin technique to find the next
+idle interface.
+This is the default action.
+.It Li next-up Ta Nm BOOL Ta
+When sending a packet on a multi-link session, have the PIF
+interface interface use a round-robin technique to find the next
+interface that is up, ignoring whether or not it is currently
+active doing output.
+.It Li pap Ta Nm BOOL Ta
+Require PAP authentication.
+The
+.Li auth-pap
+entry in the
+.Pa /etc/login.conf
+(which defaults to the same value as the
+.Li auth
+entry if not defined)
+is used to determine the default authentication style to be used
+for PAP authentication.
+Use of the
+.Xr rpasswd 8
+authentication style allows the use of PAP without requiring the
+user to have an entry in the
+.Pa /etc/master.passwd
+file.
+.It Li pap-passwd Ta Nm STR Ta
+This is the password to be sent to the PAP server.
+This option requires the
+.Li pap-peerid
+option as well and implies that this machine is willing
+to provide PAP authentication.
+.It Li pap-peerid Ta Nm STR Ta
+This is the peer name to be sent to the PAP server.
+This option requires the
+.Li pap-passwd
+option as well and implies that this machine is willing
+to provide PAP authentication.
+.It Li "pfc (pf)" Ta Nm BOOL Ta
+Enable protocol field compression.  This option eliminates
+an extra byte in PPP packet header, which can be useful on
+slow links but can cause computational overhead on fast synchronous links.
+This option is the default on asynchronous lines.
+.It Li primary-dns Ta Nm ADDR Ta
+An address to use in response to the non-standard Microsoft PPP
+request for the primary name server address.
+Use of this option is not encouraged.
+.It Li primary-nbs Ta Nm ADDR Ta
+An address to use in response to the non-standard Microsoft PPP
+request for the primary NetBUI server address.
+Use of this option is not encouraged.
+.It Li remote-addr Ta Nm ADDR Ta
+If the
+.Li link-init
+script does not assign a remote IP address to the interface, use this
+value as the remote address.
+.It Li "retries (mc)" Ta Nm NUM Ta
+The number of PPP protocol option negotiation attempts before giving up.
+The default value is 10.
+.It Li "retry-timeout (to)" Ta Nm TIME Ta
+PPP configure/terminate retry timeout.
+The default timeout is 3 seconds.
+The deprecated
+.Li to
+version of this command accepts a
+.Nm NUM
+instead of a
+.Nm TIME
+argument and is expressed in terms of tenths of a second (e.g., 30 is 3 seconds).
+.It Li secondary-dns Ta Nm ADDR Ta
+An address to use in response to the non-standard Microsoft PPP
+request for the secondary name server address.
+Use of this option is not encouraged.
+.It Li secondary-nbs Ta Nm ADDR Ta
+An address to use in response to the non-standard Microsoft PPP
+request for the secondary NetBUI server address.
+Use of this option is not encouraged.
+.It Li sseq Ta Nm BOOL Ta
+Negotiate the use of short sequence numbers for multi-link fragments.
+This option does not enable negotiation of the PPP Multi-link protocol,
+you should use either the
+.Li multilink
+or
+.Li mrru
+option to enable the PPP Multilink Protocol.
+.It Li "tcpc (pf)" Ta Nm BOOL Ta
+Enable Van Jacobson's TCP header compression.  This option
+enables compression of TCP headers by eliminating redundant
+information in the headers of consecutive TCP packets, reducing
+the protocol overhead by up to 100 bytes per packet,
+which may be critical to the performance of interactive
+.Xr telnet 1
+or
+.Xr rlogin 1
+sessions.
+However, VJ TCP compression requires the system to keep state information
+about every TCP session on both ends (up to 16 simultaneous sessions)
+and is not really useful on fast links connecting large networks.
+TCP compression does not affect UDP and ICMP packets.
+This option is the default on asynchronous lines.
+.It Li "term-retries (mt)" Ta Nm NUM Ta
+The number of attempts to terminate the connection gracefully
+before hanging up.  The default value is 3.
+.It Li "timeout (wt)" Ta Nm TIME Ta
+Timeout on waiting for beginning of session.
+The default timeout is 60 seconds.
+.El
+.sp
+For direct dial-in client, that is, clients which do not use the
+traditional login/password sequence, there must be a
+.Li ppp_direct
+entry.  The
+.Li ppp_direct
+entry is used to determine generic information about the server.
+\fBA ppp_direct entry should have at least one of pap or chap defined.\fP
+.sp
+If PAP or CHAP authentication is used, a ppp.sys entry should exist with
+the PAP/CHAP name provided by the client.
+If no entry if found for the client, the entry
+.Li pap_default
+or
+.Li chap_default
+will be used.
+If no entry is found, the connection is dropped.
+Once authentication has been
+performed (LCP negotiation is complete at this point) the following
+configuration options may re-specified in the clients' ppp.sys entry.
+See above for descriptions:
+.sp
+.in +.5i
+.Bl -column ZZZZZZZZZZZZZZZZZ ZZZZZZZZZZZZZ ZZZZZZZZZZZZZ ZZZZZZZZZZZZZ
+.It allow-addr-change Ta debug-all Ta debug-int Ta debug-packet
+.It debug-phase Ta debug-state Ta echo-freq Ta ed-802.1
+.It ed-local Ta ed-null Ta first-idle Ta first-up
+.It ftel Ta idle-timeout Ta link-down Ta link-failed
+.It link-init Ta link-options Ta link-up Ta local-addr
+.It mrru Ta multilink Ta next-idle Ta next-up
+.It packet-dump Ta primary-dns Ta primary-nbs Ta remote-addr
+.It secondary-dns Ta secondary-nbs Ta sseq Ta trace
+.It tcpc
+.El
+.in -.5i
+.sp
+The PPP Multi-link Protocol allows multiple physical PPP links
+to be treated as a single PPP connection, or bundle.
+To enable or allow use of the PPP Multi-link Protocol,
+either the
+.Li multilink
+or
+.Li mrru
+option must be specified.
+Then one of the
+.Li ed-*
+options is used to identify the Endpoint Discriminator,
+which is used along with authentication information (if available) to
+uniquely identify to the remote host which connections from this
+host should be bundled together.
+The preferred options are the
+.Li ed-ip
+and
+.Li ed-802.1
+options, since these should be globally unique addresses.
+In the absence of either of these, the
+.Li ed-local
+option can be specified, and a somewhat unique 20-byte
+string will be generated automatically.
+One of
+.Li first-up ,
+.Li first-idle ,
+.Li next-up ,
+and
+.Li next-idle
+can be specified to select how to choose which
+interface of the bundle should be used to send
+a packet.
+If none of them are specified, the default value is
+.Li next-idle ,
+which will use a round-robin technique to find
+the next idle interface.
+See
+.Xr ifconfig 8
+for more details.
+The
+.Li sseq
+option can be specified to enable negotiation of short sequence
+numbers (12 bits instead of the default 24 bits).
+.sp
+A separate copy of
+.Xr ppp 8
+needs to be running for each link of a Multi-link bundle.
+A common
+.Pa /etc/ppp.sys
+entry can be used, unless there needs to be unique
+information for each link of the bundle (such as explicitly
+specifying the device, or a different phone number).
+.Sh "OPTION TYPES
+.Bl -column ZZZZZZZ
+.Sy Type	Description
+.It Nm ADDR Ta
+The address is expected to be a 32 bit IP address.
+The address must be in a form acceptable to
+.Xr gethostbyname 3 .
+This includes both symbolic names and dotted quads (e.g.,
+10.127.42.6).
+.It Nm ADDR_802 Ta
+The address is expected to be a 48 bit 802.1 address.
+The address must be in the form
+.Li xx-xx-xx-xx-xx-xx
+where
+.Li xx
+is a one or two digit hex number.
+.It Nm NUM Ta
+A numeric value processed by the
+.Xr strtol 3
+function.
+While the standard syntax is
+.Li :option=value: ,
+the older syntax of
+.Li :option#value:
+is allowed, which uses the
+.Xr cgetnum 3
+function.
+.It Nm SCRIPT Ta
+The path name of a script
+.Ns Pq e.g., Pa /usr/libexec/chap_md5 .
+The script may be any executable file which performs the desired
+function.
+.It Nm STR Ta
+A string as returned by the
+.Xr cgetstr 3
+function.
+.It Nm TIME Ta
+A number of seconds.
+The value can be any floating point number recognized by the
+.Xr strtod 3
+function.
+The ability to specify a highly accurate time (e.g., 1.0345007 seconds)
+does not imply that the software will be that accurate (i.e. it will be
+around 1 second).
+.El
+.Sh "EXAMPLES
+The following three entries are boiler plate used by the default scripts
+provided with the system.
+They are used for dial-in, dial-out out (immediate mode)
+and dial-on-demand sessions.
+.Bd -literal
+Dialin:\e
+	:dialin:\e
+	:link-init=/etc/netscripts/Dialin.login:\e
+	:link-up=/etc/netscripts/Dialin.up:\e
+	:link-down=/etc/netscripts/Dialin.down:
+
+Dialout:\e
+	:dialout:\e
+	:link-init=/etc/netscripts/Dialout.login:\e
+	:link-up=/etc/netscripts/Dialout.up:\e
+	:link-down=/etc/netscripts/Dialout.down:
+
+Demand:\e
+	:dialout:\e
+	:link-init=/etc/netscripts/Demand.login:\e
+	:link-up=/etc/netscripts/Demand.up:\e
+	:link-down=/etc/netscripts/Demand.down:
+.Ed
+.Pp
+The following two entries define dial-in ppp sessions.
+The first entry,
+.Li ppp_direct ,
+is used when the dial-in session begins with LCP negotiation
+rather than the traditional login:/password: sequence provided
+by the
+.Xr login 8
+program.  The
+.Xr login 8
+program can recognize LCP sequences and call
+.Nm ppp
+directly with the name of
+.Li ppp_direct
+when they are seen.
+The second entry defines an individual session for the account
+.Li Pskeeter .
+If used with either the traditional login:/password: sequence via
+.Xr login 8 ,
+or when using PAP authentication via the
+.Li ppp_direct
+entry, there must be an account in the
+.Pa /etc/master.passwd
+file for
+.Li Pskeeter
+which is group
+.Li netdial .
+There must also be an entry for
+.Li Pskeeter
+in the
+.Pa /etc/netscripts/addr-map
+file.  The entry is the single line composed of
+the name
+.Li Pskeeter
+followed by white space and the IP address to assign to
+.Li Pskeeter .
+.Bd -literal
+ppp_direct:\e
+	:dialin:\e
+	:pap:\e
+	:chap:\e
+	:auth-retries=3:
+
+Pskeeter:tc=Dialin:
+.Ed
+.Pp
+The next four examples define dial-out PPP sessions.
+In all cases
+.Li REMOTEPHONENUMBER
+should be replaced by the phone number of the system to dial.
+.Li YOURLOGIN ,
+.Li YOURPAPNAME ,
+or
+.Li YOURCHAPNAME
+should be replaced with the name the remote system knows this machine as.
+.Li YOURPASSWORD
+or
+.Li YOURPAPPASSWD
+should be replaced with the password used to authenticate this machine,
+or if CHAP authentication is used, there must be an entry in the
+.Pa /etc/chap_md5_secrets
+file
+.Ns Pq see Xr chap_md5 5 .
+Normally the name returned by the remote system is used to find the
+appropriate entry in the
+.Pa /etc/chap_md5_secrets 
+file.
+Use the
+.Li chap-secret
+entry to override this name (for use with systems which do not provide
+a deterministic remote name).
+.Pp
+.Bd -literal
+Pdemand:\e
+	:interface=0:\e
+	:idle-timeout=600:\e
+	:phone-number=REMOTEPHONENUMBER:\e
+	:s0=\er:e0=ogin:f0=\er:\e
+	:s1=YOURLOGIN\er:e1=word:\e
+	:s2=YOURPASSWORD\er:\e
+	:tc=Demand:
+.Ed
+.Bd -literal
+Palways:\e
+	:immediate:\e
+	:idle-timeout=0:\e
+	:phone-number=REMOTEPHONENUMBER:\e
+	:s0=\er:e0=ogin:f0=\er:\e
+	:s1=YOURLOGIN\er:e1=word:\e
+	:s2=YOURPASSWORD\er:\e
+	:tc=Dialout:
+.Ed
+.Bd -literal
+Ppap:\e
+	:immediate:\e
+	:idle-timeout=0:\e
+	:phone-number=REMOTEPHONENUMBER:\e
+	:pap-peerid=YOURPAPNAME:\e
+	:pap-passwd=YOURPAPPASSWD:\e
+	:tc=Dialout:
+.Ed
+.Bd -literal
+Pchap:\e
+	:immediate:\e
+	:idle-timeout=0:\e
+	:phone-number=REMOTEPHONENUMBER:\e
+	:chap-allow:\e
+	:chap-name=YOURCHAPNAME:\e
+	:tc=Dialout:
+.Ed
+.Pp
+Finally, the following entry,
+named
+.Li sync ,
+might be used with a sync line.  Note that the
+.Fl s
+option to
+.Xr ppp 8
+can take a literal entry, alleviating the need to have this entry
+in the
+.Pa /etc/ppp.sys
+file.
+.Li LIP
+should be replaced with the local IP address for this session
+and
+.Li RIP
+should be replaced with the remote IP address.  Of course, other
+options, such as PAP or CHAP options, can also be provided.
+.Bd -literal
+sync:device=ntwo0:direct:immediate:dialout:local-addr=LIP:remote-addr=RIP:
+.Ed
+.Sh "SEE ALSO
+.Xr stty 1 ,
+.Xr strtod 3 ,
+.Xr strtol 3 ,
+.Xr cgetnum 3 ,
+.Xr cgetstr 3 ,
+.Xr gethostbyname 3 ,
+.Xr login.conf 5 ,
+.Xr chap_md5 8 ,
+.Xr gettyd 8 ,
+.Xr ifconfig 8 ,
+.Xr login 8 ,
+.Xr ppp 8 ,
+.Xr ppp_proxy 8 ,
+.Xr rpasswd 8

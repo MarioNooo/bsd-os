@@ -1,0 +1,595 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI cpu.8,v 1.13 2003/09/16 01:40:47 jch Exp
+.\"
+.Dd October 9, 2001
+.Os
+.Dt CPU 8
+.Sh NAME
+.Nm cpu
+.Nd "control multiprocessor aspects of system"
+.Sh SYNOPSIS
+.Nm
+.Op Fl dOv
+.Op Fl i Ar savefile
+.Op Fl o Ar override-file
+command
+.Op args 
+.Op overrides
+.Sh DESCRIPTION
+The
+.Nm
+program is used to control multiprocessor aspects of
+BSD/OS .
+The primary function of
+.Nm
+is the transition of the system from uniprocessor mode (also referred to as
+PIC mode, the state the system is in after boot) to 
+symmetric I/O mode with (possibly) multiple processors running.
+.Pp
+The bulk of the functionality available to the user via this program
+is used for debugging and/or dealing with motherboards and BIOS
+that do not fully live up to the Intel Multiprocessor Specification
+(1.4) standard.
+In normal use, a 
+.Ic cpu mp
+command is run by 
+.Pa /etc/rc
+during the boot process if
+.Pa /etc/mp.config
+is present (it may be empty); this takes care
+of all the details of starting any additional CPUs. Much of the information
+and functionality described below is targeted at engineers attempting to
+bring up a new motherboard.
+.Pp
+The
+.Nm
+program also performs numerous debugging and status functions that do not
+affect the state of the system.
+.Pp
+The flags are
+.Bl -tag -ohang -width xxx
+
+.It Fl d
+Enable debug mode. In this mode operations which would change the state
+of a running system are not issued. This mode also enables verbose mode.
+
+.It Fl i Ar savefile
+This specifies a file with saved system state from a previous invocation
+of
+.Nm cpu .
+When this option is used information about the system (BIOS SMP information,
+interrupt status, cpu status) that is used in the operation of the program is
+read from the specified file instead of from the currently running
+kernel (via
+.Xr sysctl 3 ).
+Note: if
+.Fl d
+is not also specified requested changes are still issued to the kernel
+via
+.Xr sysctl 3 .
+Thus, this option is most useful in conjunction with
+.Fl d
+to display debugging information about another machine (ie: to see how
+.Nm cpu
+is routing interrupts on a different machine).
+
+.It Fl o Ar override-file
+This specifies the pathname to a file which may contain configuration overrides.
+See OVERRIDES below.
+
+.It Fl O
+This specifies that no overrides will be read from an external file; overrides
+on the command line are still recognized.
+
+.It Fl v
+Turns on verbose mode, in this mode additional warnings and debug information
+is printed as
+.Nm
+performs its duties.
+.El
+
+.Pp
+Some definitions will aid in understanding the commands and overrides:
+.Pp
+.Bl -tag -ohang -width xxx -compact
+.It PIC (8259)
+Programmable interrupt controller. Two of these devices are built into all
+PC chipsets, these are based on the original 8259 interrupt controllers used
+on the PC/AT in 1983.  Non-MP capable systems use these parts to handle 
+device interrupts.
+.Pp
+When using the PIC's to handle interrupts the interrupt lines from the
+card slots (ISA, PCI) and internal peripherals (clock, keyboard, etc.)
+are connected to one of the two 8259 PIC's; these are in turn connected
+to the CPU and deliver interrupts directly via special bus cycles.
+
+.It APIC
+Advanced programmable interrupt controller. This device replaces the 
+functionality of the PIC in a system that is running more than one CPU.
+Systems with APIC's must also have PIC hardware to allow them to boot and
+run older software that does not support the APIC system.
+.Pp
+In an APIC based system each CPU
+has an APIC built into it (referred to as the local APIC) 
+and the motherboard has one or more I/O APIC's
+to which the interrupt signals are connected. All the APIC's in the
+system are connected to a common bus. When an interrupt is signalled
+to an I/O APIC, it picks a CPU on the APIC bus that can service the
+interrupt and exchanges message packets with that CPU's local APIC (which
+in turn causes the CPU to enter an interrupt service routine). With the
+APIC system interrupts can be distributed amongst all the CPU's
+instead of just one CPU (as with the PIC system).
+.Pp
+In general, once the APIC system has been enabled the PIC's are no longer
+used to distribute interrupts (they are disabled).
+
+.It APIC-ID (Cpu-ID)
+Each APIC on the APIC bus (either CPU local or I/O) is assigned a unique
+4 bit identifier (by the hardware designer).  The CPU local APIC IDs
+are fixed, but the I/O APIC IDs may be assigned by the O/S.  It may be
+necessary for the O/S to change the ID of an I/O APIC if it conflicts
+with the ID of a CPU local APIC.
+.Pp
+On typical two processor systems with one I/O APIC the CPU's are at ID
+0 and ID 1, and the I/O APIC is at ID 2. ID 0xf is not available,
+allowing up to 15 total APICs (counting CPU's and I/O APICs) per
+system. A mode is available where several APIC busses can be cascaded,
+however is this not supported by BSD/OS (or the Intel MPS 1.4
+spec). Cpu-ID is synonymous with APIC-ID (a number from 0 to 0xe).
+
+.It Mixed mode
+Some (arguably broken) motherboard chip sets do not externalize all their
+interrupt sources (specifically the clock signal) so there is no way to
+connect the interrupt source directly to an I/O APIC. On these systems
+a mixed interrupt delivery mode is used; interrupts that are not
+connected to the APIC system are handled by the old PIC system (and routed
+to the boot processor), interrupts that are connected to the APIC's are
+delivered using the APIC system. This is not a desirable mode to run in.
+
+
+.It Symmetric I/O mode
+When a system is first booted it is in PIC mode (using the 8259 interrupt
+controllers); the first step in starting additional processors is to turn
+off the PIC's and enable interrupt distribution via the APIC bus. When
+interrupts are routed via the APIC bus the system is said to be running
+in symmetric I/O mode.
+.Pp
+It is possible to run the system in
+symmetric I/O mode without starting additional CPU's (or even on a system with
+only one CPU, as long as it has an APIC bus and an I/O APIC).
+This is typically
+used to check out the I/O hardware on a new motherboard before adding
+the additional load (and possible complication) of a second CPU. 
+
+.It UP
+Uniprocessor mode; the state the system is in after booting (using PIC's
+for interrupt distribution and only the boot processor is running).
+
+.It MP (or SMP)
+Multiprocessor mode; this is the state the system is in after it has been
+switched into symmetric I/O mode and additional CPU's have been started.
+.El
+
+.Sh COMMANDS
+.Nm
+has multiple functions, selected via the
+.Ar command
+argument.
+.Pp
+The CPU number and APIC-ID values are in the same name space, they are
+a number from 0 to 14. A given address may be an I/O APIC or a CPU, but not
+both. All numeric input to
+.Nm
+may be in hex (leading 0x), octal (leading 0), of decimal (no prefix).
+.Pp
+Many dual processor systems use Cpu-0 and Cpu-1, and have an I/O
+APIC at address 2. The BIOS is the final source of information on
+CPU and APIC id's, use the
+.Ic mpinfo
+command to display the BIOS data regarding the machine.
+
+.Bl -tag -ohang -width xxx
+.It check
+This determines if the CPU on which it is running is capable of serving as
+a processor in an SMP system. If verbose mode is set, detailed information
+regarding the stepping and other features of the CPU is printed.
+.Pp
+This may be run on a machine without an SMP capable kernel (even an older
+release).  This does not require superuser privileges.
+
+.It cpu
+This is similar to the
+.Ic check
+command, but displays info based on the Intel MPS data provided in the
+system bootparam info.  Thus it is possible to determine the SMP
+capabilities of all CPUs in the system.  It is also possible to
+determine the SMP capabilities of another system when reading the
+savefile from that system.
+In verbose mode, the information available is a subset of the
+information available via the
+.Ic check
+command.
+
+.It mp Op Ar overrides
+This attempts to switch the system into symmetric I/O mode (a prerequisite
+for running multiple CPUs) and then starts all additional processors.
+.Pp
+See OVERRIDES below for information on when and how overrides are used.
+
+.It siomode Op Ar overrides
+This switches the system into symmetric I/O mode but does not start
+any additional CPUs. It is sometimes necessary to test a system 
+under symmetric I/O mode before starting additional processors.
+See OVERRIDES below for information on when and how overrides are used.
+
+.It stat
+Displays the status of the I/O system (PIC mode or symmetric I/O mode),
+the state of each known CPU, and the current interrupt counters for each
+interrupt source. Note that in PIC mode any additional processors will not
+be shown in this display (since their presence has not yet been
+determined).
+
+.It start Ar cpuno
+Start a CPU and set it up for scheduling user mode processes.
+
+.It stop Ar cpuno
+Stop a CPU, it will release the process it is currently running (if any) and
+then halt itself. It will not longer handle I/O interrupts.
+.Pp
+Under certain system configurations (mixed mode) it is not possible
+to stop the processor which the system was booted on.
+.El
+
+The following commands are generally only used for debugging.
+.Bl -tag -ohang -width xxx
+.It bootparam
+Decode and displays the Intel MPS bootparam data (it shows how the
+motherboard routes interrupt sources when in symmetric I/O mode).
+
+.It intr
+This summarizes the interrupt sources from the bootparam data. It is simply
+an easier to digest version of the interrupt routing data displayed by
+.Ic bootparam .
+
+.It mpinfo
+This summarizes the Intel MPS data from the bootparam data.  It is
+simply an easier to digest version of the data displayed by 
+.Ic bootparam .
+
+.It pci
+Display PCI device information; this is simply the results of a bus walk
+looking for any valid PCI devices (using the same criteria the kernel
+uses when it boots; non-zero functions will not be displayed for instance).
+This information is used when determining interrupt routing for PCI devices.
+
+.It save Ar savefile
+This reads all the kernel information needed by
+.Nm
+to switch into symmetric I/O mode and start processors, and then saves the
+data into
+.Ar savefile .
+This file
+.Po
+which is encoded with the
+.Xr uuencode 1
+command
+.Pc
+may then be sent to a support engineer to aid in the debugging of
+interrupt routing issues. This is the file that the
+.Fl i
+flag expects.
+.El
+
+.Sh OVERRIDES
+Overrides may be given on the command line or in a file. The subcommands
+that accept overrides will first attempt to read overrides from a file,
+then will add the overrides specified on the command line.
+.Pp
+The override file is
+.Pa /etc/mp.config
+by default. If the
+.Va MPINFO
+environment variable is set, it specifies an alternate filename to use.
+If the
+.Fl o
+flag is given, the file specified will be used as the override file.
+If
+.Fl O
+is supplied then overrides will not be read from any file (command line
+overrides will still be applied).
+.Pp
+Overrides on the command line must not have spaces within them (white
+space delimits the overrides). When putting overrides in a file, the
+format is one override per line, whitespace may be used within the
+override, and any characters following a
+.Sq #
+on the line are ignored as
+a comment.
+.Pp
+In normal operation these overrides should not be needed. The overrides
+are fully explained here, however use of them is not directly supported.
+Generally they should only be used at the request of BSD/OS support or
+engineering. Any options may be changed or removed at any time.
+Improper use can cause a system to hang or corrupt data.
+.Pp
+These overrides are intended for use debugging problems with new
+chip sets and motherboards or to work BIOS revisions that do not
+properly report multiprocessor information.
+
+.Bl -tag -ohang -width xxx
+
+.Sm off
+.It apicN= Ar physaddr
+.Sm on
+Indicates than an I/O APIC with ID
+.Ar N
+exists at the physical address
+.Ar physaddr .
+
+.Sm off
+.It apic Xo
+.Ar N
+.No =down
+.Xc
+.Sm on
+Indicates that I/O APIC
+.Ar N
+is not available (even if the BIOS says it is).
+
+.Sm off
+.It cpu Xo
+.Ar N
+.No =up|down
+.Xc
+.Sm on
+Indicate that a given CPU (APIC ID) exists or does not exist. This overrides
+any data supplied by the BIOS.
+
+.It noisa
+Prevent the routing of any interrupts described by the BIOS as ISA
+or EISA. 
+Typically this is used when the BIOS PCI routing information
+is incorrect and
+.Ic irqN=apic,pin
+statements are used to manually route the PCI interrupt pins to the appropriate
+IRQs instead.
+
+.It nopci
+Prevent the routing of any interrupts described by the BIOS as PCI
+interrupts.
+Typically this is used when the BIOS PCI routing information
+is incorrect and
+.Ic irqN=apic,pin
+statements are used to manually route the PCI interrupt pins to the appropriate
+IRQs instead.
+
+.Sm off
+.It irq Ar N No = Ar apic Xo
+.No ,
+.Ar pin
+.Op ,level
+.Op ,edge
+.Op ,high
+.Op ,low
+.Op ,excl
+.Xc
+.Sm on
+This manually routes a given interrupt source (as described by
+.Ar apic
+and
+.Ar pin
+) to a given IRQ. The source must on an I/O APIC (single interrupts cannot
+be delivered via CPU local APIC pins).
+.Pp
+The
+.Ar level
+option indicates the pin should be programmed (and blocked) as a level
+triggered source (ie: PCI).
+The
+.Ar edge
+option forces edge trigger mode to be used on the interrupt pin.
+Edge or
+level mode is normally automatically selected based on the source of 
+the interrupt.
+The
+.Ar high
+option forces triggering based on an active high signal. The
+.Ar low
+option forces triggering based on an active low signal. Normally the
+polarity is automatically selected based on the source of the interrupt.
+.Pp
+The
+.Ar excl
+flag indicates that no other interrupt sources may share this IRQ (an
+error is generated if an other override specifies this IRQ as a target.
+BIOS supplied routings are considered
+.Dq soft
+for this purpose, if any are mapped to an exclusive use IRQ they are
+instead redirected to a handler that simply counts them. An example of
+this case is one where an exclusive route is assigned from a PCI
+interrupt source and yet the BIOS still defines an ISA interrupt
+source for the same IRQ; in this case the isa IRQ will be redirected
+to the stray interrupt catcher. 
+
+.\" .Sm off
+.\" .It irq Xo
+.\" .Ar N
+.\" .No =ext
+.\" .Xc
+.\" .Sm on
+.\" This indicates that the named IRQ is to be handled via the 8259 PICs (AT
+.\" compatible mode) on an ExtINT pin (either connected directly to a CPU or
+.\" connected to an I/O APIC).
+
+.It noext
+Disable all ExtINT inputs.
+
+.It extclk
+This forces a special mode where the external PIC is assumed to have only
+one active interrupt (the clock, IRQ0) and the ExtINT pin is on an I/O APIC.
+In this mode the APIC pin is programmed as a normal interrupt (instead of
+an ExtINT input). This implies some additional work in the interrupt handler
+to manage the 8259 as well as the APIC when an interrupt is received (which
+is why there is a special mode and a normal irq override isn't sufficient).
+.Pp
+Normally a determination of the need to use this workaround is made based
+on the identification of the chipset (the problem occurs in chipsets which
+use the Intel 82371 PIIX3). If the device ID changes in a newer version of
+the chip this keyword may be used as a workaround until an update has been
+posted.  A symptom of not using this workaround when needed are that
+the counts for the
+.Dq Softclock
+interrupt thread do not continue to increase in the output of
+.Ic cpu stat .
+
+.It noextclk
+This forces the
+.Ic extclk
+workaround to not be used.
+
+.Sm off
+.It extint= Xo
+.Ar apic
+.No ,
+.Ar pin
+.Xc
+.Sm on
+This selects a particular source for the ExtINT input (this is the
+chaining interrupt from the AT compatible 8259 interrupt controllers).
+There may only be one ExtINT source active on a system. The BIOS
+boot data normally supplies this routing, this override may be needed
+if multiple ExtINT sources are defined by the BIOS. Routing ExtINT to
+the non-boot processor may cause the system to hang before the target
+processor is started (or if the target processor is stopped).
+
+.Sm off
+.It extdest= Xo
+.Ar cpu
+.Xc
+.Sm on
+If the ExtINT source is on an I/O APIC this determines which CPU the 8259
+interrupts will be routed to. Interrupts delivered via the ExtINT mechanism
+can only be routed to one CPU (there is no mode to automatically route
+them to the best processor as there is with APIC interrupts). Routing
+interrupts to a processor other than the boot processor may cause the
+system to hang before the target processor is started (or if it is
+stopped).
+
+.Sm off
+.It nmi= Xo
+.Ar apic
+.No ,
+.Ar pin
+.Xc
+.Sm on
+This sets up the listed interrupt source as an NMI input
+.Po
+.Ar apic
+may be a CPU or an I/O APIC
+.Pc .
+Unless
+.Ic nmidest
+is specified the NMI is programmed in broadcast mode. If not given NMI
+routing is determined by BIOS info.
+
+.Sm off
+.It nmidest= Xo
+.Ar cpu
+.Xc
+.Sm on
+Sets the destination for all NMI sources, if not specified the
+destination is the broadcast address (all CPUs). This only has meaning
+on I/O APIC sources that receive NMIs (the destination is always the
+local CPU for CPU LINTn connections).
+There is no shorthand to specify that NMI is wired to the same pin
+on each CPU, use multiple
+.Ic nmi
+overrides.
+
+.It nonmi
+Do not route any NMI sources.
+
+.It pccard
+Insures that handlers are set up for all interrupts, even if there are
+currently no devices present which use them.  This allows handling of
+interrupts for 
+.Tn PCCard
+devices that are later inserted.
+
+.Sm off
+.It smi= Xo
+.Ar apic
+.No ,
+.Ar pin
+.Xc
+.Sm on
+This sets up the listed interrupt source as a system
+management (SMI) input 
+.Po
+.Ar apic
+may be a CPU or an I/O APIC
+.Pc .
+Unless 
+.Ic smidest
+is specified the SMI is programmed in broadcast mode. If not given SMI
+routing is determined by BIOS info.
+
+.Sm off
+.It smidest= Xo
+.Ar cpu
+.Xc
+.Sm on
+Sets the destination for all SMI sources, if not specified the
+destination is the broadcast address (all CPUs). This only has meaning
+on I/O APIC sources that receive SMIs (the destination is always the
+local CPU for CPU LINTn connections).
+There is no shorthand to specify that SMI is wired to the same pin
+on each CPU, multiple
+.Ic smi
+overrides.
+
+.It nosmi
+Do not route any SMI sources.
+
+.It notpr
+Disable use of the Task Priority Register (TPR) which maps the current
+process priority into a CPU priority.  The implementation of this
+feature on some
+.Tn Pentium 4
+processors is broken and it's use will prevent any interrupts from
+being delivered.
+
+.El
+
+.Sh FILES
+.Bl -tag -width /etc/mp.config
+.It Pa /etc/mp.config
+default file to read override information from
+.El
+.Sh ENVIRONMENT VARIABLES
+.Bl -tag -width MPINFO
+.It Ev MPINFO
+If set, overrides the default configuration file path
+.Pq Pa /etc/mp.config .
+Overridden by the
+.Fl o
+command line option.
+.El
+.Sh SEE ALSO
+.Xr uuencode 1 ,
+.Xr sysctl 3 ,
+.Xr cpu 4 ,
+.Xr mp.config 5 ,
+.Xr bootparams 8 ,
+.Xr sysctl 8 .
+.Sh BUGS
+The mechanisms used to override various aspects of the interrupt
+routing algorithm are flexible but much too complex.
+.Sh HISTORY
+The 
+.Nm
+first appeared in BSD/OS 4.0.

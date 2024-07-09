@@ -1,0 +1,22 @@
+Software Package:       
+	groff
+
+Release/Version:
+	1.15
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to
+	support@BSDI.COM, bug-groff@prep.ai.mit.edu and jjc@jclark.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+	The directory structure was reorganized long ago by polk to
+	build the `right' way for BSD makefiles.  It's not worth changing
+	at this point and it's nice to have it this way since it's 
+	installed in the normal bin/man/etc directories.

@@ -1,0 +1,64 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_kmem.3,v 2.1 1997/05/25 15:09:00 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_KMEM 3
+.Os
+.Sh NAME
+.Nm kvm_kmem ,
+.Nm kvm_kmemsize
+.Nd kernel clock and statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/malloc.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_kmem "kvm_t *kd" "struct kmembuckets *bp" "int nb" "struct kmemstats *sp" "int ns"
+.Ft int
+.Fn kvm_kmemsize "kvm_t *kd" "int *nbp" "int *nsp"
+.Sh DESCRIPTION
+The
+.Fn kvm_kmem
+function fills in the memory referenced by
+.Fa bp
+with an array of up to
+.Fa nb
+.Va struct kmembuckets
+structures and the memory referenced by
+.Fa sp
+with an array of up to
+.Fa ns
+.Va struct kmemstats
+structures from the kernel indicated by
+.Fa kd .
+These structures describe kernel memory in use and usage statistics,
+respectively.
+.Pp
+The
+.Fn kvm_kmemsize
+function provides required size of the above arrays in the
+variables referenced by
+.Va nbp
+and
+.Va nsp
+respectively.
+.Sh RETURN VALUES
+These routines return zero on success and -1 on failure.  
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

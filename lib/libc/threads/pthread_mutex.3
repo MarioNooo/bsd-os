@@ -1,0 +1,149 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_mutex.3,v 1.3 1996/12/12 03:03:45 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_MUTEX 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_mutex_init ,
+.Nm pthread_mutex_destroy ,
+.Nm pthread_mutex_lock ,
+.Nm pthread_mutex_trylock ,
+.Nm pthread_mutex_unlock
+.Nd manipulate pthread mutex objects
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_mutex_init "pthread_mutex_t *mutex" "const pthread_mutexattr_t *attr"
+.Ft int
+.Fn pthread_mutex_destroy "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_lock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_trylock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
+.pthread_mutex_t
+.Pp
+.Va pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_mutex_init
+function initializes the mutex pointed to by
+.Fa mutex
+with attributes specified by
+.Fa attr .
+If
+.Fa attr
+is 
+.Dv NULL
+the default mutex attributes are used.  
+All mutexes should be initialized either statically using
+.Dv PTHREAD_MUTEX_INITIALIZER
+or dynamically by calling
+.Fn pthread_mutex_init .
+After successful initialization the mutex is available for use
+and unlocked.
+.Pp
+The
+.Fn pthread_mutex_destroy
+function destroys the mutex pointed to by
+.Fa mutex ,
+returning it to an uninitialized state.  A destroyed mutex
+may be re-initialized by calling
+.Fn pthread_mutex_init .
+.Pp
+The 
+.Fn pthread_mutex_lock
+function locks the mutex pointed to by
+.Fa mutex .
+If 
+.Fa mutex
+is already locked, the calling thread will block until the
+mutex becomes available.  Upon success the 
+.Fn pthread_mutex_lock
+function returns with the mutex locked and the calling thread
+as its owner. 
+.Pp
+The 
+.Fn pthread_mutex_trylock
+function performs a non-blocking mutex lock operation.  
+It behaves exactly like
+.Fn pthread_mutex_lock
+except that if any thread (including the calling thread)
+currently owns the mutex, an immediate error return is
+performed.
+.Pp
+The 
+.Fn pthread_mutex_unlock
+function releases a previously locked mutex.  It is an
+error to call
+.Fn pthread_mutex_unlock
+with a mutex not owned by the caller or that is currently unlocked.
+If there are threads blocked on the mutex when
+.Fn pthread_mutex_unlock
+is successfully called, the mutex becomes available and thread scheduling
+priority is used to determine which thread will acquire the mutex.
+.Sh RETURN VALUES
+On success the
+.Nm pthread_mutex
+functions all return 0.  A non-zero result indicates
+that an error occurred.
+.Sh ERRORS
+The
+.Nm pthread_mutex
+functions may fail and return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+The system lacked the necessary resources (other than memory)
+to fulfill the requested operation.
+.It Bq Er EBUSY
+In a call to
+.Fn pthread_mutex_init ,
+an attempt to re-initialize a previously initialized mutex that had
+not been destroyed was detected.
+In a call to
+.Fn pthread_mutex_destroy ,
+an attempt to destroy a mutex that is currently in use was detected.
+In a call to
+.Fn pthread_mutex_trylock ,
+a mutex could not be acquired because it was already locked.
+.It Bq Er EDEADLK
+In a call to
+.Fn pthread_mutex_lock ,
+an attempt was made to lock a mutex that the calling thread already owns.
+.It Bq Er EINVAL
+The value of a function argument is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to fulfill the requested operation.
+.It Bq Er EPERM
+The caller does not have sufficient privilege to perform the 
+requested operation.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_cond 3 ,
+.Xr pthread_create 3
+.Sh STANDARDS
+The
+.Nm pthread_mutex
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_mutex
+functions first appeared in BSD/OS 3.0.
+.Sh BUGS
+Mutex attributes are not supported. The
+.Fa attr
+argument to 
+.Fn pthread_mutex_init 
+must be passed as
+.Fa NULL .

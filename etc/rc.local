@@ -1,0 +1,90 @@
+# Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI rc.local,v 2.25 2002/09/25 22:08:49 polk Exp
+#
+# site-specific startup actions, daemons
+
+# Convenience routine to check for existence of commands in our path
+# so we can avoid absolute paths in the script
+is_executable () {
+	local IFS
+	local -
+
+	IFS=:
+	for path in ${PATH}; do
+		if [ -x ${path}/${1} ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+T=/etc/motd.tmp
+if is_executable sysctl && is_executable head && is_executable sed
+then
+	(sysctl -n kern.version | head -1; echo ""; \
+		sed '1,/^$/d' < /etc/motd) > $T
+fi
+is_executable cat && cat $T > /etc/motd
+is_executable rm && rm -f $T
+
+echo 'setting configuration parameters:'
+
+# NOTE: netstart actually runs these sysctl commands by "grep"-ing
+#	them from this file.  They need to be appropriate one-line shell
+#	commands without reference to shell functions like is_executable(),
+#	etc.  The code in netstart does ensure sysctl exists in the path
+#	before attempting to run these.
+
+# uncomment the next line to panic if there is a parity error (recommended).
+# echo -n "memory parity checking: "; sysctl -w machdep.parityerrorpanic=1
+
+# Network configuration; see sysctl(8) for other possibilities.
+# XXX
+# These commands are parsed by /etc/netstart and will eventually move there.
+
+# to enable verification of the source of IP packets
+#  (this does not work in the presence of redundant paths).
+# echo -n "IP source checking "; sysctl -w net.inet.ip.sourcecheck=1
+
+# to enable IP packet forwarding (routing):
+# echo -n "IP forwarding: "; sysctl -w net.inet.ip.forwarding=1
+
+# to enable IPv6 packet forwarding (routing):
+# echo -n "IPv6 forwarding: "; sysctl -w net.inet.ip6.forwarding=1
+
+# to disable forwarding of source-routed packets:
+# echo -n "source-route: "; sysctl -w net.inet.ip.forwsrcrt=0
+
+
+echo -n 'starting local daemons:'
+
+# Uncomment the following line to run pcnfsd -- don't forget to
+# add the -n argument to mountd in /etc/rc as well...
+# is_executable pcnfsd && echo -n " pcnfsd" && pcnfsd
+
+# Uncomment the following line to run dpteng, the interface between the 
+# dpti RAID driver and dptutil(8)
+# is_executable dpteng && echo -n " dpteng" && dpteng -nokill
+
+# Put additional local daemons here...
+
+echo '.'
+
+# Uncomment the following to start INN (netnews)
+# su -m -c news news -c /var/news/etc/rc.news
+
+# Uncomment the following to start xdm (to run X on the console)
+# if [ -f /etc/X11/xdm/xdm-config ] && is_executable xdm; then
+# 	echo 'Starting xdm';	xdm
+# fi
+
+# Uncomment the following to enable OSS sound devices
+# (you should already have configured OSS)
+# is_executable soundon && soundon
+
+# Put other local customizations here...

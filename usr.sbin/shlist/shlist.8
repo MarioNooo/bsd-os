@@ -1,0 +1,53 @@
+.\" Copyright (c) 1995, 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI shlist.8,v 2.3 1998/05/06 19:20:21 donn Exp
+.\"
+.Dd October 26, 1997
+.Dt SHLIST 8
+.Os BSD/OS
+.Sh NAME
+.Nm shlist
+.Nd "list shared libraries required by a binary
+.Sh SYNOPSIS
+.Nm shlist
+.Op Fl a
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm shlist
+utility examines an executable binary file and
+lists the names of shared libraries
+required to execute the binary.
+If a file is not an executable binary file,
+or if a file does not require any shared libraries,
+.Nm shlist
+produces no output for that file.
+When the 
+.Fl a
+flag is given, it will list the addresses where each of the 
+libraries will be mapped in addition to the name information,
+if address information is available.
+.Sh "SEE ALSO
+.Xr cc 1 ,
+.Xr ldd 1 ,
+.Xr shlicc 1 ,
+.Xr mkshlib 8 ,
+.Xr shlib 8
+.Sh BUGS
+It's a feature (I think) that
+.Nm shlist
+considers the dynamic linker to be a shared library.
+.Pp
+.Nm Shlist
+does not verify that a shared library exists,
+nor does it recurse to check dependencies of shared libraries.
+For dynamically linked programs, you can use
+.Xr ldd 1
+to check for these things.
+.Pp
+.Nm Shlist
+assumes, perhaps incorrectly, that any interpreted ELF executable
+without a dynamic segment must use BSD/OS statically linked shared libraries.

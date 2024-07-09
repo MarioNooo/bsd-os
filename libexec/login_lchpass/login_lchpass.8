@@ -1,0 +1,36 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI login_lchpass.8,v 1.1 1996/08/06 15:56:57 prb Exp
+.Dd August 1, 1996
+.Dt LOGIN_LCHPASS 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_lchpass
+.Nd change local password authentication type
+.Sh SYNOPSIS
+.Nm login_lchpass
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm
+utility is typically called from
+.Xr login 8 .
+It is functionally the same as calling the program:
+.Dq passwd -l Ar user .
+Only the
+.Li login
+service is supported.
+See
+.Xr login.conf 5 .
+The
+.Ar class
+argument is not used.
+.Sh SEE ALSO
+.Xr passwd 1 ,
+.Xr login.conf 5 ,
+.Xr login 8

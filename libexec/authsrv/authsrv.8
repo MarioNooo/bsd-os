@@ -1,0 +1,95 @@
+.\"	BSDI authsrv.8,v 1.2 1999/06/28 19:53:30 prb Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd May 14, 1997
+.Dt AUTHSRV 8
+.Os
+.Sh NAME
+.Nm authsrv
+.Nd remote authentication server
+.Sh SYNOPSIS
+.Nm authsrv
+.Op Fl c Ar class
+.Op Fl t Ar tracefile
+.Op Fl T Ar tracefile
+.Sh DESCRIPTION
+The
+.Nm authsrv
+utility, which should be invoked by
+.Xr inetd 8 ,
+provides service for the remote authentication protocol.
+The remote authentication protocol provides transparent access
+to BSD Authentication on a remote machine via an insecure network.
+All traffic is encrypted with random bytes stuffed into the stream
+to limit the amount of known clear-text.  The method of encryption
+is configurable per client.
+.Pp
+When a client is connected to the server, the server first searches
+the
+.Pa /etc/authsrv.keys
+directory for a file which matches the IP address of the client.
+A file is deemed to match the IP address if one of the IP addresses
+associated with the name (as provided by
+.Xr gethostbyname 3 )
+match the clients IP address.  The first match is used.
+The file matched is expected to contain a single line of text
+which consists of a authentication mode
+followed by a single space and authentication mode specific data
+(see
+.Xr auth 4 ) .
+The supported authentication modes are:
+.Bl -tag -width indent
+.It DES
+Use DES to encrypt the data.  A new random session key is used
+for each session, limiting the exposure of the long lived shared
+secret key.
+.\" .It MD5
+.\" Use MD5 to encrypt the data.  A new random noise vector is generated
+.\" by each side for each session to confound analysis of multiple sessions.
+.El
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl c
+Use
+.Ar class
+instead of
+.Li AUTHSRV
+as the class entry in the
+.Li /etc/login.conf
+used to determine what authentication types are allowed.  If specified,
+the types are determined by the
+.Li auth-authsrv
+entry.  If not specified, the generic
+.Li auth
+entry is used.
+.It Fl t
+Place a trace of all data sent and received as it appears on the wire into
+the file
+.Ar tracefile .
+The data is displayed in hexadecimal.
+.It Fl T
+Same as the
+.Fl t
+flag except the clear text information is also reported.  \fBTHIS WILL REPORT
+SENSITIVE INFORMATION, SUCH AS PASSWORDS, IN THE CLEAR AND SHOULD ONLY BE
+USED WHEN DIAGNOSING A PROBLEM AND NEVER USED IN PRODUCTION.\fP
+.El
+.Pp
+If the client sends the authentication style of
+.Li auth
+then the first authentication style allowed for the
+.Li AUTHSRV
+class (or
+.Ar class
+if
+.Fl c
+was used) is used.
+.Sh "SEE ALSO
+.Xr auth 4 ,
+.Xr auth-keyx 8 ,
+.Xr login_auth 8

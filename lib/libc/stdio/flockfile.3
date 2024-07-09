@@ -1,0 +1,102 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI flockfile.3,v 2.2 1996/12/11 15:51:30 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt FLOCKFILE 3
+.Os
+.Sh NAME
+.Nm flockfile ,
+.Nm ftrylockfile ,
+.Nm funlockfile 
+.Nd synchronize stdio calls from multiple threads.
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <stdio.h>
+.Ft void 
+.Fn flockfile "FILE *stream" 
+.Ft int
+.Fn ftrylockfile "FILE *stream" 
+.Ft void
+.Fn funlockfile "FILE *stream" 
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+The
+.Fn flockfile ,
+.Fn ftrylockfile , 
+and
+.Fn funlockfile
+functions provide a mechanism to synchronize access
+to a stdio stream across multiple threads.  These functions
+may be used by a thread to delineate a sequence of stdio calls
+that should be executed as a unit. 
+.Pp
+The 
+.Fn flockfile 
+function is used by a thread to guarantee exclusive ownership
+of a stdio stream.  The calling thread will block until the
+lock can be completed.
+.Pp
+The 
+.Fn ftrylockfile
+function is a non-blocking version of 
+.Fn flockfile .
+.Pp
+The 
+.Fn flockfile 
+and
+.Fn ftrylockfile 
+calls are associated with a lock count and a thread holding
+the lock may call flockfile multiple times without concern
+for deadlock.  The stdio stream is unlocked when a corresponding
+number of calls to 
+.Fn funlockfile
+are completed.
+.Pp
+The
+.Fn funlockfile
+function releases a previously held lock or if 
+.Fn flockfile
+has been called multiple times decreases the lock count
+for the current thread.  When the lock count decreases to
+zero the stream is unlocked.  When 
+.Fn funlockfile
+causes a lock on a stdio stream to be released at most one
+thread waiting for the lock will proceed.
+.Sh RETURN VALUES
+The
+.Fn flockfile
+and
+.Fn funlockfile
+functions return no value.
+.Pp
+The
+.Fn ftrylockfile
+function returns 0 if a lock was successfully acquired, and non-zero
+otherwise.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr getc_unlocked 3 ,
+.Xr getchar_unlocked 3 ,
+.Xr putc_unlocked 3 ,
+.Xr putchar_unlocked 3
+.Sh STANDARDS
+The
+.Nm flockfile ,
+.Nm ftrylockfile , 
+and
+.Nm funlockfile
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm flockfile ,
+.Nm ftrylockfile , 
+and
+.Nm funlockfile
+functions first appeared in BSD/OS 3.0.

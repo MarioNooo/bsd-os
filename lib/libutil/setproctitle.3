@@ -1,0 +1,30 @@
+.\"	BSDI setproctitle.3,v 2.1 1996/05/22 21:52:47 jch Exp
+.\"
+.Dd May 8, 1996
+.Dt SETPROCTITLE 3
+.Os
+.Sh NAME
+.Nm setproctitle
+.Nd set process command string
+.Sh SYNOPSIS
+.Ft void
+.Fn setproctitle "const char *message" ...
+.Sh DESCRIPTION
+The
+.Fn setproctitle
+function sets the command associated with the process
+.Pq as displayed by Xr ps 1
+to the specified
+.Fa message .
+Long-running processes use this to display their current state.
+.Pp
+The
+.Fa message
+argument is a
+.Xr printf 3 -style
+format string that specifies how subsequent arguments are formatted.
+.Pp
+.Sh SEE ALSO
+.Xr ps 1 ,
+.Xr printf 3
+

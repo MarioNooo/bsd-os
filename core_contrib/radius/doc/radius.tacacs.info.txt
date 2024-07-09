@@ -1,0 +1,39 @@
+To: Mark Strandskov <34HLEFG@cmuvm.csv.cmich.edu>
+Date: Wed, 08 Mar 1995 16:24:20 -0500
+From: "Allan C. Rubens" <acr@merit.edu>
+
+  John passed on your message about encrypted TACACS.  I'll try to
+explain how it works.  It's really quite simple - just a minor hack of
+the real extended TACACS protocol.  I assume you have the structure
+definition for the request and reply TACACS packets.  It's included in
+our RADIUS release.  
+
+  All we do is encrypt the password in the request and append an MD5
+signature to the reply to prove that the reply came from a trusted
+server.  The hacks begin in the password field of the request.  The
+first byte of the password string field will be a zero if a password
+follows or one if a CHAP challenge-reply follows.  You should make sure
+this byte is zero for now and, if not, reject the request.  The zero will
+be followed by the MD5 encrypted password.  Immediately after the password
+string will be a 16 byte vector which you'll need to decrypt the password
+and also to generate a valid signature in the reply.  Once you have the
+password string and the vector, decrypt the password as follows:
+
+  Concatenate the secret with the 16 byte vector and compute an MD5
+digest on this whole string.  Now, take the computed digest and XOR it
+with the encrypted password.  The resulting string will be the decrypted
+user's password.  Now, you can validate the user ID and password in
+the normal manner.
+
+  Next build the reply in the same way extended TACACS does.  Note that
+the user ID and password are NOT sent back in the reply.  A signature is
+appended to the packet beginning immediately after the TACACS header. 
+Build this 16 byte signature as follows:
+
+  First copy the 16 byte vector from the request to the first byte after
+the TACACS reply header.  Now, append the secret to the vector you just
+copied to the reply.  Then compute the MD5 digest on the entire reply,
+including the appended vector and secret.   Copy the 16 byte MD5 computed
+digest (the signature) to the first byte after the TACACS header in the
+reply and send the reply, making sure to include the length of the
+appended signature in the length you specify when sending.  

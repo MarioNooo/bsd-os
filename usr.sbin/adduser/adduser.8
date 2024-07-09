@@ -1,0 +1,197 @@
+.\" Copyright (c) 1994 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI adduser.8,v 1.5 2000/01/12 22:05:50 polk Exp
+.\"
+.Dd October 13, 1994
+.Os
+.Dt ADDUSER/RMUSER 8
+.Sh NAME
+.Nm adduser, rmuser
+.Nd "add or delete users from the system"
+.Sh SYNOPSIS
+.Nm adduser
+.Op Fl dDv
+.Op Fl c Ar change_time
+.Op Fl C Ar class
+.Op Fl e Ar expire_time
+.Op Fl g Ar primary_group
+.Op Fl G Ar gecos
+.Op Fl h Ar home_directory_basedir
+.Op Fl H Ar home_directory
+.Op Fl m Ar home_directory_mode
+.Op Fl p Ar passwd
+.Op Fl P Ar encrypted_passwd
+.Op Fl s Ar shell
+.Op Fl S Ar skeleton_dir
+.Op Fl u Ar uid
+.Op Ar username...
+.br
+.Nm rmuser
+.Op Fl v 
+.Op Ar username...
+.Sh DESCRIPTION
+The
+.Nm adduser
+program adds or deletes users from the master password file,
+.Xr passwd 5 .
+When no arguments are provided, 
+.Nm adduser 
+or 
+.Nm rmuser
+interactively prompt the user for any necessary information.
+If all necessary information for creating or deleting the user
+is provided on the command line, the user will not be prompted at all.
+.Pp
+The
+.Fl v
+flag causes
+.Nm adduser
+or 
+.Nm rmuser
+to display more information about what it is doing.
+.Pp
+.Nm adduser 
+.Fl d
+is synonymous with 
+.Nm rmuser.
+.Pp
+The other flags for adduser may be used to specify values for 
+the various fields in the password file entry.  The fields and
+their meanings are:
+.Bl -tag -width indent
+.It Fl c Ar change_time
+Specifies the 
+.Xr time 3
+value (seconds since the epoch) for the change time field
+in the password file entry.  The behavior of the password change
+time field isn't completely defined at this time.  A value of 
+zero (the default) is recommended.
+.It Fl C Ar class
+Specifies the login class for the user.  If the class is not specified,
+the password file entry will contain an empty field and the user will end
+up using the 
+.Em default
+entry in 
+.Xr login.conf 5 .
+.It Fl e Ar expire_time
+Specifies the 
+.Xr time 3
+value (seconds since the epoch) for the expire time field
+in the password file entry.  The behavior of the expire time
+field isn't completely defined at this time.  A value of zero
+(the default) is recommended.
+.It Fl g Ar group
+Specifies the primary group for the user.  If this value is not specified
+on the command line, the user will be prompted for the value.
+.It Fl G Ar gecos
+Specifies the complete value of the gecos field (including the comma
+separated subfields).  See 
+.Xr passwd 5
+for a complete description of this field.  If no value is specified on the 
+command line, the user will be prompted for the value.
+.It Fl h Ar home_directory_basedir
+Specifies the parent directory of the intended home directory for 
+the user.  The final directory name is defined as this directory 
+name with the user's login name appended.  If neither this value
+nor the 
+.Fl H
+value is specified on the command line, the user will be prompted for
+the value.
+.It Fl H Ar home_directory
+Specifies the home directory path for the user.  If neither this value
+nor the 
+.Fl h
+value is specified on the command line, the user will be prompted for
+the value.
+.It Fl m Ar mode
+Specifies the mode for the user's home directory.  If this argument
+is not specified, a default mode of 0755 will be used.
+.It Fl p Ar password
+Specifies the password (in clear text) to be used for the account.
+If neither this argument nor the
+.Fl P 
+flag are used, the user will be prompted for this information.  Note
+that it is somewhat of a security risk to use this option since the 
+value will be visible to other users via the 
+.Xr ps
+command while the 
+.Nm adduser
+program is running.
+.It Fl P Ar encrypted_password
+Specifies the already encrypted password to be used for the account.
+If neither this argument nor the
+.Fl p 
+flag are used, the user will be prompted for this information. 
+.It Fl s Ar shell
+Specifies the login shell for the user.  If this value is not specified
+on the command line, the user will be prompted for the information.
+.It Fl S Ar skeleton_directory
+Specifies the skeleton directory to be used to create the new
+users's home directory.  By default, 
+.Pa /usr/share/skel/skel.en_US
+is used.
+.It Fl u Ar uid
+Use the specified UID for the user being created.  By default, user
+ID's are assigned starting at 100 and increase.  If the 
+.Fl u 
+flag is used, the user-id is used for the new account even
+if it is already assigned to another account.  In that case, both
+accounts will share the UID and the reverse mapping (from UID to 
+name e.g., by the 
+.Nm ls
+.Fl l
+command) will return one of the names indeterminately.
+.El
+.Pp
+The 
+.Fl D
+flag can be used to set the default values for the next invocation of 
+.Nm adduser .
+No users are added or deleted when the 
+.Fl D
+flag is provided.  For example, to set the default group for 
+future invocations to 
+.Em staff 
+and the the uid to start searching for unused uids
+to 1000, use a command like:
+.Bd -literal -indent
+	adduser -D -g staff -u 1000
+.Ed
+.Pp
+If the password specified with the 
+.Fl p
+flag or at the Password: prompt contains 8 characters or fewer, the standard
+password format is used.  If the password exceeds 8 characters, 
+the "wide password" format is used (up to 128 significant characters). 
+.Sh BUGS
+.Pp
+The 
+.Pa /etc/master.passwd 
+and
+.Pa /etc/group
+files, and the databases created by 
+.Xr pwd_mkdb 8
+are not updated until you are done adding users.  If
+.Nm adduser
+is interrupted for some reason, none of the 
+users are added (although their home directories
+have already been created).  You should remove the home
+directories before re-running 
+.Nm adduser .
+.Sh FILES
+.Pa /etc/master.passwd ,
+.Pa /etc/group ,
+.Pa /var/db/passwd.cf
+.Sh SEE ALSO
+.Xr addgroup 8 ,
+.Xr passwd 5 ,
+.Xr group 5
+.Sh HISTORY
+The 
+.Nm adduser
+and
+.Nm rmuser
+commands first appeared in BSD/OS and are currently under development.

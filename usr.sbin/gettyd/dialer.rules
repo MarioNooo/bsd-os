@@ -1,0 +1,325 @@
+; Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+; The Berkeley Software Design Inc. software License Agreement specifies
+; the terms and conditions for redistribution.
+;
+;	BSDI dialer.rules,v 1.3 1996/06/13 23:04:41 prb Exp
+
+; Do not modify this file.  Modify /etc/dialer.rules.local instead.
+
+; Include local ruleset first
+;
+#include </etc/dialer.rules.local>
+
+;
+; These are shorthand notations, though sort of backwards.
+; They imply that
+; ! will become <FLASH>,
+; , will become <PAUSE>,
+; % will become <DIALTONE>,
+; @ will become <SILENCE>,
+; : will become <TONE>,
+; ^ will become <PULSE>, and
+; ~ will become <REVERSE>
+;
+<FLASH>=!
+<PAUSE>=,
+<DIALTONE>=%
+<SILENCE>=@
+<TONE>=:
+<PULSE>=^
+<REVERSE>=~
+
+;
+; <EXT> is special and must be assigned to $
+; Dialing rules may require that <EXT> (or $) must preceed any information
+; following the phone number to allow matching on length.
+;
+<EXT>=$
+
+;
+; These variables are normally already set up.  If not, we set
+; them to default values here.
+;
+INTL_ACCESS_CODE?=	011		; US standard access code
+LOCAL_COUNTRY_CODE?=	1		; North America
+LOCAL_CITY_CODE?=	612		; Central Minnesota
+
+LPREFIX?=		1		; Default long distance calling prefix
+
+;
+; The RULE variable must be set to the name of the ruleset to use to parse
+; the phone number.  If it is not set yet we set it here.
+;
+RULE?=			Default-Rules	; Default rule to process number with
+
+;
+; A rule set has the form of:
+;
+;	name {
+;		rule
+;		...
+;	}
+;
+; Note that the `{' must be on the same line as the name and the '}'
+; must be on a line of its own.
+; Rules, being newline delimited, must each be on a line of their own.
+;
+
+;
+; Rules are of the form
+;
+;	[label:] pattern actions
+;
+; Rules are processed in sequential order until the number is either
+; rejected or resolved.  A goto action is available for rudimentary
+; flow control.
+;
+; For each rule, if the pattern matches the current number then
+; the actions are processed.  A pattern (after variable expansion)
+; consists of a sequence of characters from the set
+;
+;	#*+0123456789
+;
+; which must match literally to the number.
+; The following wild cards available for matching as well:
+;
+;	[abc]	Matches any character contained within the []
+;	[a-c]	Match any between a and c inclusive. [#-9] matches
+;		any character.
+;	?	Shorthand for [0-9]
+;	$	Matches <EXT> or the end of the number.
+;	-	Matches the null string.  May be used to match any number,
+;		even an empty number.
+;
+; Other than the special case for <EXT>, which acts as the end of the number,
+; all <SPECIAL> sequences are passed through with the preceeding normal
+; character.  That is, the following all match the pattern "123"
+;
+;	123
+;	123<SPECIAL>
+;	<SPECIAL>123
+;	<SPECIAL>1<SPECIAL>2<SPECIAL>3<SPECIAL>
+;
+; When a match is made, the characters at the start of the number which
+; matched the pattern are stripped.  In the action field, the following
+; symbols have special meaning:
+;
+;	&	The characters which matched the pattern
+;	$	The remaining characters (including characters after <EXT>)
+;
+; Normally actions are simply variable assignment (e.g., VARIABLE=value)
+; You should note that the start of your ruleset should reset any values
+; that will be used internally.  NUMBER is always undefined when a ruleset
+; starts.
+;
+; The NUMBER variable must contain the number to dial, including <EXT>
+; and anything following it.
+;
+; Besides varible assigment, the action may be one of the following directives:
+;
+;	goto label		Goes to the specified label
+;	resolved type		The number resolved to the specified type
+;	reject			Reject this number
+;	prepend value		Prepend value to remaining number
+;				This has the appearance of mapping the
+;				the matched pattern to value.
+;
+; By convention the following types should be used:
+;
+;	DIRECT			Everything was after <EXT>
+;	LOCAL			A local call
+;	NATIONAL		A national long distance call
+;	INTL			An international long distance call
+;	ASSISTED-NATIONAL	A national operator assisted call
+;	ASSISTED-INTL		An international operator assisted call
+;
+; If the final rule is is not a directive, the number is assumed to
+; be rejected, though this will generate a warning message.
+;
+
+;
+; These variables contain the return type for international and national
+; calls.  They are prepended with ASSISTED- if the call is determined to
+; be an operator assisted call.
+; They really need to be reset each time you enter a ruleset
+;
+NATIONAL=NATIONAL
+INTL=INTL
+
+;
+; Default Rules
+; Very permissive (everything is a local call except for direct calls)
+;
+Default-Rules {
+	;
+	; If there is no number then this is a DIRECT call
+	;
+	$		NUMBER=$ resolved DIRECT
+	-		NUMBER=$ resolved LOCAL
+}
+
+;
+; Example rules for dialing in the United States, based on the 612 area code.
+; This ruleset is not complete
+;
+US-612-Rules {
+	;
+	; First thing we do is reset known variables to their
+	; default values
+	;
+	-		NATIONAL=NATIONAL INTL=INTL
+	-		CARRIER= PREFIX= IPREFIX= LPREFIX=
+	;
+	; If there is no number then this is a DIRECT call
+	;
+	$		NUMBER=$ resolved DIRECT
+	;
+	; Some sample speed dial calls
+	;
+	#1		NUMBER=5551234 resolved LOCAL
+	#2		NUMBER=16125551234 resolved NATIONAL
+    Top:
+	;
+	; Strip off and save things like "turn off call waiting"
+	;
+	*??		PREFIX={PREFIX}& goto Top
+	11??		PREFIX={PREFIX}& goto Top
+
+	;
+	; Check for long distance carrier access codes.
+	; If you find one it is always long distance
+	;
+	10288		CARRIER=& goto LongDistance	; AT&T
+	10222		CARRIER=& goto LongDistance	; MCI
+	10333		CARRIER=& goto LongDistance	; SPRINT
+	;
+	; You may want to enumurate the long distance companies you
+	; want to allow through, if so, you comment out the next line
+	; which allows all access codes.  There is an unverfied assumption
+	; here that all access codes start with a 2-9.
+	;
+	10[2-9]??	CARRIER=& goto LongDistance
+
+	;
+	; Nothing else starts with 10
+	;
+	10		reject
+
+	;
+	; Need to check 011 before checking ?11
+	;
+	011		IPREFIX=& LPREFIX=1 goto Intl
+
+	;
+	; Reject numbers like 411, 911, etc.
+	;
+	?11		reject
+
+	;
+	; If we have 7 digits left (starting with 2-9) then
+	; we have a local call.  This may not be true in
+	; all areas.  In this case you may need to enumerate all the
+	; local prefixes.  Be careful out there!
+	;
+	[2-9]??????$	NUMBER={PREFIX}&$ resolved LOCAL
+
+	;
+	; Anything else starting with a 2-9 should be a national call
+	;
+	[2-9]		prepend & goto National
+    LongDistance:
+	;
+	; Map the special + character to the default INTL_ACCESS_CODE
+	;
+	+		prepend {INTL_ACCESS_CODE}
+
+	;
+	; International calls can be one of
+	; 011 city number	Direct dial
+	; 01 city number	Operator Assisted call
+	;
+	011		IPREFIX=& LPREFIX=1 goto Intl
+	01		IPREFIX=& LPREFIX=0 INTL=ASSISTED-INTL goto Intl
+
+	;
+	; At this point there chould either be a 0 (assisted)
+	; or a 1 (direct dial).  It is also possible that the
+	; area code is given directly (if a CARRIER was givien)
+	; If no carrier is defined yet, we make it the standard
+	; long distance prefix.
+	;
+	0		LPREFIX=& NATIONAL=ASSISTED-NATIONAL goto National
+	1		LPREFIX=& goto National
+	-		CARRIER?={LPREFIX} goto National
+    Intl:
+	;
+	; No country codes start with a 0
+	;
+	0		reject
+	;
+	; Strip out our own country code
+	;
+	{LOCAL_COUNTRY_CODE}	goto National
+	;
+	; All country codes start with 1-9
+	;
+	[1-9]		NUMBER={PREFIX}{CARRIER}{IPREFIX}&$ resolved {INTL}
+	-		reject
+    National:
+	;
+	; No area codes end in 11
+	;
+	?11		reject
+	;
+	; Reject 900 numbers.
+	900		reject
+	;
+	; You might want to reject 800 and 888 numbers as well.
+	; It appears that you can be charged for using certain 800/888 numbers!
+	; 800		reject
+	; 888		reject
+	;
+	; Reject the 976 prefix, which is the local version of 1-900
+	; numbers
+	;
+	???976		reject
+	;
+	; If we can get here, have 10 digits, starting with a 2-9
+	; then we probably have a long distance number
+	;
+	[2-9]?????????$	NUMBER={PREFIX}{CARRIER}{LPREFIX}&$ resolved {NATIONAL}
+	;
+	; Some areas may allow 7 digit long distance numbers.  If this is
+	; the case, uncomment the next line
+	; [2-9]??????$	NUMBER={PREFIX}{CARRIER}{LPREFIX}&$ resolved {NATIONAL}
+	-		reject
+}
+
+;
+; A very simple set of rules for Japan
+;
+Japan-Rules {
+	;
+	; First thing we do is reset known variables to their default values
+	;
+	-		CARRIER=
+
+	+		prepend {INTL_ACCESS_CODE}
+	001		CARRIER=& goto INTL
+	00447		CARRIER=& goto INTL
+	00		reject
+	0		goto NATIONAL
+	-		goto LOCAL
+    INTL:
+	0		reject
+	{LOCAL_COUNTRY_CODE}	goto NATIONAL
+	[1-9]		NUMBER={CARRIER}&$ resolved INTL
+	-		reject
+    NATIONAL:
+	{LOCAL_CITY_CODE}	goto LOCAL
+	[2-9]		NUMBER=0&$ resolved NATIONAL
+	-		reject
+    LOCAL:
+	[2-9]		NUMBER=&$ resolved LOCAL
+	-		reject
+}

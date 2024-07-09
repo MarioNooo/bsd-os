@@ -1,0 +1,150 @@
+.\"	BSDI getnetgrent.3,v 2.1 1999/09/16 00:37:06 polk Exp
+.\"
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)getnetgrent.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd June 4, 1993
+.Dt GETNETGRENT 3
+.Os
+.Sh NAME
+.Nm getnetgrent ,
+.Nm setnetgrent ,
+.Nm endnetgrent ,
+.Nm innetgr
+.Nd get network group entry
+.Sh SYNOPSIS
+.Fd #include <netdb.h>
+.Ft int
+.Fn getnetgrent "char **host" "char **user" "char **domain"
+.Ft void
+.Fn setnetgrent "const char *netgroup"
+.Ft void
+.Fn endnetgrent void
+.Ft int
+.Fn innetgr "const char *netgroup" "const char *host" "const char *user" "const char *domain"
+.Sh DESCRIPTION
+These functions return information about the system's netgroups,
+based on the information found in the netgroup database file
+.Pa /etc/netgroup .
+The format of this file is described by
+.Xr netgroup 5 .
+.Pp
+The netgroup database defines a set of netgroups,
+each consisting of one or more triples (host, user and domain).
+Any of the three parts of the triple may be specified as a
+.Dq wildcard
+that matches any string.
+.Pp
+The
+.Fn innetgr
+function searches for a netgroup that has a triple consisting of the
+specified host,
+user and domain as a member.
+If one is found, it returns 1, otherwise 0.
+If any of the specified 
+.Sy host ,
+.Sy user ,
+or
+.Sy domain
+arguments are NULL,
+those fields will match any value in the respective field of the netgroup
+member.
+.Pp
+The
+.Fn setnetgrent ,
+.Fn getnetgrent
+and
+.Fn endnetgrent
+are used to step through the list of netgroups.
+.Pp
+The
+.Fn setnetgrent
+function sets the current netgroup to the group specified by
+.Fa netgroup ,
+and the offset within that group to its first member.
+.Pp
+The
+.Fn getnetgrent
+function sets the memory locations referenced by its three arguments to point
+to the triplet values for the next member of the current netgroup.
+If, on return, any of the locations are set to NULL,
+it signifies that the field was specified as a
+.Dq wildcard
+in the netgroup database.
+.Pp
+The
+.Fn endnetgrent
+function terminates the current netgroup.
+If
+.Fn setnetgrent
+is called with a different netgroup than the previous call,
+it implies a call to
+.Fn endnetgrent .
+.Sh RETURN VALUES
+The
+.Fn getnetgrent
+function returns 1 on success,
+and 0 when there are no more net group members to return.
+.Pp
+The
+.Fn innetgr
+function returns 1 for a successful match and 0 otherwise.
+.Sh FILES
+.Bl -tag -width /etc/netgroup -compact
+.It Pa /etc/netgroup
+netgroup database file
+.El
+.Sh SEE ALSO
+.Fn netgroup 5
+.Sh COMPATIBILITY
+The netgroup members have three string fields to maintain compatibility
+with other implementations, however it is not obvious what use the
+.Sy domain
+string has within BSD.
+.Sh BUGS
+The
+.Fn getnetgrent
+function returns pointers to dynamically allocated data areas that are
+free'd when the function
+.Fn endnetgrent
+is called.
+.Pp
+The
+.Fn getnetgrent ,
+.Fn innetgr ,
+.Fn setnetgrent ,
+and
+.Fn endnetgrent
+functions may not be safely called concurrently from multiple threads,
+e.g., the interfaces described by 
+.Fn pthreads 3 .

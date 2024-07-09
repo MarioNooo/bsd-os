@@ -1,0 +1,3 @@
+Disksetup has detected an FDISK table on your disk.  You may either start
+with this FDISK table or create a new FDISK table.  If you create a new
+FDISK table you will lose all information on this disk.

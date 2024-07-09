@@ -1,0 +1,6 @@
+notification of reboot needs to be more robust
+
+	We currently just toss one udp packet at them.
+	We need to retry until success... but as a background task.
+
+use the same transport as we were contacted in.

@@ -1,0 +1,230 @@
+Software Package:       
+	traceroute
+
+Release/Version:
+	1.4a2
+
+Retrieved from:
+	ftp.ee.lbl.gov
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and traceroute@ee.lbl.gov.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added makefile to translate BSDI targets.
+
+Add IPv6 support from NRL.  This is not exactly the NRL code,
+the formatting has been cleaned up and changes have been made
+to compile under BSD/OS.
+
+Document the -a flag, reformat synopsis line to look better.
+
+Bump up default TTL limit to 40, the default of 30 is not
+enough in an increasing amount of cases.
+
+Recognize sparc running BSD/OS:
+Index: config.guess
+===================================================================
+RCS file: /master/contrib/traceroute-1.4a5/config.guess,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -c -2 -r1.1.1.1 -r1.2
+*** config.guess	1998/01/16 21:18:10	1.1.1.1
+--- config.guess	1998/09/24 02:01:24	1.2
+***************
+*** 379,382 ****
+--- 379,385 ----
+  	echo m68k-hp-openbsd${UNAME_RELEASE}
+  	exit 0 ;;
++     sparc*:BSD/OS:*:*)
++ 	echo sparc-unknown-bsdi${UNAME_RELEASE}
++ 	exit 0 ;;
+      i?86:BSD/386:*:* | *:BSD/OS:*:*)
+  	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
+Index: traceroute.c
+===================================================================
+RCS file: /master/contrib/traceroute-1.4a5/traceroute.c,v
+retrieving revision 1.3
+diff -c -r1.3 traceroute.c
+*** traceroute.c	1998/02/27 17:13:59	1.3
+--- traceroute.c	1999/11/01 11:51:20
+***************
+*** 34,40 ****
+      "@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
+  The Regents of the University of California.  All rights reserved.\n";
+  static const char rcsid[] =
+!     "@(#)/master/core_contrib/traceroute/BSDI_CONTRIB,v 1.7 2002/01/29 23:35:16 donn Exp (LBL)";
+  #endif
+  
+  /*
+--- 34,40 ----
+      "@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
+  The Regents of the University of California.  All rights reserved.\n";
+  static const char rcsid[] =
+!     "@(#)/master/core_contrib/traceroute/BSDI_CONTRIB,v 1.7 2002/01/29 23:35:16 donn Exp (LBL)";
+  #endif
+  
+  /*
+***************
+*** 46,52 ****
+   * icmp "time exceeded" reply from a gateway.  We start our probes
+   * with a ttl of one and increase by one until we get an icmp "port
+   * unreachable" (which means we got to "host") or hit a max (which
+!  * defaults to 30 hops & can be changed with the -m flag).  Three
+   * probes (change with -q flag) are sent at each ttl setting and a
+   * line is printed showing the ttl, address of the gateway and
+   * round trip time of each probe.  If the probe answers come from
+--- 46,52 ----
+   * icmp "time exceeded" reply from a gateway.  We start our probes
+   * with a ttl of one and increase by one until we get an icmp "port
+   * unreachable" (which means we got to "host") or hit a max (which
+!  * defaults to 40 hops & can be changed with the -m flag).  Three
+   * probes (change with -q flag) are sent at each ttl setting and a
+   * line is printed showing the ttl, address of the gateway and
+   * round trip time of each probe.  If the probe answers come from
+***************
+*** 63,69 ****
+   * A sample use might be:
+   *
+   *     [yak 71]% traceroute nis.nsf.net.
+!  *     traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 56 byte packet
+   *      1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
+   *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
+   *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
+--- 63,69 ----
+   * A sample use might be:
+   *
+   *     [yak 71]% traceroute nis.nsf.net.
+!  *     traceroute to nis.nsf.net (35.1.1.48), 40 hops max, 56 byte packet
+   *      1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
+   *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
+   *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
+***************
+*** 83,89 ****
+   * A more interesting example is:
+   *
+   *     [yak 72]% traceroute allspice.lcs.mit.edu.
+!  *     traceroute to allspice.lcs.mit.edu (18.26.0.115), 30 hops max
+   *      1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
+   *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  19 ms  19 ms
+   *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  19 ms  19 ms
+--- 83,89 ----
+   * A more interesting example is:
+   *
+   *     [yak 72]% traceroute allspice.lcs.mit.edu.
+!  *     traceroute to allspice.lcs.mit.edu (18.26.0.115), 40 hops max
+   *      1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
+   *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  19 ms  19 ms
+   *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  19 ms  19 ms
+***************
+*** 332,338 ****
+  char *device;
+  
+  int nprobes = 3;
+! int max_ttl = 30;
+  int first_ttl = 1;
+  u_short ident;
+  u_short port = 32768 + 666;	/* start udp dest port # for probe packets */
+--- 332,338 ----
+  char *device;
+  
+  int nprobes = 3;
+! int max_ttl = 40;
+  int first_ttl = 1;
+  u_short ident;
+  u_short port = 32768 + 666;	/* start udp dest port # for probe packets */
+***************
+*** 957,962 ****
+--- 957,985 ----
+  
+  		memcpy(&from, ai->ai_addr, ai->ai_addrlen);
+  
++ #define	ISONLOOPBACKNET(x)	((ntohl(x) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
++ 		switch (from.sa.sa_family) {
++ 		case AF_INET:
++ 			if (ISONLOOPBACKNET(from.sin.sin_addr.s_addr)) {
++ 			    bad_source:
++ 				fprintf(stderr,
++ 				    "%s: source address invalid: %s\n", prog,
++ 				    source);
++ 				exit(1);
++ 			}
++ 			break;
++ 
++ 		case AF_INET6:
++ 			if (IN6_IS_ADDR_LOOPBACK(&from.sin6.sin6_addr) ||
++ 			    (IN6_IS_ADDR_V4MAPPED(&from.sin6.sin6_addr) &&
++ 			     ISONLOOPBACKNET(from.sin6.sin6_addr.s6_addr32[3])))
++ 				goto bad_source;
++ 			break;
++ 
++ 		default:
++ 			goto bad_source;
++ 		}
++ 
+  		freeaddrinfo(ai);
+  	}
+  #else /* INET6 */
+***************
+*** 1348,1353 ****
+--- 1371,1378 ----
+  	wait.tv_sec = tp->tv_sec + waittime;
+  	wait.tv_usec = tp->tv_usec;
+  	(void)gettimeofday(&now, &tz);
++ 	if (wait.tv_sec < now.tv_sec + 2)
++ 		wait.tv_sec = now.tv_sec + 2;
+  	tvsub(&wait, &now);
+  
+  	if (select(sock + 1, &fds, NULL, NULL, &wait) > 0)
+
+Index: traceroute.c
+===================================================================
+RCS file: /master/contrib/traceroute-1.4a5/traceroute.c,v
+retrieving revision 1.5
+diff -r1.5 traceroute.c
+262c262
+< #include "savestr.h"
+---
+> /*#include "savestr.h"*/
+1959c1959
+< 		hi->name = savestr(hostname);
+---
+> 		hi->name = strdup(hostname);
+1980c1980
+< 	hi->name = savestr(hp->h_name);
+---
+> 	hi->name = strdup(hp->h_name);
+
+Extract the GCC version number correctly.
+
+Index: configure
+===================================================================
+RCS file: /master/core_contrib/traceroute-1.4a5/configure,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -c -r1.1 -r1.2
+*** configure	1998/01/16 21:18:10	1.1
+--- configure	2002/01/29 22:00:51	1.2
+***************
+*** 876,882 ****
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    ac_cv_lbl_gcc_vers=`$CC -v 2>&1 | \
+! 			    sed -n -e '$s/.* //' -e '$s/\..*//p'`
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6
+--- 876,882 ----
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    ac_cv_lbl_gcc_vers=`$CC -v 2>&1 | \
+! 			    sed -n -e '$s/^gcc version //' -e '$s/\..*//p'`
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6

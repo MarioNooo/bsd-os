@@ -1,0 +1,209 @@
+.\" Copyright (c) 1994,1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI mkshlib.8,v 2.6 1997/10/31 21:54:31 donn Exp
+.\"
+.Dd October 31, 1997
+.Dt MKSHLIB 8
+.Os BSD/OS
+.Sh NAME
+.Nm mkshlib
+.Nd "create static shared libraries
+.Sh SYNOPSIS
+.Nm mkshlib
+.Op Fl Lv
+.Op Fl l Ns Ar archive
+.Op Fl m Ar shlib.map
+.Ar ...
+.Sh DESCRIPTION
+The
+.Nm mkshlib
+utility builds or rebuilds the standard static shared libraries
+for the system,
+along with their corresponding stub libraries.
+The following flags and arguments are recognized:
+.Bl -tag -width data-address\0\0
+.It Fl L
+Instructs
+.Nm mkshlib
+that the input library archives and
+the output shared libraries and stub libraries are
+.Em local
+to the current directory,
+with generic names (no version numbers).
+This flag is useful in
+.Pa Makefile Ns s .
+.It Fl l Ns Ar archive
+Rebuilds based on the linker name of a library;
+for example,
+.Fl l Ns Ar c
+builds the shared C library
+.Pa /shlib/libc_s.4.0.0 .
+.It Fl m Ar shlib.map
+Specify an alternate
+.Pa shlib.map
+file.
+If the
+.Ar shlib.map
+argument does not contain a
+.Sq Pa /
+character,
+.Nm mkshlib
+will prepend the string
+.Sq Pa /etc/shlib.map.
+to it.
+This option overrides the
+.Ev SHLIB_MAP
+variable
+.Pq see below .
+.It Fl v
+Verify the
+.Xr shlib 8
+commands that would be used to build the libraries,
+but do not execute them.
+This flag is useful for debugging
+.Pa shlib.map
+files.
+.El
+.Pp
+If no archives are specified explicitly,
+.Nm mkshlib
+processes all the archives in the
+.Pa shlib.map
+file.
+For each library that is to be built,
+.Nm mkshlib
+prints the corresponding
+.Xr shlib 8
+command before executing it.
+.Pp
+.Nm Mkshlib
+reads a master list of shared library directives from the
+.Pa shlib.map
+file.
+This file contains one entry for each standard shared library,
+along with other material that is processed by the shell
+.Pq Xr sh 1 .
+Entries are lists of arguments that start with a
+.Li MAP
+command.
+Each entry contains at least 5 whitespace-separated arguments
+following the
+.Li MAP
+command:
+.Bl -tag -width data-address\0\0
+.It Fl l Ns Ar archive
+The linker flag for the given library archive.
+.It Ar text-address
+The address at which the shared library text is loaded,
+given in hexadecimal with no
+.Li 0x
+prefix.
+.It Ar data-address
+The address at which the shared library data is loaded,
+given in hexadecimal with no
+.Li 0x
+prefix.
+.It Ar source
+The pathname of the source archive library
+corresponding to the linker flag.
+.It Ar image
+The pathname of the shared library image
+corresponding to the linker flag and the source archive.
+.El
+.Pp
+Any additional fields are passed as arguments to
+.Xr shlib 8 .
+These fields are typically used to pass
+the linker flag names for shared images that
+are prerequisites for the given shared image.
+For example, the shared compat library
+.Fl l Ns Ar compat
+needs to be linked against the shared C library
+.Fl l Ns Ar c .
+Following shell syntax,
+lines that end in a backslash
+are joined with the following line
+and the backslash is removed.
+.Pp
+Entries in
+.Pa shlib.map
+should be ordered according to their prerequisites;
+for example, the entry for
+.Fl l Ns Ar compat
+should follow the entry for
+.Fl l Ns Ar c .
+.Pp
+Lines other than library entries are passed directly to the shell.
+The usual shell expansions are performed on entries,
+so you can set a shell variable and
+use it in a subsequent library entry.
+.Pp
+Stub archive libraries are created in
+the directory of the source archive library,
+using the name of the shared library image
+suffixed with
+.Sq Pa .a .
+For example, the
+.Fl l Ns Ar compat
+library might have a source archive of
+.Pa /usr/lib/libcompat.a
+and a shared image named
+.Pa /shlib/libcompat_s.4.0.0 ;
+the stub library would thus be
+.Pa /usr/lib/libcompat_s.4.0.0.a .
+.Pp
+.Nm Mkshlib
+looks for library-specific loader files
+in the directory where the archive library is located,
+under the name
+.Pa loader.\& Ns Em library Ns Pa \&.c .
+If it finds no appropriate library-specific loader,
+the generic loader
+.Pa /usr/lib/loader.c
+is used.
+.Sh EXAMPLES
+Here is an excerpt from a sample
+.Pa shlib.map
+file:
+.Bd -literal
+VER=4.0.0
+UL=/usr/lib
+#    -lX       text     data      source archive   shared image
+MAP  -lstdc++  a0410000 a0448000  $UL/libstdc++.a  $UL/libstdc++_s.$VER \e
+        -X stdfiles.o -E -lgcc -lm -lc
+.Ed
+.Sh FILES
+.Bl -tag -width /usr/sbin/shlib\0 -compact
+.It Pa /etc/shlib.map
+default table of shared library information
+.It Pa /usr/sbin/shlib
+utility to build individual shared libraries
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width /usr/sbin/shlib\0 -compact
+.It Ev SHLIB_MAP
+if set, gives an alternate
+.Ar shlib.map
+file
+.El
+.Sh "SEE ALSO
+.Xr shlib 8 ,
+.Xr shlicc 1
+.Sh BUGS
+To create dynamic shared libraries, use
+.Xr ld 1 .
+.Pp
+In the event that you need to build a new shared library
+from scratch without reference to a previous version,
+you must change the name of the current shared library image in
+.Pa shlib.map
+before running
+.Nm mkshlib .
+This new image name will be compiled into future binaries,
+which will not reference the same image file as older binaries.
+Normally, a complete set of compatible libraries is built together
+by changing a single version number variable in the
+.Pa shlib.map
+file.

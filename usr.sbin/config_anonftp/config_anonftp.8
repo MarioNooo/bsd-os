@@ -1,0 +1,74 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI config_anonftp.8,v 2.4 2000/10/02 19:16:26 chrisk Exp
+.\"
+.Dd May 10, 1998
+.Os
+.Dt CONFIG_ANONFTP 8
+.Sh NAME
+.Nm config_anonftp
+.Nd "enable anonymous ftp"
+.Sh SYNOPSIS
+.Nm config_anonftp
+.Sh DESCRIPTION
+The
+.Nm config_anonftp
+program creates an anonymous ftp directory and an account
+for the anonymous ftp user (thus enabling anonymous ftp access).
+.Pp
+The 
+.Nm config_anonftp
+program accepts no arguments.
+.Pp
+You can disable anonymous ftp by removing the 
+.Em ftp
+user from the
+.Xr passwd 5
+file (e.g., with a command like ``rmuser ftp'').
+.Pp
+Setting up an anonymous ftp server is a potentially large security
+hazard, so it should not be taken lightly.  The
+.Nm config_anonftp
+program will set up a simple anonymous ftp configuration with a 
+readable 
+.Pa ~ftp/pub
+directory and a non readable
+.Pa ~ftp/hidden
+directory.  World readable files placed in either directory will 
+be available for anonymous ftp transfers.  Files placed in the 
+`hidden' directory may only be transferred if the names are known
+(or guessed!).
+.Pp
+The
+.Nm config_anonftp
+will also create an
+.Pa ~ftp/etc/pwd.db
+file with no users defined in it.
+This prevents the
+.Xr ftpd 8
+process from generating errors due to the absence of the
+.Pa ~ftp/etc/pwd.db
+file.
+.Pp
+No uploads are permitted in the configuration created by 
+.Nm config_anonftp .
+If you wish to enable uploading, it is recommended that you 
+learn the ins and outs of the fancy anonymous ftp server supplied
+with BSD/OS by reading the 
+.Xr ftpd 8
+and 
+.Xr ftpconfig 5
+man pages.
+.Sh FILES
+.Pa /var/spool/ftp/*
+.Sh SEE ALSO
+.Xr ftpd 8 ,
+.Xr ftpconfig 5 ,
+.Xr adduser 8
+.Sh HISTORY
+The 
+.Nm config_anonftp
+command first appeared in BSD/OS and is currently under development.

@@ -1,0 +1,125 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_np.3,v 1.1 1998/06/02 22:53:36 pjd Exp
+.\" 
+.Dd May 29, 1998
+.Dt PTHREAD_*_NP 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_attr_setsuspendstate_np ,
+.Nm pthread_attr_getsuspendstate_np ,
+.Nm pthread_getstackbase_np ,
+.Nm pthread_getstackpointer_np ,
+.Nm pthread_getstacksize_np ,
+.Nm pthread_resume_np ,
+.Nm pthread_resume_all_np ,
+.Nm pthread_suspend_np ,
+.Nm pthread_suspend_all_np
+.Nd pthread non-POSIX functions
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_attr_setsuspendstate_np "pthread_attr_t *attr" "int suspendstate"
+.Ft int
+.Fn pthread_attr_getsuspendstate_np "pthread_attr_t *attr" "int *suspendstate"
+.Ft int
+.Fn pthread_getstackbase_np "pthread_t *thread" "int *stackbase"
+.Ft int
+.Fn pthread_getstackpointer_np "pthread_t *thread" "int *stackpointer"
+.Ft int
+.Fn pthread_getstacksize_np "pthread_t *thread" "int *stacksize"
+.Ft int
+.Fn pthread_resume_np "pthread_t *thread"
+.Ft int
+.Fn pthread_resume_all_np
+.Ft int
+.Fn pthread_suspend_np "pthread_t *thread"
+.Ft int
+.Fn pthread_suspend_all_np
+.Sh DESCRIPTION
+.Pp
+These functions are NOT defined by 
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_attr_getsuspendstate_np
+and
+.Fn pthread_attr_setsuspendstate_np
+functions get and set the PTHREAD_CREATE_SUSPENDED thread creation attribute
+in
+.Fa attr .
+.Pp
+The
+.Fn pthread_getstackbase_np
+function gets the value of stackbase for the thread specified by
+.Fa thread .
+.Pp
+The
+.Fn pthread_getstackpointer_np
+function gets the value of the stack pointer for the thread specified by
+.Fa thread .
+.Pp
+The
+.Fn pthread_getstacksize_np
+function get the stack size for the thread specified by
+.Fa thread .
+.Pp
+The
+.Fn pthread_suspend_np
+and
+.Fn pthread_resume_np
+functions suspend and resume the execution of the thread specified by
+.Fa thread .
+.Pp
+The
+.Fn pthread_suspend_all_np
+and
+.Fn pthread_resume_all_np
+functions suspend and resume the execution of all threads except the current
+thread.
+.Sh RETURN VALUES
+Upon successful completion the
+.Nm pthread_attr_setsuspendstate_np ,
+.Nm pthread_attr_getsuspendstate_np ,
+.Nm pthread_getstackbase_np ,
+.Nm pthread_getstackpointer_np ,
+.Nm pthread_getstacksize_np ,
+.Nm pthread_resume_np ,
+.Nm pthread_resume_all_np ,
+.Nm pthread_suspend_np 
+and
+.Nm pthread_suspend_all_np
+functions all return 0.  A non-zero result indicates that an error occurred.
+.Sh ERRORS
+The
+.Nm pthread_attr_setsuspendstate_np ,
+.Nm pthread_attr_getsuspendstate_np ,
+.Nm pthread_getstackbase_np ,
+.Nm pthread_getstackpointer_np ,
+.Nm pthread_getstacksize_np ,
+.Nm pthread_resume_np ,
+.Nm pthread_resume_all_np ,
+.Nm pthread_suspend_np 
+and
+.Nm pthread_suspend_all_np
+functions may fail and return the following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of a function argument is invalid.
+.El
+.Sh HISTORY
+The
+.Nm pthread_attr_setsuspendstate_np ,
+.Nm pthread_attr_getsuspendstate_np ,
+.Nm pthread_getstackbase_np ,
+.Nm pthread_getstackpointer_np ,
+.Nm pthread_getstacksize_np ,
+.Nm pthread_resume_np ,
+.Nm pthread_resume_all_np ,
+.Nm pthread_suspend_np 
+and
+.Nm pthread_suspend_all_np
+functions first appeared in BSD/OS 4.0.

@@ -1,0 +1,4 @@
+Makefile
+t_sockaddr
+.libs
+t_sockaddr.lo

@@ -1,0 +1,124 @@
+#! /bin/sh
+#
+# Copyright (c) 1994,1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI mkshlib,v 2.8 1998/10/02 22:05:39 jch Exp
+#
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+#
+# Build the standard shared libraries,
+# as defined in the shlib.map file.
+#
+
+SHLIB_MAP="${SHLIB_MAP:-/etc/shlib.map}"
+VERBOSE=no
+LOCAL=no
+
+LIBS=
+while [ $# -gt 0 ]
+do
+	case "$1" in
+	-L)
+		LOCAL=yes
+		;;
+	-m*)
+		shift
+		SHLIB_MAP="$1"
+		;;
+	-v*)
+		VERBOSE=yes
+		;;
+	*)
+		LIBS="$LIBS $1"
+		;;
+	esac
+	shift
+done
+
+case "$SHLIB_MAP" in
+*/*)
+	;;
+*)
+	[ -f $SHLIB_MAP ] || SHLIB_MAP="/etc/shlib.map.$SHLIB_MAP"
+	;;
+esac
+
+if [ ! -r $SHLIB_MAP ]
+then
+	echo "mkshlib: can't open $SHLIB_MAP"
+	exit 1
+fi
+
+(
+	cat << EOF
+LIBS='$LIBS'
+SHLIB_MAP='$SHLIB_MAP'
+VERBOSE='$VERBOSE'
+LOCAL='$LOCAL'
+EOF
+	cat << 'EOF'
+
+MAP() {
+	if [ $# -lt 5 ]
+	then
+		echo "mkshlib: $SHLIB_MAP line for $1 has too few fields"
+		return
+	fi
+
+	FOUND=
+	for L in $LIBS
+	do
+		[ "X$L" = "X$1" ] && FOUND=$L
+	done
+	[ -z "$FOUND" ] && [ -n "$LIBS" ] && return
+
+	HANDLE="$1"
+	TADDR="$2"
+	DADDR="$3"
+	SOURCE="$4"
+	SHLIB="$5"
+	shift 5
+
+	LIB=`dirname $SOURCE`
+	STUB=$LIB/`basename $SHLIB`.a
+	BASE=`basename $SOURCE .a`
+
+	CFLAG=
+	EFLAG=
+	IFLAG=
+	BFLAG=
+
+	[ -f $LIB/$BASE.const ] && CFLAG="-c $LIB/$BASE.const"
+	[ -f $LIB/$BASE.except ] && EFLAG="-e $LIB/$BASE.except"
+	[ -f $SHLIB ] && IFLAG="-i $SHLIB"
+	[ -f $LIB/loader.$BASE.c ] && BFLAG="-b $LIB/loader.$BASE.c"
+
+	[ $LOCAL = yes ] && {
+		SOURCE=$(basename "$SOURCE")
+		SHLIB=$(basename "$SOURCE" .a)_s
+		STUB=${SHLIB}.a
+	}
+
+	if [ ! -r $SOURCE ]
+	then
+		echo "mkshlib: $SOURCE missing or unreadable"
+		return
+	fi
+
+	echo shlib -m "$SHLIB_MAP" -t "$TADDR" -d "$DADDR" -s "$STUB" \
+	    -n "$SHLIB" $CFLAG $EFLAG $IFLAG $BFLAG "$@" "$SOURCE"
+	[ $VERBOSE = no ] && \
+	    shlib -m "$SHLIB_MAP" -t "$TADDR" -d "$DADDR" -s "$STUB" \
+	    -n "$SHLIB" $CFLAG $EFLAG $IFLAG $BFLAG "$@" "$SOURCE"
+}
+
+EOF
+	sed -e 's/^-/MAP -/' "$SHLIB_MAP"
+) |
+	sh
+
+exit 0

@@ -1,0 +1,150 @@
+.Dd "January 30, 2001"
+.Dt AES
+.Os BSD 4
+.Sh NAME
+.Nm makeKey ,
+.Nm cipherInit ,
+.Nm blockEncrypt ,
+.Nm blockDecrypt
+.Nd Advanced Encryption Standard interface.
+.Sh SYNOPSIS
+.Fd #include <aes.h>
+.Ft int
+.Fn makeKey "keyInstance *key" "BYTE direction" "int keyLen" "char *keyMaterial"
+.Ft int
+.Fn cipherInit "cipherInstance *cipher" "BYTE mode" "char *IV"
+.Ft int
+.Fn blockEncrypt "cipherInstance *cipher" "keyInstanct *key" "BYTE *input" "int inputLen" "BYTE *output"
+.Ft int
+.Fn blockDecrypt "cipherInstance *cipher" "keyInstanct *key" "BYTE *input" "int inputLen" "BYTE *output"
+.Sh DESCRIPTION
+The
+.Nm aes
+functions provide an interface to the NIST Advanced Encryption Standard (AES)
+Cryptographic API Specification for ANSI C.
+.Pp
+The
+.Fn makeKey
+function fills in a key instance pointed to by
+.Ar key .
+The
+.Ar direction
+must be
+.Ev DIR_ENCRYPT
+or
+.Ev DIR_DECRYPT
+and defines the direction (encryption or decryption) in which this key will
+be used.
+The key is 
+.Ar keyLen
+bits long, the values of
+.Ev 128 ,
+.Ev 192 ,
+and
+.Ev 256
+are supported.
+The key is passed in as ASCII HEX and must resolve to
+.Ar keyLen
+bits in length.
+.Pp
+The
+.Fn cipherInit
+function defines a cipher context to be used in either the
+.Fn blockEncrypt
+or
+.Fn blockDecrypt
+functions (described below).
+The context is stored in
+.Ar cipher ,
+which should be preloaded with any algorithmic specific values prior
+to calling
+.Fn cipherInit .
+If no algorithmic values are to be preloaded the data pointed to by
+.Ar cipher
+should first be zeroed out before being passed to
+.Fn cipherInit .
+The
+.Ar mode
+defines the operation mode of the cipher.
+The 
+.Ev MODE_ECB ,
+.Ev MODE_CBC ,
+and
+.Ev MODE_CFB1
+are supported (Electronic Code Book, Cipher Block Chaining and 1 bit Cipher Feed Back).
+The initialization vector, pointed to by
+.Ar IV ,
+is in ASCII HEX format and should represent
+.Ev MAX_IV_SIZE
+bytes of data (the array will be
+.Ev MAX_IV_SIZE
+* 2 bytes).
+.Pp
+The
+.Fn blockEncrypt
+and
+.Fn blockDecrypt
+functions encrypt or decrypt one or more input blocks, pointed to by
+.Ar input
+and place the resulting blocks in the space pointed to by
+.Ar output .
+The
+.Ar input
+is a binary stream of
+.Ar inputLen
+bits.
+The data pointed to by
+.Ar output
+must be at least
+.Ar inputLen
+bits in length.
+The type of encryption/decryption is defined by the
+.Ar cipher
+context.
+.The
+.Ar key
+argument defines the encryption key to be used.
+Both the
+.Fn makeKey
+and
+.Fn cipherInit
+functions must be called prior to calling
+.Fn blockEncrypt
+or
+.Fn blockDecrypt .
+.Sh RETURN VALUES
+The
+.Fn makeKey
+and
+.Fn cipherInit
+functions return the value
+.Ev TRUE on success.
+The
+.Fn blockEncrypt
+and
+.Fn blockDecrypt
+functions return the number of bits encrypted or decrypted.
+On error all functions return one of the following values:
+.Bl -tag -width [BAD_CIPHER_INSTANCE]
+.It Bq Er BAD_CIPHER_INSTANCE
+Bad cipher instance (e.g., not initialized).
+.It Bq Er BAD_CIPHER_MODE
+Unknown cipher mode.
+.It Bq Er BAD_CIPHER_STATE
+Bad cipher state (e.g., not initialized).
+.It Bq Er BAD_DATA
+Data contents are invalid (e.g., invalid padding)
+.It Bq Er BAD_KEY_DIR
+Direction is invalid.
+.It Bq Er BAD_KEY_INSTANCE
+The key passed is not valid.
+.It Bq Er BAD_KEY_MAT
+The key material (e.g., wrong length).
+.It Bq Er BAD_KEY_MATERIAL
+The direction set in the key is does not correspond with the call to
+.Fn encryptBlock
+/
+.Fn decryptBlock .
+.El
+.Sh SEE ALSO
+.Sh HISTORY

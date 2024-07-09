@@ -1,0 +1,167 @@
+ld.so (1.9.5-1) unstable; urgency=low
+
+  * Fixed a bug in ldd where ld-linux.so.2 was not called
+    correctly when run on shared libraries.
+  * Fixed a problem in the previous version where some
+    Makefiles were not architecture independent.
+
+ -- David Engel <david@sw.ods.com>  Tue,  5 Aug 1997 20:13:22 -0500
+
+ld.so (1.9.4-1) unstable; urgency=high
+
+  * Fixed a bug in ld.so introduced in the previous version
+    which broke preloads.
+  * Turned a.out support back on by default, at least for the
+    time being.  There are no promises to keep it.
+
+ -- David Engel <david@sw.ods.com>  Sat, 26 Jul 1997 14:21:23 -0500
+
+ld.so (1.9.3-1) unstable; urgency=high
+
+  * Fixed buffer overflow bugs in ld-linux.so and ld.so.
+  * Changed the README file a little to clarify a couple of
+    things.
+  * Changed ldconfig to chroot to the specified directory when
+    the new -r option is used (Bob Tinsley).
+
+ -- David Engel <david@sw.ods.com>  Mon, 21 Jul 1997 15:55:13 -0500
+
+ld.so (1.9.2-3) unstable; urgency=low
+
+  * Added a warning in the description not to downgrade to 
+    version 1.8.x or earlier.
+  * Changed /etc/ld.so.conf to not be a dpkg "conf" file 
+    (Bug#9722).
+  * Fixed a typo in debian/rules which affected m68k builds 
+    (Bug#10025).
+
+ -- David Engel <david@sw.ods.com>  Tue, 27 May 1997 10:27:48 -0500
+
+ld.so (1.9.2-2) unstable; urgency=low
+
+  * Added a libdl1-altdev package which can coexist with the
+    libc6-dev package.
+
+ -- David Engel <david@sw.ods.com>  Fri, 2 May 1997 21:45:40 -0500
+
+ld.so (1.9.2-1) unstable; urgency=low
+
+  * Removed /usr/local/lib from the default /etc/ld.so.conf
+    for Debian (Bug#8181).
+  * Changed ldconfig to be 64-bit clean (H.J. Lu).
+
+ -- David Engel <david@sw.ods.com>  Tue, 22 Apr 1997 19:56:26 -0500
+
+ld.so (1.9.1-1) unstable; urgency=low
+
+  * Changed ldconfig to try to determine which libc a
+    library is for even if it doesn't have an soname.
+  * Fixed a bug in ldconfig where an older library using
+    the glibc naming convention would be used instead of
+    a newer library.
+  * Changed to ld-linux.so and libdl.so to not require the 
+    libc5 headers in order to compile.
+  * Changed ldconfig and ldd to be compilable with either
+    libc5 or libc6.
+
+ -- David Engel <david@sw.ods.com>  Tue, 18 Mar 1997 20:46:50 -0600
+
+ld.so (1.9.0-1) unstable; urgency=low
+
+  * Changed to not build the old, a.out dynamic loader by
+    default.
+  * Changed instldso.sh to require the --force option to
+    make sure users read the README file.
+  * Changed instldso.sh to not install the libdl.so
+    development files unless the --devfiles option is used.
+  * Changed instldso.sh to not strip binaries and libraries
+    if the --no-strip option is used.
+  * Changed the Debian packaging to put the development files 
+    which conflict with glibc in a new libdl1-dev package.
+  * Changed ldd to use the glibc dynamic linker, if it is
+    available, when run on a shared library.
+  * Changed ld-linux.so to print the load addresses of
+    libraries, ala glibc, when run by ldd.
+  * Changed ld-linux.so to allow the libraries listed in 
+    LD_PRELOAD to be separated by white space in addition to 
+    colons.
+  * Changed ld-linux.so to load the libraries listed in 
+    LD_PRELOAD for setu/gid programs as long as they can be 
+    loaded securely.
+  * Changed ldconfig to update the symlinks for the dynamic
+    linkers.
+  * Changed ldconfig to try to determine if an ELF library is
+    intended for libc5 or libc6 and save the infomation in the
+    cache.  The mechanism used is rather simplistic and may
+    need to be enhanced.
+  * Changed ldconfig to print the type of ELF library when
+    printing the cache.
+  * Changed ld-linux.so to only load ELF shared libraries for
+    use with libc5 or an unknown libc.
+
+ -- David Engel <david@sw.ods.com>  Thu, 6 Mar 1997 20:25:22 -0600
+
+ld.so (1.8.10-2) unstable; urgency=low
+
+  * Changed the shlibs file so other packages would depend on ldso
+    instead of libdl1.
+
+ -- David Engel <david@sw.ods.com>  Mon, 3 Mar 1997 11:40:34 -0600
+
+ld.so (1.8.10-1) stable unstable; urgency=low
+
+  * Fixed a bug in ldconfig where a symlink could be used
+    instead of a regular file.
+
+  * Fixed a Debian packaging problem for the sparc 
+    architecture.
+
+ -- David Engel <david@debian.org>  Tue, 18 Feb 1997 20:49:23 -0600
+
+ld.so (1.8.9-1) unstable; urgency=low
+
+  * Changed ldconfig to only cache the symlinks it creates.
+    This make the behavior of the dynamic linkers consistent
+     with how they would behave if a cache was not used.
+
+  * Changed ldconfig to cache the symlinks that it finds but
+    use the name of the symlink as the soname instead of the 
+    actual soname.
+
+ -- David Engel <david@debian.org>  Sun, 9 Feb 1997 00:32:25 -0600
+
+ld.so (1.8.8-1) stable unstable; urgency=low
+
+  * Minor documentation updates to reflect recent changes.
+
+  * Changed ld.so and ld-linux.so to perform more complete
+    validation on ld.so.cache before using it.
+
+  * Changed ldconfig to accept libraries with inconsistent
+    sonames since glibc is going to use them.  A warning is
+    still printed in debug mode.
+
+  * Changed the install script to not strip _dl_debug_state
+    from ld-linux.so since gdb needs it.
+
+  * More sparc fixes (Derrick Brashear).
+
+  * Changed ldconfig to not issue a warning when a linker
+    script disguised as a shared library is found.
+
+  * Fixed a bug in ld-linux.so where some registers were 
+    not preserved on the first call to a function causing 
+    problems for non-C-like languages (Tim Renouf).
+
+  * Fixed a bug in ld-linux.so where global variables were 
+    not always mapped correctly across dynamically loaded 
+    libraries (Mikihiko Nakao).
+
+  * Converted to new Debian source packaging format (Shaya
+    Potter).
+
+ -- David Engel <david@debian.org>  Sat, 25 Jan 1997 23:30:10 -0600
+
+Local variables:
+mode: debian-changelog
+End:

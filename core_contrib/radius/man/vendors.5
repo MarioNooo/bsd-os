@@ -1,0 +1,108 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH VENDORS 5 "29 July 1996"
+.SH NAME
+vendors \- \s-2RADIUS\s+2 vendor to vendor code mapping file
+.SH SYNOPSIS
+.B ../raddb/vendors
+.SH DESCRIPTION
+.LP
+The
+.I vendors
+file resides in the \s-2RADIUS\s+2 configuration directory (named
+.I .../raddb
+somewhere).  It contains a list of zero or more vendor entries.
+Each vendor entry contains a vendor name and vendor number.
+The vendor numbers are \s-2SMI\s+2 Network Management Private Enterprise Code
+numbers as described in the \s-2RADIUS\s+2 \s-2DRAFT\s+2 \s-2RFC\s+2 and
+\s-2RFC 1700\s+2.
+Each entry optionally contains an interim way of mapping external (with
+respect to the \s-2RADIUS\s+2 server) attribute numbers to internal (with
+respect to the \s-2RADIUS\s+2 server) vendor specific attribute.
+This optional mapping is used both on inbound and outbound, with
+respect to the server, \s-2RADIUS\s+2 requests.
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+The file contains a line of information for each vendor.
+Each line has the following form:
+.IP
+.I "[ <attribute-string> <value-string> ] <vendor-code> <vendor-name>"
+.RS
+.IP
+.I "[ ( [ <standard-value> <vendor-specific-value> ... ] ) ]"
+.RE
+.LP
+For example:
+.IP
+.ft B
+61 Merit ( 211 211 213 213 )
+.LP
+The
+.I <attribute-string>
+and
+.I <value-string>
+are optional strings which default to "Attribute" and "Value" when
+not specified.
+Non-default strings may be used to specify vendor specific attributes and
+values in the dictionary file.
+.LP
+The
+.I <vendor-code>
+field is from the Assigned Numbers (\s-2IANA\s+2) \s-2RFC 1700\s+2.
+.LP
+The
+.I <vendor-name>
+field is the vendor name.
+The vendor name may appear in the
+.I clients
+file as a
+.B type=vendor:nas
+entry or in vendor specific attribute names in the
+.I dictionary
+and
+.I users
+files.
+.LP
+The
+.I <standard-value>
+field is the "external" or "common" attribute number as seen in \s-2RADIUS\s+2
+requests on the network.
+.LP
+The
+.I <vendor-specific-value>
+field is the "internal" attribute number.
+.LP
+These last two optional fields may be repeated an optional number
+of times within the optional parenthesis.
+These numbers are used to map attributes from the common attribute space
+defined in the \s-2DRAFT\s+2 \s-2RADIUS\s+2 \s-2RFC\s+2 to internal
+non-conflicting vendor specific attributes.
+Some vendors currently assign vendor specific attributes in the standard
+attribute address space.
+As you can see, this is somewhat of a kludge in order to get around this
+problem.
+.LP
+The
+.I vendors
+file is read by
+.B radiusd
+upon startup, or when a \s-2HUP\s+2 signal is received by a running
+\s-2RADIUS\s+2 server.
+The \s-2RADIUS\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+This file is maintained by the \s-2RADIUS\s+2 administrator using a text editor.
+.SH FILES
+.PD 0
+.TP
+.I ../raddb/clients
+.TP
+.I ../raddb/users
+.PD
+.SH "SEE ALSO"
+.BR clients (5),
+.BR dictionary (5).
+.BR users (5)

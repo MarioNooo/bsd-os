@@ -1,0 +1,33 @@
+.\" Copyright (c) 1995 Berkeley Software Design Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI chkconfig.8,v 2.1 1995/08/01 21:13:04 bostic Exp
+.Dd August 1, 1995
+.Dt CHKCONFIG 8
+.Os
+.Sh NAME
+.Nm chkconfig
+.Nd check system configuration
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+The
+.Nm chkconfig
+program compares the current system configuration
+(as reported during the most recent reboot)
+with a previous stored configuration.
+Any significant differences are displayed and logged,
+and the new configuration is stored for future comparison.
+.Sh FILES
+.Bl -tag -width /var/db/dmesg.bootXX
+.It /var/db/dmesg.boot
+stored configuration
+.El
+.Sh SEE ALSO
+.Xr diff 1 ,
+.Xr config 8
+.\" .Sh HISTORY
+.\" The
+.\" .Nm
+.\" program appeared in BSD/OS 1.0.

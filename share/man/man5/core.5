@@ -1,0 +1,137 @@
+.\"	BSDI core.5,v 2.4 1997/12/14 23:44:57 donn Exp
+.Dd December 13, 1997
+.Dt CORE 5
+.Os
+.Sh NAME
+.Nm core
+.Nd "file format of a core dump
+.Sh SYNOPSIS
+.Fd #include <sys/elf.h>
+.Sh DESCRIPTION
+A
+.Em core file
+or
+.Em core dump
+contains the contents of the writable memory segments
+of a previously running program.
+Core dumps are ELF binary files
+.Pq see Xr elf 5 .
+.Pp
+The system will terminate a program
+and create a core dump in certain situations.
+The system or another process may send a signal
+.Pq see Xr sigaction 2
+to a given process to notify it of a condition,
+and if the given process does not arrange to ignore, block or catch the signal,
+the system may terminate the process and create a core dump.
+Only certain signals will produce a core dump.
+The system will send some of these signals
+automatically if it detects a serious error in the process.
+These errors include references to unallocated memory,
+attempts to write to write-protected memory,
+attempts to execute privileged instructions or
+division by zero.
+A user may also send signals to create core dumps.
+The
+.Dv SIGQUIT
+signal is a software signal that can be generated at the keyboard
+.Pq see Xr termios 4 .
+If a process calls the
+.Xr abort 3
+function, the system will send it a
+.Dv SIGABRT
+signal.
+There are restrictions on sending signals to other processes
+that prevent unauthorized users from terminating processes
+.Pq see Xr kill 2 .
+A process may choose to ignore, block or catch
+signals that cause core dumps.
+.Pp
+When the system automatically creates a core dump,
+it writes the information to a file named
+.Ar program Ns Pa \&.core
+in the process's current directory, where
+.Ar program
+is the name of the program.
+Core files have mode
+.Li u=rw ;
+only the process's owner may read or write a core file.
+.Pp
+The system will refuse to create an automatic core dump
+in certain conditions:
+.Bl -bullet -compact -offset indent
+.It
+if the process has had setuid or setgid privileges
+and isn't currently running with superuser privileges
+.It
+if the process does not have permission to create
+a file in its current directory
+.It
+if a file with the same name as the core dump already exists,
+and the process's owner doesn't own the file
+.It
+if the file exists,
+and it is not a regular file
+.It
+if the file exists,
+and it has hard links (its link count is greater than one)
+.It
+if the file exists,
+and it is readable or writable by group or other
+.It
+if the process's core file size limit is zero
+.Pq see Xr setrlimit 2
+.El
+The system refuses to follow a symlink to a core file
+if the process currently has setuid or setgid privileges.
+.Pp
+A process may also request a core dump without termination
+.Pq see Xr fcore 2 .
+Such core dumps contain snapshots of a process's running state.
+.Pp
+A core dump is an ELF binary file with type
+.Dv ET_CORE .
+It contains a program header table but no section header table.
+The program header table contains a note segment
+plus one segment for each writable memory segment
+in the process's virtual memory.
+.Pp
+The note segment contains BSD/OS-specific and architecture-specific
+.Em core notes
+that describe process state other than memory.
+The core notes each have the name
+.Li BSD/OS .
+The note with type 1
+has a descriptor section containing register state.
+On the i386 architecture, it holds
+17 32-bit slots for the process's general registers in trap frame format
+.Pq see Aq Pa machine/reg.h
+plus an integer containing the terminating signal (if any).
+On the SPARC,
+it holds both general registers and floating point registers.
+Note that the system performs a register window flush on the SPARC
+immediately before creating a core dump.
+The note with type 2
+contains a
+.Fa pcb
+structure
+.Pq see Aq Pa machine/pcb.h .
+This structure contains the floating point registers on the i386.
+The note with type 3 contains a
+.Fa kinfo_proc
+structure
+.Pq see Aq Pa sys/sysctl.h .
+.Sh SEE ALSO
+.Xr gcore 1 ,
+.Xr gdb 1 ,
+.Xr fcore 2 ,
+.Xr setrlimit 2 ,
+.Xr sigaction 2 ,
+.Xr elf 5
+.Sh HISTORY
+ELF core files originated in Unix System V.
+The BSD/OS-specific notes first appeared in BSD/OS 4.0.
+.Sh BUGS
+If the core dump file size limit is greater than zero but not unlimited,
+the system will create zero-length core dump files
+when the core dump size would exceed the limit.

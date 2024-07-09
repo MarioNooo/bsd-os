@@ -1,0 +1,409 @@
+This is Info file ld.so.info, produced by Makeinfo version 1.67 from
+the input file ld.so.texi.
+
+   This file documents the dynamic-link support libraries and utilities
+for the Linux OS, version 1.8.1.
+
+   Copyright 1996 Michael Deutschmann
+
+   This document is subject to the GNU General Public License as
+published by the Free Software foundation, version 2 or later (your
+choice).
+
+   Note: The software described in this document is under a different
+copyright and license.
+
+
+File: ld.so.info,  Node: Top,  Next: intro,  Up: (dir)
+
+
+
+   The `ld.so' module provides dynamic linked library support in Linux.
+This file documents `ld.so' and its companion software.
+
+* Menu:
+
+* intro::	Introduction
+
+* ld.so::	The dynamic linker core program
+* ldd::		A utility to print out dependencies
+* ldconfig::	A utility to maintain the cache and symlinks
+* libdl::	Manual dynamic linking library
+
+
+File: ld.so.info,  Node: intro,  Next: ld.so,  Prev: Top,  Up: Top
+
+Introduction
+************
+
+   The `ld.so' suite contains special files and utilities needed for
+linux to handle "dynamic libraries".
+
+   Ordinary static libraries (`lib*.a' files) are included into
+executables that use their functions. A file that only uses static
+libraries needs less intelligence to load, but takes up more space. If
+many executables use the same library, there can be much wastage of
+storage space, since multiple copies of the library functions are
+scattered across the executables.  However, static libraries are easier
+to make.
+
+   Dynamic libraries (`lib*.so*' files) are not copied into executables
+-- the executable is written in such a way that it will automatically
+load the libraries. In linux, the executable will first load the
+special library `ld.so' or `ld-linux.so', which contains the
+intelligence to load further dynamic libraries. Since multiple files
+end up getting executable data from the same file, dynamic libraries
+are also known as shared libraries.
+
+   Linux executables come in two flavors, ELF and a.out.
+
+   a.out is the original executable format used by Linux. It has
+somewhat less overhead than ELF. However creating shared libraries for
+a.out is *very* involved, and each a.out shared library must be
+explicitly registered.
+
+   ELF is a more recent format, which supports a much simpler method of
+creating libraries. ELF libraries may also be linked manually (*note
+libdl::.).
+
+   Since many library authors prefer ELF and no longer release shared
+a.out libraries, a.out is moribund on Linux. This version of the
+`ld.so' can be compiled to support only ELF, or to support both
+formats. (The last release of ld.so to support a.out alone was 1.8.0.)
+
+
+File: ld.so.info,  Node: ld.so,  Next: ldd,  Prev: intro,  Up: Top
+
+`ld.so': Dynamic linker core
+****************************
+
+   `ld.so' works behind the scenes to handle dynamic libraries in Linux.
+Users will almost never have to deal with it directly, but in special
+cases one can send instructions to it through environment variables.
+Also, if something is wrong with your libraries (usually an incorrect
+version) ld.so will give error messages.
+
+   Actually `ld.so' is the a.out linker. The new ELF executables are
+handled by a related program `ld-linux.so'.
+
+* Menu:
+
+* files::	Configuration files used by the suite
+* environment::	Environment settings that tweak `ld.so'
+* errors::	Complaints `ld.so' might make
+
+
+File: ld.so.info,  Node: files,  Next: environment,  Up: ld.so
+
+Configuration Files
+===================
+
+`/etc/ld.so.cache'
+     A file created by `ldconfig' and used to speed linking. It's
+     structure is private to the suite.
+
+`/etc/ld.so.conf'
+     A simple list of directories to scan for libraries, in addition to
+     `/usr/lib' and `/lib', which are hardwired. It may contain
+     comments started with a `#'.
+
+`/etc/ld.so.preload'
+     A list of libraries to preload. This allows preloading libraries
+     for setuid/setgid executables securely. It may contain comments.
+
+
+File: ld.so.info,  Node: environment,  Next: errors,  Prev: files,  Up: ld.so
+
+Environment Variables
+=====================
+
+`LD_AOUT_LIBRARY_PATH'
+`LD_LIBRARY_PATH'
+     These variables supply a library path for finding dynamic
+     libraries, in the standard colon seperated format. These variables
+     are ignored when executing setuid/setgid programs, because
+     otherwise they would be a security hazard.  `ld.so' will use
+     `LD_AOUT_LIBRARY_PATH' and `ld-linux.so' will use
+     `LD_LIBRARY_PATH'.
+
+`LD_AOUT_PRELOAD'
+`LD_PRELOAD'
+     These variables allow an extra library not specified in the
+     executable to be loaded. Generally this is only useful if you want
+     to override a function.  These are also ignored when running
+     setuid/setgid executables. `ld.so' will use `LD_AOUT_PRELOAD' and
+     `ld-linux.so' will use `LD_PRELOAD'.
+
+`LD_NOWARN'
+     If non-empty, errors about incompatible minor revisions are
+     suppressed.
+
+`LD_KEEPDIR'
+     If non-empty, allow executables to specify absolute library names.
+     This option is deprecated.
+
+
+File: ld.so.info,  Node: errors,  Prev: environment,  Up: ld.so
+
+Errors
+======
+
+`Can't find library LIBRARY'
+     The executable required a dynamically linked library that ld.so
+     cannot find.  Your symbolic links may be not set right, or you may
+     have not installed a library needed by the program.
+
+`Can't load library LIBRARY'
+     The library is corrupt.
+
+`Incompatible library LIBRARY'
+`Require major version X and found Y'
+     Your version of the library is incompatible with the executable.
+     Recompiling the executable, or upgrading the library will fix the
+     problem.
+
+`using incompatible library LIBRARY'
+`Desire minor version >= X and found Y.'
+     Your version of the library is older than that expected by the
+     executable, but not so old that the library interface has
+     radically changed, so the linker will attempt to run anyway. There
+     is a chance that it will work, but you should upgrade the library
+     or recompile the software. The environment variable `LD_NOWARN'
+     can be used to supress this message.
+
+`too many directories in library path'
+     The linker only supports up to 32 library directories. You have
+     too many.
+
+`dynamic linker error in BLAH'
+     The linker is having trouble handling a binary - it is probably
+     corrupt.
+
+`can't map cache file CACHE-FILE'
+`cache file CACHE-FILE BLAH'
+     The linker cache file (generally `/etc/ld.so.cache') is corrupt or
+     non-existent. These errors can be ignored, and can be prevented by
+     regenerating the cache file with `ldconfig'.
+
+
+File: ld.so.info,  Node: ldd,  Next: ldconfig,  Prev: ld.so,  Up: Top
+
+`ldd': Dependency scanner
+*************************
+
+   `ldd' is a utility that prints out the dynamic libraries that an
+executable is linked to.
+
+   Actually `ldd' works by signalling ld.so to print the dependencies.
+For a.out executables this is done by starting the executable with
+`argc' equal to 0. The linker detects this and prints the dependencies.
+(This can cause problems with *very* old binaries, which would run as
+normal only with an inappropriate `argc'.)
+
+   For ELF executables, special environment variables are used to tell
+the linker to print the dependencies.
+
+   `ldd' has a few options:
+
+`-v'
+     Print the version number of `ldd' itself
+
+`-V'
+     Print the version number of the dynamic linker
+
+`-d'
+     Report missing functions. This is only supported for ELF
+     executables.
+
+`-r'
+     Report missing objects. This is also only available for ELF
+     executables.
+
+
+File: ld.so.info,  Node: ldconfig,  Next: libdl,  Prev: ldd,  Up: Top
+
+`ldconfig': Setup program
+*************************
+
+   This utility is used by the system administrator to automatically
+set up symbolic links needed by the libraries, and also to set up the
+cache file.
+
+   `ldconfig' is run after new dynamic libraries are installed, and if
+the cache file or links are damaged. It is also run when upgrading the
+`ld.so' suite itself.
+
+   The `/lib' and `/usr/lib' directories, and any listed in the file
+`/etc/ld.so.conf' are scanned by default unless `-n' is used.
+Additional directories may be specified on the command line.
+
+   It has the following options:
+
+`-D'
+     Enter debug mode. Implies `-N' and `-X'.
+
+`-v'
+     Verbose. Print out links created and directories scanned.
+
+`-n'
+     Check directories specified on the commandline *only*.
+
+`-N'
+     Do not regenerate the cache.
+
+`-X'
+     Do not rebuild symbolic links.
+
+`-l'
+     Set up symbolic links for only libraries presented on the command
+     line.
+
+`-p'
+     Print out the library pathnames in the cache file
+     (`/etc/ld.so.cache')
+
+
+File: ld.so.info,  Node: libdl,  Prev: ldconfig,  Up: Top
+
+User dynamic linking library
+****************************
+
+   The `ld.so' package includes a small library of functions (`libdl')
+to allow manual dynamic linking. Normally programs are linked so that
+dynamic functions and objects are automagically available. These
+functions allow one to manually load and access a symbol from a library.
+They are only available for ELF executables.
+
+* Menu:
+
+* using libdl::	General points
+* functions::	How to use the functions
+* example::	A sample program
+
+
+File: ld.so.info,  Node: using libdl,  Next: functions,  Up: libdl
+
+Overview
+========
+
+   To access this library, add the flag `-ldl' to your compile command
+when linking the executable. You also must include the header file
+`dlfcn.h'. You may also need the flag `-rdynamic', which enables
+resolving references in the loaded libraries against your executable.
+
+   Generally, you will first use `dlopen' to open a library. Then you
+use `dlsym' one or more times to access symbols. Finally you use
+`dlclose' to close the library.
+
+   These facilities are most useful for language interpreters that
+provide access to external libraries. Without `libdl', it would be
+neccessary to link the interpreter executable with any and all external
+libraries needed by the programs it runs. With `libdl', the interpreter
+only needs to be linked with the libraries it uses itself, and can
+dynamically load in additional ones if programs need it.
+
+
+File: ld.so.info,  Node: functions,  Next: example,  Prev: using libdl,  Up: libdl
+
+Functions
+=========
+
+ - Function: void *dlopen ( const char FILENAME, int FLAGS )
+     This function opens the dynamic library specified by FILENAME and
+     returns an abstract handle, which can be used in subsequent calls
+     to `dlsym'. The function will respect the `LD_ELF_LIBRARY_PATH' and
+     `LD_LIBRARY_PATH' environment variables.
+
+
+   The following flags can be used with `dlopen':
+
+ - Macro: int RTLD_LAZY
+     Resolve symbols in the library as they are needed.
+
+ - Macro: int RTLD_NOW
+     Resolve all symbols in the library before returning, and fail if
+     not all can be resolved. This is mutually exclusive with
+     `RTLD_LAZY'.
+
+ - Macro: int RTLD_GLOBAL
+     Make symbols in this library available for resolving symbols in
+     other libraries loaded with `dlopen'.
+
+ - Function: int dlclose ( void *HANDLE )
+     This function releases a library handle.
+
+     Note that if a library opened twice, the handle will be the same.
+     However, a reference count is used, so you should still close the
+     library as many times as you open it.
+
+
+ - Function: void *dlsym (void *HANDLE,char *SYMBOL-NAME)
+     This function looks up the name SYMBOL-NAME in the library and
+     returns it in the void pointer.
+
+     If there is an error, a null pointer will be returned. However, it
+     is possible for a valid name in the library to have a null value,
+     so `dlerror' should be used to check if there was an error.
+
+
+ - Function: libdl function const char *dlerror( void )
+     This function is used to read the error state. It returns a
+     human-readable string describing the last error, or null, meaning
+     no error.
+
+     The function resets the error value each time it is called, so the
+     result should be copied into a variable. If the function is called
+     more than once after an error, the second and subsequent calls
+     will return null.
+
+
+
+File: ld.so.info,  Node: example,  Prev: functions,  Up: libdl
+
+Example program
+===============
+
+   Here is an example program that prints the cosine of two by manually
+linking to the math library:
+
+     #include <stdio.h>
+     #include <dlfcn.h>
+     
+     int main(int argc, char **argv) {
+         void *handle;
+         double (*cosine)(double);
+         char *error;
+     
+         handle = dlopen ("/lib/libm.so", RTLD_LAZY);
+         if (!handle) {
+             fputs (dlerror(), stderr);
+             exit(1);
+         }
+     
+         cosine = dlsym(handle, "cos");
+         if ((error = dlerror()) != NULL)  {
+             fputs(error, stderr);
+             exit(1);
+         }
+     
+         printf ("%f\\n", (*cosine)(2.0));
+         dlclose(handle);
+     }
+
+
+
+Tag Table:
+Node: Top479
+Node: intro888
+Node: ld.so2659
+Node: files3381
+Node: environment3965
+Node: errors5038
+Node: ldd6593
+Node: ldconfig7561
+Node: libdl8675
+Node: using libdl9229
+Node: functions10163
+Node: example12134
+
+End Tag Table

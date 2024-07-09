@@ -1,0 +1,57 @@
+/*
+**	Copyright 1992 UUNET Technologies Inc.
+**
+**	All rights reserved.
+**
+**	Use of this software is subject to a licence agreement.
+*/
+
+/*
+**	Compare two strings in a case-independant way similar to "strncmp()".
+**
+**	RCSID strnccmp.c.uunet,v 2.1 1995/02/03 13:20:49 polk Exp
+**
+**	strnccmp.c.uunet,v
+**	Revision 2.1  1995/02/03 13:20:49  polk
+**	Update all revs to 2.1
+**	
+# Revision 1.1  1995/01/08  07:48:36  donn
+# Some changes from Paul Vixie.
+#
+# Revision 1.1  1994/12/28  06:19:26  vixie
+# Initial revision
+#
+# Revision 1.1.1.1  1992/09/28  20:08:51  trent
+# Latest UUCP from ziegast@uunet
+#
+ * Revision 1.1  1992/04/14  21:29:38  piers
+ * Initial revision
+ *
+*/
+
+int
+strnccmp(s1, s2, len)
+	register char *	s1;
+	register char *	s2;
+	register int	len;
+{
+	register int	c;
+
+	while ( c = *s1++ )
+	{
+		if ( --len < 0 )
+			return 0;
+
+		if ( (c ^= *s2++) && c != 040 )
+			break;
+	}
+
+	if ( c == 0 )
+	{
+		if ( len == 0 || *s2 == '\0' )
+			return 0;
+		return -1;	/* s2 longer than s1 */
+	}
+
+	return ((*--s1)|040) - ((*--s2)|040);
+}

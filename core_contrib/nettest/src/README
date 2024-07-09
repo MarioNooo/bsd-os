@@ -1,0 +1,28 @@
+
+This source for nettest and nettestd are provided on an "as is" basis.
+Cray Research does not provide any support for this code (unless you
+are a customer who has purchased the UNICOS operating system).
+
+We will gladly take bug reports for nettest/nettestd.  Suggested
+fixes are prefered to just bug reports.  Changes to allow
+nettest/nettestd to run on other architectures are also welcomed.
+We will try to incorporate bugfixes and update the publicly available
+code, but we can make no guarantees.
+
+For copyright information, see the notice in each source file.
+
+Send bug-reports/fixes to:
+
+	E-mail:		dab@cray.com
+	U.S. Mail:	David Borman
+			Cray Research, Inc.
+			655F Lone Oak Drive
+			Eagan, MN 55121
+
+Notes:
+
+1) The -b option to nettestd has not been tested...
+
+2) The ISO code should work on a 4.4BSD system, but the
+   gethostinfo() routine is specific to UNICOS...
+

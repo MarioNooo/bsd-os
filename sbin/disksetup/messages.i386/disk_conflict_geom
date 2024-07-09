@@ -1,0 +1,4 @@
+WARNING: The geometry discovered from the FDISK partition table does not
+match the geometry that it appears the BIOS will use.  The geometry
+discovered from the FDISK table has:
+

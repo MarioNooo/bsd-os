@@ -1,0 +1,199 @@
+.\"	BSDI ttyname.3,v 2.4 2001/05/18 15:21:14 donn Exp
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)ttyname.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd June 4, 1993
+.Dt TTYNAME 3
+.Os
+.Sh NAME
+.Nm ttyname ,
+.Nm ttyname_r ,
+.Nm isatty ,
+.Nm ttyslot
+.Nd get name of associated terminal (tty) from file descriptor
+.Sh SYNOPSIS
+.Fd #include <unistd.h>
+.Ft char *
+.Fn ttyname "int fd"
+.Ft int
+.Fn ttyname_r "int fd" "char *buf" "size_t size"
+.Ft int
+.Fn isatty "int fd"
+.Ft int
+.Fn ttyslot void
+.Sh DESCRIPTION
+These functions operate on the system file descriptors for terminal
+type devices. These descriptors are not related to the standard
+.Tn I/O
+.Dv FILE
+typedef, but refer to the special device files found in
+.Pa /dev
+and named
+.Pa /dev/tty Ns Em xx
+and for which an entry exists
+in the initialization file
+.Pa /etc/ttys.
+(See
+.Xr ttys 5 . )
+.Pp
+The
+.Fn isatty
+function
+determines if the file descriptor
+.Fa fd
+refers to a valid
+terminal type device.
+.Pp
+The
+.Fn ttyname
+function
+gets the related device name of
+a file descriptor for which
+.Fn isatty
+is true.
+.Pp
+The
+.Fn ttyname_r
+function is a reentrant version of the traditional
+.Fn ttyname
+function that fills in a supplied buffer
+.Fa buf
+of the given
+.Fa size ,
+which should be at least
+.Dv TTY_NAME_MAX
+characters long.
+.Pp
+The
+.Fn ttyslot
+function
+fetches the current process' control terminal number from the
+.Xr ttys 5
+file entry.
+.Sh RETURN VALUES
+The
+.Fn ttyname
+function
+returns the null terminated name if the device is found and
+.Fn isatty
+is true; otherwise 
+a
+.Dv NULL
+pointer is returned.
+.Pp
+The
+.Fn ttyname_r
+function returns 0 on success,
+or the reason for failure (see ERRORS).
+(In no case is the global variable
+.Va errno
+changed.)
+.Pp
+The
+.Fn ttyslot
+function
+returns the unit number of the device file if found; otherwise
+the value zero is returned.
+.Sh ERRORS
+.Bl -tag -width ERANGEXX
+.It Bq Er EBADF
+The
+.Fa fd
+argument to
+.Fn ttyname
+or
+.Fn ttyname_r
+is invalid.
+.It Bq Er ENOTTY
+The
+.Fa fd
+argument to
+.Fn ttyname
+or
+.Fn ttyname_r
+does not refer to a tty.
+.It Bq Er ENOENT
+While the
+.Fa fd
+argument to
+.Fn ttyname
+or
+.Fn ttyname_r
+appears to refer to a tty, no name could be found for it.
+.It Bq Er ERANGE
+The buffer supplied to
+.Fn ttyname_r
+is too small to hold the name.
+(That is, the supplied
+.Fa size
+does not provide sufficient room.)
+.Sh FILES
+.Bl -tag -width /etc/ttys -compact
+.It Pa /dev/\(**
+.It Pa /etc/ttys
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr ttys 5
+.Sh HISTORY
+The
+.Fn isatty ,
+.Fn ttyname ,
+and
+.Fn ttyslot
+functions appeared in
+.At v7 .
+The
+.Fn ttyname ,
+.Fn ttyname_r
+and
+.Fn isatty
+functions conform to
+.St -p1003.1-96 .
+.Sh BUGS
+The
+.Fn ttyname
+function leaves its result in an internal static object and returns
+a pointer to that object. Subsequent calls to
+.Fn ttyname
+will modify the same object.
+.Pp
+The 
+.Fn ttyname ,
+.Fn isatty ,
+and
+.Fn ttyslot
+functions may not be safely called concurrently from multiple 
+threads, e.g., the interfaces described by 
+.Fn pthreads 3 .

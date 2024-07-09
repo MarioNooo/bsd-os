@@ -1,0 +1,95 @@
+#	BSDI ttys,v 1.2 1999/01/22 01:30:37 jch Exp
+#
+#	@(#)ttys        5.2 (Berkeley) 6/10/93
+#
+# Removing the secure flag from console will also cause init to require
+# the root password before going into single-user mode.  You can disable
+# this by recompiling init without the -DSECURE option.
+#
+# Use ``kill -HUP 1'' to make init(8) re-read this file when changes are made.
+#
+# Changes to the order of entries or number of ttys should only be made in
+# single-user mode.
+#
+console	"/usr/libexec/getty pccons"	bsdos-ppc	on secure
+
+# Virtual consoles (named after the function key used to reach them)
+ttyc2	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc3	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc4	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc5	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc6	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc7	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+ttyc8	"/usr/libexec/getty pccons"	bsdos-ppc	off secure
+
+# PC COM ports (tty00 is DOS COM1)
+tty00	disabled
+tty01	disabled
+tty02	disabled
+tty03	disabled
+
+# Entries for ptys (used by telnet, etc)
+ttyp0	network
+ttyp1	network
+ttyp2	network
+ttyp3	network
+ttyp4	network
+ttyp5	network
+ttyp6	network
+ttyp7	network
+ttyp8	network
+ttyp9	network
+ttypa	network
+ttypb	network
+ttypc	network
+ttypd	network
+ttype	network
+ttypf	network
+ttyq0	network
+ttyq1	network
+ttyq2	network
+ttyq3	network
+ttyq4	network
+ttyq5	network
+ttyq6	network
+ttyq7	network
+ttyq8	network
+ttyq9	network
+ttyqa	network
+ttyqb	network
+ttyqc	network
+ttyqd	network
+ttyqe	network
+ttyqf	network
+ttyr0	network
+ttyr1	network
+ttyr2	network
+ttyr3	network
+ttyr4	network
+ttyr5	network
+ttyr6	network
+ttyr7	network
+ttyr8	network
+ttyr9	network
+ttyra	network
+ttyrb	network
+ttyrc	network
+ttyrd	network
+ttyre	network
+ttyrf	network
+ttys0	network
+ttys1	network
+ttys2	network
+ttys3	network
+ttys4	network
+ttys5	network
+ttys6	network
+ttys7	network
+ttys8	network
+ttys9	network
+ttysa	network
+ttysb	network
+ttysc	network
+ttysd	network
+ttyse	network
+ttysf	network

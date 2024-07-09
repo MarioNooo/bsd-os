@@ -1,0 +1,73 @@
+#!/bin/sh -
+#	@(#)recover.in	8.8 (Berkeley) 10/10/96
+#
+# Script to recover nvi edit sessions.
+#
+RECDIR="@vi_cv_path_preserve@"
+SENDMAIL="@vi_cv_path_sendmail@"
+echo 'Recovering vi editor sessions.'
+
+# Check editor backup files.
+vibackup=`echo $RECDIR/vi.*`
+if [ "$vibackup" != "$RECDIR/vi.*" ]; then
+	for i in $vibackup; do
+		# Only test regular, non-symlink files that are readable.
+		if test -h $i -o ! -f $i -o ! -r $i ; then
+			continue
+		fi
+
+		# Unmodified nvi editor backup files either have the
+		# execute bit set or are zero length.  Delete them.
+		if test -x $i -o ! -s $i; then
+			rm $i
+		fi
+	done
+fi
+
+# It is possible to get incomplete recovery files, if the editor crashes
+# at the right time.
+virecovery=`echo $RECDIR/recover.*`
+if [ "$virecovery" != "$RECDIR/recover.*" ]; then
+	for i in $virecovery; do
+		# Only test regular, non-symlink files that are readable.
+		if test -h $i -o ! -f $i -o ! -r $i ; then
+			continue
+		fi
+
+		# recover.* files are tiny mail messages.
+		# make sure it is so (no more than 25 lines or 1024 bytes)
+		set -- $(wc $i)		# $1 == line count, $3 == byte count
+		if [ $1 -gt 25 -o $3 -gt 1024 ] ; then
+			continue
+		fi
+
+		# the To: line must be to a single local user
+		to=`awk '/^To:[^@,]*$/ && NF == 2 { print $2}' < $i`
+		if ! test -n "$to" ; then
+			continue;
+		fi
+
+		# Delete any recovery files that are zero length, corrupted,
+		# or that have no corresponding backup file.  Else send mail
+		# to the user, assuming the recfile is valid
+		recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
+
+		# Only test regular, non-symlink files that are readable.
+		if test -h "$recfile" -o ! -f "$recfile" -o ! -r "$recfile"
+		then
+			rm -f $i
+			continue
+		fi
+
+		if test -n "$recfile" -a -s "$recfile"; then
+			# ignore the Reply-To: and From: lines in the
+			# file and generate our own.
+			(echo "Reply-To: root" ;
+			 echo "From: root (vi recovery program)" ;
+			grep -iv "^From:\|^Reply-To:\|^Sender:" < $i) |
+			$SENDMAIL -t
+		else
+			rm -f $i
+		fi
+	done
+fi

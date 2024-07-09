@@ -1,0 +1,788 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; BSD/OS 4.0 i386) [Netscape]">
+   <META NAME="Author" CONTENT="Donn Seeley">
+   <TITLE>A Technical Overview of the Linux Application Platform on BSD/OS</TITLE>
+</HEAD>
+<BODY>
+
+<H1>
+A Technical Overview of the Linux Application Platform on BSD/OS</H1>
+The <B>Linux Application Platform</B> is a package of software that allows
+Linux applications to run under BSD/OS.&nbsp; Although BSD/OS and Linux
+share a common executable file format (the Unix <B>ELF</B> format) and
+a common Unix-like programming interface (based on the IEEE <B>POSIX</B>
+interface), they differ in the way that applications communicate to the
+operating system kernel, and they differ in the sizes and structure of
+their parameterized data types.&nbsp; The LAP software dynamically converts
+Linux data types into BSD/OS data types and <I>vice versa</I>, and it substitutes
+a BSD/OS kernel interface for the application's Linux kernel interface.
+
+<P>The LAP software uses <I>transformations</I> to convert data types,
+system call numbers and other parameters between Linux and BSD/OS.&nbsp;
+Transformations are written in a <I>transformation language</I>.&nbsp;
+The language looks a lot like C; the inspiration comes from <TT>lex</TT>(1).&nbsp;
+The language specification tries to make the most common transformations
+also be the simplest ones to specify.&nbsp; Many transformations can be
+described by a simple C prototype declaration.&nbsp; The language is described
+in detail&nbsp; <A HREF="#The Transformation Language">below.</A>
+
+<P>The LAP software uses <I>dynamic linking</I> to insert its transformations
+into Linux applications.&nbsp; When an application calls on an operating
+system service such as <TT>read()</TT> or <TT>write()</TT>, it first looks
+for the name of the service in a <I>shared library</I> file, which contains
+the application code that the program must use to contact the operating
+system.&nbsp; The LAP software adds its own shared library named <B>liblinux</B>
+to provide operating system services to the application, and because of
+the way that dynamic linking works, the application program uses the <B>liblinux</B>
+code in preference to the regular Linux shared library code.&nbsp; The
+<B>liblinux</B> shared library provides only specific, low-level interfaces
+to operating system services; the application program obtains all of the
+rest of its needs from the usual Linux shared libraries.
+
+<P>In the sections below, we'll discuss some of the&nbsp; <A HREF="#Design Issues">design
+issues</A>&nbsp; that we considered when writing the LAP software, and
+we'll introduce some of the features and describe how they work.
+<H2>
+Examples</H2>
+Here are a few examples of the differences between BSD/OS and Linux which
+require transformation:
+<UL>
+<LI>
+BSD/OS follows the Unix Application Binary Interface standard for system
+calls, using the <TT>lcall</TT> instruction to transfer control to the
+operating system kernel.&nbsp; Linux uses the <TT>int</TT> instruction
+to transfer to the kernel, which generates a pseudo-interrupt, more like
+MS-DOS.</LI>
+
+<LI>
+The operating system assigns numbers to system calls, signals and error
+conditions, and BSD/OS and Linux use different numbers.</LI>
+
+<LI>
+The POSIX application programming interface requires certain abstract data
+types, which are defined using the C <TT>typedef</TT> mechanism.&nbsp;
+The BSD/OS and Linux systems use different real types for these data types
+for some interfaces.&nbsp; For example, the <TT>uid_t</TT> type describes
+user ID values; in BSD/OS, these values are unsigned 32-bit integers, while
+in Linux these are unsigned 16-bit integers.</LI>
+
+<LI>
+The POSIX API also requires certain aggregate data types which correspond
+to <TT>struct</TT> data types in C.&nbsp; The order of elements or the
+types of elements in a <TT>struct</TT> may be different in BSD/OS and Linux.&nbsp;
+For example, the file status structure <TT>struct</TT> <TT>stat</TT> in
+BSD/OS puts the timestamps before the sizes, while in Linux the sizes come
+first.</LI>
+</UL>
+
+<H2>
+<A NAME="Design Issues"></A>Design Issues</H2>
+The main design goals were to:
+<UL>
+<LI>
+keep the specification simple</LI>
+
+<LI>
+make few modifications to Linux code</LI>
+
+<LI>
+maintain efficiency</LI>
+
+<LI>
+avoid burdening the operating system kernel</LI>
+</UL>
+In a little more detail:
+<UL><I>Keep the specification simple:</I>&nbsp; If we can make the specifications
+for most transformations very simple, then we are likely to commit fewer
+errors when writing transformations.&nbsp; Also, the effort of writing
+transformations is reduced.
+
+<P><I>Make few modifications to Linux code:</I>&nbsp; By supplying actual
+Linux shared libraries, we reduce the chances that we will interfere with
+interactions between the application and the libraries, and we reduce the
+amount of work that we set for ourselves.
+
+<P><I>Maintain efficiency:</I>&nbsp; We try to avoid design decisions that
+would cause us to add overhead by requiring us to block signals to protect
+internal data structures or make other expensive accommodations.
+
+<P><I>Avoid burdening the operating system kernel:</I>&nbsp; We want to
+avoid changes to the BSD/OS kernel to support Linux emulation.&nbsp; This
+means that extra kernel resources don't need to be tied down for Linux
+emulation.&nbsp; It also means that installing new LAP software does not
+require an update to the kernel.&nbsp; It means that debugging is simpler,
+and that it's unlikely that an error in LAP software will cause the operating
+system to crash.</UL>
+Linux emulation works differently from SCO emulation under BSD/OS.&nbsp;
+Because the SCO SVr3 operating system API is more different from BSD/OS
+than Linux is, we had to make more accommodations for SCO applications.&nbsp;
+SCO applications are not dynamically linked, so the BSD/OS operating system
+kernel must load the emulation library into each SCO application.&nbsp;
+Instead of replacing library entry points, the SCO emulation redirects
+the target of <TT>lcall</TT> instructions from the kernel to the emulation
+library, so that system calls are processed directly by the library. The
+SCO emulation library maintains state about the application, so it must
+protect its data structures against re-entrant calls through signal handlers.&nbsp;
+It does this using a sophisticated scheme that detects caught signals and
+exits the emulator either by undoing state or by blocking further signals
+and committing to a new state.&nbsp; The SCO emulation also uses a pathname
+transformation feature to map SCO pathnames into BSD/OS pathnames without
+using symbolic links that would clutter the filesystem.&nbsp; Since the
+Linux environment is much more similar to BSD/OS than the SCO environment,
+much of this complexity can be avoided in Linux emulation.&nbsp; In particular,
+the Linux emulation can be re-entrant, which avoids many difficulties or
+inefficiencies with signal processing.
+<H1>
+The Software</H1>
+The LAP software resides in the filesystem under the directory <TT>/linux</TT>.&nbsp;
+(This directory is often a link to <TT>/usr/linux</TT>; if no Linux applications
+need to run during early BSD/OS initialization, then there is no need for
+LAP files to reside on the root partition.)&nbsp; A stub directory named
+<TT>/lib</TT> exists simply to provide symbolic links to the Linux dynamic
+linkers under <TT>/linux</TT>.
+
+<P>The LAP software is logically divided into two parts, following a division
+in the Linux shared libraries.&nbsp; In the not too distant past, Linux
+upgraded from an older version of the API, usually called <B>libc5</B>,
+to a newer one, usually called <B>glibc</B>.&nbsp; Many applications still
+use the older <B>libc5</B> libraries.&nbsp; The software breaks down like
+this:
+<UL>
+<LI>
+<TT>/linux/lib/ld-1.9.5.so</TT>:&nbsp; This file is a version of the old
+Linux dynamic linker that has been built to operate under BSD/OS.&nbsp;
+Filesystem links connect this file to <TT>/lib/ld-linux.so.1</TT>, which
+Linux applications automatically load when they run.&nbsp; We modified
+the program slightly to use BSD/OS system calls and to search for its configuration
+files in <TT>/linux/etc</TT> with the suffix <TT>.1</TT>; this prevents
+its configuration files from being confused with the <B>glibc</B> linker's
+configuration files or with BSD/OS's configuration files.</LI>
+
+<LI>
+<TT>/linux/usr/i486-linux-libc5/lib/liblinux.so.1</TT>:&nbsp; This is the
+<B>libc5</B> version of the <B>liblinux</B> transformation library.&nbsp;
+It lives in the same directory as all the other <B>libc5</B>-compatible
+Linux libraries.&nbsp; The <TT>/linux/etc/ld.so.conf.1</TT> file forces
+the dynamic linker to look in <TT>/linux/usr/i486-linux-libc5/lib</TT>
+for shared libraries.</LI>
+
+<LI>
+<TT>/linux/lib/ld-2.0.7.so</TT>:&nbsp; This file is the <B>glibc</B> dynamic
+linker.&nbsp; We build it in a Linux-compatible compilation environment
+and link it with the <B>liblinux</B> library so that it uses BSD/OS system
+calls.&nbsp; Filesystem links connect this file with <TT>/lib/ld-linux.so.2</TT>,
+which is the name that Linux applications expect to see.&nbsp; It looks
+for its configuration files in <TT>/linux/etc</TT>.</LI>
+
+<LI>
+<TT>/linux/lib/liblinux.so.2</TT>:&nbsp; This is the <B>glibc</B> version
+of <B>liblinux</B>.&nbsp; The <TT>/linux/etc/ld.so.conf</TT> file points
+the linker at the directories <TT>/linux/lib</TT>, <TT>/linux/usr/lib</TT>
+and <TT>/linux/usr/X11R6/lib</TT> for shared libraries.</LI>
+</UL>
+The LAP source tree builds but does not install two other programs.&nbsp;
+The <B>transform</B> program converts transformation templates into C.&nbsp;
+Most of the source code for <B>liblinux</B> is in the form of transformation
+templates.&nbsp; Also, the <B>afdb</B> program reads symbol information
+from the <B>libc5</B> and <B>glibc</B> shared libraries and converts it
+into database format.&nbsp; The <B>transform</B> program makes use of these
+databases to assign the appropriate names to entry points for operating
+system services.
+<H2>
+<A NAME="The Transformation Language"></A>The Transformation Language</H2>
+&nbsp;The transformation language resembles C, with inspiration from <TT>lex</TT>(1).&nbsp;
+Source code in the transformation language is translated into C by the
+<B>transform</B> program.&nbsp; By convention, source code files for transformations
+end in the suffix <TT>.x</TT>, while headers for transformation sources
+end in <TT>.xh</TT>.&nbsp; Transformations describe how to convert between
+Linux data types and system calls, and BSD/OS data types and system calls.
+
+<P>As an example, here is the transformation for the <TT>stat</TT>(2) system
+call:
+<UL><TT>int stat(const char *name, struct stat *buf);</TT></UL>
+Given the appropriate <TT>stat.xh</TT> header, this transformation causes
+<B>liblinux.so.1 </B>to do the following:
+<UL>
+<LI>
+Create a function that executes an <TT>lcall</TT> instruction to perform
+the BSD/OS <TT>stat</TT>(2) service, placing the resulting data in a buffer
+on the stack.</LI>
+
+<LI>
+Convert the BSD/OS <TT>stat</TT> structure into a Linux <TT>stat</TT> structure
+in memory belonging to the application.</LI>
+
+<LI>
+If there was an error, convert the BSD/OS error code into a Linux error
+code and store it in the Linux <TT>errno</TT> location.</LI>
+
+<LI>
+Map the name of the service into the various names used by <B>libc5</B>
+for this service.</LI>
+</UL>
+The following sections provide a full description of the transformation
+language.
+<H3>
+Lexical Structure</H3>
+The basic elements of the transformation language are similar to C.&nbsp;
+Unlike C, there is no macro preprocessor; however, it is possible to ``escape''
+to C code and write C preprocessor code in that context.
+
+<P>The language defines <I>keywords</I> that introduce statements or qualify
+declarations.&nbsp; All C keywords are reserved.&nbsp; Several keywords
+that are specific to the transformation language are introduced in the
+syntax section&nbsp; <A HREF="#Syntax">below</A> , along with the statements
+that use them.&nbsp; The <TT>typedef</TT> statement provides a mechanism
+for defining new keywords, analogous to the C <TT>typedef</TT> statement.
+
+<P>There are <I>names</I> and <I>numbers</I> that work much like they do
+in C.&nbsp; Names are introduced in C-like contexts such as function names,
+parameter names, structure tags, structure members, and so on.&nbsp; Names
+follow the usual C rules -- they must begin with a letter or an underscore,
+and may contain letters, digits or underscores.&nbsp; Numbers also follow
+C rules; the <B>transform</B> program simply passes numbers into its C
+output without interpretation.
+
+<P>The transformation language treats specially those names that begin
+with a <I>foreign</I> or <I>native</I> prefix.&nbsp; Names that start with
+<TT>linux_</TT> or <TT>__bsdi_</TT> cause the <B>transform</B> program
+to place restrictions on the automatic mapping between Linux names and
+BSD/OS names.&nbsp; See&nbsp; <A HREF="#If name begins with linux_">below</A>&nbsp;
+for more information on this feature.
+
+<P><I>Strings</I> in the transform language are used only to give the names
+of header files.&nbsp; They are surrounded by double quotes and they don't
+follow C rules for escapes (yes, very crude).
+
+<P>Various <I>punctuation marks</I> and ``syntactic sugar'' are recognized,
+including parentheses, commas, semicolons and braces.
+<BR>Certain punctuation implies an escape to C.&nbsp; As in <TT>lex</TT>(1),
+text that appears inside percent-brace pairs <TT>%{ ... %}</TT> is treated
+as literal C, and text that appears between simple braces following a function
+declaration is also treated as C.&nbsp; This C text is included in the
+output from the <B>transform</B> program without significant alteration.
+
+<P><I>Comments</I> and <I>whitespace</I> are basically the same as C: text
+inside slash-star and star-slash <TT>/* ... */</TT> is ignored, and comments,
+spaces, tabs and newlines serve to break input into tokens, but are otherwise
+collapsed together and ignored.
+<H3>
+<A NAME="Syntax"></A>Syntax</H3>
+The syntax of the transformation language is organized into <I>statements</I>.&nbsp;
+The transformation language itself provides only declarative statements.&nbsp;
+Any imperative statements must be coded in C inside C escapes.&nbsp; Here
+is a summary of the statements.&nbsp; Literal text appears in <TT>fixed
+width</TT> font, while text that varies appears in <I><TT>slanted fixed
+width</TT></I> font.
+<H4>
+Include</H4>
+
+<UL><TT>include "<I>header</I></TT>"</UL>
+The <TT>include</TT> statement causes text from the named header file to
+be inserted into the program text at the current location.&nbsp; The <B>transform</B>
+program searches for header files using an <I>include path</I> -- it starts
+with the current directory, then checks the directory where the source
+file resides, and then checks any directories that were specified on the
+command line using the <TT>-i</TT> flag, in order from left to right.&nbsp;
+Note that there is no ``<TT>#</TT>'' character at the beginning of the
+line.&nbsp; If a program needs to include a C header so that text in C
+escapes can use the header information, then that C header must be included
+using a C escape too; for example, <TT>include "foo.xh"</TT> includes a
+transformation language header, while <TT>%{ #include "foo.h" %} </TT>includes
+a C header.
+<H4>
+Typedef</H4>
+
+<UL><TT>typedef <I>type-specifiers ... name</I>;</TT>
+<BR><TT>typedef <I>type-specifiers ... name</I> {</TT>
+<UL><TT>in(<I>name</I>) { ... }</TT>
+<BR><TT>out(<I>name</I>) { ... }</TT></UL>
+<TT>};</TT></UL>
+The first form of the <TT>typedef</TT> statement looks much like a C <TT>typedef</TT>.&nbsp;
+It declares <I><TT>name</TT></I> as a type name.&nbsp;<A NAME="If name begins with linux_"></A>If
+<I><TT>name</TT></I> begins with <TT>linux_</TT>, then the type is a <I>foreign</I>
+type with no BSD/OS equivalent; otherwise, the <B>transform</B> program
+creates a mapping between the given type name in Linux and the type with
+the same name in BSD/OS.&nbsp; In the latter case, there really are two
+types, but the difference is hidden by the mapping feature.&nbsp; Inside
+C escapes, the BSD/OS type has the usual name while the Linux version of
+the type is prefixed with <TT>linux_</TT>.&nbsp; Note that the transformation
+language does not define the BSD/OS version of a type name; you must provide
+that yourself in a C escape, either by including the appropriate header
+file or by writing an explicit C <TT>typedef</TT> statement.&nbsp; As an
+example, the statement <TT>typedef long off_t;</TT> in the transformation
+language says that there is a Linux type named <TT>off_t</TT> that corresponds
+to a BSD/OS type <TT>off_t</TT>, and that it is equivalent to the basic
+C type <TT>long</TT> in Linux.
+
+<P>The second form of the <TT>typedef</TT> statement allows you to specify
+<I>transformation functions</I> for the given integral type.&nbsp; The
+<TT>in()</TT> function is automatically called to convert Linux types into
+BSD/OS types, while the <TT>out()</TT> function is automatically called
+to convert BSD/OS types into Linux types.&nbsp; The parameter <I><TT>name</TT></I>
+represents the value to be transformed.&nbsp; The body of the function
+is given in C inside braces.&nbsp; One or both transformation functions
+may be omitted, in which case the value is transformed by assignment.&nbsp;
+As an example, the statement
+<UL><TT>typedef unsigned short dev_t { in(dev) { return (makedev(dev >>
+8, dev &amp; 0xff); } };</TT></UL>
+specifies an input transformation for <TT>dev_t</TT> that converts Linux
+<TT>dev_t</TT> values into BSD/OS <TT>dev_t</TT> values using the BSD/OS
+<TT>makedev()</TT> macro.&nbsp; Note that a <TT>typedef</TT>'s&nbsp; transformation
+functions may be accessed directly inside C escapes by appending <TT>_in()</TT>
+or <TT>_out()</TT> to the type name; this is true of transformation functions
+in general.
+<H4>
+Cookie</H4>
+
+<UL><TT>cookie <I>type-specifiers ... name</I> {</TT>
+<UL><TT><I>name number</I>;</TT>
+<BR><TT>in(<I>name</I>) { ... }</TT>
+<BR><TT>out(<I>name</I>) { ... }</TT></UL>
+<TT>};</TT></UL>
+The <TT>cookie</TT> statement is an enumeration statement that creates
+a type like a <TT>typedef</TT> and lists members of that type along with
+their Linux values.&nbsp; When an object of the given integral type appears
+in an input context and its value matches one of the enumerated values,
+the value is converted to the value with the corresponding name in BSD/OS.&nbsp;
+This is a fancy way of saying that cookies convert <TT>#define</TT> macros
+from Linux values to BSD/OS values and back.&nbsp; Inside C escapes, the
+Linux member names are prefixed with <TT>LINUX_</TT>.&nbsp; If a <TT>cookie</TT>
+member's name is given with a <TT>LINUX_</TT> prefix, the <B>transform</B>
+program assumes that there is no equivalent BSD/OS value; if the <TT>cookie</TT>
+type name itself is prefixed with <TT>linux_</TT>, <B>transform</B> assumes
+that none of the members have corresponding BSD/OS names (and it omits
+the <TT>LINUX_</TT> prefixes in C escapes).&nbsp; If there's no match for
+a cookie value, the value gets assigned without conversion -- that means
+that you don't have to list names that have the same value in both Linux
+and BSD/OS.&nbsp; However, if there is an <TT>in()</TT> or <TT>out()</TT>
+function, it applies to unmatched values.&nbsp; This lets you take care
+of values that have no exact equivalent in Linux or BSD/OS.&nbsp; Note
+that you are responsible for supplying the BSD/OS cookie member definitions,
+usually by including the appropriate C header file inside a C escape.
+
+<P>As an example,
+<UL><TT>cookie int reboot_t { RB_AUTOBOOT 0x01234567; RB_HALT 0xcdef0123;
+LINUX_RB_ENABLE_CAD 0x89abcdef; };</TT></UL>
+says (among other things) that <TT>RB_AUTOBOOT</TT> has the value <TT>0x01234567</TT>
+in Linux and that there is no direct BSD/OS equivalent for the Linux name
+<TT>RB_ENABLE_CAD</TT>.&nbsp; An object of type <TT>reboot_t</TT>, presumably
+the argument to <TT>reboot()</TT>, with value <TT>0x01234567</TT> would
+be converted to the BSD/OS value of <TT>RB_AUTOBOOT</TT>, which happens
+to be <TT>0</TT>.&nbsp; (Yes, Linux uses enumerated values rather than
+flags as arguments to <TT>reboot()</TT>.)
+<H4>
+Flag</H4>
+
+<UL><TT>flag <I>type-specifiers ... name</I> {</TT>
+<UL><TT><I>name number</I>;</TT>
+<BR><TT><I>name</I>;</TT>
+<BR><TT>in(<I>foreign_name, native_name</I>) { ... }</TT>
+<BR><TT>out(<I>native_name, foreign_name</I>) { ... }</TT></UL>
+<TT>};</TT></UL>
+A <TT>flag</TT> works very much like a <TT>cookie</TT> but for flag bits
+rather than enumerated values.&nbsp; <TT>Flag</TT> values are tested for
+matches by logically <TT>and-</TT>ing against the appropriate Linux (on
+input) or BSD/OS (on output) value.&nbsp; If a match occurs, the corresponding
+BSD/OS (on input) or Linux (on output) value is logically <TT>or</TT>-ed
+in.&nbsp; Bits that aren't matched are copied unchanged, so you don't need
+to list flag values that are identical on both Linux and BSD/OS.&nbsp;
+A given input can match more than one flag value.&nbsp; If you provide
+a transformation function, it gets both the raw value and the converted
+value, so that you can use a complicated rule to add (or subtract) bits
+from the converted value after all of the specific conversions are made.&nbsp;
+If you specify a flag name without a value, <B>transform</B> assumes that
+the name is a BSD/OS name with no equivalent Linux value.&nbsp; If a member
+name has a <TT>LINUX_</TT> prefix, <B>transform</B> assumes that the name
+is a Linux name with no equivalent BSD/OS value.&nbsp; Bits that have no
+equivalent are not copied by default; this is a handy way to clear bits
+that aren't supported and don't significantly affect the semantics.&nbsp;
+Inside C escapes, the Linux flag member names are prefixed with <TT>LINUX_</TT>.
+
+<P>Here's an example:
+<UL><TT>flag unsigned int cflag_t {</TT>
+<UL><TT>...</TT>
+<BR><TT>LINUX_CSIZE 0000060;</TT>
+<BR><TT>...</TT>
+<BR><TT>HUPCL 0002000;</TT>
+<BR><TT>...</TT>
+<BR><TT>CRTS_IFLOW;</TT>
+<BR><TT>...</TT>
+<BR><TT>in(f, n) { return (n | (f &amp; LINUX_CSIZE) &lt;&lt; 4); }</TT>
+<BR><TT>out(n, f) { return (f | (n &amp; CSIZE) >> 4); }</TT></UL>
+<TT>};</TT></UL>
+This <TT>flag</TT> encodes the flag bits for the <TT>c_cflag</TT> field
+of a <TT>termios</TT> structure.&nbsp; It says that the <TT>HUPCL</TT>
+bit under Linux has the value <TT>02000</TT> rather than <TT>0x4000</TT>
+as it does under BSD/OS.&nbsp; The BSD/OS <TT>CRTS_IFLOW</TT> bit has no
+equivalent under Linux, and we clear it by default in any conversion.&nbsp;
+The <TT>LINUX_CSIZE</TT> field is also cleared by default, but the transformation
+functions copy it to and from the BSD/OS <TT>CSIZE</TT> field, so the information
+isn't lost.&nbsp; Notice how the transformation functions must be careful
+to preserve the bits that were already converted when returning a value.
+<H4>
+Struct</H4>
+
+<UL><TT>struct <I>name</I> {</TT>
+<UL><TT><I>type-specifiers ... name</I>;</TT>
+<BR><TT><I>type-specifiers ... name</I>[<I>number</I>];</TT>
+<BR><TT>in(<I>foreign_name, native_name, length</I>) { ... }</TT>
+<BR><TT>out(<I>native_name, foreign_name, length</I>) { ... }</TT></UL>
+<TT>};</TT></UL>
+A <TT>struct</TT> statement in the transformation language declares a Linux
+structure and guides its transformation into a BSD/OS structure (or the
+reverse).&nbsp; Structure members are declared like they are in C.&nbsp;
+Arrays may have a symbolic length instead of a number, but that symbolic
+length must be defined using a C escape.&nbsp; A structure member whose
+name begins with <TT>linux_</TT> is assumed to have no BSD/OS equivalent,
+and it doesn't get converted automatically.&nbsp; Unlike <TT>flags</TT>
+or <TT>cookies</TT>, <TT>structs</TT> have no defaults -- all of the members
+must be listed, and if the BSD/OS version of the structure contains a member
+that is not present in the <TT>struct</TT> specification in the transformation
+language, <B>transform</B> assumes that no such member appears in the Linux
+version of the structure.&nbsp; Inside C escapes, the member names look
+exactly the way that they are declared -- no prefixes are automatically
+prepended.&nbsp; (We can do this because structure member names have a
+scope local to the given structure.)
+
+<P>When converting structures, each member is converted using a transformation
+that is appropriate for the type of the member, or if no transformation
+for that type is available, it is copied by assignment.&nbsp; Arrays are
+always copied by assignment (actually, by a <TT>memcpy()</TT> call).&nbsp;
+It is important to note that <B>transform</B> doesn't transform structures,
+but rather structure <I>pointers</I>; the direction and size of the transformation
+are derived from context.
+
+<P>After the specific members have been converted, any transformation functions
+are applied.&nbsp; The parameters to the transformation functions are a
+pointer to the source structure, a pointer to the destination structure
+and the length of the destination structure.&nbsp;<A NAME="If the last member in a structure is an array"></A>If
+the last member in a structure is an array, <B>transform</B> assumes that
+the structure has variable length and it copies everything from the start
+of the array to the end of the structure as determined by the length parameter.&nbsp;
+Structure transformation functions have void type, since the parameters
+are passed by reference.
+
+<P>Here is an example of a <TT>struct</TT> statement:
+<UL><TT>struct sockaddr {</TT>
+<UL><TT>familycookie_t sa_family;</TT>
+<BR><TT>char sa_data[14];</TT>
+<BR><TT>in(f, n, len) { n->sa_len = len; }</TT></UL>
+<TT>};</TT></UL>
+The <TT>familycookie_t</TT> type is a <TT>cookie</TT> type that converts
+socket family values from Linux numbers to BSD/OS numbers and back.&nbsp;
+Because the structure ends with an array, it is considered a variable-length
+structure and the <TT>sa_data</TT> field fills out the structure to the
+given length <TT>len</TT>.&nbsp; The input transformation fills in the
+BSD/OS <TT>sa_len</TT> field using <TT>len</TT>, whose value was supplied
+elsewhere.
+<H4>
+Function</H4>
+
+<UL><TT><I>type-specifiers ... name</I>(<I>parameters</I>, ...);</TT>
+<BR><TT><I>type-specifiers</I> ... <I>name</I>(<I>parameters</I>, ...)
+= <I>syscall-name</I>;</TT>
+<BR><TT><I>type-specifiers ... name</I>(<I>parameters, ...</I>) = <I>errno-cookie</I>;</TT>
+<BR><TT><I>type-specifiers ... name</I>(<I>parameters</I>, ...) = <I>number</I>;</TT>
+<BR><TT><I>type-specifiers ... name</I>(<I>parameters</I>, ...) { ... }</TT>
+
+<P>where <I><TT>parameters</TT></I> can be:
+
+<P><I><TT>type-specifiers ... name</TT></I>
+<BR><TT>const <I>type-specifiers ... name</I></TT>
+<BR><TT>volatile<I> type-specifiers ... name</I></TT>
+<BR><I><TT>cookie-member-name</TT></I>
+<BR><I><TT>flag-member-name</TT></I></UL>
+A function statement is a transformation that converts a Linux function
+call into a BSD/OS function call.&nbsp; Function statements look similar
+to prototype function declarations and function definitions in C, but they
+have different meanings.
+
+<P>All of the function statement formats require a return type, a function
+name and a parameter list.&nbsp; The return type doesn't have to be a transformable
+type; it may be any C type, including a pointer, as long as all of the
+type names have been declared.&nbsp; One exception to this rule is that
+functions may not return transformable structure pointers.&nbsp; The function
+name should match a name in the Linux C library.&nbsp; <B>Transform</B>
+uses a database of library symbols to generate all of the aliases for a
+known symbol, so the simplest version of the symbol name is usually the
+right one.&nbsp; If the name is identical to the name of a BSD/OS system
+call, the body of the function may be omitted, in which case <B>transform</B>
+arranges to call the BSD/OS system call automatically.&nbsp; There may
+be zero or more parameters.&nbsp; Each parameter is either a declaration
+for a name, or a <TT>cookie</TT> or <TT>flag</TT> member name.&nbsp; Declared
+parameters look much like they do in C, except that the name of the parameter
+is mandatory even when the function statement has no body and looks like
+a C declaration.&nbsp; Here is a simple example:
+<UL><TT>ssize_t read(int fd, void *buf, size_t nbytes);</TT></UL>
+This definition creates a mapping for the <TT>read()</TT> function.&nbsp;
+It replaces the definitions for the Linux names <TT>read</TT>, <TT>__read</TT>
+and <TT>__libc_read</TT>.&nbsp; It calls BSD/OS system call number 3 (<TT>SYS_read</TT>)
+with the given parameters and returns the result.&nbsp; If the return value
+is -1, it converts the error number in <TT>__bsdi_errno</TT> into a Linux
+error number in <TT>errno</TT>.
+
+<P>The parameter list may optionally be followed by an assignment or a
+C escape.&nbsp; An assignment is a shorthand for certain common function
+bodies.&nbsp; An assignment from a system call name tells <B>transform</B>
+to make a call to the given BSD/OS system call rather than using the name
+of the function as the name of the system call.&nbsp; An assignment from
+an <TT>errno</TT> cookie says to return an error condition (-1 for integer
+valued functions, NULL for pointer valued functions) and set the Linux
+<TT>errno</TT> variable to the given value (translated to a Linux value).&nbsp;
+An assignment from a number tells <B>transform</B> to make the function
+return that constant value; it's useful for turning functions into no-ops.&nbsp;
+Finally, if you provide a C escape, it will be used as the body of the
+function in C.&nbsp; <B>Transform</B> will still look for error returns
+and translate <TT>errno</TT> unless you mark the function definition with
+the type qualifier <TT>noerrno</TT>.
+
+<P>The basic point of the transformation language is to allow you to specify
+transformations of function parameters and return values using transformable
+type names.&nbsp; If the parameter and return value transformations are
+sufficient to handle the transformation for the function, then you can
+generally omit the function body; this is the simplest and most common
+definition in the transformation language.&nbsp; If you need to do more
+work, you can write your own function body.&nbsp; Inside the function body
+there are a few rules that you must follow, which (unfortunately) are not
+enforced by <B>transform</B>, which does not process the C code in the
+body.&nbsp; Functions must be re-entrant; if they need to allocate memory
+dynamically, they should do it on the stack using stack variables and/or
+the <TT>alloca()</TT> function.&nbsp; To make a BSD/OS system call inside
+a function body, you must do an indirect call through the <TT>__bsdi_syscall()</TT>
+function.&nbsp; The <TT>__bsdi_syscall()</TT> function works just like
+the BSD/OS <TT>syscall()</TT> function -- it takes a syscall number from
+<TT>&lt;sys/syscall.h></TT> and a list of parameters, and it performs the
+corresponding BSD/OS system call.&nbsp; (The <TT>__bsdi_qsyscall()</TT>
+function is identical to the BSD/OS <TT>__syscall()</TT> function and it
+is used when a BSD/OS system call requires <TT>quad_t</TT> (64-bit integer)
+parameters.)&nbsp; Any helper functions that you provide in C escapes must
+have names that use the <TT>__bsdi_</TT> prefix so that they do not collide
+with Linux function names.&nbsp; The <TT>__bsdi_syscall()</TT> and <TT>__bsdi_qsyscall()</TT>
+functions set the <TT>__bsdi_errno</TT> variable, <B><I>not</I></B> the
+<TT>errno</TT> variable, which is a Linux variable.&nbsp; <B>Transform</B>
+generates code to translate <TT>__bsdi_errno</TT> to <TT>errno</TT> automatically
+(unless this feature is suppressed with the <TT>noerrno</TT> keyword),
+so in general it isn't necessary to refer to <TT>__bsdi_errno</TT> explicitly.
+
+<P>There are several interesting features of parameters beyond the obvious
+ones.&nbsp; Transformable structure pointers are quite special in many
+ways:
+<UL>
+<LI>
+The <TT>const</TT> keyword means something in addition to the usual C semantics
+when it is applied to a transformable structure pointer.&nbsp; A <TT>const</TT>
+transformable structure pointer is an input-only parameter -- the structure
+gets converted from a Linux structure into a BSD/OS structure, copying
+it from the application's memory space onto the stack; however, no copying
+or condition is performed on return.</LI>
+
+<LI>
+A <TT>volatile</TT> transformable structure pointer is a read/write parameter
+-- that is, it is transformed both on input and on output, unless there
+is an error.</LI>
+
+<LI>
+A transformable structure pointer parameter that doesn't have a <TT>const</TT>
+or <TT>volatile</TT> qualifier is output-only.&nbsp; The BSD/OS system
+call places its data in a BSD/OS structure allocated on the stack, and
+that structure is automatically converted on return into the corresponding
+Linux structure.</LI>
+
+<LI>
+If a structure definition ends with an array and a function definition
+contains both a transformable structure pointer <I>and</I> an integral
+parameter with whose name consists of the prefix <TT>length_</TT> plus
+the name of the structure pointer parameter, then the structure is considered
+to be variable length and it is assumed to have the number of bytes indicated
+by the length parameter.&nbsp; The length parameter may also be a pointer
+to an integral type, in which case it is dereferenced before it is used.&nbsp;
+The value of the length parameter is used when converting the array member
+(as described&nbsp; <A HREF="#If the last member in a structure is an array">above</A>
+) and it is also passed to the structure's transformation functions, if
+it has any.</LI>
+</UL>
+Some system calls like <TT>ioctl()</TT> and <TT>fcntl()</TT> change their
+parameter types or their return types depending on the value of a ``command''
+or flag parameter.&nbsp; The transformation language allows you to define
+each of these variants separately.&nbsp; You simply specify a <TT>cookie</TT>
+or <TT>flag</TT> member name for a particular parameter, and if the function
+is called with that parameter matching that value, then the body of that
+function definition is executed.&nbsp; The first matching definition applies.&nbsp;
+You must always supply a <I>generic</I> function definition that uses the
+appropriate <TT>cookie</TT> or <TT>flag</TT> type for that parameter, and
+the body of that function definition is executed when the <TT>cookie</TT>
+or <TT>flag</TT> value fails to match any of the specific values in other
+function definitions for the same function.&nbsp; The feature is hard to
+describe in words but easy to show in examples; here's one:
+<UL><TT>cookie int linux_pers_t { PERS_LINUX 0; };</TT>
+<BR><TT>int personality(PERS_LINUX) = 0;</TT>
+<BR><TT>int personality(linux_pers_t p) = EINVAL;</TT></UL>
+This code defines a <TT>cookie</TT> that lists ``personality'' values for
+the Linux <TT>personality()</TT> system call.&nbsp; We only support the
+Linux personality, so only the <TT>PERS_LINUX</TT> member is interesting.&nbsp;
+If the application calls <TT>personality(0)</TT>, the definition for <TT>personality(PERS_LINUX)</TT>
+matches, and the system call appears to return 0.&nbsp; If the application
+calls <TT>personality()</TT> with any other value for the personality parameter,
+the system call will appear to return -1 and <TT>errno</TT> will be set
+to the Linux equivalent of <TT>EINVAL</TT>.
+
+<P>Here is a somewhat more complex example:
+<UL><TT>flag int openflags_t { ... };</TT>
+<BR><TT>cookie int fcntl_t { ... };</TT>
+<BR><TT>struct flock { ... };</TT>
+<BR><TT>openflags_t fcntl(int fd, F_GETFL, int ignore);</TT>
+<BR><TT>int fcntl(int fd, F_SETFL, openflags_t oflags);</TT>
+<BR><TT>int fcntl(int fd, F_GETLK, struct flock *fl);</TT>
+<BR><TT>int fcntl(int fd, F_SETLK, const struct flock *fl);</TT>
+<BR><TT>int fcntl(int fd, F_SETLKW, const struct flock *fl);</TT>
+<BR><TT>int fcntl(int fd, fcntl_t cmd, int arg);</TT></UL>
+In this example, if the second parameter matches <TT>F_GETFL</TT>, then
+the first <TT>fcntl()</TT> definition applies; it converts the BSD/OS <TT>open()</TT>
+mode flags into Linux mode flags on return.&nbsp; If the second parameter
+is <TT>F_SETFL</TT>, the third parameter is converted from Linux mode flags
+into BSD/OS mode flags before we call the BSD/OS <TT>fcntl()</TT> system
+call.&nbsp; The third, fourth and fifth definitions show how a transformable
+structure pointer parameter is converted on output (third) and input (fourth
+and fifth, respectively).&nbsp; The generic function definition causes
+all remaining <TT>fcntl()</TT> cookie values to be passed unchanged to
+the BSD/OS <TT>fcntl()</TT> system call; this is appropriate when the BSD/OS
+cookie value is identical to the Linux cookie value and the parameters
+and return value do not require transformation, or when the application
+supplies an illegal cookie value that the BSD/OS <TT>fcntl()</TT> call
+can reject.&nbsp; Note that there is really just one <TT>fcntl()</TT> function
+in the transformation library -- all the function definitions are merged
+into a single real function.
+<H4>
+Alias</H4>
+
+<UL><TT>alias <I>weak-name</I> = <I>global-name</I>;</TT></UL>
+An <TT>alias</TT> definition establishes a <I>weak</I> ELF name that is
+associated with a <I>global</I> ELF name.&nbsp; The Linux libraries use
+the ELF ``weak symbol'' feature to allow applications to replace library
+functions with their own functions.&nbsp; The <B>transform</B> program
+automatically determines the weak and global names for a system call, so
+the <TT>alias</TT> statement is only useful in very obscure situations.
+<H3>
+Limitations</H3>
+The transformation language has a few obscure limitations that are useful
+to know about.
+
+<P>C escapes may only appear as function bodies, among statements and among
+member lists.&nbsp; They can't appear in parameter lists or in other awkward
+locations inside statements.&nbsp; Brace-delimited C escapes <TT>{ ...
+}</TT> are recognized only in the context of function bodies.
+
+<P>Sometimes the lexical scanner may not be able to find the end of a brace-delimited
+<TT>{ ... }</TT> C escape.&nbsp; It can always identify a percent-brace
+escape <TT>%{ ... %}</TT>, however, and the two forms are otherwise completely
+interchangeable as function bodies.
+
+<P>The transformation language contains no conditional compilation feature
+itself.&nbsp; You can use <TT>#ifdef</TT> and other features inside C escapes
+to force conditional compilation in most contexts, however.&nbsp; For example:
+<UL><TT>struct dirent { ... %{ #ifndef LIBC5 %} unsigned char linux_d_type;
+%{ #endif /* LIBC5 */ %} ... };</TT></UL>
+Note that the structure member uses the <TT>linux_</TT> prefix so that
+<B>transform</B> doesn't attempt to perform automatic conversion from the
+BSD/OS <TT>d_type</TT> member, which would fail to compile if <TT>LIBC5</TT>
+is defined.&nbsp; One major glitch: You can't use C escapes to conditionally
+compile function definitions.&nbsp; Because <B>transform</B> doesn't understand
+C, it doesn't recognize that a function definition may not be present,
+and when function definitions are merged at the end of translation, there
+could be references to a definition that was conditionally compiled out,
+and that causes a compilation error.
+
+<P>Although C permits type qualifiers like <TT>const</TT> and <TT>volatile</TT>
+to move around, <B>transform</B> requires that no more than one of them
+may appear with a transformable structure pointer parameter declaration,
+and they must come first.&nbsp; <B>Transform</B> doesn't really parse C
+declarations; it just matches strings.
+
+<P>You can't automatically transform arrays of transformable elements.
+<H1>
+The Source Code</H1>
+The source code for the LAP resides in <TT>/usr/src/contrib/linux</TT>.&nbsp;
+There are several subdirectories:
+<UL>
+<LI>
+<TT>liblinux.common</TT>: This directory holds common source files and
+header files for the <B>liblinux</B> transformation library.</LI>
+
+<LI>
+<TT>liblinux.so.1</TT>: Source files and build directory for the <B>libc5</B>
+emulation.</LI>
+
+<LI>
+<TT>liblinux.so.2</TT>: Source files and build directory for the <B>glibc</B>
+emulation.</LI>
+
+<LI>
+<TT>ld-1.9.5.so</TT>: Build directory for the <B>libc5</B> dynamic linker.&nbsp;
+The source files are shared with the BSD/OS version of the Linux dynamic
+linker, which are in <TT>/usr/src/contrib/ld.so-1.9.5</TT>.</LI>
+
+<LI>
+<TT>ld-2.0.7.so</TT>: Build directory for the <B>glibc</B> dynamic linker.&nbsp;
+Source files include <B>glibc</B> sources as well as some files from <TT>liblinux.so.2</TT>
+and <TT>liblinux.common</TT>.</LI>
+
+<LI>
+<TT>transform</TT>: Source files and build directory for the <B>transform</B>
+translator.</LI>
+
+<LI>
+<TT>afdb</TT>: Source file and build directory for the <B>afdb</B> database
+builder.&nbsp; The <B>afdb</B> utility reads Linux shared libraries and
+creates a database of symbols that <B>transform</B> accesses in order to
+find aliases for function names.</LI>
+
+<LI>
+<TT>D</TT>: The distribution directory for various Linux source files,
+including <TT>glibc-2.0.7</TT>.&nbsp; This is used exclusively to build
+the <TT>ld-2.0.7.so</TT> dynamic linker and the <B>afdb</B> database builder.</LI>
+</UL>
+
+<H1>
+Problems and Directions</H1>
+Currently the <B>liblinux</B> library has no debugging feature analogous
+to the SCO emulation.&nbsp; The <B>transform</B> program has enough information
+to be able to print some very useful trace information.&nbsp; For now,
+system call tracing must be performed with the <TT>ktrace</TT>(1) utility.
+
+<P>Not all Linux system calls are currently emulated.&nbsp; The sign that
+a system call hasn't been emulated is that your application receives a
+segmentation violation signal.&nbsp; We need to provide default implementations
+for the remaining system calls so that the emulation aborts with useful
+information about an unimplemented system call.
+
+<P>We don't support statically linked Linux programs or any Linux programs
+that make inline system calls.&nbsp; (We do handle the inline <TT>personality()</TT>
+system call in <B>libc5</B> startup code as a special case, however.)&nbsp;
+If we wanted to support statically linked Linux programs, we would have
+to adopt the SCO emulation technology.&nbsp; The kernel would load a statically-linked
+emulation library into every statically linked Linux program, and it would
+set IDT entry 128 to redirect Linux system call instructions (<TT>int $0x80</TT>)
+to the emulation library.&nbsp; The emulation library would contain a table
+that mapped Linux system call numbers to transformation functions, and
+it would marshal Linux system call arguments from saved register values
+on the stack and&nbsp; call the transformation functions.&nbsp; The transformation
+source code could be derived from the existing transformation sources with
+a few modifications.
+
+<P>If we decide that we need pathname transformation or other non-reentrant
+features that the SCO emulation already implements, we may want to switch
+to the SCO emulation library technology anyway.&nbsp; It is very desirable
+to keep the LAP software simple and re-entrant, for efficiency and maintainability,
+but it may not be practical.&nbsp; We need experience with real Linux applications
+to find out whether we need to switch.
+
+<P>Currently we have no support for Linux thread calls.&nbsp; We are thinking
+about fixing the undocumented BSD/OS <TT>sfork()</TT> system call to make
+it functional again after we broke it in 4.0.&nbsp; It should be easy to
+use <TT>sfork()</TT> to implement the Linux <TT>clone()</TT> system call,
+which is the basis for the Linux thread implementation.
+</BODY>
+</HTML>

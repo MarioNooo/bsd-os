@@ -1,0 +1,42 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI login_rchpass.8,v 1.2 1996/09/13 19:39:36 bostic Exp
+.Dd August 1, 1996
+.Dt LOGIN_RCHPASS 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_rchpass
+.Nd change remote password authentication type
+.Sh SYNOPSIS
+.Nm login_rchpass
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm
+utility is typically called from
+.Xr login 8 .
+It is functionally the same as calling the program:
+.Dq rpasswd Ar user .
+.Pp
+Only the
+.Li login
+service is supported.
+.Pp
+The
+.Ar class
+argument is not used.
+.Pp
+See
+.Xr login.conf 5
+for more information.
+.Sh SEE ALSO
+.Xr rpasswd 1 ,
+.Xr login.conf 5 ,
+.Xr login 8 ,
+.Xr login_rpasswd 8 ,
+.Xr rpasswdadm 8

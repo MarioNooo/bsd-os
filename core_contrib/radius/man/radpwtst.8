@@ -1,0 +1,311 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH RADPWTST 8 "18 November 1996"
+.SH NAME
+radpwtst \- authenticates a user's password using a \s-2RADIUS\s+2 server
+.SH SYNOPSIS
+.B radpwtst
+[
+.BI \-c code
+]
+[
+.BI \-d directory
+]
+[
+.BI \-f file
+]
+[
+.BI \-g group
+]
+.if n .ti +5
+[
+.B \-h
+]
+[
+.BI \-i client_\s-2IP\s+2_address
+]
+[
+.BI \-l async_port
+]
+.if t .ti +5
+[
+.B \-n
+]
+.if n .ti +5
+[
+.BI \-p \s-2UDP\s+2_port
+]
+[
+.BI \-r retries
+]
+[
+.BI \-s servername
+]
+.if n .ti +5
+[
+.BI \-t timeout
+]
+[
+.BI \-u type
+]
+[
+.BR \-v [
+.IR "1 \(bv 2" ]
+]
+.if n .ti +5
+.if t .ti +5
+[
+.BI \-w password
+]
+[
+.B \-x
+]
+[
+.BI \-: <attribute>=<value>
+]
+.if n .ti +5
+.I userid
+.RI [@realm
+]
+.SH DESCRIPTION
+.LP
+.B Radpwtst
+authenticates a user using a \s-2RADIUS\s+2 server.
+The
+.I userid
+is required on the command line.
+.B Radpwtst
+prompts for the password matching this
+.I userid
+and forwards the userid/password tuple to a \s-2RADIUS\s+2 server.
+When the optional
+.I @realm
+is present, it indicates the user belongs in some authentication realm.
+These realms are usually listed in the first column of the \s-2RADIUS\s+2
+server's
+.I authfile
+which is assumed (by default) to be located in either the
+.I ../raddb
+or the
+.I /usr/private/etc/raddb
+directories.
+See
+.BR authfile (5)
+for more information.
+When the optional
+.I @realm
+is omitted, the
+.I userid
+is sought in the
+.I users
+file, only.
+An exact match is required and if that fails the \s-2DEFAULT\s+2 entry
+ends up describing how to authenticate this user.
+See
+.BR users (5)
+for more information.
+.LP
+If authentication succeeds,
+.B radpwtst
+displays
+"authentication \s-2OK\s+2"
+on standard output.
+Otherwise,
+.B radpwtst
+displays:
+.sp
+.RS 0.5i
+.ft I
+"userid"
+.ft
+authentication failed.
+.SH OPTIONS
+.TP
+.BI \-c " code"
+allows the user to specify several \s-2RADIUS\s+2 packet type codes from
+the following list: 1 (for Access-Request), 4 (for Accounting-Request),
+7 (for Password-Request) and 12 (for Status-Server).
+.TP
+.BI \-d " directory"
+allows the user to specify an alternate directory name containing the
+\s-2RADIUS\s+2
+.IR authfile ,
+.I clients
+and
+.I users
+files instead of the default
+.I ../raddb
+and
+.I /usr/private/etc/raddb
+directories.
+If no
+.BI \-d " directory"
+argument is given, \s-2RADIUS\s+2 will look first for a directory
+.I ../raddb
+and, if none is found, use
+.IR /usr/private/etc/raddb .
+An error will be displayed on stdout if neither directory can be used
+to locate the various \s-2RADIUS\s+2 configuration files.
+Care should be taken to ensure the contents of these configuration
+files match those of the \s-2RADIUS\s+2 server if the server is running
+on a different machine than the one where
+.B radpwtst
+is being run.
+.TP
+.BI \-f " file"
+allows the user to specify a "prefix" for a file in the
+.I users
+file format (see the
+.BR users (5)
+man page).
+The name of this
+.I users
+file is assumed to be
+.I <file>.users
+and found in the \s-2RADIUS\s+2 configuration file directory.
+This file contains arbitrary check-items and reply-items (see
+.BR users (5)
+for more information) grouped into pseudo-users having names
+which may be specified by the following
+.B -g
+option.
+If no
+.B -g
+option is given, the
+.B \s-2DEFAULT\s+2
+entry (if one is present) will be used.
+In this way, arbitrary attribute-value pairs may be communicated to
+remote \s-2RADIUS\s+2 servers.
+.TP
+.BI \-g " group"
+allows the user to specify an arbitrary "pseudo-user" named
+.I group
+in the file specified by the above
+.B -f
+option.
+This file contains arbitrary check-items and reply-items (see
+.BR users (5)
+for more information) grouped by these pseudo-user names.
+If no
+.B -g
+option is given, the
+.B \s-2DEFAULT\s+2
+entry (if one is present) will be used.
+In this way, arbitrary attribute-value pairs may be communicated to
+remote \s-2RADIUS\s+2 servers.
+.TP
+.B \-h
+causes a usage (help) message to be placed onto stdout.
+.TP
+.BI \-i " client\s-2IP\s+2address"
+allows the user to specify a different client \s-2IP\s+2 address instead
+of the using as default the \s-2IP\s+2 address of the originating machine.
+.TP
+.BI \-l " async_port"
+allows the user to specify an alternate asynch port number instead
+of the default async port
+.IR 1 .
+.TP
+.B \-n
+allows the user to force the Authentication-Only value to be used
+in the attribute-value pair Service-Type.
+.TP
+.BI \-p " \s-2UDP\s+2port"
+allows the user to specify an alternate \s-2UDP\s+2 port number instead
+of the default \s-2UDP\s+2 port number
+.IR 1645 .
+.TP
+.BI \-r " retries"
+allows the user to specify a maximum number of retries instead of the default
+.IR ten .
+.TP
+.BI \-s " servername"
+allows the user to specify an alternate server instead of the default
+.IR homeless.merit.edu .
+.TP
+.BI \-t " timeout"
+allows the user to specify an alternate timeout value (in seconds) instead
+of the default
+.IR three .
+.TP
+.BI \-u " type"
+allows the user to specify one of several Service-Type values instead
+of the default
+.I auth
+value.
+Note, that the default
+.I auth
+value will fail if no password (or an empty password) is included in
+the Access-Request (default or
+.IR \-c 1)
+produced by
+.BR radpwtst .
+This is because the \s-2RADIUS\s+2 server requires a valid (non-empty)
+password be provided in Access-Request packets where the Service-Type
+is Authenticate-Only.
+Valid
+.IR type s
+are:
+.IR admin ,
+.IR auth ,
+.IR dumb ,
+.IR exec ,
+.IR kchap ,
+.IR outbound ,
+.IR ppp ,
+.IR slip ,
+.IR dbadmin ,
+.IR dbdumb ,
+.IR dbppp and
+.IR dbslip ,
+where
+.I db
+stands for "dial back" in the last four types.
+.TP
+.B \-v
+prints the version of \s-2RADIUS\s+2 used to build the program.
+If the option is given as
+.B \-v1
+or
+.B \-v2
+the program will build the request according to the \s-2RADIUS\s+2 protocol
+version one or two, respectively.
+.TP
+.BI \-w " password"
+allows the user to provide a password on the command line and not be
+prompted for one.
+.TP
+.B \-x
+allows the user to turn on debugging output.
+.TP
+.BI \-: <attribute>=<value>
+the text that follows the colon (":") character is taken to specify the
+value of any attribute in the dictionary.  The syntax is identical to
+the reply-items described in 
+.BR users (5).
+.PD
+.SH EXIT STATUS
+.LP
+Normal successful completion returns zero to the system.
+If the response from the \s-2RADIUS\s+2 server
+had errors,
+.B radpwtst
+returns -2.
+Local errors return -1, and timeout errors return 1 as status.
+.SH FILES
+.PD 0
+.TP 2i
+.I  ../raddb
+the directory containing the \s-2RADIUS\s+2 configuration and database files.
+.TP 2i
+.I  /usr/private/etc/raddb
+an alternate directory containing the same files.
+.PD
+.SH SEE ALSO
+.LP
+.BR radcheck (8),
+.BR radiusd (8),
+.BR authfile (5),
+.BR clients (5),
+.BR dictionary (5),
+.BR users (5)

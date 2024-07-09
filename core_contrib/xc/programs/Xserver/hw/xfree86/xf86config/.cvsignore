@@ -1,0 +1,8 @@
+Makefile
+xf86conf.0
+xf86config
+.depend
+xf86config.man
+xf86config.0
+Makefile.tmp
+xf86config._man

@@ -1,0 +1,31 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.ntwo.X21,v 1.1 1995/08/17 14:57:28 cp Exp
+#
+
+#
+# ntwo setup script to configure
+unit=
+IFS=.
+for i in $0
+do
+    unit=$i
+done
+IFS=
+
+echo -n " ntwo$unit"
+n2setup -u $unit <<EOF
+
+transmit clock source = receive clock;
+data carrier detect = ignore dcd;
+
+#
+# uncomment following to make driver silent about receive
+# errors such as parity and framing
+#
+#receive data errors = silent;		
+
+EOF

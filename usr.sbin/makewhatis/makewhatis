@@ -1,0 +1,16 @@
+#!/bin/sh
+#	BSDI	makewhatis,v 2.2 1998/06/08 18:03:33 donn Exp
+
+out=/usr/share/man/whatis.db
+
+if [ $# -eq 0 ]
+then
+	dirs=$(perl5 -e '$, = " "; while (<STDIN>) { s/^_default[ 	]// or next; print map { glob } split; }' < /etc/man.conf)
+else
+	dirs="$@"
+fi
+
+find $dirs -type f -name '*.0*' -print | \
+	/usr/share/man/makewhatis.perl | \
+	sort -u > $out
+exit 0

@@ -1,0 +1,57 @@
+
+  Both public keys and pre-shared keys are kept in flat files (a known 
+security hole!) and are managed by a suite of routines and an interface 
+library in the auth directory.
+  Key rings are kept in a directory specified in authdef.h (KEYPATH) under 
+the names <hostname>.dsspriv and <hostname>.dsspub for DSS keys, 
+<hostname>.rsapriv and <hostname>.rsapub for RSA keys, and 
+<hostname>.preshr.priv and <hostname>.preshr.pub for pre-shared keys. For 
+example, using the default KEYPATH of /var/db on host joe.blow.org, the DSS
+private key file would be /var/db/joe.blow.org.dsspriv; the public key ring 
+would be the file /var/db/joe.blow.org.dsspub. Edit the authdef.h file and 
+set the KEYPATH directory if the default is not satisfactory.
+  The supplied routines are:
+
+	* gen_dss_key: This routine will generate a public/private DSS key
+		pair and store the result in $KEYPATH/<hostname>.dsspriv.
+
+	* gen_rsa_key: This routine will generate a public/private RSA key
+		pair and store the result in $KEYPATH/<hostname>.rsapriv.
+
+	* dump_key: Generate an ASCII rendition of your public key. This
+		routine is used to create a file suitable for sharing with
+		other parties with whom you would like to authenticate.
+
+	* add_pub_key: Add another party's public key to your public key
+		ring. It is assumed that the file to add was created by the
+		other party with "dump_key".
+
+	* list_keys: Print out ASCII renderings of all entries in your
+		public key ring.
+
+	* fingerprint: Obtain the fingerprint of a public key. This routine
+		is used to verify that a public key has not been tampered with. 
+		This routine is either passed the filename of an ASCII file
+		which contains the public key of another party, in 
+		which case it will generate a fingerprint from it, or nothing,
+		in which case it will generate a fingerprint from the public
+		key of the current host.
+
+dump_key, add_pub_key, list_keys, and fingerprint all take an optional
+parameter (RSA) to denote which public key ring to operate on. The default
+is DSS.
+
+In addition to these routines the libauth.a library contains subroutines
+which can be used by applications wishing to access the key files. The 
+authdef.h file defines appropriate structures and prototypes for this 
+library. Using the aforementioned routines and library, individuals can
+generate, exchange, and manage public keys and pre-shared keys. At this 
+time there is no facility for indirect trust-- a key in your public key 
+ring in implicitly trusted.
+
+	An application to remove a key from the public key ring is left
+as an exercise for the reader.
+
+	A BSAFE version of the RSA specific routines has been written
+but is not part of this distribution. 
+

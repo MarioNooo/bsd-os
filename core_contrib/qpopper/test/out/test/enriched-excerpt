@@ -1,0 +1,130 @@
+Return-Path: <lgl@qualcomm.com>
+Received: from nala.qualcomm.com (nala.qualcomm.com [129.46.50.44])
+	by booray.new-era.com (8.8.5/8.8.5) with ESMTP id VAA05362
+	for <lgl@island-resort.com>; Tue, 30 Sep 1997 21:08:55 -0400
+Received: from [129.46.137.174] (llundblade-mac.qualcomm.com [129.46.137.174]) by nala.qualcomm.com (8.8.5/1.4/8.7.2/1.13) with ESMTP id SAA01922 for <lgl@island-resort.com>; Tue, 30 Sep 1997 18:08:45 -0700 (PDT)
+X-Sender: llundbla@mrw.qualcomm.com
+Message-Id: <v0400132ab0574d180674@[129.46.137.174]>
+In-Reply-To: <3.0.32.19970930125746.0093a7a0@emrys.qualcomm.com>
+Mime-Version: 1.0
+Content-Type: text/enriched; charset="us-ascii"
+Date: Tue, 30 Sep 1997 17:43:36 -0700
+To: lgl@island-resort.com
+From: Laurence Lundblade <lgl@qualcomm.com>
+Subject: test: lost of nested excerpts
+
+unquoted text...
+
+
+>>>>
+
+<excerpt>At 10:01 AM 9/30/97 -0700, Laurence Lundblade wrote:
+
+>>>> 
+
+<excerpt>At 8:19 AM -0700 9/30/97, Steve Sprigg wrote:
+
+>>>>
+
+<excerpt>Looks like the Pilot could be dropping all of the compressed
+Acks.  Sorry if these are redundant questions, but here goes...
+
+
+- Am I correct in assuming this does NOT happen without VJ compression?
+ If this is a serial driver issue, then it probably should happen
+regardless of the use of VJ header compression. 
+
+</excerpt><<<<<<<<
+
+It does not happen without VJ compression, BUT there is an explanation.
+I believe there are two problems - one is the loss of compressed
+packets, the other is the fact that the timeouts get longer and
+longer.
+
+</excerpt><<<<<<<<
+
+
+They don't always seem to get longer and longer.  Maybe the timeouts
+are just totally broken.
+
+
+
+>>>>
+
+<excerpt><excerpt><excerpt>
+
+The <italic>really</italic> odd thing about the above sequence is the
+timing.  The numbers I've listed in the first column were the
+<italic>seconds</italic> column from the timestamps in the trace (as in
+"Thu Sep 18 16:37:29").  Often the <italic>initial</italic>
+retransmitted data packet is one second behind the first in-sequence
+transmission of that packet (as in the above illustration), but
+sometimes it is four or five seconds, sometimes ten.  The second and
+third consecutive retransmit delays are just as weird (see attached
+file).
+
+</excerpt></excerpt><<<<<<<<
+
+Yes, I've seen very weird retransmission timings from the Pilot too. I
+wonder if there some integer arithmatic that's overflowing when they
+get really large.
+
+
+</excerpt><<<<<<<<
+
+
+>>>>
+
+<excerpt>
+
+>>>>
+
+<excerpt><excerpt>
+
+>So, should a successful transmission and ack reset the retransmission
+
+>timer? It appears not to for the NT 4.0 stack.
+
+
+Isn't it the Pilot's retransmission timing that's in question?  NT is
+just sending ACKs for each packet it gets.
+
+
+</excerpt></excerpt><<<<<<<<
+
+The issue is when does the ACK compressor decide to send an
+uncompressed packet, because that's what causes recovery.
+
+  At first I thought it was the NT box's problem, but then I saw ack's
+that should be passed through uncompressed were not.
+
+</excerpt><<<<<<<<
+
+
+An uncompressed packet will be forced by any retransmitted packet, and
+in some other cases (negative seq & ack deltas, I think).  This is what
+I observed, and looking back over it now, it seems that each Pilot
+retransmit is in fact followed by an uncompressed PC ack (or no ACK at
+all...).
+
+
+>>>>
+
+<excerpt> The subscriber folks have some code that throws out
+over-eager acks which may be responsible for this problem.
+
+</excerpt><<<<<<<<
+
+
+This is interesting...where do they do this? how do they know what's
+over-eager?  There were periods during which the PC side was strangely
+silent.  Whereever they do this, it's certainly not between the PPP
+endpoints so it shouldn't break VJ, and any retransmits which go over
+that link should be uncompressed.
+
+
+-bhk
+
+</excerpt><<<<<<<<
+
+

@@ -1,0 +1,247 @@
+Copyright [C] The Regents of the University of Michigan and Merit Network,
+Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+
+
+              Authentication/Authorization Transfer Vector (AATV)
+
+
+   Existing versions of RADIUS servers have used ad hoc methods to obtain
+authentication credentials for requests originating at a Network Access
+Server (NAS) client.  Early versions performed a simple table lookup in
+a local "users" database -- essentially a flat file database.  Eventually
+this was extended into fetching passwords on the (default) UNIX host which
+was running the RADIUS server.  Both of these methods did not scale well,
+although both are extremely popular and adequate in many cases.  The Merit
+extensions added a complex source module to allow for multiple kinds of
+authentication types (e.g., Kerberos) including the relaying of (proxy)
+authentication requests to other RADIUS servers reachable over the network.
+
+   However, adding a new authentication type to the Merit AAA server became
+a painful and expert level activity.  At the requests of several individuals,
+Merit has added an authentication/authorization Applications Programming
+Interface (or API).  This API is suitable for handling requests of other
+types than just authentication/authorization.  In fact, it is now possible
+to have a request travel through several "phases" of this API on its journey
+from the NAS client, into the Merit AAA server and back to the NAS client.
+
+   It was felt a modular approach would make the code more manageable and
+more understandable.  It also would allow the addition of new authentication
+types to become an independent and constrained activity no longer requiring
+the services of "expert" RADIUS programmers.  It will also permit different
+vendors to attach proprietary authentication/authorization/accounting engines
+in a hopefully portable and standard fashion.
+
+   The resulting extensions, here called AATV for Authentication/Authorization
+Transfer Vector, provide the required modularity and eliminate any global name
+space pollution.  Some prefer to think of the modularity made possible by the
+AATV as an object oriented mechanism (without using C++) while others think of
+the various client modules as simple black boxes having only one public symbol
+and one or more local (static) procedures for handling the actual work load.
+The transfer vector derives from a public structure which is described below.
+Basically it is an array of several function pointers and a few associated
+flags used to inform the Merit AAA server about the type of processing needed
+to perform the given function (e.g., whether sockets or process creation, or
+neither, are used to maintain a good response time for incoming requests).
+
+   The "black box" contains an initialization function (think "constructor"
+for C++) and a workhorse function (method) which implements the actual body
+of the module's processing algorithm (here called the "action" function).
+The "cleanup", "recv" and "timer" methods are optional.  An integer variable
+is available to hold the file descriptor for a socket (if needed).  The three
+remaining fields are just overhead to tell the Merit AAA server how to invoke
+and control the AATV client module should an incoming request match the type
+of the module.
+
+   The AATV concept is integral to the use of a Finite State Machine (FSM) in
+the Merit AAA server.  See the related FSM documentation for more information
+on this subject.
+
+   The AATV structure (think class in C++) describes the "public interface"
+or protocol of the client module.  These methods (when present) are private
+to the AATV module (in the strict C++ sense).  The Merit AAA server maintains
+an array of these AATV structure pointers and uses that array to select which
+module matches the incoming authentication (or authorization or accounting)
+request.  So, now, here is the formal description of the AATV structure:
+
+
+    typedef struct aatv
+    {
+        u_char       id[32];
+        char         authen_type;
+        u_char       aatvfunc_type;
+        void       (*init) PROTO((struct aatv *));
+        int        (*timer) PROTO((void));
+        int        (*act_func) PROTO((AUTH_REQ *, int, char *));
+        AUTH_REQ * (*recv) PROTO((struct sockaddr_in *, UINT4, u_int, EV *));
+        void       (*cleanup) PROTO((void));
+        int          sockfd;
+        u_short      process_statistics[5];
+        time_t       timing_statistics[3];
+        PROC_ENT    *proc_q;
+    } AATV;
+
+
+Where:   The "id" field is an unsigned character array containing the unique
+         ASCII name for this particular AATV.  No more than one AATV having
+         this name may be present in the AATV array in the Merit AAA server.
+
+
+         The "authen_type" field is a character containing the numerical
+         type code as defined in the "dictionary" file (REALM, MIT-KRB,
+         TACACS, UNIX-PW, etc.) or "-1" for several built-in types.
+
+
+         The "aatvfunc_type" field indicates to the Merit AAA server how a
+         given AATV module deals with flow blocking and how the Merit AAA
+         server should process these types of requests.  This field is an
+         unsigned character containing one of the following numbers:
+
+            0 (AA_DIRECT) - The AATV "act_func" function has a direct reply.
+                            This is the case when it is possible to perform
+                            the processing locally using table lookup or some
+                            computational means.  This is simply a direct
+                            function call (and return) within the server
+                            running on the local host.
+
+            1 (AA_SOCKET) - The deferred reply is returned on a UDP socket
+                            for this type of AATV module.  Presumably some
+                            sort of remote processing is required and the
+                            result is eventually returned by the remote host.
+
+            2 (AA_FORK)   - This type of client spawns a process and informs
+                            the engine to expect a deferred reply.  The reply
+                            is part of the exit status of the child process.
+
+            3 (AA_FREPLY) - This type is similar to the AA_FORK since it does
+                            fork, but it gets any reply on the standard server
+                            reply UDP socket (just like the AA_SOCKET type).
+
+         The "init" field is a (possibly NULL) function pointer which points
+         to the initialization function for this client module.  It takes a
+         pointer to an AATV typically to provide access to the socket file
+         descriptor which would need to be initialized for type AA_SOCKET.
+
+
+         The "timer" field is a (possibly NULL) function pointer which points
+         to a timer function which will be called every second when a client
+         request is pending.  This allows the AATV module to do some general
+         purpose timing functions, but is not normally necessary.
+
+
+         The "act_func" field is a function pointer which points to the main
+         processing function for this AATV module.  It is this function which
+         "does all the work" corresponding to the given request.  The "action"
+         function has arguments for an AUTH_REQ pointer, integer and a string.
+         The integer and string are just general purpose arguments which the
+         action function may or may not need.  All action functions need and
+         use the AUTH_REQ pointer which grants them access to the engine's
+         global queue of request data structures.  This structure contains
+         everything there is to know about the current (outstanding) request.
+         Each action function returns the results of its execution in a small
+         integer valued return code.  A list of these "events" is given below.
+
+
+         The "recv" field is a (possibly NULL) function pointer which points
+         to a receiving function (if needed) to receive packets from a socket.
+         The engine will hand off received packets to this function when it
+         receives them and will determine which function to call based on the
+         socket upon which it arrived.  The first argument carries information
+         about the originating socket, the second argument contains the IP
+         address of the sender, the third argument is the number of octets
+         received by the engine and the last argument is an EVENT_ENT pointer.
+         The receive function builds an AUTH_REQ structure and populates it.
+         It also returns an "event" for the FSM using the EVENT_ENT pointer.
+
+
+         The "cleanup" field is a (possibly NULL) pointer to a function which
+         is used to perform any post-processing or clean up type activities
+         (if necessary) for this AATV module (think "destructor" for C++).
+
+
+         The "sockfd" field is an integer containing the file descriptor
+         for this AATV module (if it is an AA_SOCKET type).
+
+
+         The process_statistics fields are used to keep track of forking
+         type AATV modules (AA_FORK and AA_FREPLY) and may be used to track
+         and control the number of outstanding forked processes (children).
+
+
+         The timing_statistics fields are used to identify when the various
+         process_statistics fields described above transitioned or reached
+         their current value(s).
+
+   The flow of data through the Merit AAA server normally begins on a
+well-known socket and is then handed off to one of (perhaps) several AATV
+modules for processing.  From these modules, the request may be satisfied
+locally or relayed off the local host for further processing.  Eventually,
+the request is satisfied in either a positive, or negative sense, and the
+Merit AAA server returns an acknowledgement, or a negative acknowledgement,
+to the NAS (RADIUS client), respectively.
+
+   A list of exemplary AATV names is given below.  Several different "utility"
+AATV concepts have been identified and made part of the Merit AAA server, for
+developers' convenience.  The TIMER AATV sets a timer interval to an initial
+value.  The END AATV terminates the FSM for this request.  The LOG AATV is
+used to log an error condition.  The REPLY AATV is used to do whatever is
+needed to issue the reply or response to the original request.  The TIMEOUT
+AATV logs the fact that a request on the global queue has timed out.
+
+
+
+               Exemplary List of Event Names and Their Meaning
+
+    ACK          acknowledgment of the previous action
+    NAK          negative acknowledgment of the previous action
+    WAIT         the previous action generated a pending event
+    ERROR        the previous action generated an error
+    FATAL        the previous action generated a fatal error
+    DUP          the incoming request is a duplicate
+    TIMER        the timer value has expired
+    TIMEOUT      the request has timed out due to inactivity
+    AUTHEN       the incoming request is an Access-Request
+    ACCT         the incoming request is an Accounting-Request
+    PASSWD       the incoming request is a Passwd-Request
+    REACCESS     the incoming request is is an Access-Request with State
+    ACC_CHAL     the incoming request is and Access-Challenge
+    MGT_POLL     the incoming request is is a Status-Server
+    AUTH_ONLY    the incoming request is for Authentication-Only
+    ACCT_START   the incoming request is an Accounting Start
+    ACCT_STOP    the incoming request is an Accounting Stop
+    RC1          general purpose return code of one
+    RC2          general purpose return code of two
+    RC3          general purpose return code of three
+    RC4          general purpose return code of four
+    RC5          general purpose return code of five
+    RC6          general purpose return code of six
+    RC7          general purpose return code of seven
+    RC8          general purpose return code of eight
+    RC9          general purpose return code of nine
+    RC10         general purpose return code of ten
+
+               Exemplary List of AATV Names and Their Purpose
+
+    ACCT          the AATV for Accounting requests
+    ACK           utility AATV used to always signify success
+    AKERB         the AATV for AFS Kerberos Authentication
+    AUTHENTICATE  the AATV for Authentication requests
+    CLEANUP       utility AATV used to exit the FSM
+    FILE          the AATV for FILE Authentication
+    KCHAP         the AATV for KCHAP Authentication
+    KILL          utility AATV used to unconditionally remove pending events
+    LOG           utility AATV used to log some error
+    MKERB         the AATV for MIT Kerberos Authentication
+    NULL          utility NULL AATV
+    PASSWD        the AATV for Passwd requests
+    PENDING       utility AATV used to test for pending events
+    RAD2RAD       the AATV used to send (relay) RADIUS proxy requests
+    RADDNS        the AATV for resolving DNS names
+    RADIUS        the main AATV in the Merit AAA server
+    REALM         the AATV for handling realm based Authentication
+    REDO          utility AATV used to re-invoke an action
+    REPLY         utility AATV used to send a RADIUS reply
+    SRV_STATUS    the AATV for Status-Server (Management-Poll) requests
+    TACACS        the AATV for TACACS Authentication
+    TIMEOUT       utility AATV used to do timeout logging
+    TIMER         utility AATV used to initialize the timeout value
+    UNIX-PW       the AATV for for UNIX password file Authentication

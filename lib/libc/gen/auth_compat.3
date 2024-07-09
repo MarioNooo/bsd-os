@@ -1,0 +1,240 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Berkeley Software Design,
+.\"	Inc.
+.\" 4. The name of Berkeley Software Design, Inc.  may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY BERKELEY SOFTWARE DESIGN, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL BERKELEY SOFTWARE DESIGN, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	BSDI auth_compat.3,v 2.3 1998/01/28 02:49:23 prb Exp
+.Dd "March 20, 1997"
+.Dt AUTH_COMPAT 3
+.Os 
+.Sh NAME
+.Nm auth_approve ,
+.Nm auth_check ,
+.Nm auth_clropts ,
+.Nm auth_env ,
+.Nm auth_response ,
+.Nm auth_rmfiles ,
+.Nm auth_scan ,
+.Nm auth_script ,
+.Nm auth_script_data ,
+.Nm auth_setopt ,
+.Nm auth_value
+.Nd deprecated BSD Authentication interface
+.Sh SYNOPSIS
+.Fd #include <login_cap.h>
+
+.Ft int
+.Fn auth_approve "login_cap_t *lc" "char *fullname" "char *service"
+.Ft int
+.Fn auth_check "char *fullname" "char *class" "char *style" "char *service" "int *stat"
+.Ft void
+.Fn auth_clropts
+.Ft void
+.Fn auth_env
+.Ft int
+.Fn auth_response "char *fullname" "char *class" "char *style" "char *service" "int *stat" "char *challenge" "char *response"
+.Ft void
+.Fn auth_rmfiles
+.Ft int
+.Fn auth_scan "int okay"
+.Ft int
+.Fn auth_script "char *path" "..."
+.Ft int
+.Fn auth_script_data "char *data" "int nbytes" "char *path" "..."
+.Ft int
+.Fn auth_setopt "char *name" "char *value"
+.Ft char *
+.Fn auth_value "char *name"
+.Sh DESCRIPTION
+These functions provide the deprecated interface to the BSD Authentication
+system.  They are only provided for backwards compatibility with existing
+software and should not be used in new code.
+.Sh
+BSD Authentication is performed through external login scripts with access
+controlled by the
+.Pa /etc/login.conf
+file.  See
+.Xr login.conf 5
+for a description of the interface to these external programs.
+.Sh THE PARAMETERS
+The following parameters are used in the various routines:
+.Bl -tag -width fullnamexx
+.It Ar challenge
+A null terminated string representing the challenge issued to the user.
+.It Ar class
+The users login class.  See
+.Xr login.conf 5
+for more details.
+.It Ar data
+A pointer to arbitrary data to be passed to the login script on
+file descriptor 3 (the
+.Dq backchannel ) .
+The data may contain NULs.
+.It Ar fullname
+The full name of the user being authenticated, including any instance.
+.It Ar lc
+A pointer to the
+.Ar login_cap_t
+returned by the
+.Xr login_getclass 3
+routine.  This value can be NULL in which case the
+.Ar fullname
+parameter is used to lookup the login class for the user.
+.It Ar name
+The name of a variable or option.
+.It Ar nbytes
+The number of bytes the
+.Ar data
+parameter is pointing to.
+.It Ar okay
+The value to return if no explicit authentication or rejection
+message is received from the login_script.
+.It Ar path
+.It Ar response
+A null terminated string representing the response to the challenge that
+was issued to the user.
+.It Ar service
+The type of service being requested of the login script.
+See
+.Xr login.conf 5
+for a description of the various services.
+A NULL may be passed to indicate the default service should be used.
+The default service requires that standard input, output, and error
+be available for their normal interaction with the user.
+.It Ar stat
+If not NULL, the full return status is stored to the location to which
+.Ar stat points.
+The return values are a subset of the status such that any return value
+greater than 0 indicates the authentication was successful.  The
+additional information contained in the full status indicates how to
+treat a failure.
+.It Ar style
+The style of authentication to be used.
+See
+.Xr login.conf 5
+for a description of the various styles.
+This value must not be NULL, there is no hard coded default style.
+.It Ar value
+The value to be associated with the specified name.
+.El
+.Sh STATUS
+The status is made up of one or more the following values ORed together:
+.Bl -tag -width fullnamexx
+.It Li AUTH_OKAY
+The user was authenticated.
+.It Li AUTH_ROOTOKAY
+The user was authenticated with a root instance.
+.It Li AUTH_SECURE
+The user was authenticated via a mechanism which is not subject to
+eavesdropping attacks (such as provided by token cards).
+.It Li AUTH_SILENT
+Do not report an error, the user was not authenticated for access and
+was not expected to be.  This is returned by login scripts that allow
+changing of the users password, for instance.
+This value is stripped off for normal returns.
+.It Li AUTH_CHALLENGE
+The user was not authenticated for access and a challenge was issued.
+The challenge should be displayed to the user, a response retrieved,
+and the result verified.
+This value is stripped off for normal returns.
+.El
+.Sh THE FUNCTIONS
+.Bl -tag -width fullnamexx
+.It Fn auth_approve
+Run the approval script for the specified service, a return greater than 0
+indicates the user was approved.
+.It Fn auth_check
+Run the login script specified by the
+.Ar style
+for the user.
+A return value greater than 0 indicates success.  Use the value
+pointed to by
+.Ar stat
+to determine if a rejection was silent or a challenge was issued.
+Use the
+.Fn auth_value
+function to retrieve any generated challenge.
+.It Fn auth_clropts
+Clear any options stored for sending to the login script.
+.It Fn auth_env
+Set any environment variables specified by the last login_script to
+have run.
+.It Fn auth_response
+Verify a response from the user for the specified challenge.  The challenge
+can be the NULL string if the user provided a response prior to the
+issuing of challenge (such as from a PortMaster).
+.It Fn auth_rmfiles
+Remove any files generated by the login script.  This should only be
+done if the user was ultimately denied access.
+.It Fn auth_scan
+Scan the data returned from a login script and return the status determined.
+If no status was set, return
+.Ar okay .
+(Note that
+.Ar okay
+should always be 0 when checking authentication, approval scripts
+use the value of
+.Li AUTH_OKAY
+since no return from them implies the user was accepted.)
+.It Fn auth_script
+Execute the requested script, reading responses on file descriptor 3.
+Any options specified by the
+.Fn auth_setopt
+function are inserted between the 0th and first argument.
+Each option is preceeded by the
+.Fl v
+flag.
+.It Fn auth_script_data
+The same as
+.Fn auth_script
+except the specified data is written to file descriptor 3 prior to
+reading the response.  The data typically should be of the form
+.Dq challenge\0response\0 .
+.It Fn auth_setopt
+When calling a login script, insert the following option on the command line:
+.Li Fl v Ar name=value
+.It Fn
+Search the response from the last login script for the value associated
+with the given name.  See
+.Xr login.conf 5
+for a list of possible names.
+.El 
+.Sh ISSUES
+These routines use global state so only one BSD Authentication session
+can be effectively used at one time.  While
+.Fn auth_check
+provides a simple single function call authentication
+interface, it depends on standard input, output and error.
+The programmatic interface, in particular when challenges are issued,
+is complex and overly burdensome.  The new BSD Authentication interface
+provides a much better interface.
+.Sh SEE ALSO
+.Xr authenticate 3 ,
+.Xr auth_subr 3 ,
+.Xr login_cap 3 ,
+.Xr login.conf 5

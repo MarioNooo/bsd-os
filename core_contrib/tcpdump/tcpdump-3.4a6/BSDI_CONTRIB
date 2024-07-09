@@ -1,0 +1,5684 @@
+Software Package:       
+	tcpdump
+
+Release/Version:
+	3.4a6
+
+Retrieved from:
+	ftp.ee.lbl.gov
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and tcpdump@ee.lbl.gov.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Add support for -X (hexdump) flag.
+
+Add support for IPX over LLC.
+
+Add detailed decoding of SAP & RIP over IPX.
+
+Print SAP packets if either or both of the source and destination
+socket specify SAP.
+
+Add support for CHDLC and FR.
+
+Add detail to SLIP and PPP printing (including PPP control
+protocols).
+
+Merge in support for IPv6.
+
+Print the ICMP router discovery preference as a signed decimal
+number.
+
+Add support for NFSv3.
+
+Add support for 802.1Q packets (not including E-RIF field)
+
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 interface.h
+*** interface.h	1998/02/02 19:04:19	1.1.1.1
+--- interface.h	1998/02/06 02:00:50
+***************
+*** 45,50 ****
+--- 45,51 ----
+  extern int tflag;		/* print packet arrival time */
+  extern int vflag;		/* verbose */
+  extern int xflag;		/* print packet in hex */
++ extern int xxflag;		/* fancy hex print */
+  
+  extern int packettype;		/* as specified by -T */
+  #define PT_VAT		1	/* Visual Audio Tool */
+***************
+*** 178,183 ****
+--- 179,185 ----
+  	const u_char *);
+  extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+  extern void gre_print(const u_char *, u_int);
++ extern void hexdump(const void *, int);
+  extern void icmp_print(const u_char *, const u_char *);
+  extern void igrp_print(const u_char *, u_int, const u_char *);
+  extern void ip_print(const u_char *, u_int);
+Index: ipx.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/ipx.h,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 ipx.h
+*** ipx.h	1998/02/02 19:04:19	1.1.1.1
+--- ipx.h	1998/02/06 02:00:50
+***************
+*** 27,29 ****
+--- 27,61 ----
+  
+  #define ipxSize	30
+  
++ /* Sap */
++ typedef struct sapRec {
++ 	u_char	name[48];
++ 	u_char	net[4];
++ 	u_char	node[6];
++ 	u_char	socket[2];
++ 	u_char	hops[2];
++ } sap_rec_t;
++ 
++ typedef struct sapHdr {
++ 	u_char	cmd[2];
++ 	u_char	srvtype[2];
++ } sap_hdr_t;
++ 
++ #define SAP_GEN_REQ	1
++ #define	SAP_GEN_RESP	2
++ #define	SAP_NEAR_REQ	3
++ #define	SAP_NEAR_RESP	4
++ 
++ /* Rip */
++ typedef struct ripRec {
++ 	u_char	net[4];
++ 	u_char	hops[2];
++ 	u_char	ticks[2];
++ } rip_rec_t;
++ 
++ typedef struct ripHdr {
++ 	u_char	type[2];
++ } rip_hdr_t;
++ 
++ #define	RIP_REQUEST	1
++ #define	RIP_RESPONSE	2
+Index: llc.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/llc.h,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 llc.h
+*** llc.h	1998/02/02 19:04:19	1.1.1.1
+--- llc.h	1998/02/06 02:00:50
+***************
+*** 115,120 ****
+--- 115,123 ----
+  #ifndef LLCSAP_SNAP
+  #define	LLCSAP_SNAP		0xaa
+  #endif
++ #ifndef LLCSAP_IPX
++ #define LLCSAP_IPX		0xe0
++ #endif
+  #ifndef LLCSAP_ISONS
+  #define	LLCSAP_ISONS		0xfe
+  #endif
+Index: print-atm.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-atm.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-atm.c
+*** print-atm.c	1998/02/02 19:04:20	1.1.1.1
+--- print-atm.c	1998/02/06 02:00:50
+***************
+*** 138,148 ****
+  			       p[0], p[1], p[2], /* dsap/ssap/ctrl */
+  			       p[3], p[4], p[5], /* manufacturer's code */
+  			       ethertype);
+! 		if (!xflag && !qflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+   out:
+  	putchar('\n');
+  }
+--- 138,150 ----
+  			       p[0], p[1], p[2], /* dsap/ssap/ctrl */
+  			       p[3], p[4], p[5], /* manufacturer's code */
+  			       ethertype);
+! 		if (!xflag && !qflag && !xxflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
++ 	if (xxflag)
++ 		hexdump(p, caplen);
+   out:
+  	putchar('\n');
+  }
+Index: print-ether.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ether.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-ether.c
+*** print-ether.c	1998/02/02 19:04:20	1.1.1.1
+--- print-ether.c	1998/02/06 02:00:50
+***************
+*** 126,144 ****
+  				printf("(LLC %s) ",
+  			       etherproto_string(htons(extracted_ethertype)));
+  			}
+! 			if (!xflag && !qflag)
+  				default_print(p, caplen);
+  		}
+  	} else if (ether_encap_print(ether_type, p, length, caplen) == 0) {
+  		/* ether_type not known, print raw packet */
+  		if (!eflag)
+  			ether_print((u_char *)ep, length + sizeof(*ep));
+! 		if (!xflag && !qflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+   out:
+  	putchar('\n');
+  }
+  
+--- 126,146 ----
+  				printf("(LLC %s) ",
+  			       etherproto_string(htons(extracted_ethertype)));
+  			}
+! 			if (!xflag && !qflag && !xxflag)
+  				default_print(p, caplen);
+  		}
+  	} else if (ether_encap_print(ether_type, p, length, caplen) == 0) {
+  		/* ether_type not known, print raw packet */
+  		if (!eflag)
+  			ether_print((u_char *)ep, length + sizeof(*ep));
+! 		if (!xflag && !qflag && !xxflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+   out:
++ 	if (xxflag)
++ 		hexdump(packetp, h->caplen);
+  	putchar('\n');
+  }
+  
+Index: print-fddi.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-fddi.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-fddi.c
+*** print-fddi.c	1998/02/02 19:04:20	1.1.1.1
+--- print-fddi.c	1998/02/06 02:00:51
+***************
+*** 318,324 ****
+  				printf("(LLC %s) ",
+  			etherproto_string(htons(extracted_ethertype)));
+  			}
+! 			if (!xflag && !qflag)
+  				default_print(p, caplen);
+  		}
+  	} else if ((fddip->fddi_fc & FDDIFC_CLFF) == FDDIFC_SMT)
+--- 318,324 ----
+  				printf("(LLC %s) ",
+  			etherproto_string(htons(extracted_ethertype)));
+  			}
+! 			if (!xflag && !qflag && !xxflag)
+  				default_print(p, caplen);
+  		}
+  	} else if ((fddip->fddi_fc & FDDIFC_CLFF) == FDDIFC_SMT)
+***************
+*** 327,338 ****
+  		/* Some kinds of FDDI packet we cannot handle intelligently */
+  		if (!eflag)
+  			fddi_print(fddip, length, ESRC(&ehdr), EDST(&ehdr));
+! 		if (!xflag && !qflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+  out:
+  	putchar('\n');
+  }
+  #else
+--- 327,340 ----
+  		/* Some kinds of FDDI packet we cannot handle intelligently */
+  		if (!eflag)
+  			fddi_print(fddip, length, ESRC(&ehdr), EDST(&ehdr));
+! 		if (!xflag && !qflag && !xxflag)
+  			default_print(p, caplen);
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+  out:
++ 	if (xxflag)
++ 		hexdump(fddip, h->caplen);
+  	putchar('\n');
+  }
+  #else
+Index: print-ipx.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ipx.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-ipx.c
+*** print-ipx.c	1998/02/02 19:04:20	1.1.1.1
+--- print-ipx.c	1998/02/06 02:00:51
+***************
+*** 55,61 ****
+--- 55,63 ----
+  static const char *ipxaddr_string(u_int32_t, const u_char *);
+  void ipx_decode(const struct ipxHdr *, const u_char *, u_int);
+  void ipx_sap_print(const u_short *, u_int);
++ void ipx_sap_dprint(const sap_hdr_t *sap, int length);
+  void ipx_rip_print(const u_short *, u_int);
++ void ipx_rip_dprint(const rip_hdr_t *hdr, int len);
+  
+  /*
+   * Print IPX datagram packets.
+***************
+*** 99,104 ****
+--- 101,107 ----
+  ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
+  {
+      register u_short dstSkt;
++     register u_short srcSkt;
+  
+      dstSkt = EXTRACT_16BITS(&ipx->dstSkt);
+      switch (dstSkt) {
+***************
+*** 118,124 ****
+  	(void)printf(" ipx-diags %d", length);
+  	break;
+        default:
+! 	(void)printf(" ipx-#%x %d", dstSkt, length);
+  	break;
+      }
+  }
+--- 121,130 ----
+  	(void)printf(" ipx-diags %d", length);
+  	break;
+        default:
+! 	if (EXTRACT_16BITS(&ipx->srcSkt) == IPX_SKT_SAP)
+!           ipx_sap_print((u_short *)datap, length);
+! 	else
+! 	  (void)printf(" ipx-#%x %d", dstSkt, length);
+  	break;
+      }
+  }
+***************
+*** 129,134 ****
+--- 135,146 ----
+      int command, i;
+  
+      TCHECK(ipx[0]);
++ 
++     if (vflag > 1) {
++       ipx_sap_dprint((sap_hdr_t *)ipx, length);
++       return;
++     }
++ 
+      command = EXTRACT_16BITS(ipx);
+      ipx++;
+      length -= 2;
+***************
+*** 137,143 ****
+        case 1:
+        case 3:
+  	if (command == 1)
+! 	    (void)printf("ipx-sap-req");
+  	else
+  	    (void)printf("ipx-sap-nearest-req");
+  
+--- 149,155 ----
+        case 1:
+        case 3:
+  	if (command == 1)
+! 	    (void)printf("ipx-sap-general-req");
+  	else
+  	    (void)printf("ipx-sap-nearest-req");
+  
+***************
+*** 152,158 ****
+        case 2:
+        case 4:
+  	if (command == 2)
+! 	    (void)printf("ipx-sap-resp");
+  	else
+  	    (void)printf("ipx-sap-nearest-resp");
+  
+--- 164,170 ----
+        case 2:
+        case 4:
+  	if (command == 2)
+! 	    (void)printf("ipx-sap-general-resp");
+  	else
+  	    (void)printf("ipx-sap-nearest-resp");
+  
+***************
+*** 175,186 ****
+--- 187,276 ----
+  	printf("[|ipx %d]", length);
+  }
+  
++ char *sap_cmd_name[] = {
++ 	"General request",
++ 	"General response",
++ 	"Nearest request",
++ 	"Nearest response"
++ };
++ 
++ struct sap_srvtypes {
++ 	int type;
++ 	char *name;
++ } sap_srvtypes[] = {
++ 	{ 0x0004, "File server" },
++ 	{ 0x0005, "Job server" },
++ 	{ 0x0007, "Print server" },
++ 	{ 0x0009, "Archive server" },
++ 	{ 0x000a, "Job queue" },
++ 	{ 0x0021, "NAS SNA gateway" },
++ 	{ 0x002e, "Dynamic SAP" },
++ 	{ 0x0047, "Advertising print server" },
++ 	{ 0x004b, "Btrieve VAP 5.0" },
++ 	{ 0x004c, "SQL VAP" },
++ 	{ 0x007a, "TES - NetWare VMS" },
++ 	{ 0x0098, "NetWare access server" },
++ 	{ 0x009a, "Named pipes server" },
++ 	{ 0x009e, "Portable NetWare - Unix" },
++ 	{ 0x0107, "NetWare 386" },
++ 	{ 0x0111, "Test server" },
++ 	{ 0x0166, "NetWare management" },
++ 	{ 0x026a, "NetWare management" },
++ 	{ 0x026b, "Time synchronization" },
++ 	{ 0x0278, "NetWare directory server" },
++ 	{ 0x0840, "Internet server" },
++ 	{ 0, NULL }
++ };
++ 
++ /* Print lots of detail */
++ void
++ ipx_sap_dprint(const sap_hdr_t *sap, int len)
++ {
++ 	u_short t;
++ 	struct sap_srvtypes *tp;
++ 	sap_rec_t *sr;
++ 
++ 	t = EXTRACT_16BITS(sap->cmd);
++ 	printf(" ipx-sap:\n\tCommand : %4.4x", t);
++ 	if (t >= 1 && t <= 4)
++ 		printf(" (%s)", sap_cmd_name[t - 1]);
++ 	else
++ 		printf(" (???)");
++ 	t = EXTRACT_16BITS(sap->srvtype);
++ 	printf(   "\n\tSrvType : %4.4x", t);
++ 	for (tp = sap_srvtypes; tp->type != 0; tp++)
++ 		if (tp->type == t) break;
++ 	if (tp->type != 0)
++ 		printf(" (%s)", tp->name);
++ 	len -= sizeof(sap_hdr_t);
++ 	sr = (sap_rec_t *)(sap + 1);
++ 	while (len >= sizeof(sap_rec_t)) {
++ 		printf("\n\t  %30s.%4.4x hops=%4.4x %s",
++ 		     ipxaddr_string(EXTRACT_32BITS(sr->net), sr->node),
++ 		     EXTRACT_16BITS(sr->socket),
++ 		     EXTRACT_16BITS(sr->hops),
++ 		     sr->name);
++ 		len -= sizeof(sap_rec_t);
++ 		sr++;
++ 	}
++ 	if (len != 0) {
++ 		printf("\n\tTrailing data:");
++ 		hexdump(sr, len);
++ 	}
++ }
++ 
+  void
+  ipx_rip_print(const u_short *ipx, u_int length)
+  {
+      int command, i;
+  
+      TCHECK(ipx[0]);
++ 
++     if (vflag > 1) {
++       ipx_rip_dprint((rip_hdr_t *)ipx, length);
++       return;
++     }
++ 
+      command = EXTRACT_16BITS(ipx);
+      ipx++;
+      length -= 2;
+***************
+*** 213,215 ****
+--- 303,339 ----
+  	printf("[|ipx %d]", length);
+  }
+  
++ void
++ ipx_rip_dprint(const rip_hdr_t *hdr, int len)
++ {
++ 	u_short t;
++ 	rip_rec_t *sr;
++ 
++ 	t = EXTRACT_16BITS(hdr->type);
++ 	switch (t) {
++ 	case RIP_REQUEST:
++ 		printf(" ipx-rip-request:");
++ 		break;
++ 	case RIP_RESPONSE:
++ 		printf(" ipx-rip-response:");
++ 		break;
++ 	default:
++ 		printf(" ipx-rip-??? (%x)", t);
++ 	}
++ 	len -= sizeof(rip_hdr_t);
++ 	sr = (rip_rec_t *)(hdr + 1);
++ 	if (len >= sizeof(rip_rec_t))
++ 		printf("\n\t  Net      Hops Ticks");
++ 	while (len >= sizeof(rip_rec_t)) {
++ 		printf("\n\t  %8.8x %4.4x %4.4x",
++ 			EXTRACT_32BITS(sr->net),
++ 			EXTRACT_16BITS(sr->hops),
++ 			EXTRACT_16BITS(sr->ticks));
++ 		len -= sizeof(rip_rec_t);
++ 		sr++;
++ 	}
++ 	if (len != 0) {
++ 		printf("\n\tTrailing data:");
++ 		hexdump(sr, len);
++ 	}
++ }
+Index: print-llc.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-llc.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-llc.c
+*** print-llc.c	1998/02/02 19:04:20	1.1.1.1
+--- print-llc.c	1998/02/06 02:00:51
+***************
+*** 110,115 ****
+--- 110,124 ----
+  			return (ret);
+  	}
+  
++ 	if (llc.ssap == LLCSAP_IPX && llc.dsap == LLCSAP_IPX
++ 	    && llc.llcui == LLC_UI) {
++ 		p += 3;		/* dsap/ssap/ctl */
++ 		length -= 3;
++ 		caplen -= sizeof(llc);
++ 		ipx_print(p, length);
++ 		return (1);
++ 	}
++ 
+  	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
+  		if (eflag)
+  			(void)printf("%s ", llcsap_string(llc.dsap));
+***************
+*** 185,191 ****
+  		caplen -= 4;
+  	}
+  	(void)printf(" len=%d", length);
+! 	if (caplen > 0) {
+  		default_print_unaligned(p, caplen);
+  	}
+  	return(1);
+--- 194,200 ----
+  		caplen -= 4;
+  	}
+  	(void)printf(" len=%d", length);
+! 	if (caplen > 0 && !xflag && !xxflag && !qflag) {
+  		default_print_unaligned(p, caplen);
+  	}
+  	return(1);
+Index: print-null.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-null.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-null.c
+*** print-null.c	1998/02/02 19:04:20	1.1.1.1
+--- print-null.c	1998/02/06 02:00:51
+***************
+*** 118,123 ****
+--- 118,125 ----
+  
+  	if (xflag)
+  		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
++ 	if (xxflag)
++ 		hexdump(packetp, h->caplen);
+  	putchar('\n');
+  }
+  
+Index: print-raw.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-raw.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-raw.c
+*** print-raw.c	1998/02/02 19:04:20	1.1.1.1
+--- print-raw.c	1998/02/06 02:00:51
+***************
+*** 84,88 ****
+--- 84,90 ----
+  
+  	if (xflag)
+  		default_print(p, caplen);
++ 	if (xxflag)
++ 		hexdump(p, caplen);
+  	putchar('\n');
+  }
+Index: tcpdump.1
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.1,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 tcpdump.1
+*** tcpdump.1	1998/02/02 19:04:21	1.1.1.1
+--- tcpdump.1	1998/02/06 02:00:52
+***************
+*** 27,33 ****
+  .na
+  .B tcpdump
+  [
+! .B \-adeflnNOpqStvx
+  ] [
+  .B \-c
+  .I count
+--- 27,33 ----
+  .na
+  .B tcpdump
+  [
+! .B \-adeflnNOpqStvxX
+  ] [
+  .B \-c
+  .I count
+***************
+*** 212,217 ****
+--- 212,223 ----
+  .TP
+  .B \-x
+  Print each packet (minus its link level header) in hex.
++ The smaller of the entire packet or
++ .I snaplen
++ bytes will be printed.
++ .TP
++ .B \-X
++ Print each packet (including its link level header) in hex and ASCII.
+  The smaller of the entire packet or
+  .I snaplen
+  bytes will be printed.
+Index: tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 tcpdump.c
+*** tcpdump.c	1998/02/02 19:04:21	1.1.1.1
+--- tcpdump.c	1998/02/06 02:00:53
+***************
+*** 66,71 ****
+--- 66,72 ----
+  int tflag = 1;			/* print packet arrival time */
+  int vflag;			/* verbose */
+  int xflag;			/* print packet in hex */
++ int xxflag;			/* fancy hex dump */
+  
+  int packettype;
+  
+***************
+*** 149,155 ****
+  
+  	opterr = 0;
+  	while (
+! 	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xY")) != EOF)
+  		switch (op) {
+  
+  		case 'a':
+--- 150,156 ----
+  
+  	opterr = 0;
+  	while (
+! 	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xXY")) != EOF)
+  		switch (op) {
+  
+  		case 'a':
+***************
+*** 263,268 ****
+--- 264,273 ----
+  			++xflag;
+  			break;
+  
++ 		case 'X':
++ 			++xxflag;
++ 			break;
++ 
+  		default:
+  			usage();
+  			/* NOTREACHED */
+***************
+*** 433,438 ****
+--- 438,491 ----
+  		(void)printf(" %02x", *(u_char *)sp);
+  	}
+  }
++ 
++ u_char xpos[16] = { 0,  3,  6,  9, 12, 15, 18, 21,
++ 		   26, 29, 32, 35, 38, 41, 44, 47 };
++ 
++ u_char cpos[16] = { 0,  1,  2,  3,  4,  5,  6,  7,
++ 		    9, 10, 11, 12, 13, 14, 15, 16 };
++ 
++ char hex2asc[17] = "0123456789abcdef";
++ 
++ /* Fancier hex dump */
++ void
++ hexdump(const void *bufr, int len)
++ {
++ 	const u_char *p = bufr;
++ 	int pos = 0;
++ 	int off = 0;
++ 	char xbuf[50];
++ 	char cbuf[24];
++ 	int val;
++ 	int xp;
++ 
++ 	memset(xbuf, ' ', 50);
++ 	memset(cbuf, ' ', 24);
++ 	while (len--) {
++ 		val = *p++;
++ 		xp = xpos[off];
++ 		xbuf[xp] = hex2asc[val >> 4];
++ 		xbuf[xp+1] = hex2asc[val & 0xf];
++ 		xp = cpos[off];
++ 		if (isprint(val))
++ 			cbuf[xp] = val;
++ 		else
++ 			cbuf[xp] = '_';
++ 			
++ 		if (off == 0xf) {
++ 			printf("\n    %4.4x: %-50.50s %-17.17s", pos & ~0xf,
++ 			    xbuf, cbuf);
++ 		}
++ 		pos++;
++ 		off = pos & 0xf;
++ 	}
++ 	if (off) {
++ 		xbuf[xpos[off]] = 0;
++ 		cbuf[cpos[off]] = 0;
++ 		printf("\n    %4.4x: %-50.50s %-17.17s", pos & ~0xf, xbuf,
++ 		    cbuf);
++  	}
++  }
+  
+  __dead void
+  usage(void)
+
+
+Add support for tracing packets on C_HDLC links and Token Ring
+networks.
+  
+Index: Makefile.in
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/Makefile.in,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 Makefile.in
+*** Makefile.in	1998/02/02 19:04:19	1.1.1.1
+--- Makefile.in	1998/02/06 02:05:59
+***************
+*** 64,76 ****
+  	$(CC) $(CFLAGS) -c $(srcdir)/$*.c
+  
+  CSRC =	tcpdump.c \
+! 	print-arp.c print-atalk.c print-atm.c print-bootp.c \
+  	print-decnet.c print-domain.c print-dvmrp.c print-egp.c \
+  	print-ether.c print-fddi.c print-gre.c print-icmp.c \
+  	print-igrp.c print-ip.c print-ipx.c print-isoclns.c print-krb.c \
+  	print-llc.c print-nfs.c print-ntp.c print-null.c print-ospf.c \
+  	print-pim.c print-ppp.c print-raw.c print-rip.c print-sl.c \
+! 	print-snmp.c print-sunrpc.c print-tcp.c print-tftp.c print-udp.c \
+  	print-wb.c addrtoname.c bpf_dump.c gmt2local.c machdep.c \
+  	parsenfsfh.c util.c savestr.c setsignal.c
+  LOCALSRC =
+--- 64,76 ----
+  	$(CC) $(CFLAGS) -c $(srcdir)/$*.c
+  
+  CSRC =	tcpdump.c \
+! 	print-arp.c print-atalk.c print-atm.c print-bootp.c print-chdlc.c \
+  	print-decnet.c print-domain.c print-dvmrp.c print-egp.c \
+  	print-ether.c print-fddi.c print-gre.c print-icmp.c \
+  	print-igrp.c print-ip.c print-ipx.c print-isoclns.c print-krb.c \
+  	print-llc.c print-nfs.c print-ntp.c print-null.c print-ospf.c \
+  	print-pim.c print-ppp.c print-raw.c print-rip.c print-sl.c \
+! 	print-snmp.c print-sunrpc.c print-tcp.c print-tftp.c print-token.c print-udp.c \
+  	print-wb.c addrtoname.c bpf_dump.c gmt2local.c machdep.c \
+  	parsenfsfh.c util.c savestr.c setsignal.c
+  LOCALSRC =
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.2
+diff -c -r1.2 interface.h
+*** interface.h	1998/02/06 02:02:56	1.2
+--- interface.h	1998/02/06 02:05:59
+***************
+*** 170,175 ****
+--- 170,177 ----
+  extern void atalk_print(const u_char *, u_int);
+  extern void atm_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+  extern void bootp_print(const u_char *, u_int, u_short, u_short);
++ extern void chdlc_if_print(u_char *, const struct pcap_pkthdr *,
++ 	const u_char *);
+  extern void decnet_print(const u_char *, u_int, u_int);
+  extern void default_print(const u_char *, u_int);
+  extern void default_print_unaligned(const u_char *, u_int);
+***************
+*** 206,210 ****
+--- 208,214 ----
+  extern void sunrpcrequest_print(const u_char *, u_int, const u_char *);
+  extern void tcp_print(const u_char *, u_int, const u_char *);
+  extern void tftp_print(const u_char *, u_int);
++ extern void token_if_print(u_char *, const struct pcap_pkthdr *,
++ 	const u_char *);
+  extern void udp_print(const u_char *, u_int, const u_char *);
+  extern void wb_print(const void *, u_int);
+Index: tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.c,v
+retrieving revision 1.2
+diff -c -r1.2 tcpdump.c
+*** tcpdump.c	1998/02/06 02:02:59	1.2
+--- tcpdump.c	1998/02/06 02:06:00
+***************
+*** 92,104 ****
+  
+  static struct printer printers[] = {
+  	{ ether_if_print,	DLT_EN10MB },
+! 	{ ether_if_print,	DLT_IEEE802 },
+  	{ sl_if_print,		DLT_SLIP },
+  	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
+  	{ ppp_if_print,		DLT_PPP },
+  	{ ppp_bsdos_if_print,	DLT_PPP_BSDOS },
+  	{ fddi_if_print,	DLT_FDDI },
+  	{ null_if_print,	DLT_NULL },
+  	{ raw_if_print,		DLT_RAW },
+  	{ atm_if_print,		DLT_ATM_RFC1483 },
+  	{ NULL,			0 },
+--- 92,105 ----
+  
+  static struct printer printers[] = {
+  	{ ether_if_print,	DLT_EN10MB },
+! 	{ token_if_print,	DLT_IEEE802 },
+  	{ sl_if_print,		DLT_SLIP },
+  	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
+  	{ ppp_if_print,		DLT_PPP },
+  	{ ppp_bsdos_if_print,	DLT_PPP_BSDOS },
+  	{ fddi_if_print,	DLT_FDDI },
+  	{ null_if_print,	DLT_NULL },
++ 	{ chdlc_if_print,	DLT_C_HDLC },
+  	{ raw_if_print,		DLT_RAW },
+  	{ atm_if_print,		DLT_ATM_RFC1483 },
+  	{ NULL,			0 },
+Index: print-atm.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-atm.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -c -r1.2 -r1.3
+*** print-atm.c	1998/02/06 02:02:57	1.2
+--- print-atm.c	1998/02/14 02:28:43	1.3
+***************
+*** 143,150 ****
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
+  	if (xxflag)
+  		hexdump(p, caplen);
+-  out:
+  	putchar('\n');
+  }
+--- 143,150 ----
+  	}
+  	if (xflag)
+  		default_print(p, caplen);
++  out:
+  	if (xxflag)
+  		hexdump(p, caplen);
+  	putchar('\n');
+  }
+Index: Makefile.in
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/Makefile.in,v
+retrieving revision 1.2
+diff -c -r1.2 Makefile.in
+*** Makefile.in	1998/02/06 02:09:46	1.2
+--- Makefile.in	1998/02/14 02:32:16
+***************
+*** 66,72 ****
+  CSRC =	tcpdump.c \
+  	print-arp.c print-atalk.c print-atm.c print-bootp.c print-chdlc.c \
+  	print-decnet.c print-domain.c print-dvmrp.c print-egp.c \
+! 	print-ether.c print-fddi.c print-gre.c print-icmp.c \
+  	print-igrp.c print-ip.c print-ipx.c print-isoclns.c print-krb.c \
+  	print-llc.c print-nfs.c print-ntp.c print-null.c print-ospf.c \
+  	print-pim.c print-ppp.c print-raw.c print-rip.c print-sl.c \
+--- 66,72 ----
+  CSRC =	tcpdump.c \
+  	print-arp.c print-atalk.c print-atm.c print-bootp.c print-chdlc.c \
+  	print-decnet.c print-domain.c print-dvmrp.c print-egp.c \
+! 	print-ether.c print-fddi.c print-fr.c print-gre.c print-icmp.c \
+  	print-igrp.c print-ip.c print-ipx.c print-isoclns.c print-krb.c \
+  	print-llc.c print-nfs.c print-ntp.c print-null.c print-ospf.c \
+  	print-pim.c print-ppp.c print-raw.c print-rip.c print-sl.c \
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.3
+diff -c -r1.3 interface.h
+*** interface.h	1998/02/06 02:09:46	1.3
+--- interface.h	1998/02/14 02:32:22
+***************
+*** 180,185 ****
+--- 180,186 ----
+  extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
+  	const u_char *);
+  extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
++ extern void fr_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+  extern void gre_print(const u_char *, u_int);
+  extern void hexdump(const void *, int);
+  extern void icmp_print(const u_char *, const u_char *);
+Index: tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.c,v
+retrieving revision 1.3
+diff -c -r1.3 tcpdump.c
+*** tcpdump.c	1998/02/06 02:09:47	1.3
+--- tcpdump.c	1998/02/14 02:32:22
+***************
+*** 100,105 ****
+--- 100,106 ----
+  	{ fddi_if_print,	DLT_FDDI },
+  	{ null_if_print,	DLT_NULL },
+  	{ chdlc_if_print,	DLT_C_HDLC },
++ 	{ fr_if_print,		DLT_FR },
+  	{ raw_if_print,		DLT_RAW },
+  	{ atm_if_print,		DLT_ATM_RFC1483 },
+  	{ NULL,			0 },
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.4
+diff -c -r1.4 interface.h
+*** interface.h	1998/02/14 02:43:41	1.4
+--- interface.h	1998/02/15 03:57:22
+***************
+*** 159,164 ****
+--- 159,165 ----
+  /* The printer routines. */
+  
+  #ifdef __STDC__
++ struct ip;
+  struct pcap_pkthdr;
+  #endif
+  
+***************
+*** 172,177 ****
+--- 173,179 ----
+  extern void bootp_print(const u_char *, u_int, u_short, u_short);
+  extern void chdlc_if_print(u_char *, const struct pcap_pkthdr *,
+  	const u_char *);
++ extern void compressed_sl_print(const u_char *, const struct ip *, u_int, int);
+  extern void decnet_print(const u_char *, u_int, u_int);
+  extern void default_print(const u_char *, u_int);
+  extern void default_print_unaligned(const u_char *, u_int);
+***************
+*** 203,210 ****
+  extern void raw_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+  extern void rip_print(const u_char *, u_int);
+  extern void sl_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+- extern void sl_bsdos_if_print(u_char *, const struct pcap_pkthdr *,
+-     const u_char *);
+  extern void snmp_print(const u_char *, u_int);
+  extern void sunrpcrequest_print(const u_char *, u_int, const u_char *);
+  extern void tcp_print(const u_char *, u_int, const u_char *);
+--- 205,210 ----
+***************
+*** 212,215 ****
+--- 212,216 ----
+  extern void token_if_print(u_char *, const struct pcap_pkthdr *,
+  	const u_char *);
+  extern void udp_print(const u_char *, u_int, const u_char *);
++ extern void uncompressed_sl_print(u_char, const struct ip *, u_int, int);
+  extern void wb_print(const void *, u_int);
+Index: ppp.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/ppp.h,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 ppp.h
+*** ppp.h	1998/02/02 19:04:20	1.1.1.1
+--- ppp.h	1998/02/15 03:57:22
+***************
+*** 46,50 ****
+  
+  #define PPP_LCP		0xc021	/* Link Control Protocol */
+  #define PPP_PAP		0xc023	/* Password Authentication Protocol */
+! #define PPP_LQM		0xc025	/* Link Quality Monitoring */
+  #define PPP_CHAP	0xc223	/* Challenge Handshake Authentication Protocol */
+--- 46,105 ----
+  
+  #define PPP_LCP		0xc021	/* Link Control Protocol */
+  #define PPP_PAP		0xc023	/* Password Authentication Protocol */
+! #define PPP_LQR		0xc025	/* Link Quality Monitoring */
+  #define PPP_CHAP	0xc223	/* Challenge Handshake Authentication Protocol */
++ 
++ #define	PPP_CP_CODE		0	/* Offset to code (one byte) */
++ #define	PPP_CP_ID		1	/* Offset to ID (one byte) */
++ #define	PPP_CP_LEN		2	/* Offset to length (two bytes) */
++ #define	PPP_CPHDR_LEN		4	/* Length of CP header */
++ 
++ #define PPP_CP_CONF_REQ		1       /* Configure-Request */
++ #define PPP_CP_CONF_ACK		2       /* Configure-Ack */
++ #define PPP_CP_CONF_NAK		3       /* Configure-Nak */
++ #define PPP_CP_CONF_REJ		4       /* Configure-Reject */
++ #define PPP_CP_TERM_REQ		5       /* Terminate-Request */
++ #define PPP_CP_TERM_ACK		6       /* Terminate-Ack */
++ #define PPP_CP_CODE_REJ		7       /* Code-Reject */
++ #define PPP_LCP_PROTO_REJ	8       /* Protocol-Reject */
++ #define PPP_LCP_ECHO_REQ	9       /* Echo-Request */
++ #define PPP_LCP_ECHO_REPL	10      /* Echo-Reply */
++ #define PPP_LCP_DISC_REQ	11      /* Discard-Request */
++ #define	PPP_LCP_IDENT		12	/* Identification */
++ #define	PPP_LCP_TIME_REMAIN	13	/* Time remaintin */
++ 
++ #define	PPP_OP_TYPE		0	/* Offset to option type */
++ #define	PPP_OP_LEN		1	/* Offset to option length */
++ #define	PPP_OP_DATA		2	/* Offset to option data */
++ 
++ /* LCP option types */
++ #define PPP_LCP_MRU		1       /* Maximum-Receive-Unit */
++ #define PPP_LCP_ACCM		2       /* Async-Control-Character-Map */
++ #define PPP_LCP_AP		3       /* Authentication-Protocol */
++ #define PPP_LCP_QP		4       /* Quality-Protocol */
++ #define PPP_LCP_MAGIC		5       /* Magic-Number */
++ #define PPP_LCP_PFC		7       /* Protocol-Field-Compression */
++ #define PPP_LCP_ACFC		8       /* Address-and-Control-Field-Compression */
++ 
++ /* IPCP option types */
++ #define PPP_IPCP_ADDRS		1       /* IP-Addresses */
++ #define PPP_IPCP_CPROT		2       /* IP-Compression-Protocol */
++ #define PPP_IPCP_ADDR		3       /* IP-Address */
++ #define	PPP_IPCP_PDNS		129	/* Microsoft Primary DNS */
++ #define	PPP_IPCP_PNBNS		130	/* Microsoft Primary NBNS */
++ #define	PPP_IPCP_SDNS		131	/* Microsoft Secondary DNS */
++ #define	PPP_IPCP_SNBNS		132	/* Microsoft Secondary NBNS */
++ 
++ /* CHAP control packets */
++ #define	PPP_CHAP_CHALLANGE	1	/* Challange */
++ #define	PPP_CHAP_RESPONSE	2	/* Response */
++ #define	PPP_CHAP_SUCCESS	3	/* Success */
++ #define	PPP_CHAP_FAILURE	4	/* Failure */
++ 
++ /* CHAP Algorithms */
++ #define	PPP_CHAPA_MD5	5	/* MD5 */
++ 
++ /* PAP control packets */
++ #define	PPP_PAP_AUTH_REQ	1	/* Authentication-Request */
++ #define	PPP_PAP_AUTH_ACK	2	/* Authentication-Ack */
++ #define	PPP_PAP_AUTH_NAK	3	/* Authenitcation-Nak */
+Index: print-ppp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ppp.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-ppp.c
+*** print-ppp.c	1998/02/02 19:04:20	1.1.1.1
+--- print-ppp.c	1998/02/15 03:57:22
+***************
+*** 45,52 ****
+--- 45,56 ----
+  #include <pcap.h>
+  #include <stdio.h>
+  
++ #include <net/slcompress.h>
++ #include <net/slip.h>
++ 
+  #include "interface.h"
+  #include "addrtoname.h"
++ #include "extract.h"
+  #include "ppp.h"
+  
+  /* XXX This goes somewhere else. */
+***************
+*** 91,106 ****
+  }
+  
+  /* proto type to string mapping */
+  static struct tok ptype2str[] = {
+  	{ PPP_VJC,	"VJC" },
+  	{ PPP_VJNC,	"VJNC" },
+! 	{ PPP_OSI,	"OSI" },
+! 	{ PPP_LCP,	"LCP" },
+  	{ PPP_IPCP,	"IPCP" },
+  	{ 0,		NULL }
+  };
+  
+! #define PPP_BSDI_HDRLEN 24
+  
+  /* BSD/OS specific PPP printer */
+  void
+--- 95,138 ----
+  }
+  
+  /* proto type to string mapping */
++ 
+  static struct tok ptype2str[] = {
++ 	{ PPP_IP,	"IP" },
++ 	{ PPP_OSI,	"OSI" },
++ 	{ PPP_NS,	"NS" },
++ 	{ PPP_DECNET,	"DECNET" },
++ 	{ PPP_APPLE,	"APPLE" },
++ 	{ PPP_IPX,	"IPX" },
+  	{ PPP_VJC,	"VJC" },
+  	{ PPP_VJNC,	"VJNC" },
+! 	{ PPP_BRPDU,	"BRPDU" },
+! 	{ PPP_STII,	"STII" },
+! 	{ PPP_VINES,	"VINES" },
+! 
+! 	{ PPP_HELLO,	"HELLO" },
+! 	{ PPP_LUXCOM,	"LUXCOM" },
+! 	{ PPP_SNS,	"SNS" },
+! 
+  	{ PPP_IPCP,	"IPCP" },
++ 	{ PPP_OSICP,	"OSICP" },
++ 	{ PPP_NSCP,	"NSCP" },
++ 	{ PPP_DECNETCP,	"DECNETCP" },
++ 	{ PPP_APPLECP,	"APPLECP" },
++ 	{ PPP_IPXCP,	"IPXCP" },
++ 	{ PPP_STIICP,	"STIICP" },
++ 	{ PPP_VINESCP,	"VINESCP" },
++ 
++ 	{ PPP_LCP,	"LCP" },
++ 	{ PPP_PAP,	"PAP" },
++ 	{ PPP_LQR,	"LQR" },
++ 	{ PPP_CHAP,	"CHAP" },
+  	{ 0,		NULL }
+  };
+  
+! static void ppp_lcp_print(const u_char *, int);
+! static void ppp_ipcp_print(const u_char *, int);
+! static void ppp_pap_print(const u_char *, int);
+! static void ppp_chap_print(const u_char *, int);
+  
+  /* BSD/OS specific PPP printer */
+  void
+***************
+*** 111,120 ****
+  	register u_int caplen = h->caplen;
+  	register int hdrlength;
+  	u_short ptype;
+  
+  	ts_print(&h->ts);
+  
+! 	if (caplen < PPP_BSDI_HDRLEN) {
+  		printf("[|ppp]");
+  		goto out;
+  	}
+--- 143,155 ----
+  	register u_int caplen = h->caplen;
+  	register int hdrlength;
+  	u_short ptype;
++ 	u_char address, control, dir;
++ 	const u_char *ch;
++ 	char *direction;
+  
+  	ts_print(&h->ts);
+  
+! 	if (caplen < SLC_BPFHDR) {
+  		printf("[|ppp]");
+  		goto out;
+  	}
+***************
+*** 126,168 ****
+  	 */
+  	packetp = p;
+  	snapend = p + caplen;
+- 	hdrlength = 0;
+  
+! 	if (p[0] == PPP_ADDRESS && p[1] == PPP_CONTROL) {
+! 		if (eflag) 
+! 			printf("%02x %02x ", p[0], p[1]);
+  		p += 2;
+- 		hdrlength = 2;
+  	}
+! 
+! 	if (eflag) 
+! 		printf("%d ", length);
+! 	/* Retrieve the protocol type */
+! 	if (*p & 01) {
+! 		/* Compressed protocol field */
+! 		ptype = *p;
+! 		if (eflag) 
+  			printf("%02x ", ptype);
+! 		p++;
+! 		hdrlength += 1;
+! 	} else {
+! 		/* Un-compressed protocol field */
+! 		ptype = ntohs(*(u_short *)p);
+! 		if (eflag) 
+  			printf("%04x ", ptype);
+- 		p += 2;
+- 		hdrlength += 2;
+  	}
+-   
+- 	length -= hdrlength;
+  
+! 	if (ptype == PPP_IP)
+  		ip_print(p, length);
+! 	else
+! 		printf("%s ", tok2str(ptype2str, "proto-#%d", ptype));
+  
+  	if (xflag)
+! 		default_print((const u_char *)p, caplen - hdrlength);
+  out:
+  	putchar('\n');
+  }
+--- 161,706 ----
+  	 */
+  	packetp = p;
+  	snapend = p + caplen;
+  
+! 	/* 
+! 	 * Each packet has a BPF header of SLC_BPFHDR (24) bytes
+! 	 *
+! 	 * The format is:
+! 	 *	1 Byte Direction			(SLIPDIR_IN or SLIPDIR_OUT)
+! 	 *	1 Byte Length of link level header	(0 for slip)
+! 	 *	1 Byte Length of compressed header	(0 for slip)
+! 	 *	m Bytes link level header 		(maximum of 4 bytes)
+! 	 *	n Bytes compressed header 		(maximum of 15 bytes)
+! 	 *	p Bytes to pad to SLC_BPFHDR bytes
+! 	 */
+! 
+! 	/* Decode the BPF header */
+! 	direction = (dir = *p++ == SLIPDIR_IN) ? "I " : "O ";
+! 	hdrlength = *p++;
+! 	p++;	/* Skip compressed header length */
+! 	/* Decode the compressed PPP header */
+! 	if (hdrlength > 2) {
+! 		address = *p++;
+! 		control = *p++;
+! 	} else {
+! 		address = PPP_ADDRESS;
+! 		control = PPP_CONTROL;
+! 	}
+! 	if (hdrlength & 0x01)
+! 		ptype = *p++;
+! 	else {
+! 		ptype = EXTRACT_16BITS(p);
+  		p += 2;
+  	}
+! 	/* Save pointer to compressed header */
+! 	ch = p;
+! 	if (eflag) {
+! 		printf("%s", direction);
+! 		direction = "";
+! 		printf("%02x %02x %d ", address, control, length);
+! 		if (hdrlength & 0x01)
+  			printf("%02x ", ptype);
+! 		else
+  			printf("%04x ", ptype);
+  	}
+  
+! 	length -= SLC_BPFHDR;
+! 	p = packetp + SLC_BPFHDR;
+! 
+! 	switch (ptype) {
+! 	case PPP_VJC:
+! 		if (eflag)
+! 			compressed_sl_print(ch, (struct ip *)p, length, dir);
+! 		ip_print(p, length);
+! 		break;
+! 	case PPP_VJNC:
+! 		if (eflag)
+! 			uncompressed_sl_print(ch[1], (struct ip *)p, length,
+! 			    dir);
+  		ip_print(p, length);
+! 		break;
+! 	case PPP_IP:
+! 		ip_print(p, length);
+! 		break;
+! 	case PPP_DECNET:
+! 		decnet_print(p, length, caplen);
+! 		break;
+! 	case PPP_APPLE:
+! 		atalk_print(p, length);
+! 		break;
+! 
+! 	case PPP_NS:	/* XXX?? */
+! 	case PPP_IPX:
+! 		ipx_print(p, length);
+! 		break;
+! 
+! 	case PPP_IPCP:
+! 		printf("%sipcp ", direction);
+! 		ppp_ipcp_print(p, length);
+! 		break;
+! 	case PPP_LCP:
+! 		printf("%slcp ", direction);
+! 		ppp_lcp_print(p, length);
+! 		break;
+!         case PPP_PAP:
+! 		printf("%spap ", direction);
+! 		ppp_pap_print(p, length);
+! 		break;
+! 	case PPP_LQR:
+! 		printf("%slqr ", direction);
+! 		break;
+! 	case PPP_CHAP:
+! 		printf("%schap ", direction);
+! 		ppp_chap_print(p, length);
+! 		break;
+! 
+! 	default:
+! 		if (!eflag)
+! 			printf("%s ", tok2str(ptype2str, "proto-#%d", ptype));
+! 		break;
+! 	}
+  
+  	if (xflag)
+! 		default_print((const u_char *)p, caplen - SLC_BPFHDR);
+  out:
++ 	if (xxflag)
++ 		hexdump(p, caplen - SLC_BPFHDR);
+  	putchar('\n');
++ }
++ 
++ static void
++ ppp_lcp_print(const u_char *cp, int length)
++ {
++ 	register const u_char *lp;
++ 	int len;
++ 
++ 	if (cp + PPP_CPHDR_LEN > snapend) {
++ 		printf("[|lcp]");
++ 		return;
++ 	}
++ 	if (length < PPP_CPHDR_LEN) {
++ 		printf("truncated-lcp %u", length);
++ 		return;
++ 	}
++ 
++ 	printf("id %u ", cp[PPP_CP_ID]);
++ 	len = EXTRACT_16BITS(cp + PPP_CP_LEN);
++ 	lp = min(cp + len, snapend);
++ 
++ 	switch (cp[PPP_CP_CODE]) {
++ 		const u_char *op;
++ 		u_short s;
++ 		
++ 	case PPP_CP_CONF_REQ: 
++ 		printf("conf-req"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_ACK: 
++ 		printf("conf-ack"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_NAK: 
++ 		printf("conf-nak"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_REJ: 
++ 		printf("conf-rej");
++ 	    /* FALL THROUGH */
++ 	Options:
++ 		for (op = cp + PPP_CPHDR_LEN; op < lp;
++ 		     op = op + op[PPP_OP_LEN]) {
++ 			if (op + op[PPP_OP_LEN] > lp) {
++ 				printf("[|lcp]");
++ 				return;
++ 			}
++ 		 	switch (op[PPP_OP_TYPE]) {
++ 			case PPP_LCP_MRU:
++ 				printf(" {mru %u}",
++ 				    EXTRACT_16BITS(op + PPP_OP_DATA));
++ 				break;
++ 			case PPP_LCP_ACCM:
++ 				printf(" {accm %08x}",
++ 				    EXTRACT_32BITS(op + PPP_OP_DATA));
++ 				break;
++ 			case PPP_LCP_AP:
++ 				s = EXTRACT_16BITS(op + PPP_OP_DATA);
++ 				printf(" {ap ");
++ 				switch (s) {
++ 				case PPP_PAP:
++ 					printf("pap}");
++ 					break;
++ 
++ 				case PPP_CHAP:
++ 					printf("chap w/");
++ 					switch (op[PPP_OP_DATA + 2]) {
++ 					case PPP_CHAPA_MD5:
++ 						printf("md5}");
++ 						break;
++ 
++ 					default:
++ 						printf("%02x}",
++ 						    op[PPP_OP_DATA + 2]);
++ 						break;
++ 					}
++ 					break;
++ 
++ 				default:
++ 					printf("%04x}", s);
++ 					break;
++ 				}
++ 				break;
++ 			case PPP_LCP_QP:
++ 				printf(" {qp %ums",
++ 				    EXTRACT_32BITS(op + PPP_OP_DATA) * 10);
++ 				s = EXTRACT_16BITS(op + PPP_OP_DATA);
++ 				switch (s) {
++ 				case PPP_LQR:
++ 					printf("lqr}");
++ 					break;
++ 
++ 				default:
++ 					printf("%04x}", s);
++ 				}
++ 				break;
++ 			case PPP_LCP_MAGIC:
++ 				printf(" {magic %x}",
++ 				    EXTRACT_32BITS(op + PPP_OP_DATA));
++ 				break;
++ 			case PPP_LCP_PFC:
++ 				printf(" {pfc}");
++ 				break;
++ 			case PPP_LCP_ACFC:
++ 				printf(" {acfc}");
++ 				break;
++ 			default:
++ 				printf(" {option-%d %d}",
++ 				    op[PPP_OP_TYPE], op[PPP_OP_LEN]);
++ 				break;
++ 			}
++ 		}
++ 		break;
++ 		
++ 
++ 	case PPP_CP_TERM_REQ: 
++ 		printf("term-req"); 
++ 		goto Terminate;
++ 	case PPP_CP_TERM_ACK: 
++ 		printf("term-ack");
++ 	Terminate:
++ 		op = cp + PPP_CPHDR_LEN;
++ 		goto Data;
++ 
++ 	case PPP_CP_CODE_REJ:
++ 		printf("code-rej ");
++ 		ppp_lcp_print(cp + PPP_CPHDR_LEN, len);
++ 		break;
++ 
++ 	case PPP_LCP_PROTO_REJ:
++ 		printf("proto-rej proto %s", tok2str(ptype2str, "#%d",
++ 		    EXTRACT_16BITS(cp + PPP_CPHDR_LEN)));
++ 		break;
++ 
++ 	case PPP_LCP_ECHO_REQ: 
++ 		printf("echo-req"); 
++ 		goto Magic;
++ 	case PPP_LCP_ECHO_REPL: 
++ 		printf("echo-rpl"); 
++ 		goto Magic;
++ 	case PPP_LCP_DISC_REQ: 
++ 		printf("discard-req"); 
++ 		goto Magic;
++ 	case PPP_LCP_IDENT: 
++ 		printf("ident");
++ 	Magic:
++ 		printf(" magic %x", EXTRACT_32BITS(cp + PPP_CPHDR_LEN));
++ 		op = cp + PPP_CPHDR_LEN + sizeof (u_long);
++ 	Data:
++ 		if (vflag && op < lp) {
++ 			printf(" data");
++ 			for (; op < lp - 1; op += 2)
++ 				printf(" %02x%02x", op[0], op[1]);
++ 			if (op < lp)
++ 				printf(" %02x", *op);
++ 		}
++ 	    	break;
++ 
++ 	case PPP_LCP_TIME_REMAIN:
++ 		op = cp + PPP_CPHDR_LEN;
++ 		printf("time remaining %u",
++ 		    EXTRACT_32BITS(op + 4));
++ 		printf(" magic %x message %.*s", EXTRACT_32BITS(op + 4),
++ 		    lp - (op + 8), op + 8);
++ 		break;
++ 
++ 	default:
++ 		printf("lcp-code-%d %d", cp[PPP_CP_CODE], length);
++ 		break;
++ 	}
++ }
++ 
++ static void
++ ppp_ipcp_print(const u_char *cp, int length)
++ {
++ 	register const u_char *lp;
++ 	int len;
++ 
++ 	if (cp + PPP_CPHDR_LEN > snapend) {
++ 		printf("[|ipcp]");
++ 		return;
++ 	}
++ 	if (length < PPP_CPHDR_LEN) {
++ 		printf("truncated-lcp %u", length);
++ 		return;
++ 	}
++ 
++ 	printf("id %u ", cp[PPP_CP_ID]);
++ 	len = EXTRACT_16BITS(cp + PPP_CP_LEN);
++ 	lp = min((u_char *) cp + len, snapend);
++ 
++ 	switch (cp[PPP_CP_CODE]) {
++ 		const u_char *op;
++ 		
++ 	case PPP_CP_CONF_REQ:
++ 		printf("conf-req"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_ACK: 
++ 		printf("conf-ack"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_NAK: 
++ 		printf("conf-nak"); 
++ 		goto Options;
++ 	case PPP_CP_CONF_REJ: 
++ 		printf("conf-rej");
++ 	    /* FALL THROUGH */
++ 	Options:
++ 		for (op = cp + PPP_CPHDR_LEN; op < lp;
++ 		     op = op + op[PPP_OP_LEN]) {
++ 		 	switch (op[PPP_OP_TYPE]) {
++ 				u_short s;
++ 			    
++ 			case PPP_IPCP_ADDRS:
++ 				printf(" {addrs lcl %s rmt %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA),
++ 				    ipaddr_string(op + PPP_OP_DATA + 4));
++ 				break;
++ 
++ 			case PPP_IPCP_CPROT:
++ 				s = EXTRACT_16BITS(op + PPP_OP_DATA);
++ 				printf(" {cprot ");
++ 				switch (s) {
++ 				case PPP_VJC:
++ 					printf("vj");
++ 					break;
++ 
++ 				default:
++ 					printf("%04x", s);
++ 					break;
++ 				}
++ 				if (vflag) {
++ 					const u_char *dp, *dlp;
++ 
++ 					dlp = min(op + op[PPP_OP_LEN], lp);
++ 					for (dp = op + PPP_OP_LEN + 2; dp < dlp -1; dp += 2)
++ 				    		printf(" %02x%02x", dp[0], dp[1]);
++ 					if (dp < dlp)
++ 						printf(" %02x", *dp);
++ 				}
++ 				putchar('}');
++ 				break;
++ 
++ 			case PPP_IPCP_ADDR:
++ 				printf(" {addr %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA));
++ 				break;
++ 
++ 			case PPP_IPCP_PDNS:
++ 				printf(" {dns-primary %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA));
++ 				break;
++ 
++ 			case PPP_IPCP_PNBNS:
++ 				printf(" {nbns-primary %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA));
++ 				break;
++ 
++ 			case PPP_IPCP_SDNS:
++ 				printf(" {dns-secondary %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA));
++ 				break;
++ 
++ 			case PPP_IPCP_SNBNS:
++ 				printf(" {nbns-secondary %s}",
++ 				    ipaddr_string(op + PPP_OP_DATA));
++ 				break;
++ 
++ 			default:
++ 				printf(" {option-%d %d}",
++ 				    op[PPP_OP_TYPE], op[PPP_OP_LEN]);
++ 				break;
++ 			}
++ 		}
++ 		break;
++ 		
++ 
++ 	case PPP_CP_TERM_REQ: 
++ 		printf("term-req"); 
++ 		goto Terminate;
++ 	case PPP_CP_TERM_ACK: 
++ 		printf("term-ack");
++ 	Terminate:
++ 		op = cp + PPP_CPHDR_LEN;
++ 		if (vflag && op < lp) {
++ 			printf(" data");
++ 			for (; op < lp - 1; op += 2)
++ 				printf(" %02x%02x", op[0], op[1]);
++ 			if (op < lp)
++ 				printf(" %02x", *op);
++ 		}
++ 	    	break;
++ 
++ 	case PPP_CP_CODE_REJ: 
++ 		printf("code-rej"); 
++ 		break;
++ 
++ 	default:
++ 		printf("ipcp-code-%d %d", cp[PPP_CP_CODE], length);
++ 		break;
++ 	}
++ }
++ 
++ 
++ static void
++ ppp_pap_print(const u_char *cp, int length)
++ {
++ 	register const u_char *lp, *op;
++ 	int len;
++ 
++ 	if (cp + PPP_CPHDR_LEN > snapend) {
++ 		printf("[|ipcp]");
++ 		return;
++ 	}
++ 	if (length < PPP_CPHDR_LEN) {
++ 		printf("truncated-lcp %u", length);
++ 		return;
++ 	}
++ 
++ 	printf("id %u ", cp[PPP_CP_ID]);
++ 	len = EXTRACT_16BITS(cp + PPP_CP_LEN);
++ 	lp = min((u_char *) cp + len, snapend);
++ 	op = cp + PPP_CPHDR_LEN;
++ 
++ 	switch (cp[PPP_CP_CODE]) {
++ 	case PPP_PAP_AUTH_REQ:
++ 		printf("auth-req");
++ 		if (vflag) {
++ 		    	const u_char *dp, *dlp;
++ 
++ 			/* Peer-id */
++ 			printf(" peer-id");
++ 			for (dp = op + 1, dlp = min(dp + *op, lp);
++ 			     dp < dlp - 1;
++ 			     dp += 2)
++ 				printf(" %02x%02x", dp[0], dp[1]);
++ 			if (dp < dlp)
++ 				printf(" %02x", *dp);
++ 			op += *op + 1;
++ 			if (op >= lp)
++ 				break;
++ 
++ 			/* Password */
++ 			printf(" passwd");
++ 			for (dp = op + 1, dlp = min(dp + *op, lp);
++ 			     dp < dlp - 1;
++ 			     dp += 2)
++ 				printf(" %02x%02x", dp[0], dp[1]);
++ 			if (dp < dlp)
++ 				printf(" %02x", *dp);
++ 		}
++ 		break;
++ 
++ 	case PPP_PAP_AUTH_ACK: 
++ 		printf("auth-ack"); 
++ 		goto Message;
++ 	case PPP_PAP_AUTH_NAK: 
++ 		printf("auth-nak");
++ 	Message:
++ 		if (vflag && op[0]) {
++ 			op++;
++ 			printf(" msg %.*s", lp - op, op);
++ 		}
++ 		break;
++ 
++ 	default:
++ 		printf("pap-code-%d %d", cp[PPP_CP_CODE], length);
++ 		break;
++ 	}
++ }
++ 
++ static void
++ ppp_chap_print(const u_char *cp, int length)
++ {
++ 	register const u_char *lp, *op;
++ 	int len;
++ 
++ 	if (cp + PPP_CPHDR_LEN > snapend) {
++ 		printf("[|ipcp]");
++ 		return;
++ 	}
++ 	if (length < PPP_CPHDR_LEN) {
++ 		printf("truncated-lcp %u", length);
++ 		return;
++ 	}
++ 
++ 	printf("id %u ", cp[PPP_CP_ID]);
++ 	len = EXTRACT_16BITS(cp + PPP_CP_LEN);
++ 	lp = min((u_char *) cp + len, snapend);
++ 	op = cp + PPP_CPHDR_LEN;
++ 
++ 	switch (cp[PPP_CP_CODE]) {
++ 	case PPP_CHAP_CHALLANGE: 
++ 		printf("challange"); 
++ 		goto Value;
++ 	case PPP_CHAP_RESPONSE: 
++ 		printf("response");
++ 	Value:
++ 		if (vflag) {
++ 		    	const u_char *dp, *dlp;
++ 
++ 			/* Value */
++ 			printf(" value");
++ 			for (dp = op + 1, dlp = dp + *op;
++ 			     dp < dlp - 1;
++ 			     dp += 2)
++ 				printf(" %02x%02x", dp[0], dp[1]);
++ 			if (dp < dlp)
++ 				printf(" %02x", *dp);
++ 			op += *op + 1;
++ 
++ 			/* Name */
++ 			printf(" name");
++ 			for (dp = op, dlp = lp;
++ 			     dp < dlp - 1;
++ 			     dp += 2)
++ 				printf(" %02x%02x", dp[0], dp[1]);
++ 			if (dp < dlp)
++ 				printf(" %02x", *dp);
++ 		}
++ 		break;
++ 	    
++ 	case PPP_CHAP_SUCCESS: 
++ 		printf("success"); 
++ 		goto Message;
++ 	case PPP_CHAP_FAILURE: 
++ 		printf("failure");
++  Message:
++ 		if (vflag) {
++ 		    	const u_char *dp, *dlp;
++ 
++ 			/* Message */
++ 			if (vflag)
++ 				printf(" msg %.*s", lp - op, op);
++ 		}
++ 		break;
++ 
++ 	default:
++ 		printf("chap-code-%d %d", cp[PPP_CP_CODE], length);
++ 		break;
++ 	}
+  }
+Index: print-sl.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-sl.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-sl.c
+*** print-sl.c	1998/02/02 19:04:20	1.1.1.1
+--- print-sl.c	1998/02/15 03:57:22
+***************
+*** 63,81 ****
+  static u_int lastlen[2][256];
+  static u_int lastconn = 255;
+  
+! static void sliplink_print(const u_char *, const struct ip *, u_int);
+! static void compressed_sl_print(const u_char *, const struct ip *, u_int, int);
+  
+! /* XXX BSD/OS 2.1 compatibility */
+  #if !defined(SLIP_HDRLEN) && defined(SLC_BPFHDR)
+! #define SLIP_HDRLEN SLC_BPFHDR
+! #define SLX_DIR 0
+! #define SLX_CHDR (SLC_BPFHDRLEN - 1)
+! #define CHDR_LEN (SLC_BPFHDR - SLC_BPFHDRLEN)
+  #endif
+  
+- /* XXX needs more hacking to work right */
+- 
+  void
+  sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+  {
+--- 63,88 ----
+  static u_int lastlen[2][256];
+  static u_int lastconn = 255;
+  
+! static void sliplink_print(const u_char *, const struct ip *, u_int, u_int);
+  
+! /* BSD/OS 2.1 and later compatibility */
+  #if !defined(SLIP_HDRLEN) && defined(SLC_BPFHDR)
+! /* 
+!  * Each packet has a BPF header of SLC_BPFHDR (24) bytes
+!  *
+!  * The format is:
+!  *	1 Byte Direction			(SLIPDIR_IN or SLIPDIR_OUT)
+!  *	1 Byte Length of link level header	(0 for slip)
+!  *	1 Byte Length of compressed header	(0 for slip)
+!  *	m Bytes link level header 		(maximum of 4 bytes)
+!  *	n Bytes compressed header 		(maximum of 15 bytes)
+!  *	p Bytes to pad to SLC_BPFHDR bytes
+!  */
+! #define SLIP_HDRLEN	SLC_BPFHDR
+! #define SLX_DIR		SLC_DIR
+! #define SLX_CHDR	SLC_CHDR
+  #endif
+  
+  void
+  sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+  {
+***************
+*** 102,202 ****
+  	ip = (struct ip *)(p + SLIP_HDRLEN);
+  
+  	if (eflag)
+! 		sliplink_print(p, ip, length);
+! 
+! 	ip_print((u_char *)ip, length);
+! 
+! 	if (xflag)
+! 		default_print((u_char *)ip, caplen - SLIP_HDRLEN);
+!  out:
+! 	putchar('\n');
+! }
+! 
+! 
+! void
+! sl_bsdos_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+! {
+! 	register u_int caplen = h->caplen;
+! 	register u_int length = h->len;
+! 	register const struct ip *ip;
+! 
+! 	ts_print(&h->ts);
+! 
+! 	if (caplen < SLIP_HDRLEN) {
+! 		printf("[|slip]");
+! 		goto out;
+! 	}
+! 	/*
+! 	 * Some printers want to get back at the link level addresses,
+! 	 * and/or check that they're not walking off the end of the packet.
+! 	 * Rather than pass them all the way down, we set these globals.
+! 	 */
+! 	packetp = p;
+! 	snapend = p + caplen;
+! 
+! 	length -= SLIP_HDRLEN;
+! 
+! 	ip = (struct ip *)(p + SLIP_HDRLEN);
+! 
+! #ifdef notdef
+! 	if (eflag)
+! 		sliplink_print(p, ip, length);
+! #endif
+  
+  	ip_print((u_char *)ip, length);
+  
+  	if (xflag)
+! 		default_print((u_char *)ip, caplen - SLIP_HDRLEN);
+   out:
+  	putchar('\n');
+  }
+  
+  static void
+  sliplink_print(register const u_char *p, register const struct ip *ip,
+! 	       register u_int length)
+  {
+  	int dir;
+  	u_int hlen;
+  
+  	dir = p[SLX_DIR];
+  	putchar(dir == SLIPDIR_IN ? 'I' : 'O');
+  	putchar(' ');
+  
+! 	if (nflag) {
+! 		/* XXX just dump the header */
+! 		register int i;
+! 
+! 		for (i = SLX_CHDR; i < SLX_CHDR + CHDR_LEN - 1; ++i)
+! 			printf("%02x.", p[i]);
+! 		printf("%02x: ", p[SLX_CHDR + CHDR_LEN - 1]);
+! 		return;
+  	}
+! 	switch (p[SLX_CHDR] & 0xf0) {
+  
+  	case TYPE_IP:
+! 		printf("ip %d: ", length + SLIP_HDRLEN);
+  		break;
+  
+  	case TYPE_UNCOMPRESSED_TCP:
+! 		/*
+! 		 * The connection id is stored in the IP protocol field.
+! 		 * Get it from the link layer since sl_uncompress_tcp()
+! 		 * has restored the IP header copy to IPPROTO_TCP.
+! 		 */
+! 		lastconn = ((struct ip *)&p[SLX_CHDR])->ip_p;
+! 		hlen = ip->ip_hl;
+! 		hlen += ((struct tcphdr *)&((int *)ip)[hlen])->th_off;
+! 		lastlen[dir][lastconn] = length - (hlen << 2);
+! 		printf("utcp %d: ", lastconn);
+  		break;
+  
+  	default:
+! 		if (p[SLX_CHDR] & TYPE_COMPRESSED_TCP) {
+! 			compressed_sl_print(&p[SLX_CHDR], ip,
+! 			    length, dir);
+! 			printf(": ");
+! 		} else
+! 			printf("slip-%d!: ", p[SLX_CHDR]);
+  	}
+  }
+  
+--- 109,182 ----
+  	ip = (struct ip *)(p + SLIP_HDRLEN);
+  
+  	if (eflag)
+! 		sliplink_print(p, ip, length, h->len);
+  
+  	ip_print((u_char *)ip, length);
+  
+  	if (xflag)
+! 		default_print((u_char *)ip, snapend - p);
+   out:
++ 	if (xxflag)
++ 		hexdump((u_char *)ip, snapend - p);
+  	putchar('\n');
+  }
+  
+  static void
+  sliplink_print(register const u_char *p, register const struct ip *ip,
+! 	       register u_int length, register u_int iplength)
+  {
++ 	int type;
+  	int dir;
+  	u_int hlen;
++ 	int chlen;
++ 	int cid;
++ 	const u_char *chp;
+  
+  	dir = p[SLX_DIR];
+  	putchar(dir == SLIPDIR_IN ? 'I' : 'O');
+  	putchar(' ');
+  
+! #ifdef	SLC_BPFHDR
+! 	chlen = p[SLC_CHL] & 0x0f;
+! 	chp = p + SLC_BPFHDRLEN + p[SLC_LLHL];
+! 	switch (chlen) {
+! 	case 0:
+! 		type = (ip)->ip_v << 4;
+! 		cid = ip->ip_p;
+! 		chp = 0;
+! 		break;
+! 	case 2:
+! 		chlen = 0;
+! 		cid = chp[1];
+! 		/* Fall through */
+! 	default:
+! 		type = *chp & 0xf0;
+! 		break;
+  	}
+! #else
+! 	type = p[SLX_CHDR] & 0xf0;
+! 	chp = p + SLX_CHDR;
+! 	chlen = CHDR_LEN;
+! 	if (chlen)
+! 		cid = ((struct ip *)&ch)->ip_p;
+! #endif
+! 
+! 	switch (type) {
+  
+  	case TYPE_IP:
+! 		printf("ip %d: ", iplength);
+  		break;
+  
+  	case TYPE_UNCOMPRESSED_TCP:
+! 		uncompressed_sl_print(cid, ip, length, dir);
+  		break;
+  
+  	default:
+! 		if (type & TYPE_COMPRESSED_TCP)
+! 			compressed_sl_print(chp, ip, length, dir);
+! 		else
+! 			printf("slip-%d!: ", type);
+! 		break;
+  	}
+  }
+  
+***************
+*** 229,235 ****
+  	return (cp);
+  }
+  
+! static void
+  compressed_sl_print(const u_char *chdr, const struct ip *ip,
+  		    u_int length, int dir)
+  {
+--- 209,215 ----
+  	return (cp);
+  }
+  
+! void
+  compressed_sl_print(const u_char *chdr, const struct ip *ip,
+  		    u_int length, int dir)
+  {
+***************
+*** 277,283 ****
+  	hlen = ip->ip_hl;
+  	hlen += ((struct tcphdr *)&((int32_t *)ip)[hlen])->th_off;
+  	lastlen[dir][lastconn] = length - (hlen << 2);
+! 	printf(" %d (%d)", lastlen[dir][lastconn], cp - chdr);
+  }
+  #else
+  #include <sys/types.h>
+--- 257,282 ----
+  	hlen = ip->ip_hl;
+  	hlen += ((struct tcphdr *)&((int32_t *)ip)[hlen])->th_off;
+  	lastlen[dir][lastconn] = length - (hlen << 2);
+! 	printf(" %d (%d):", lastlen[dir][lastconn], cp - chdr);
+! }
+! 
+! void
+! uncompressed_sl_print(u_char cid, const struct ip *ip,
+! 		      u_int length, int dir)
+! {
+! 	int hlen;
+! 
+! 	/*
+! 	 * The connection id is stored in the IP protocol field.
+! 	 * Get it from the link layer since sl_uncompress_tcp()
+! 	 * has restored the IP header copy to IPPROTO_TCP.
+! 	 */
+! 
+! 	lastconn = cid;
+! 	hlen = ip->ip_hl;
+! 	hlen += ((struct tcphdr *)&((int *)ip)[hlen])->th_off;
+! 	lastlen[dir][lastconn] = length - (hlen << 2);
+! 	printf("utcp %d: ", lastconn);
+  }
+  #else
+  #include <sys/types.h>
+Index: tcpdump.1
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.1,v
+retrieving revision 1.2
+diff -c -r1.2 tcpdump.1
+*** tcpdump.1	1998/02/06 02:02:59	1.2
+--- tcpdump.1	1998/02/15 03:57:23
+***************
+*** 166,173 ****
+  .TP
+  .B \-s
+  Snarf \fIsnaplen\fP bytes of data from each packet rather than the
+! default of 68 (with SunOS's NIT, the minimum is actually 96).
+! 68 bytes is adequate for IP, ICMP, TCP
+  and UDP but may truncate protocol information from name server and NFS
+  packets (see below).  Packets truncated because of a limited snapshot
+  are indicated in the output with ``[|\fIproto\fP]'', where \fIproto\fP
+--- 166,173 ----
+  .TP
+  .B \-s
+  Snarf \fIsnaplen\fP bytes of data from each packet rather than the
+! default of 76 (with SunOS's NIT, the minimum is actually 96).
+! 76 bytes is adequate for IP, ICMP, TCP
+  and UDP but may truncate protocol information from name server and NFS
+  packets (see below).  Packets truncated because of a limited snapshot
+  are indicated in the output with ``[|\fIproto\fP]'', where \fIproto\fP
+***************
+*** 928,934 ****
+  is printed.
+  .LP
+  Note that name server requests and responses tend to be large and the
+! default \fIsnaplen\fP of 68 bytes may not capture enough of the packet
+  to print.  Use the \fB\-s\fP flag to increase the snaplen if you
+  need to seriously investigate name server traffic.  `\fB\-s 128\fP'
+  has worked well for me.
+--- 928,934 ----
+  is printed.
+  .LP
+  Note that name server requests and responses tend to be large and the
+! default \fIsnaplen\fP of 76 bytes may not capture enough of the packet
+  to print.  Use the \fB\-s\fP flag to increase the snaplen if you
+  need to seriously investigate name server traffic.  `\fB\-s 128\fP'
+  has worked well for me.
+Index: tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.c,v
+retrieving revision 1.4
+diff -c -r1.4 tcpdump.c
+*** tcpdump.c	1998/02/14 02:43:41	1.4
+--- tcpdump.c	1998/02/15 03:57:24
+***************
+*** 94,100 ****
+  	{ ether_if_print,	DLT_EN10MB },
+  	{ token_if_print,	DLT_IEEE802 },
+  	{ sl_if_print,		DLT_SLIP },
+! 	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
+  	{ ppp_if_print,		DLT_PPP },
+  	{ ppp_bsdos_if_print,	DLT_PPP_BSDOS },
+  	{ fddi_if_print,	DLT_FDDI },
+--- 94,100 ----
+  	{ ether_if_print,	DLT_EN10MB },
+  	{ token_if_print,	DLT_IEEE802 },
+  	{ sl_if_print,		DLT_SLIP },
+! 	{ sl_if_print,		DLT_SLIP_BSDOS },
+  	{ ppp_if_print,		DLT_PPP },
+  	{ ppp_bsdos_if_print,	DLT_PPP_BSDOS },
+  	{ fddi_if_print,	DLT_FDDI },
+Index: Makefile.in
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/Makefile.in,v
+retrieving revision 1.3
+diff -u -r1.3 Makefile.in
+--- Makefile.in	1998/02/14 02:43:41	1.3
++++ Makefile.in	1998/02/17 14:46:41
+@@ -1,3 +1,8 @@
++#
++# This file has been slightly modified by NRL for use with IPv6+IPsec.
++# Search for INET6 and/or IPSEC to see the blocks where this happened.
++# See the NRL Copyright notice for conditions on the modifications.
++#
+ #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+ # 	The Regents of the University of California.  All rights reserved.
+ #
+@@ -66,8 +71,8 @@
+ CSRC =	tcpdump.c \
+ 	print-arp.c print-atalk.c print-atm.c print-bootp.c print-chdlc.c \
+ 	print-decnet.c print-domain.c print-dvmrp.c print-egp.c \
+-	print-ether.c print-fddi.c print-fr.c print-gre.c print-icmp.c \
+-	print-igrp.c print-ip.c print-ipx.c print-isoclns.c print-krb.c \
++	print-ether.c print-fddi.c print-fr.c print-gre.c print-icmp.c print-icmpv6.c \
++	print-igrp.c print-ip.c print-ipv6.c print-ipx.c print-isoclns.c print-krb.c \
+ 	print-llc.c print-nfs.c print-ntp.c print-null.c print-ospf.c \
+ 	print-pim.c print-ppp.c print-raw.c print-rip.c print-sl.c \
+ 	print-snmp.c print-sunrpc.c print-tcp.c print-tftp.c print-token.c print-udp.c \
+Index: addrtoname.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/addrtoname.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 addrtoname.c
+--- addrtoname.c	1998/02/02 19:04:19	1.1.1.1
++++ addrtoname.c	1998/02/17 14:46:42
+@@ -1,4 +1,18 @@
+ /*
++%%% portions-copyright-cmetz-97
++Portions of this software are Copyright 1997-1998 by Craig Metz, All Rights
++Reserved. The Inner Net License Version 2 applies to these portions of
++the software.
++You should have received a copy of the license with this software. If
++you didn't get a copy, you may request one from <license@inner.net>.
++
++*/
++/*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -78,6 +92,16 @@
+ 	struct hnamemem *nxt;
+ };
+ 
++#ifdef INET6
++struct hnamemem6 {
++	struct in6_addr addr;
++	char *name;
++	struct hnamemem6 *nxt;
++};
++
++struct hnamemem6 hname6table[HASHNAMESIZE];
++#endif /* INET6 */
++
+ struct hnamemem hnametable[HASHNAMESIZE];
+ struct hnamemem tporttable[HASHNAMESIZE];
+ struct hnamemem uporttable[HASHNAMESIZE];
+@@ -248,6 +272,76 @@
+ 	p->name = savestr(intoa(addr));
+ 	return (p->name);
+ }
++
++#ifdef INET6
++struct hnamemem6 *
++newhnamemem6()
++{
++	register struct hnamemem6 *p;
++	static struct hnamemem6 *ptr = NULL;
++	static u_int num = 0;
++
++	if (num <= 0) {
++		num = 64;
++		ptr = (struct hnamemem6 *)calloc(num, sizeof (*ptr));
++		if (ptr == NULL)
++			error("newhnamemem: calloc");
++	}
++	--num;
++	p = ptr++;
++	return (p);
++}
++
++char *
++ipv6addr_string(const struct in6_addr *ap)
++{
++  static char buffer[64];
++  struct hnamemem6 *p;
++
++  if ((unsigned)ap & 3) {
++    static struct in6_addr i;
++    memcpy(&i, ap, sizeof(struct in6_addr));
++    ap = &i;
++  }
++
++  {
++    u_int32_t *a = (u_int32_t *)ap;
++
++    p = &hname6table[(a[0] ^ a[1] ^ a[2] ^ a[3]) & (HASHNAMESIZE-1)];
++    for (; p->nxt; p = p->nxt) {
++      if (!memcmp(&(p->addr), ap, sizeof(struct in6_addr)))
++	return (p->name);
++    }
++    memcpy(&p->addr, ap, sizeof(struct in6_addr));
++    p->nxt = newhnamemem6();
++  }
++
++  {
++    struct sockaddr_in6 sin6;
++
++    memset(&sin6, 0, sizeof(struct sockaddr_in6));
++#ifdef SIN6_LEN
++    sin6.sin6_len = sizeof(struct sockaddr_in6);
++#endif /* SIN6_LEN */
++    sin6.sin6_family = AF_INET6;
++    memcpy(&sin6.sin6_addr, ap, sizeof(struct in6_addr));
++
++    if (getnameinfo((struct sockaddr *)&sin6, sizeof(struct sockaddr_in6), buffer, sizeof(buffer), NULL, 0, nflag ? NI_NUMERICHOST : 0)) {
++      fprintf(stderr, "tcpdump: getnameinfo failed\n");
++      return p->name = "???";
++    }
++
++    if (Nflag) {
++      char *c;
++
++      if (c = strchr(buffer, '.'))
++        *c = 0;
++    }
++
++    return (p->name = strdup(buffer));
++  }
++}
++#endif /* INET6 */
+ 
+ static char hex[] = "0123456789abcdef";
+ 
+Index: ethertype.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/ethertype.h,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 ethertype.h
+--- ethertype.h	1998/02/02 19:04:19	1.1.1.1
++++ ethertype.h	1998/02/17 14:46:42
+@@ -71,6 +71,9 @@
+ #ifndef ETHERTYPE_AARP
+ #define ETHERTYPE_AARP		0x80f3
+ #endif
++#ifndef	ETHERTYPE_IPV6
++#define	ETHERTYPE_IPV6		0x86dd
++#endif
+ #ifndef	ETHERTYPE_LOOPBACK
+ #define	ETHERTYPE_LOOPBACK	0x9000
+ #endif
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.5
+diff -u -r1.5 interface.h
+--- interface.h	1998/02/15 03:58:38	1.5
++++ interface.h	1998/02/17 14:46:42
+@@ -186,8 +186,10 @@
+ extern void gre_print(const u_char *, u_int);
+ extern void hexdump(const void *, int);
+ extern void icmp_print(const u_char *, const u_char *);
++extern void icmpv6_print(const u_char *, int);
+ extern void igrp_print(const u_char *, u_int, const u_char *);
+ extern void ip_print(const u_char *, u_int);
++extern void ipv6_print(const u_char *, int);
+ extern void ipx_print(const u_char *, u_int);
+ extern void isoclns_print(const u_char *, u_int, u_int, const u_char *,
+ 	const u_char *);
+Index: ppp.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/ppp.h,v
+retrieving revision 1.2
+diff -u -r1.2 ppp.h
+--- ppp.h	1998/02/15 03:58:38	1.2
++++ ppp.h	1998/02/17 14:46:42
+@@ -30,6 +30,7 @@
+ #define PPP_BRPDU	0x0031	/* Bridging PDU */
+ #define PPP_STII	0x0033	/* Stream Protocol (ST-II) */
+ #define PPP_VINES	0x0035	/* Banyan Vines */
++#define	PPP_IPV6	0x0057	/* Raw IPv6 */
+ 
+ #define PPP_HELLO	0x0201	/* 802.1d Hello Packets */
+ #define PPP_LUXCOM	0x0231	/* Luxcom */
+Index: print-atm.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-atm.c,v
+retrieving revision 1.3
+diff -u -r1.3 print-atm.c
+--- print-atm.c	1998/02/14 02:28:43	1.3
++++ print-atm.c	1998/02/17 14:46:42
+@@ -106,6 +106,12 @@
+ 		ip_print(p, length);
+ 		break;
+ 
++#ifdef	INET6
++	case ETHERTYPE_IPV6:
++		ipv6_print(p, length);
++		break;
++#endif
++
+ 		/*XXX this probably isn't right */
+ 	case ETHERTYPE_ARP:
+ 	case ETHERTYPE_REVARP:
+Index: print-chdlc.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-chdlc.c,v
+retrieving revision 1.1
+diff -u -r1.1 print-chdlc.c
+--- print-chdlc.c	1998/02/06 02:09:46	1.1
++++ print-chdlc.c	1998/02/17 14:46:43
+@@ -298,10 +298,16 @@
+ 	pp = p + CHDLC_HDRLEN;
+ 
+ 	switch (ntohs(chp->csh_type)) {
+-	case CISCO_TYPE_INET:
++	case ETHERTYPE_IP:
+ 		ip_print(pp, length);
+ 		break;
+ 
++#ifdef	INET6
++	case ETHERTYPE_IPV6:
++		ipv6_print(pp, length);
++		break;
++#endif
++
+ #ifdef	CISCO_TYPE_CDP
+ 	case CISCO_TYPE_CDP:
+ 		if (!eflag)
+@@ -311,7 +317,7 @@
+ 		break;
+ #endif	/* CISCO_TYPE_CDP */
+ 
+-	case CISCO_TYPE_SLARP:
++	case ETHERTYPE_REVARP:
+ 		if (!eflag)
+ 			printf("%sslarp:",
+ 			       direction);
+Index: print-ether.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ether.c,v
+retrieving revision 1.2
+diff -u -r1.2 print-ether.c
+--- print-ether.c	1998/02/06 02:02:57	1.2
++++ print-ether.c	1998/02/17 14:46:43
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -167,6 +172,12 @@
+ 	case ETHERTYPE_IP:
+ 		ip_print(p, length);
+ 		return (1);
++
++#ifdef	INET6
++	case ETHERTYPE_IPV6:
++		ipv6_print(p, length);
++		return (1);
++#endif
+ 
+ 	case ETHERTYPE_ARP:
+ 	case ETHERTYPE_REVARP:
+Index: print-gre.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-gre.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 print-gre.c
+--- print-gre.c	1998/02/02 19:04:20	1.1.1.1
++++ print-gre.c	1998/02/17 14:46:43
+@@ -32,9 +32,12 @@
+ #include <sys/uio.h>
+ #include <sys/socket.h>
+ 
++#include <net/if.h>
++
+ #include <netinet/in.h>
+ #include <netinet/in_systm.h>
+ #include <netinet/ip.h>
++#include <netinet/if_ether.h>
+ 
+ #include <netdb.h>
+ #include <stdio.h>
+@@ -76,9 +79,6 @@
+ #define GRE_SP		0x1000	/* Sequence Present */
+ 
+ 
+-#define GREPROTO_IP	0x0800
+-
+-
+ /*
+  * Deencapsulate and print a GRE-tunneled IP datagram
+  */
+@@ -125,9 +125,15 @@
+ 
+ 	switch (proto) {
+ 
+-	case GREPROTO_IP:
++	case ETHERTYPE_IP:
+ 		ip_print(cp, length - ((cp - bp) / sizeof(u_char)));
+ 		break;
++
++#ifdef	INET6
++	case ETHERTYPE_IPV6:
++		ipv6_print(cp, length - ((cp - bp) / sizeof(u_char)));
++		break;
++#endif
+ 
+ 	default:
+ 		printf("gre-proto-0x%04X", proto);
+Index: print-ip.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ip.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 print-ip.c
+--- print-ip.c	1998/02/02 19:04:20	1.1.1.1
++++ print-ip.c	1998/02/17 14:46:43
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -49,7 +54,10 @@
+ #include "interface.h"
+ #include "extract.h"			/* must come after interface.h */
+ 
+-/* Compatibility */
++#ifdef IPSEC
++#include <netsec/ipsec.h>
++#endif /* IPSEC */
++
+ #ifndef	IPPROTO_ND
+ #define	IPPROTO_ND	77
+ #endif
+@@ -221,6 +229,20 @@
+ 	fputs("[|igmp]", stdout);
+ }
+ 
++#ifdef IPSEC
++void ah_print(const void *p)
++{
++  struct ipsec_ah *ah = (struct ipsec_ah *)p;
++
++  printf(" ah 0x%x dlen %d", ntohl(ah->ah_spi), ah->ah_datalen << 2);
++}
++
++void esp_print(const void *esp)
++{
++  printf(" esp 0x%x", ntohl(*(u_int32_t *)esp));
++}
++#endif /* IPSEC */
++
+ /*
+  * print the recorded route in an IP RR, LSRR or SSRR option.
+  */
+@@ -339,6 +361,10 @@
+ 	register u_int hlen, len, off;
+ 	register const u_char *cp;
+ 
++#ifdef IPSEC
++	int chain = 0;
++	int p;
++#endif /* IPSEC */
+ 	ip = (const struct ip *)bp;
+ #ifdef LBL_ALIGN
+ 	/*
+@@ -389,7 +415,13 @@
+ 	off = ntohs(ip->ip_off);
+ 	if ((off & 0x1fff) == 0) {
+ 		cp = (const u_char *)ip + hlen;
+-		switch (ip->ip_p) {
++#ifdef IPSEC
++		p = ip->ip_p;
++chain:
++		switch (p) {
++#else
++	        switch (ip->ip_p) {
++#endif /* IPSEC */
+ 
+ 		case IPPROTO_TCP:
+ 			tcp_print(cp, len, (const u_char *)ip);
+@@ -462,6 +494,49 @@
+ 				return;
+   			}
+   			break;
++
++#ifdef IPSEC
++		case IPPROTO_ESP:
++			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
++				ipaddr_string(&ip->ip_dst));
++                        if (len < sizeof(u_int32_t)) {
++                          printf(" esp (truncated)");
++			  break;
++                        }
++			esp_print(cp);
++			break;
++
++		case IPPROTO_AH:
++                        if (chain)
++                          break;
++			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
++				ipaddr_string(&ip->ip_dst));
++                        if (len < sizeof(struct ipsec_ah)) {
++                          printf(" ah (truncated)");
++			  break;
++                        }
++			ah_print(cp);
++			{
++                          struct ipsec_ah *ah = (struct ipsec_ah *)cp;
++			  int i = sizeof(struct ipsec_ah) + (ah->ah_datalen << 2);
++			  len -= i;
++			  p = ah->ah_nexthdr;
++			  cp += i;
++			}
++			printf("\n                ");
++			chain = 1;
++			goto chain;
++#endif /* IPSEC */
++
++#ifdef INET6
++		case IPPROTO_IPV6:
++			printf("%s > %s: v6-in-v4",
++				ipaddr_string(&ip->ip_src),
++				ipaddr_string(&ip->ip_dst));
++			printf("\n                ");
++			ipv6_print(cp, len);
++			break;
++#endif /* INET6 */
+ 
+ 		default:
+ 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
+Index: print-null.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-null.c,v
+retrieving revision 1.2
+diff -u -r1.2 print-null.c
+--- print-null.c	1998/02/06 02:02:58	1.2
++++ print-null.c	1998/02/17 14:46:44
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -52,6 +57,7 @@
+ 
+ #include "interface.h"
+ #include "addrtoname.h"
++#include "extract.h"
+ 
+ #ifndef AF_NS
+ #define AF_NS		6		/* XEROX NS protocols */
+@@ -64,14 +70,11 @@
+ #define	NULL_HDRLEN 4
+ 
+ static void
+-null_print(const u_char *p, const struct ip *ip, u_int length)
++null_print(u_int family, const u_char *p, u_int length)
+ {
+-	u_int family;
+-
+-	memcpy((char *)&family, (char *)p, sizeof(family));
+ 
+ 	if (nflag) {
+-		/* XXX just dump the header */
++		printf("%d: ", family);
+ 		return;
+ 	}
+ 	switch (family) {
+@@ -80,6 +83,10 @@
+ 		printf("ip: ");
+ 		break;
+ 
++	case AF_INET6:
++		printf("ipv6: ");
++		break;
++
+ 	case AF_NS:
+ 		printf("ns: ");
+ 		break;
+@@ -95,7 +102,7 @@
+ {
+ 	u_int length = h->len;
+ 	u_int caplen = h->caplen;
+-	const struct ip *ip;
++	u_int family;
+ 
+ 	ts_print(&h->ts);
+ 
+@@ -107,17 +114,32 @@
+ 	packetp = p;
+ 	snapend = p + caplen;
+ 
+-	length -= NULL_HDRLEN;
++	family = EXTRACT_32BITS(p);
+ 
+-	ip = (struct ip *)(p + NULL_HDRLEN);
++	length -= NULL_HDRLEN;
++	p += NULL_HDRLEN;
+ 
+ 	if (eflag)
+-		null_print(p, ip, length);
++		null_print(family, p, length);
+ 
+-	ip_print((const u_char *)ip, length);
++	switch (family) {
++	case AF_INET:
++		ip_print(p, length);
++		break;
++
++#ifdef	INET6
++	case AF_INET6:
++		ipv6_print(p, length);
++		break;
++#endif
++
++	case AF_NS:
++		ipx_print(p, length);
++		break;
++	}
+ 
+ 	if (xflag)
+-		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
++		default_print(p, caplen - NULL_HDRLEN);
+ 	if (xxflag)
+ 		hexdump(packetp, h->caplen);
+ 	putchar('\n');
+Index: print-ppp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ppp.c,v
+retrieving revision 1.2
+diff -u -r1.2 print-ppp.c
+--- print-ppp.c	1998/02/15 03:58:38	1.2
++++ print-ppp.c	1998/02/17 14:46:44
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -86,7 +91,12 @@
+ 
+ 	length -= PPP_HDRLEN;
+ 	ip = (struct ip *)(p + PPP_HDRLEN);
+-	ip_print((const u_char *)ip, length);
++	if (ip->ip_v == 4) 
++		ip_print((const u_char *)ip, length);
++#ifdef	INET6
++        else  
++		ipv6_print((const u_char *)ip, length);
++#endif
+ 
+ 	if (xflag)
+ 		default_print((const u_char *)ip, caplen - PPP_HDRLEN);
+@@ -108,6 +118,7 @@
+ 	{ PPP_BRPDU,	"BRPDU" },
+ 	{ PPP_STII,	"STII" },
+ 	{ PPP_VINES,	"VINES" },
++	{ PPP_IPV6,	"IPV6" },
+ 
+ 	{ PPP_HELLO,	"HELLO" },
+ 	{ PPP_LUXCOM,	"LUXCOM" },
+@@ -222,6 +233,11 @@
+ 	case PPP_IP:
+ 		ip_print(p, length);
+ 		break;
++#ifdef	INET6
++	case PPP_IPV6:
++		ipv6_print(p, length);
++		break;
++#endif
+ 	case PPP_DECNET:
+ 		decnet_print(p, length, caplen);
+ 		break;
+Index: print-sl.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-sl.c,v
+retrieving revision 1.2
+diff -u -r1.2 print-sl.c
+--- print-sl.c	1998/02/15 03:58:39	1.2
++++ print-sl.c	1998/02/17 14:46:44
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -111,7 +116,12 @@
+ 	if (eflag)
+ 		sliplink_print(p, ip, length, h->len);
+ 
+-	ip_print((u_char *)ip, length);
++	if (ip->ip_v == 4)
++		ip_print((u_char *)ip, length);
++#ifdef	INET6
++	else if (ip->ip_v == 6)
++		ipv6_print((u_char *)ip, length);
++#endif
+ 
+ 	if (xflag)
+ 		default_print((u_char *)ip, snapend - p);
+Index: print-tcp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-tcp.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 print-tcp.c
+--- print-tcp.c	1998/02/02 19:04:20	1.1.1.1
++++ print-tcp.c	1998/02/17 14:46:44
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -34,6 +39,10 @@
+ #include <netinet/tcp.h>
+ #include <netinet/tcpip.h>
+ 
++#ifdef	INET6
++#include <netinet6/ipv6.h>
++#endif
++
+ #ifdef HAVE_MEMORY_H
+ #include <memory.h>
+ #endif
+@@ -124,9 +133,18 @@
+ 	win = ntohs(tp->th_win);
+ 	urp = ntohs(tp->th_urp);
+ 
+-	(void)printf("%s.%s > %s.%s: ",
+-		ipaddr_string(&ip->ip_src), tcpport_string(sport),
+-		ipaddr_string(&ip->ip_dst), tcpport_string(dport));
++#ifdef	INET6
++	if (ip->ip_v == 6)
++		(void)printf("%s.%s > %s.%s:",
++		    ipv6addr_string(&(((struct ipv6hdr *)ip)->ipv6_src)),
++		        tcpport_string(sport),
++		    ipv6addr_string(&(((struct ipv6hdr *)ip)->ipv6_dst)),
++		        tcpport_string(dport));
++	else
++#endif
++		(void)printf("%s.%s > %s.%s: ",
++		    ipaddr_string(&ip->ip_src), tcpport_string(sport),
++		    ipaddr_string(&ip->ip_dst), tcpport_string(dport));
+ 
+ 	if (qflag) {
+ 		(void)printf("tcp %d", length - tp->th_off * 4);
+Index: print-token.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-token.c,v
+retrieving revision 1.1
+diff -u -r1.1 print-token.c
+--- print-token.c	1998/02/06 02:09:46	1.1
++++ print-token.c	1998/02/17 14:46:45
+@@ -35,8 +35,6 @@
+ 
+ #include <netinet/in.h>
+ #include <netinet/if_ether.h>
+-#include <netinet/in_systm.h>
+-#include <netinet/ip.h>
+ #include <net/if_token.h>
+ 
+ #include <ctype.h>
+Index: print-udp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-udp.c,v
+retrieving revision 1.1.1.1
+diff -u -r1.1.1.1 print-udp.c
+--- print-udp.c	1998/02/02 19:04:21	1.1.1.1
++++ print-udp.c	1998/02/17 14:46:45
+@@ -1,4 +1,9 @@
+ /*
++ * This file has been slightly modified by NRL for use with IPv6+IPsec.
++ * Search for INET6 and/or IPSEC to see the blocks where this happened.
++ * See the NRL Copyright notice for conditions on the modifications.
++ */
++/*
+  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
+  *	The Regents of the University of California.  All rights reserved.
+  *
+@@ -35,6 +40,10 @@
+ #include <netinet/udp.h>
+ #include <netinet/udp_var.h>
+ 
++#ifdef	INET6
++#include <netinet6/ipv6.h>
++#endif
++
+ #ifdef NOERROR
+ #undef NOERROR					/* Solaris sucks */
+ #endif
+@@ -411,9 +420,18 @@
+ 			return;
+ 		}
+ 	}
+-	(void)printf("%s.%s > %s.%s:",
+-		ipaddr_string(&ip->ip_src), udpport_string(sport),
+-		ipaddr_string(&ip->ip_dst), udpport_string(dport));
++#ifdef	INET6
++	if (ip->ip_v == 6)
++		(void)printf("%s.%s > %s.%s:",
++		    ipv6addr_string(&(((struct ipv6hdr *)ip)->ipv6_src)),
++		        udpport_string(sport),
++		    ipv6addr_string(&(((struct ipv6hdr *)ip)->ipv6_dst)), 
++		        udpport_string(dport));
++	else
++#endif
++		(void)printf("%s.%s > %s.%s:",
++		    ipaddr_string(&ip->ip_src), udpport_string(sport),
++		    ipaddr_string(&ip->ip_dst), udpport_string(dport));
+ 
+ 	if (!qflag) {
+ #define ISPORT(p) (dport == (p) || sport == (p))
+Index: print-icmp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-icmp.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-icmp.c
+*** print-icmp.c	1998/02/02 19:04:20	1.1.1.1
+--- print-icmp.c	1998/02/24 02:01:44
+***************
+*** 159,165 ****
+  
+  struct id_rdiscovery {
+  	u_int32_t ird_addr;
+! 	u_int32_t ird_pref;
+  };
+  
+  void
+--- 159,165 ----
+  
+  struct id_rdiscovery {
+  	u_int32_t ird_addr;
+! 	int32_t ird_pref;
+  };
+  
+  void
+***************
+*** 299,308 ****
+  		}
+  		idp = (struct id_rdiscovery *)&dp->icmp_data;
+  		while (num-- > 0) {
+  			TCHECK(*idp);
+! 			(void)sprintf(cp, " {%s %u}",
+! 			    ipaddr_string(&idp->ird_addr),
+! 			    EXTRACT_32BITS(&idp->ird_pref));
+  			cp = buf + strlen(buf);
+  		}
+  		}
+--- 299,315 ----
+  		}
+  		idp = (struct id_rdiscovery *)&dp->icmp_data;
+  		while (num-- > 0) {
++ 			int32_t pref;
++ 
+  			TCHECK(*idp);
+! 			pref = EXTRACT_32BITS(&idp->ird_pref);
+! 			if (pref != 0x80000000)
+! 				(void)sprintf(cp, " {%s %d}",
+! 				    ipaddr_string(&idp->ird_addr),
+! 				    pref);
+! 			else
+! 				(void)sprintf(cp, "{%s ineligible}",
+! 				    ipaddr_string(&idp->ird_addr));
+  			cp = buf + strlen(buf);
+  		}
+  		}
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.6
+diff -c -r1.6 interface.h
+*** interface.h	1998/02/17 14:47:36	1.6
+--- interface.h	1998/03/10 00:11:20
+***************
+*** 67,73 ****
+   * In particular, it allows for an ethernet header, tcp/ip header, and
+   * 14 bytes of data (assuming no ip options).
+   */
+! #define DEFAULT_SNAPLEN 68
+  
+  #ifndef BIG_ENDIAN
+  #define BIG_ENDIAN 4321
+--- 67,73 ----
+   * In particular, it allows for an ethernet header, tcp/ip header, and
+   * 14 bytes of data (assuming no ip options).
+   */
+! #define DEFAULT_SNAPLEN 76
+  
+  #ifndef BIG_ENDIAN
+  #define BIG_ENDIAN 4321
+Index: print-nfs.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-nfs.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-nfs.c
+*** print-nfs.c	1998/02/02 19:04:20	1.1.1.1
+--- print-nfs.c	1998/03/19 01:30:59
+***************
+*** 50,65 ****
+  #include "interface.h"
+  #include "addrtoname.h"
+  
+! #include "nfsv2.h"
+  #include "nfsfh.h"
+  
+  static void nfs_printfh(const u_int32_t *);
+! static void xid_map_enter(const struct rpc_msg *, const struct ip *);
+  static u_int32_t xid_map_find(const struct rpc_msg *, const struct ip *,
+      u_int32_t *);
+  static void interp_reply(const struct rpc_msg *, u_int32_t, u_int);
+  
+  static int nfserr;		/* true if we error rather than trunc */
+  
+  void
+  nfsreply_print(register const u_char *bp, u_int length,
+--- 50,98 ----
+  #include "interface.h"
+  #include "addrtoname.h"
+  
+! #include "nfsproto.h"
+  #include "nfsfh.h"
+  
+  static void nfs_printfh(const u_int32_t *);
+! static void xid_map_enter(const struct rpc_msg *, const struct ip *, u_int32_t);
+  static u_int32_t xid_map_find(const struct rpc_msg *, const struct ip *,
+      u_int32_t *);
+  static void interp_reply(const struct rpc_msg *, u_int32_t, u_int);
+  
+  static int nfserr;		/* true if we error rather than trunc */
++ static int nfsvers;		/* Version number of the packet we are parsing */
++ 
++ /*
++  * Mapping of old NFS Version 2 RPC numbers to generic numbers.
++  */
++ int nfsv3_procid[NFS_NPROCS] = {
++ 	NFSPROC_NULL,
++ 	NFSPROC_GETATTR,
++ 	NFSPROC_SETATTR,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_LOOKUP,
++ 	NFSPROC_READLINK,
++ 	NFSPROC_READ,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_WRITE,
++ 	NFSPROC_CREATE,
++ 	NFSPROC_REMOVE,
++ 	NFSPROC_RENAME,
++ 	NFSPROC_LINK,
++ 	NFSPROC_SYMLINK,
++ 	NFSPROC_MKDIR,
++ 	NFSPROC_RMDIR,
++ 	NFSPROC_READDIR,
++ 	NFSPROC_FSSTAT,
++ 	NFSPROC_FSINFO,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP,
++ 	NFSPROC_NOOP
++ };
+  
+  void
+  nfsreply_print(register const u_char *bp, u_int length,
+***************
+*** 132,141 ****
+  static const u_int32_t *
+  parsefh(register const u_int32_t *dp)
+  {
+! 	if (dp + 8 <= (u_int32_t *)snapend) {
+  		nfs_printfh(dp);
+  		return (dp + 8);
+  	}
+  	return (NULL);
+  }
+  
+--- 165,189 ----
+  static const u_int32_t *
+  parsefh(register const u_int32_t *dp)
+  {
+! 	register u_int32_t len;
+! 
+! 	switch (nfsvers) {
+! 	case NFS_VER2:
+! 		if (dp + 8 > (u_int32_t *)snapend)
+! 			return (NULL);
+  		nfs_printfh(dp);
+  		return (dp + 8);
++ 
++ 	case NFS_VER3:
++ 		if (dp + 1 > (u_int32_t *)snapend)
++ 			return (NULL);
++ 		len = htonl(*dp++);
++ 		if ((u_char *)dp + len > snapend)
++ 			return (NULL);
++ 		nfs_printfh(dp);
++ 		return ((u_int32_t *)((u_char *)dp + len));
+  	}
++ 
+  	return (NULL);
+  }
+  
+***************
+*** 185,190 ****
+--- 233,412 ----
+  	return (parsefn(dp));
+  }
+  
++ static void
++ printquad(const char *string, register const u_int32_t *dp)
++ {
++ 	u_int32_t high;
++ 
++ 	high = (u_int32_t)ntohl(dp[0]);
++ 	if (dp[0] != 0)
++ 		(void)printf("%s0x%x%08x", 
++ 		    string, high,
++ 		    (u_int32_t)ntohl(dp[1]));
++ 	else
++ 		(void)printf("%s%u",
++ 		    string,
++ 		    (u_int32_t)ntohl(dp[1]));
++ }
++ 
++ #define	parsesattr(dp, v) \
++ 	(nfsvers == NFS_VER2 ? parsesattr2(dp, v) : parsesattr3(dp, v))
++ 
++ static const u_int32_t *
++ parsesattr2(register const u_int32_t *dp, int verbose)
++ {
++ 	const struct nfsv2_sattr *sap;
++ 
++ 	sap = (const struct nfsv2_sattr *)dp;
++ 	if (verbose) {
++ 		TCHECK(sap->sa_size);
++ 		printf(" %o ids %u/%u sz %u",
++ 		    (u_int32_t)ntohl(sap->sa_mode),
++ 		    (u_int32_t)ntohl(sap->sa_uid),
++ 		    (u_int32_t)ntohl(sap->sa_gid),
++ 		    (u_int32_t)ntohl(sap->sa_size));
++ 	}
++ 	/* print lots more stuff */
++ 	if (verbose > 1) {
++ 		TCHECK(sap->sa_atime);
++ 		printf(" %u.%06u",
++ 		    (u_int32_t)ntohl(sap->sa_atime.nfsv2_sec),
++ 		    (u_int32_t)ntohl(sap->sa_atime.nfsv2_usec));
++ 		TCHECK(sap->sa_mtime);
++ 		printf(" %u.%06u",
++ 		    (u_int32_t)ntohl(sap->sa_mtime.nfsv2_sec),
++ 		    (u_int32_t)ntohl(sap->sa_mtime.nfsv2_usec));
++ 	}
++ 	return ((const u_int32_t *)(sap + 1));
++ trunc:
++ 	return (NULL);
++ }
++ 
++ /*
++  * Parse the sattr (v3) data
++  */
++ static const u_int32_t *
++ parsesattr3(register const u_int32_t *dp, int verbose)
++ {
++ 
++ 	TCHECK(dp[0]);
++ 	if (*dp++) {
++ 		if (verbose) {
++ 			TCHECK(dp[0]);
++ 			(void)printf(" %o", 
++ 			    (u_int32_t)ntohl(*dp));
++ 		}
++ 		dp++;
++ 	}
++ 	TCHECK(dp[0]);
++ 	if (*dp++) {
++ 		if (verbose) {
++ 			TCHECK(dp[0]);
++ 			(void)printf(" uid %u", 
++ 			    (u_int32_t)ntohl(*dp));
++ 		}
++ 		dp++;
++ 	}
++ 	TCHECK(dp[0]);
++ 	if (*dp++) {
++ 		if (verbose) {
++ 			TCHECK(dp[0]);
++ 			(void)printf(" gid %u", 
++ 			    (u_int32_t)ntohl(*dp));
++ 		}
++ 		dp++;
++ 	}
++ 	TCHECK(dp[0]);
++ 	if (*dp++) {
++ 		if (verbose) {
++ 			TCHECK2(dp[0], 2 * sizeof(*dp));
++ 			printquad(" sz ", dp);
++ 		}
++ 		dp += 2;
++ 	}
++ 	TCHECK(dp[0]);
++ 	switch (ntohl(*dp++)) {
++ 	case NFSV3SATTRTIME_DONTCHANGE:
++ 		break;
++ 	case NFSV3SATTRTIME_TOSERVER:
++ 		if (verbose > 1)
++ 			(void)printf(" atime server");
++ 		break;
++ 	case NFSV3SATTRTIME_TOCLIENT:
++ 		if (verbose) {
++ 			TCHECK2(dp[0], 2 * sizeof(*dp));
++ 			(void)printf(" atime %u.%09u",
++ 			    (u_int32_t)ntohl(dp[0]),
++ 			    (u_int32_t)ntohl(dp[1]));
++ 		}
++ 		dp += 2;
++ 		break;
++ 	}
++ 	TCHECK(dp[0]);
++ 	switch (ntohl(*dp++)) {
++ 	case NFSV3SATTRTIME_DONTCHANGE:
++ 		break;
++ 	case NFSV3SATTRTIME_TOSERVER:
++ 		if (verbose > 1)
++ 			(void)printf(" mtime server");
++ 		break;
++ 	case NFSV3SATTRTIME_TOCLIENT:
++ 		if (verbose) {
++ 			TCHECK2(dp[0], 2 * sizeof(*dp));
++ 			(void)printf(" mtime %u.%09u",
++ 			    (u_int32_t)ntohl(dp[0]),
++ 			    (u_int32_t)ntohl(dp[1]));
++ 		}
++ 		dp += 2;
++ 		break;
++ 	}
++ 
++ 	return (dp);
++ 
++ trunc:
++ 	return (NULL);
++ }
++ 
++ /*
++  * Parse access field
++  */
++ static int
++ parseaccess(register const u_int32_t *dp)
++ {
++ 	register u_int32 access;
++ 	TCHECK2(dp[0], sizeof(*dp));
++ 	access = ntohl(dp[0]);
++ 	if (access & NFSV3ACCESS_READ)
++ 		(void)printf(" read");
++ 	if (access & NFSV3ACCESS_LOOKUP)
++ 		(void)printf(" lookup");
++ 	if (access & NFSV3ACCESS_MODIFY)
++ 		(void)printf(" modify");
++ 	if (access & NFSV3ACCESS_EXTEND)
++ 		(void)printf(" extend");
++ 	if (access & NFSV3ACCESS_DELETE)
++ 		(void)printf(" delete");
++ 	if (access & NFSV3ACCESS_EXECUTE)
++ 		(void)printf(" execute");
++ 
++ 	return (1);
++ 
++ trunc:
++ 	return (0);
++ }
++ 
++ static struct tok rwflag2str[] = {
++ 	{ 0x01,	"read" },
++ 	{ 0x02,	"write" },
++ 	{ 0,	NULL }
++ };
++ 
++ static struct tok sync2str[] = {
++ 	{ NFSV3WRITE_UNSTABLE,	"unstable" },
++ 	{ NFSV3WRITE_DATASYNC,	"datasync" },
++ 	{ NFSV3WRITE_FILESYNC,	"filesync" },
++ 	{ 0,			NULL }
++ };
+  void
+  nfsreq_print(register const u_char *bp, u_int length,
+      register const u_char *bp2)
+***************
+*** 192,225 ****
+  	register const struct rpc_msg *rp;
+  	register const struct ip *ip;
+  	register const u_int32_t *dp;
+  
+  	nfserr = 0;		/* assume no error */
+  	rp = (const struct rpc_msg *)bp;
+  	ip = (const struct ip *)bp2;
+  	if (!nflag)
+! 		(void)printf("%s.%u > %s.nfs: %d",
+  			     ipaddr_string(&ip->ip_src),
+  			     (u_int32_t)ntohl(rp->rm_xid),
+  			     ipaddr_string(&ip->ip_dst),
+! 			     length);
+  	else
+! 		(void)printf("%s.%u > %s.%u: %d",
+  			     ipaddr_string(&ip->ip_src),
+  			     (u_int32_t)ntohl(rp->rm_xid),
+  			     ipaddr_string(&ip->ip_dst),
+  			     NFS_PORT,
+! 			     length);
+  
+! 	xid_map_enter(rp, ip);	/* record proc number for later on */
+  
+! 	switch (ntohl(rp->rm_call.cb_proc)) {
+! #ifdef NFSPROC_NOOP
+! 	case NFSPROC_NOOP:
+! 		printf(" nop");
+  		return;
+! #else
+! #define NFSPROC_NOOP -1
+! #endif
+  	case NFSPROC_NULL:
+  		printf(" null");
+  		return;
+--- 414,455 ----
+  	register const struct rpc_msg *rp;
+  	register const struct ip *ip;
+  	register const u_int32_t *dp;
++ 	register u_int32_t proc;
+  
+  	nfserr = 0;		/* assume no error */
+  	rp = (const struct rpc_msg *)bp;
+  	ip = (const struct ip *)bp2;
++ 	nfsvers = ntohl(rp->rm_call.cb_vers);
+  	if (!nflag)
+! 		(void)printf("%s.%u > %s.nfs: %d v%u",
+  			     ipaddr_string(&ip->ip_src),
+  			     (u_int32_t)ntohl(rp->rm_xid),
+  			     ipaddr_string(&ip->ip_dst),
+! 			     length, nfsvers);
+  	else
+! 		(void)printf("%s.%u > %s.%u: %d v%u",
+  			     ipaddr_string(&ip->ip_src),
+  			     (u_int32_t)ntohl(rp->rm_xid),
+  			     ipaddr_string(&ip->ip_dst),
+  			     NFS_PORT,
+! 			     length, nfsvers);
+  
+! 	switch (nfsvers) {
+! 	case NFS_VER2:
+! 		proc = nfsv3_procid[ntohl(rp->rm_call.cb_proc)];
+! 		break;
+  
+! 	case NFS_VER3:
+! 		proc = ntohl(rp->rm_call.cb_proc);
+! 		break;
+! 
+! 	default:
+  		return;
+! 	}
+! 
+! 	xid_map_enter(rp, ip, proc);	/* record proc number for later on */
+! 
+! 	switch (proc) {
+  	case NFSPROC_NULL:
+  		printf(" null");
+  		return;
+***************
+*** 232,252 ****
+  
+  	case NFSPROC_SETATTR:
+  		printf(" setattr");
+! 		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+  			return;
+  		break;
+  
+- #if NFSPROC_ROOT != NFSPROC_NOOP
+- 	case NFSPROC_ROOT:
+- 		printf(" root");
+- 		break;
+- #endif
+  	case NFSPROC_LOOKUP:
+  		printf(" lookup");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
+  	case NFSPROC_READLINK:
+  		printf(" readlink");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+--- 462,501 ----
+  
+  	case NFSPROC_SETATTR:
+  		printf(" setattr");
+! 		if ((dp = parsereq(rp, length)) == NULL ||
+! 		    (dp = parsefh(dp)) == NULL ||
+! 		    (dp = parsesattr(dp, !qflag)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			TCHECK2(dp[0], sizeof(*dp));
+! 			if (ntohl(dp[0])) {
+! 				TCHECK2(dp[1], 2 * sizeof(*dp));
+! 				printf(" guard %u.%09u",
+! 				    (u_int32_t)ntohl(dp[1]),
+! 				    (u_int32_t)ntohl(dp[2]));
+! 			}
+  			return;
++ 		}
+  		break;
+  
+  	case NFSPROC_LOOKUP:
+  		printf(" lookup");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
++ 	case NFSPROC_ACCESS:
++ 		printf(" access");
++ 		if ((dp = parsereq(rp, length)) != NULL && 
++ 		    (dp = parsefh(dp)) != NULL &&
++ 		    parseaccess(dp) != 0)
++ 			return;
++ 		break;
++ 
+  	case NFSPROC_READLINK:
+  		printf(" readlink");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+***************
+*** 257,302 ****
+  		printf(" read");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			TCHECK2(dp[0], 3 * sizeof(*dp));
+! 			printf(" %u bytes @ %u",
+! 			    (u_int32_t)ntohl(dp[1]),
+! 			    (u_int32_t)ntohl(dp[0]));
+  			return;
+  		}
+  		break;
+  
+- #if NFSPROC_WRITECACHE != NFSPROC_NOOP
+- 	case NFSPROC_WRITECACHE:
+- 		printf(" writecache");
+- 		if ((dp = parsereq(rp, length)) != NULL &&
+- 		    (dp = parsefh(dp)) != NULL) {
+- 			TCHECK2(dp[0], 4 * sizeof(*dp));
+- 			printf(" %u (%u) bytes @ %u (%u)",
+- 			    (u_int32_t)ntohl(dp[3]),
+- 			    (u_int32_t)ntohl(dp[2]),
+- 			    (u_int32_t)ntohl(dp[1]),
+- 			    (u_int32_t)ntohl(dp[0]));
+- 			return;
+- 		}
+- 		break;
+- #endif
+  	case NFSPROC_WRITE:
+  		printf(" write");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			TCHECK2(dp[0], 4 * sizeof(*dp));
+! 			printf(" %u (%u) bytes @ %u (%u)",
+! 			    (u_int32_t)ntohl(dp[3]),
+! 			    (u_int32_t)ntohl(dp[2]),
+! 			    (u_int32_t)ntohl(dp[1]),
+! 			    (u_int32_t)ntohl(dp[0]));
+  			return;
+  		}
+  		break;
+  
+  	case NFSPROC_CREATE:
+  		printf(" create");
+! 		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
+--- 506,610 ----
+  		printf(" read");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			switch (nfsvers) {
+! 			case NFS_VER2:
+! 				TCHECK2(dp[0], 3 * sizeof(*dp));
+! 				printf(" %u bytes @ %u",
+! 				    (u_int32_t)ntohl(dp[1]),
+! 				    (u_int32_t)ntohl(dp[0]));
+! 				break;
+! 
+! 			case NFS_VER3:
+! 				TCHECK2(dp[0], 3 * sizeof(*dp));
+! 				printf(" %u bytes",
+! 				    (u_int32_t)ntohl(dp[2]));
+! 				printquad(" @ ", dp);
+! 				break;
+! 			}
+  			return;
+  		}
+  		break;
+  
+  	case NFSPROC_WRITE:
+  		printf(" write");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			switch (nfsvers) {
+! 			case NFS_VER2:
+! 				TCHECK2(dp[0], 4 * sizeof(*dp));
+! 				printf(" %u bytes @ %u",
+! 				    (u_int32_t)ntohl(dp[3]),
+! 				    (u_int32_t)ntohl(dp[1]));
+! 				break;
+! 
+! 			case NFS_VER3:
+! 				TCHECK2(dp[0], 4 * sizeof(*dp));
+! 				printf(" %s %u bytes",
+! 				    tok2str(sync2str, "sync-%d", (u_int32_t)ntohl(dp[3])),
+! 				    (u_int32_t)ntohl(dp[2]));
+! 				printquad(" @ ", dp);
+! 				break;
+! 			}
+  			return;
+  		}
+  		break;
+  
+  	case NFSPROC_CREATE:
+  		printf(" create");
+! 		if ((dp = parsereq(rp, length)) == NULL ||
+! 		    (dp = parsefhn(dp)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER3:
+! 			TCHECK2(dp[0], sizeof(*dp));
+! 			if (ntohl(dp[0]) == NFSV3CREATE_EXCLUSIVE)
+! 				return;
+! 			dp++;
+! 			/* FALL THROUGH */
+! 
+! 		case NFS_VER2:
+! 			if (parsesattr(dp, !qflag) != NULL)
+! 				return;
+! 			return;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_MKDIR:
+! 		printf(" mkdir");
+! 		if ((dp = parsereq(rp, length)) != NULL &&
+! 		    (dp = parsefhn(dp)) != NULL &&
+! 		    parsesattr(dp, !qflag) != NULL)
+! 			return;
+! 		break;
+! 
+! 	case NFSPROC_SYMLINK:
+! 		printf(" symlink");
+! 		if ((dp = parsereq(rp, length)) != NULL &&
+! 		    (dp = parsefhn(dp)) != NULL) {
+! 			switch (nfsvers) {
+! 			case NFS_VER3:
+! 				if ((dp = parsesattr3(dp, !qflag)) == NULL)
+! 					goto trunc;
+! 				fputs(" -> ", stdout);
+! 				if (parsefn(dp) != NULL)
+! 					return;
+! 				break;
+! 
+! 			case NFS_VER2:
+! 				fputs(" -> ", stdout);
+! 				if ((dp = parsefn(dp)) != NULL &&
+! 				    parsesattr2(dp, !qflag) != NULL)
+! 					return;
+! 				break;
+! 			}
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_MKNOD:
+! 		printf(" mknod");
+! 		if ((dp = parsereq(rp, length)) != NULL && 
+! 		    (dp = parsefhn(dp)) != NULL &&
+! 		    parsesattr3(dp, !qflag) != NULL)
+  			return;
+  		break;
+  
+***************
+*** 306,311 ****
+--- 614,625 ----
+  			return;
+  		break;
+  
++ 	case NFSPROC_RMDIR:
++ 		printf(" rmdir");
++ 		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
++ 			return;
++ 		break;
++ 
+  	case NFSPROC_RENAME:
+  		printf(" rename");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+***************
+*** 326,377 ****
+  		}
+  		break;
+  
+! 	case NFSPROC_SYMLINK:
+! 		printf(" symlink");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+! 		    (dp = parsefhn(dp)) != NULL) {
+! 			fputs(" -> ", stdout);
+! 			if (parsefn(dp) != NULL)
+  				return;
+  		}
+  		break;
+  
+! 	case NFSPROC_MKDIR:
+! 		printf(" mkdir");
+! 		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_RMDIR:
+! 		printf(" rmdir");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_READDIR:
+! 		printf(" readdir");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			TCHECK2(dp[0], 2 * sizeof(*dp));
+! 			/*
+! 			 * Print the offset as signed, since -1 is common,
+! 			 * but offsets > 2^31 aren't.
+! 			 */
+! 			printf(" %u bytes @ %d",
+! 			    (u_int32_t)ntohl(dp[1]),
+! 			    (u_int32_t)ntohl(dp[0]));
+  			return;
+  		}
+  		break;
+  
+! 	case NFSPROC_STATFS:
+! 		printf(" statfs");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+  			return;
+  		break;
+  
+  	default:
+! 		printf(" proc-%u", (u_int32_t)ntohl(rp->rm_call.cb_proc));
+  		return;
+  	}
+  trunc:
+--- 640,753 ----
+  		}
+  		break;
+  
+! 	case NFSPROC_READDIR:
+! 		printf(" readdir");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+! 		    (dp = parsefh(dp)) != NULL) {
+! 			register u_int32_t len;
+! 
+! 			switch (nfsvers) {
+! 			case NFS_VER3:
+! 				TCHECK2(dp[0], 3 * sizeof(*dp));
+! 				len = (u_int32_t)ntohl(dp[1]);
+! 				TCHECK2(dp[0], len + sizeof(*dp));
+! 				printf(" %u bytes",
+! 				    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[1]));
+! 				printquad(" @ ", dp);
+! 				return;
+! 
+! 			case NFS_VER2:
+! 				TCHECK2(dp[0], 2 * sizeof(*dp));
+! 				/*
+! 				 * Print the offset as signed, since -1 is common,
+! 				 * but offsets > 2^31 aren't.
+! 				 */
+! 				printf(" %u bytes @ %d",
+! 				    (u_int32_t)ntohl(dp[1]),
+! 				    (u_int32_t)htonl(dp[0]));
+  				return;
++ 			}
+  		}
+  		break;
+  
+! 	case NFSPROC_READDIRPLUS:
+! 		printf(" readdirplus");
+! 		if ((dp = parsereq(rp, length)) != NULL &&
+! 		    (dp = parsefh(dp)) != NULL) {
+! 			register u_int32_t len;
+! 
+! 			TCHECK2(dp[0], 3 * sizeof(*dp));
+! 			len = (u_int32_t)ntohl(dp[1]);
+! 			TCHECK2(dp[0], len + 2 * sizeof(*dp));
+! 
+! 			/*
+! 			 * Print the offset as signed, since -1 is common,
+! 			 * but offsets > 2^31 aren't.
+! 			 */
+! 			printf(" %u bytes %u max",
+! 			    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[1]),
+! 			    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[2]));
+! 			printquad(" @ ", dp);
+  			return;
++ 		}
+  		break;
+  
+! 	case NFSPROC_FSSTAT:
+! 		printf(" fsstat");
+! 		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+! 			return;
+! 		break;
+! 
+! 	case NFSPROC_FSINFO:
+! 		printf(" fsinfo");
+! 		break;
+! 
+! 	case NFSPROC_PATHCONF:
+! 		printf(" pathconf");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefhn(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_COMMIT:
+! 		printf(" commit");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefh(dp)) != NULL) {
+! 			TCHECK2(dp[0], 3 * sizeof(*dp));
+! 			printf(" %u bytes",
+! 			    (u_int32_t)ntohl(dp[2]));
+! 			printquad(" @ ", dp);
+  			return;
+  		}
+  		break;
+  
+! 	case NQNFSPROC_GETLEASE:
+! 		printf(" getlease");
+! 		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+! 			return;
+! 		TCHECK2(dp[0], 2 * sizeof(*dp));
+! 		(void)printf(" %s term %u", 
+! 		    tok2str(rwflag2str, "lease-%d", (u_int32_t)ntohl(dp[0])),
+! 		    (u_int32_t)ntohl(dp[1]));
+! 		break;
+! 
+! 	case NQNFSPROC_VACATED:
+! 		printf(" vacated");
+  		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
+  			return;
+  		break;
+  
++ 	case NQNFSPROC_EVICTED:
++ 		printf(" evicted");
++ 		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
++ 			return;
++ 		break;
++ 
++ 	case NFSPROC_NOOP:
++ 		printf(" nop");
++ 		return;
++ 
+  	default:
+! 		printf(" proc-%u", (u_int32_t)proc);
+  		return;
+  	}
+  trunc:
+***************
+*** 399,408 ****
+  
+  	if (sfsname) {
+  		/* file system ID is ASCII, not numeric, for this server OS */
+! 		static char temp[NFS_FHSIZE+1];
+  
+  		/* Make sure string is null-terminated */
+! 		strncpy(temp, sfsname, NFS_FHSIZE);
+  		/* Remove trailing spaces */
+  		sfsname = strchr(temp, ' ');
+  		if (sfsname)
+--- 775,784 ----
+  
+  	if (sfsname) {
+  		/* file system ID is ASCII, not numeric, for this server OS */
+! 		static char temp[NFS_SMALLFH+1];
+  
+  		/* Make sure string is null-terminated */
+! 		strncpy(temp, sfsname, NFS_SMALLFH);	/* XXX */
+  		/* Remove trailing spaces */
+  		sfsname = strchr(temp, ' ');
+  		if (sfsname)
+***************
+*** 426,431 ****
+--- 802,808 ----
+  	struct in_addr	client;		/* client IP address (net order) */
+  	struct in_addr	server;		/* server IP address (net order) */
+  	u_int32_t		proc;		/* call proc number (host order) */
++ 	u_int32_t		vers;		/* version number */
+  };
+  
+  /*
+***************
+*** 442,448 ****
+  int	xid_map_hint = 0;
+  
+  static void
+! xid_map_enter(const struct rpc_msg *rp, const struct ip *ip)
+  {
+  	struct xid_map_entry *xmep;
+  
+--- 819,825 ----
+  int	xid_map_hint = 0;
+  
+  static void
+! xid_map_enter(const struct rpc_msg *rp, const struct ip *ip, u_int32_t proc)
+  {
+  	struct xid_map_entry *xmep;
+  
+***************
+*** 454,460 ****
+  	xmep->xid = rp->rm_xid;
+  	xmep->client = ip->ip_src;
+  	xmep->server = ip->ip_dst;
+! 	xmep->proc = ntohl(rp->rm_call.cb_proc);
+  }
+  
+  /* Returns true and sets proc success or false on failure */
+--- 831,838 ----
+  	xmep->xid = rp->rm_xid;
+  	xmep->client = ip->ip_src;
+  	xmep->server = ip->ip_dst;
+! 	xmep->proc = proc;
+! 	xmep->vers = ntohl(rp->rm_call.cb_vers);
+  }
+  
+  /* Returns true and sets proc success or false on failure */
+***************
+*** 476,481 ****
+--- 854,860 ----
+  			/* match */
+  			xid_map_hint = i;
+  			*proc = xmep->proc;
++ 			nfsvers = xmep->vers;
+  			return (1);
+  		}
+  		if (++i >= XIDMAPSIZE)
+***************
+*** 599,645 ****
+  	{ NFBLK,	"BLK" },
+  	{ NFCHR,	"CHR" },
+  	{ NFLNK,	"LNK" },
+  	{ 0,		NULL }
+  };
+  
+  static const u_int32_t *
+! parsefattr(const u_int32_t *dp, int verbose)
+  {
+! 	const struct nfsv2_fattr *fap;
+  
+! 	fap = (const struct nfsv2_fattr *)dp;
+  	if (verbose) {
+! 		TCHECK(fap->fa_nfssize);
+! 		printf(" %s %o ids %u/%u sz %u ",
+! 		    tok2str(type2str, "unk-ft %d ",
+  		    (u_int32_t)ntohl(fap->fa_type)),
+  		    (u_int32_t)ntohl(fap->fa_mode),
+  		    (u_int32_t)ntohl(fap->fa_uid),
+  		    (u_int32_t)ntohl(fap->fa_gid),
+! 		    (u_int32_t)ntohl(fap->fa_nfssize));
+  	}
+  	/* print lots more stuff */
+  	if (verbose > 1) {
+! 		TCHECK(fap->fa_nfsfileid);
+! 		printf("nlink %u rdev %x fsid %x nodeid %x a/m/ctime ",
+  		    (u_int32_t)ntohl(fap->fa_nlink),
+! 		    (u_int32_t)ntohl(fap->fa_nfsrdev),
+! 		    (u_int32_t)ntohl(fap->fa_nfsfsid),
+! 		    (u_int32_t)ntohl(fap->fa_nfsfileid));
+! 		TCHECK(fap->fa_nfsatime);
+! 		printf("%u.%06u ",
+! 		    (u_int32_t)ntohl(fap->fa_nfsatime.nfs_sec),
+! 		    (u_int32_t)ntohl(fap->fa_nfsatime.nfs_usec));
+! 		TCHECK(fap->fa_nfsmtime);
+! 		printf("%u.%06u ",
+! 		    (u_int32_t)ntohl(fap->fa_nfsmtime.nfs_sec),
+! 		    (u_int32_t)ntohl(fap->fa_nfsmtime.nfs_usec));
+! 		TCHECK(fap->fa_nfsctime);
+! 		printf("%u.%06u ",
+! 		    (u_int32_t)ntohl(fap->fa_nfsctime.nfs_sec),
+! 		    (u_int32_t)ntohl(fap->fa_nfsctime.nfs_usec));
+  	}
+! 	return ((const u_int32_t *)&fap[1]);
+  trunc:
+  	return (NULL);
+  }
+--- 978,1072 ----
+  	{ NFBLK,	"BLK" },
+  	{ NFCHR,	"CHR" },
+  	{ NFLNK,	"LNK" },
++ 	{ NFSOCK,	"SOCK" },
++ 	{ NFFIFO,	"FIFO" },
+  	{ 0,		NULL }
+  };
+  
++ #define	parsefattr(dp, v)	(nfsvers == NFS_VER2 ? parsefattr2(dp, v) : \
++     parsefattr3(dp, v))
++ 
+  static const u_int32_t *
+! parsefattr2(const u_int32_t *dp, int verbose)
+  {
+! 	const struct nfs_fattr *fap;
+  
+! 	fap = (const struct nfs_fattr *)dp;
+  	if (verbose) {
+! 		TCHECK(fap->fa2_size);
+! 		printf(" %s %o ids %u/%u sz %u",
+! 		    tok2str(type2str, " unk-ft %d",
+  		    (u_int32_t)ntohl(fap->fa_type)),
+  		    (u_int32_t)ntohl(fap->fa_mode),
+  		    (u_int32_t)ntohl(fap->fa_uid),
+  		    (u_int32_t)ntohl(fap->fa_gid),
+! 		    (u_int32_t)ntohl(fap->fa2_size));
+  	}
+  	/* print lots more stuff */
+  	if (verbose > 1) {
+! 		TCHECK(fap->fa2_fileid);
+! 		printf(" nlink %u rdev %x fsid %x nodeid %x a/m/ctime",
+  		    (u_int32_t)ntohl(fap->fa_nlink),
+! 		    (u_int32_t)ntohl(fap->fa2_rdev),
+! 		    (u_int32_t)ntohl(fap->fa2_fsid),
+! 		    (u_int32_t)ntohl(fap->fa2_fileid));
+! 		TCHECK(fap->fa2_atime);
+! 		printf(" %u.%06u",
+! 		    (u_int32_t)ntohl(fap->fa2_atime.nfsv2_sec),
+! 		    (u_int32_t)ntohl(fap->fa2_atime.nfsv2_usec));
+! 		TCHECK(fap->fa2_mtime);
+! 		printf(" %u.%06u",
+! 		    (u_int32_t)ntohl(fap->fa2_mtime.nfsv2_sec),
+! 		    (u_int32_t)ntohl(fap->fa2_mtime.nfsv2_usec));
+! 		TCHECK(fap->fa2_ctime);
+! 		printf(" %u.%06u",
+! 		    (u_int32_t)ntohl(fap->fa2_ctime.nfsv2_sec),
+! 		    (u_int32_t)ntohl(fap->fa2_ctime.nfsv2_usec));
+  	}
+! 	return ((const u_int32_t *)(&fap->fa_un.fa_nfsv2 + 1));
+! trunc:
+! 	return (NULL);
+! }
+! 
+! static const u_int32_t *
+! parsefattr3(const u_int32_t *dp, int verbose)
+! {
+! 	const struct nfs_fattr *fap;
+! 
+! 	fap = (const struct nfs_fattr *)dp;
+! 	if (verbose) {
+! 		TCHECK(fap->fa3_size);
+! 		printf(" %s %o ids %u/%u",
+! 		    tok2str(type2str, "unk-ft %d ",
+! 		    (u_int32_t)ntohl(fap->fa_type)),
+! 		    (u_int32_t)ntohl(fap->fa_mode),
+! 		    (u_int32_t)ntohl(fap->fa_uid),
+! 		    (u_int32_t)ntohl(fap->fa_gid));
+! 		printquad(" sz ", (u_int32_t *)&fap->fa3_size);
+! 	}
+! 	/* print lots more stuff */
+! 	if (verbose > 1) {
+! 		TCHECK(fap->fa3_fileid);
+! 		printf(" nlink %u rdev %x fsid %x",
+! 		    (u_int32_t)ntohl(fap->fa_nlink),
+! 		    (u_int32_t)ntohl(fap->fa2_rdev),
+! 		    (u_int32_t)ntohl(fap->fa2_fsid));
+! 		printquad(" nodeid ", (u_int32_t *)&fap->fa3_fileid);
+! 		printf(" a/m/ctime");
+! 		TCHECK(fap->fa3_atime);
+! 		printf(" %u.%09u",
+! 		    (u_int32_t)ntohl(fap->fa3_atime.nfsv3_sec),
+! 		    (u_int32_t)ntohl(fap->fa3_atime.nfsv3_nsec));
+! 		TCHECK(fap->fa3_mtime);
+! 		printf(" %u.%09u",
+! 		    (u_int32_t)ntohl(fap->fa3_mtime.nfsv3_sec),
+! 		    (u_int32_t)ntohl(fap->fa3_mtime.nfsv3_nsec));
+! 		TCHECK(fap->fa3_ctime);
+! 		printf(" %u.%09u",
+! 		    (u_int32_t)ntohl(fap->fa3_ctime.nfsv3_sec),
+! 		    (u_int32_t)ntohl(fap->fa3_ctime.nfsv3_nsec));
+! 	}
+! 	return ((const u_int32_t *)(&fap->fa_un.fa_nfsv3 + 1));
+  trunc:
+  	return (NULL);
+  }
+***************
+*** 670,675 ****
+--- 1097,1158 ----
+  	return (parsefattr(dp, vflag) != NULL);
+  }
+  
++ static const u_int32_t *
++ parsepostopattr(const u_int32_t *dp)
++ {
++ 
++ 	TCHECK2(dp[0], sizeof(*dp));
++ 	if (!ntohl(*dp++))
++ 		return (dp);
++ 
++ 	return (parsefattr3(dp, !qflag));
++ 
++ trunc:
++ 	return (NULL);
++ }
++ 
++ static const u_int32_t *
++ parsewccdata(register const u_int32_t *dp, int qflag)
++ {
++ 	TCHECK2(dp[0], sizeof(*dp));
++ 	if (ntohl(*dp++)) {
++ 		TCHECK2(dp[0], 2 * sizeof(*dp));
++ 		printquad(" sz ", dp);
++ 		TCHECK2(dp[2], 2 * sizeof(*dp));
++ 		printf(" mtime %u.%09u",
++ 		    (u_int32_t)ntohl(dp[2]),
++ 		    (u_int32_t)ntohl(dp[3]));
++ 		TCHECK2(dp[4], 2 * sizeof(*dp));
++ 		printf(" ctime %u.%09u",
++ 		    (u_int32_t)ntohl(dp[4]),
++ 		    (u_int32_t)ntohl(dp[5]));
++ 		dp += 6;
++ 	}
++ 	return (parsepostopattr(dp));
++ 	
++ trunc:
++ 	return (NULL);
++ }
++ 
++ static int
++ parsecreateres(const u_int32_t *dp)
++ {
++ 
++ 	dp = parsestatus(dp);
++ 	if (dp == NULL)
++ 		return (0);
++ 
++ 	TCHECK2(dp[0], sizeof(*dp));
++ 	if (ntohl(*dp++) && (dp = parsefh(dp)) == NULL)
++ 		return (0);
++ 
++ 	return ((dp = parsepostopattr(dp)) != NULL &&
++ 	    parsewccdata(dp, !qflag) != NULL);
++ 
++ trunc:
++ 	return (0);
++ }
++ 
+  static int
+  parselinkres(const u_int32_t *dp)
+  {
+***************
+*** 677,697 ****
+  	if (dp == NULL)
+  		return (0);
+  
+  	putchar(' ');
+  	return (parsefn(dp) != NULL);
+  }
+  
+  static int
+! parsestatfs(const u_int32_t *dp)
+  {
+! 	const struct nfsv2_statfs *sfsp;
+  
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  
+  	if (!qflag) {
+! 		sfsp = (const struct nfsv2_statfs *)dp;
+  		TCHECK(sfsp->sf_bavail);
+  		printf(" tsize %u bsize %u blocks %u bfree %u bavail %u",
+  		    (u_int32_t)ntohl(sfsp->sf_tsize),
+--- 1160,1193 ----
+  	if (dp == NULL)
+  		return (0);
+  
++ 	switch (nfsvers) {
++ 	case NFS_VER2:
++ 		break;
++ 
++ 	case NFS_VER3:
++ 		dp = parsepostopattr(dp);
++ 		if (dp == NULL)
++ 			return (0);
++ 		break;
++ 	}
++ 
+  	putchar(' ');
+  	return (parsefn(dp) != NULL);
+  }
+  
++ #define	parsestatfs(dp)	(nfsvers == NFS_VER2 ? parsestatfs2(dp) : parsestatfs3(dp))
++ 
+  static int
+! parsestatfs2(const u_int32_t *dp)
+  {
+! 	const struct nfs_statfs *sfsp;
+  
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  
+  	if (!qflag) {
+! 		sfsp = (const struct nfs_statfs *)dp;
+  		TCHECK(sfsp->sf_bavail);
+  		printf(" tsize %u bsize %u blocks %u bfree %u bavail %u",
+  		    (u_int32_t)ntohl(sfsp->sf_tsize),
+***************
+*** 707,725 ****
+  }
+  
+  static int
+  parserddires(const u_int32_t *dp)
+  {
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  	if (!qflag) {
+! 		TCHECK(dp[0]);
+! 		printf(" offset %x", (u_int32_t)ntohl(dp[0]));
+! 		TCHECK(dp[1]);
+! 		printf(" size %u", (u_int32_t)ntohl(dp[1]));
+! 		TCHECK(dp[2]);
+! 		if (dp[2] != 0)
+! 			printf(" eof");
+  	}
+  
+  	return (1);
+--- 1203,1255 ----
+  }
+  
+  static int
++ parsestatfs3(const u_int32_t *dp)
++ {
++ 	const struct nfs_statfs *sfsp;
++ 
++ 	dp = parsestatus(dp);
++ 	if (dp == NULL)
++ 		return (0);
++ 
++ 	if (!qflag) {
++ 		sfsp = (const struct nfs_statfs *)dp;
++ 		TCHECK(sfsp->sf_afiles);
++ 		printquad(" tbytes ", (u_int32_t *)&sfsp->sf_tbytes);
++ 		printquad(" fbytes ", (u_int32_t *)&sfsp->sf_fbytes);
++ 		printquad(" abytes ", (u_int32_t *)&sfsp->sf_abytes);
++ 		printquad(" tfiles ", (u_int32_t *)&sfsp->sf_tfiles);
++ 		printquad(" ffiles ", (u_int32_t *)&sfsp->sf_ffiles);
++ 		printquad(" afiles ", (u_int32_t *)&sfsp->sf_afiles);
++ 	}
++ 
++ 	return (1);
++ trunc:
++ 	return (0);
++ }
++ 
++ static int
+  parserddires(const u_int32_t *dp)
+  {
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  	if (!qflag) {
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			TCHECK(dp[0]);
+! 			printf(" offset %x", (u_int32_t)ntohl(dp[0]));
+! 			TCHECK(dp[1]);
+! 			printf(" size %u", (u_int32_t)ntohl(dp[1]));
+! 			TCHECK(dp[2]);
+! 			if (dp[2] != 0)
+! 				printf(" eof");
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsepostopattr(dp) == NULL)
+! 				return (0);
+! 			break;
+! 		}
+  	}
+  
+  	return (1);
+***************
+*** 732,746 ****
+  {
+  	register const u_int32_t *dp;
+  
+  	switch (proc) {
+  
+- #ifdef NFSPROC_NOOP
+- 	case NFSPROC_NOOP:
+- 		printf(" nop");
+- 		return;
+- #else
+- #define NFSPROC_NOOP -1
+- #endif
+  	case NFSPROC_NULL:
+  		printf(" null");
+  		return;
+--- 1262,1270 ----
+  {
+  	register const u_int32_t *dp;
+  
++ 	(void)printf(" v%u", nfsvers);
+  	switch (proc) {
+  
+  	case NFSPROC_NULL:
+  		printf(" null");
+  		return;
+***************
+*** 755,773 ****
+  	case NFSPROC_SETATTR:
+  		printf(" setattr");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parseattrstat(dp, !qflag) != 0)
+! 			return;
+! 		break;
+  
+! #if NFSPROC_ROOT != NFSPROC_NOOP
+! 	case NFSPROC_ROOT:
+! 		printf(" root");
+  		break;
+! #endif
+  	case NFSPROC_LOOKUP:
+  		printf(" lookup");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsediropres(dp) != 0)
+  			return;
+  		break;
+  
+--- 1279,1326 ----
+  	case NFSPROC_SETATTR:
+  		printf(" setattr");
+  		dp = parserep(rp, length);
+! 		if (dp == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parseattrstat(dp, !qflag) != 0)
+! 				return;
+! 			break;
+  
+! 		case NFS_VER3:
+! 			if ((dp = parsestatus(dp)) != NULL &&
+! 			    parsewccdata(dp, !qflag) != NULL)
+! 				return;
+! 			break;
+! 		}
+  		break;
+! 
+  	case NFSPROC_LOOKUP:
+  		printf(" lookup");
+! 		if ((dp = parserep(rp, length)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parsediropres(dp) != 0)
+! 				return;
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if ((dp = parsestatus(dp)) != NULL &&
+! 			    (dp = parsefh(dp)) != NULL &&
+! 			    (dp = parsepostopattr(dp)) != NULL &&
+! 			    (dp = parsepostopattr(dp)) != NULL)
+! 				return;
+! 			break;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_ACCESS:
+! 		printf( " access");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    (dp = parsepostopattr(dp)) != NULL &&
+! 		    parseaccess(dp) != 0)
+  			return;
+  		break;
+  
+***************
+*** 781,869 ****
+  	case NFSPROC_READ:
+  		printf(" read");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parseattrstat(dp, vflag) != 0)
+! 			return;
+  		break;
+  
+- #if NFSPROC_WRITECACHE != NFSPROC_NOOP
+- 	case NFSPROC_WRITECACHE:
+- 		printf(" writecache");
+- 		break;
+- #endif
+  	case NFSPROC_WRITE:
+  		printf(" write");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parseattrstat(dp, vflag) != 0)
+! 			return;
+  		break;
+  
+  	case NFSPROC_CREATE:
+  		printf(" create");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsediropres(dp) != 0)
+  			return;
+  		break;
+  
+  	case NFSPROC_REMOVE:
+  		printf(" remove");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatus(dp) != 0)
+! 			return;
+  		break;
+  
+  	case NFSPROC_RENAME:
+  		printf(" rename");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatus(dp) != 0)
+! 			return;
+  		break;
+  
+  	case NFSPROC_LINK:
+  		printf(" link");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatus(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_SYMLINK:
+! 		printf(" symlink");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatus(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_MKDIR:
+! 		printf(" mkdir");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parsediropres(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_RMDIR:
+! 		printf(" rmdir");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatus(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_READDIR:
+! 		printf(" readdir");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parserddires(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_STATFS:
+! 		printf(" statfs");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatfs(dp) != 0)
+  			return;
+  		break;
+  
+  	default:
+  		printf(" proc-%u", proc);
+  		return;
+  	}
+  	if (!nfserr)
+  		fputs(" [|nfs]", stdout);
+  }
+--- 1334,1584 ----
+  	case NFSPROC_READ:
+  		printf(" read");
+  		dp = parserep(rp, length);
+! 		if (dp == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parseattrstat(dp, vflag) != 0)
+! 				return;
+! 			break;
+! 		case NFS_VER3:
+! 			if ((dp = parsestatus(dp)) != NULL &&
+! 			    (dp = parsepostopattr(dp)) != NULL) {
+! 				TCHECK2(dp[0], sizeof(*dp));
+! 				(void)printf(" %u bytes",
+! 				    (u_int32_t)ntohl(dp[0]));
+! 				TCHECK2(dp[1], sizeof(*dp));
+! 				if (ntohl(dp[1]))
+! 					(void)printf(" eof");
+! 				return;
+! 			}			    
+! 			break;
+! 		}
+  		break;
+  
+  	case NFSPROC_WRITE:
+  		printf(" write");
+  		dp = parserep(rp, length);
+! 		if (dp == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parseattrstat(dp, vflag) != 0)
+! 				return;
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if ((dp = parsestatus(dp)) != NULL &&
+! 			    (dp = parsewccdata(dp, !qflag)) != NULL) {
+! 				TCHECK2(dp[0], 2 * sizeof(*dp));
+! 				(void)printf(" %u bytes %s",
+! 				    (u_int32_t)ntohl(dp[0]),
+! 				    tok2str(sync2str, "stable-%d",
+! 					(u_int32_t)ntohl(dp[1])));
+! 				return;
+! 			}
+! 			break;
+! 		}
+  		break;
+  
+  	case NFSPROC_CREATE:
+  		printf(" create");
+! 		if ((dp = parserep(rp, length)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parsediropres(dp) != 0)
+! 				return;
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsecreateres(dp) != 0)
+! 				return;
+! 			break;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_MKDIR:
+! 		printf(" mkdir");
+! 		if ((dp = parserep(rp, length)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parsediropres(dp) != 0)
+! 				return;
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsecreateres(dp) != 0)
+! 				return;
+! 			break;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_SYMLINK:
+! 		printf(" symlink");
+! 		if ((dp = parserep(rp, length)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			if (parsestatus(dp) != 0)
+! 				return;
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsecreateres(dp) != 0)
+! 				return;
+! 			break;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_MKNOD:
+! 		printf(" mknod");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    parsecreateres(dp) != 0)
+  			return;
+  		break;
+  
+  	case NFSPROC_REMOVE:
+  		printf(" remove");
+! 		if ((dp = parserep(rp, length)) == NULL ||
+! 			(dp = parsestatus(dp)) == NULL)
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsewccdata(dp, !qflag) != NULL)
+! 				return;
+! 		}
+! 		break;
+! 
+! 	case NFSPROC_RMDIR:
+! 		printf(" rmdir");
+! 		if ((dp = parserep(rp, length)) == NULL ||
+! 		    (dp = parsestatus(dp)) == NULL)	
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if (parsewccdata(dp, !qflag) != NULL)
+! 				return;
+! 		}
+  		break;
+  
+  	case NFSPROC_RENAME:
+  		printf(" rename");
+! 		if ((dp = parserep(rp, length)) == NULL ||
+! 		    (dp = parsestatus(dp)) == NULL)	
+! 			break;
+! 		switch (nfsvers) {
+! 		case NFS_VER2:
+! 			break;
+! 
+! 		case NFS_VER3:
+! 			if ((dp = parsewccdata(dp, !qflag)) != NULL &&
+! 			    parsewccdata(dp, !qflag) != NULL)
+! 				return;
+! 			break;
+! 		}
+  		break;
+  
+  	case NFSPROC_LINK:
+  		printf(" link");
++ 		if ((dp = parserep(rp, length)) == NULL ||
++ 		    (dp = parsestatus(dp)) == NULL)	
++ 			break;
++ 		switch (nfsvers) {
++ 		case NFS_VER2:
++ 			break;
++ 		case NFS_VER3:
++ 			if ((dp = parsepostopattr(dp)) != NULL &&
++ 			    parsewccdata(dp, !qflag) != NULL)
++ 				return;
++ 			break;
++ 		}
++ 		break;
++ 
++ 	case NFSPROC_READDIR:
++ 		printf(" readdir");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parserddires(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_READDIRPLUS:
+! 		printf(" readdirplus");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    parsepostopattr(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_FSSTAT:
+! 		printf(" fsstat");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parsestatfs(dp) != 0)
+  			return;
+  		break;
+  
+! 	case NFSPROC_FSINFO:
+! 		printf(" fsinfo");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    parsepostopattr(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_PATHCONF:
+! 		printf(" pathconf");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    parsepostopattr(dp) != NULL)
+  			return;
+  		break;
+  
+! 	case NFSPROC_COMMIT:
+! 		printf(" commit");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    parsewccdata(dp, !qflag) != NULL)
+! 			return;
+! 		break;
+! 
+! 	case NQNFSPROC_GETLEASE:
+! 		printf(" getlease");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL)
+! 			return;
+! 		break;
+! 
+! 	case NQNFSPROC_VACATED:
+! 		printf(" vacated");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL)
+! 			return;
+! 		break;
+! 
+! 	case NQNFSPROC_EVICTED:
+! 		printf(" evicted");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL)
+  			return;
+  		break;
+  
++ 	case NFSPROC_NOOP:
++ 		printf(" nop");
++ 		return;
++ 
+  	default:
+  		printf(" proc-%u", proc);
+  		return;
+  	}
++ 
++ trunc:
+  	if (!nfserr)
+  		fputs(" [|nfs]", stdout);
+  }
+Index: nfsproto.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/nfsproto.h,v
+retrieving revision 1.1
+diff -c -r1.1 nfsproto.h
+*** nfsproto.h	1998/03/19 01:32:32	1.1
+--- nfsproto.h	1998/04/13 21:46:26
+***************
+*** 120,126 ****
+  #define	NFSX_V3FHMAX		64	/* max. allowed by protocol */
+  #define NFSX_V3FATTR		84
+  #define NFSX_V3SATTR		60	/* max. all fields filled in */
+! #define NFSX_V3SRVSATTR		(sizeof (struct nfsv3_sattr))
+  #define NFSX_V3POSTOPATTR	(NFSX_V3FATTR + NFSX_UNSIGNED)
+  #define NFSX_V3WCCDATA		(NFSX_V3POSTOPATTR + 8 * NFSX_UNSIGNED)
+  #define NFSX_V3COOKIEVERF 	8
+--- 120,126 ----
+  #define	NFSX_V3FHMAX		64	/* max. allowed by protocol */
+  #define NFSX_V3FATTR		84
+  #define NFSX_V3SATTR		60	/* max. all fields filled in */
+! #define NFSX_V3SRVSATTR		(15 * NFSX_UNSIGNED)	/* max. all fields filled in */
+  #define NFSX_V3POSTOPATTR	(NFSX_V3FATTR + NFSX_UNSIGNED)
+  #define NFSX_V3WCCDATA		(NFSX_V3POSTOPATTR + 8 * NFSX_UNSIGNED)
+  #define NFSX_V3COOKIEVERF 	8
+***************
+*** 360,382 ****
+  	u_long		sa_size;
+  	nfstime2	sa_atime;
+  	nfstime2	sa_mtime;
+- };
+- 
+- /*
+-  * NFS Version 3 sattr structure for the new node creation case.
+-  */
+- struct nfsv3_sattr {
+- 	u_long		sa_modetrue;
+- 	u_long		sa_mode;
+- 	u_long		sa_uidtrue;
+- 	u_long		sa_uid;
+- 	u_long		sa_gidtrue;
+- 	u_long		sa_gid;
+- 	u_long		sa_sizefalse;
+- 	u_long		sa_atimetype;
+- 	nfstime3	sa_atime;
+- 	u_long		sa_mtimetype;
+- 	nfstime3	sa_mtime;
+  };
+  
+  struct nfs_statfs {
+--- 360,365 ----
+Index: print-nfs.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-nfs.c,v
+retrieving revision 1.2
+diff -c -r1.2 print-nfs.c
+*** print-nfs.c	1998/03/19 01:32:33	1.2
+--- print-nfs.c	1998/04/13 21:46:27
+***************
+*** 407,412 ****
+--- 407,425 ----
+  	{ NFSV3WRITE_FILESYNC,	"filesync" },
+  	{ 0,			NULL }
+  };
++ 
++ static struct tok type2str[] = {
++ 	{ NFNON,	"NON" },
++ 	{ NFREG,	"REG" },
++ 	{ NFDIR,	"DIR" },
++ 	{ NFBLK,	"BLK" },
++ 	{ NFCHR,	"CHR" },
++ 	{ NFLNK,	"LNK" },
++ 	{ NFSOCK,	"SOCK" },
++ 	{ NFFIFO,	"FIFO" },
++ 	{ 0,		NULL }
++ };
++ 
+  void
+  nfsreq_print(register const u_char *bp, u_int length,
+      register const u_char *bp2)
+***************
+*** 556,562 ****
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER3:
+! 			TCHECK2(dp[0], sizeof(*dp));
+  			if (ntohl(dp[0]) == NFSV3CREATE_EXCLUSIVE)
+  				return;
+  			dp++;
+--- 569,575 ----
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER3:
+! 			TCHECK(dp[0]);
+  			if (ntohl(dp[0]) == NFSV3CREATE_EXCLUSIVE)
+  				return;
+  			dp++;
+***************
+*** 603,611 ****
+  	case NFSPROC_MKNOD:
+  		printf(" mknod");
+  		if ((dp = parsereq(rp, length)) != NULL && 
+! 		    (dp = parsefhn(dp)) != NULL &&
+! 		    parsesattr3(dp, !qflag) != NULL)
+  			return;
+  		break;
+  
+  	case NFSPROC_REMOVE:
+--- 616,636 ----
+  	case NFSPROC_MKNOD:
+  		printf(" mknod");
+  		if ((dp = parsereq(rp, length)) != NULL && 
+! 		    (dp = parsefhn(dp)) != NULL) {
+! 			u_int32_t type;
+! 
+! 			TCHECK(dp[0]);
+! 			type = ntohl(*dp++);
+! 			dp = parsesattr3(dp, !qflag);
+! 			printf(" %s", tok2str(type2str, "type-%u", type));
+! 			if (dp == NULL)
+! 				goto trunc;
+! 			if (type == NFBLK || type == NFCHR) {
+! 				TCHECK2(dp[0], 2 * sizeof(*dp));
+! 				printf(" %u,%u", ntohl(dp[0]), ntohl(dp[1]));
+! 			}
+  			return;
++ 		}
+  		break;
+  
+  	case NFSPROC_REMOVE:
+***************
+*** 970,987 ****
+  trunc:
+  	return (NULL);
+  }
+- 
+- static struct tok type2str[] = {
+- 	{ NFNON,	"NON" },
+- 	{ NFREG,	"REG" },
+- 	{ NFDIR,	"DIR" },
+- 	{ NFBLK,	"BLK" },
+- 	{ NFCHR,	"CHR" },
+- 	{ NFLNK,	"LNK" },
+- 	{ NFSOCK,	"SOCK" },
+- 	{ NFFIFO,	"FIFO" },
+- 	{ 0,		NULL }
+- };
+  
+  #define	parsefattr(dp, v)	(nfsvers == NFS_VER2 ? parsefattr2(dp, v) : \
+      parsefattr3(dp, v))
+--- 995,1000 ----
+Index: print-nfs.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-nfs.c,v
+retrieving revision 1.3
+diff -c -r1.3 print-nfs.c
+*** print-nfs.c	1998/04/13 21:47:46	1.3
+--- print-nfs.c	1998/05/29 17:27:18
+***************
+*** 477,483 ****
+  		printf(" setattr");
+  		if ((dp = parsereq(rp, length)) == NULL ||
+  		    (dp = parsefh(dp)) == NULL ||
+! 		    (dp = parsesattr(dp, !qflag)) == NULL)
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER2:
+--- 477,483 ----
+  		printf(" setattr");
+  		if ((dp = parsereq(rp, length)) == NULL ||
+  		    (dp = parsefh(dp)) == NULL ||
+! 		    (dp = parsesattr(dp, vflag)) == NULL)
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER2:
+***************
+*** 576,582 ****
+  			/* FALL THROUGH */
+  
+  		case NFS_VER2:
+! 			if (parsesattr(dp, !qflag) != NULL)
+  				return;
+  			return;
+  		}
+--- 576,582 ----
+  			/* FALL THROUGH */
+  
+  		case NFS_VER2:
+! 			if (parsesattr(dp, vflag) != NULL)
+  				return;
+  			return;
+  		}
+***************
+*** 586,592 ****
+  		printf(" mkdir");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefhn(dp)) != NULL &&
+! 		    parsesattr(dp, !qflag) != NULL)
+  			return;
+  		break;
+  
+--- 586,592 ----
+  		printf(" mkdir");
+  		if ((dp = parsereq(rp, length)) != NULL &&
+  		    (dp = parsefhn(dp)) != NULL &&
+! 		    parsesattr(dp, vflag) != NULL)
+  			return;
+  		break;
+  
+***************
+*** 596,602 ****
+  		    (dp = parsefhn(dp)) != NULL) {
+  			switch (nfsvers) {
+  			case NFS_VER3:
+! 				if ((dp = parsesattr3(dp, !qflag)) == NULL)
+  					goto trunc;
+  				fputs(" -> ", stdout);
+  				if (parsefn(dp) != NULL)
+--- 596,602 ----
+  		    (dp = parsefhn(dp)) != NULL) {
+  			switch (nfsvers) {
+  			case NFS_VER3:
+! 				if ((dp = parsesattr3(dp, vflag)) == NULL)
+  					goto trunc;
+  				fputs(" -> ", stdout);
+  				if (parsefn(dp) != NULL)
+***************
+*** 606,612 ****
+  			case NFS_VER2:
+  				fputs(" -> ", stdout);
+  				if ((dp = parsefn(dp)) != NULL &&
+! 				    parsesattr2(dp, !qflag) != NULL)
+  					return;
+  				break;
+  			}
+--- 606,612 ----
+  			case NFS_VER2:
+  				fputs(" -> ", stdout);
+  				if ((dp = parsefn(dp)) != NULL &&
+! 				    parsesattr2(dp, vflag) != NULL)
+  					return;
+  				break;
+  			}
+***************
+*** 621,627 ****
+  
+  			TCHECK(dp[0]);
+  			type = ntohl(*dp++);
+! 			dp = parsesattr3(dp, !qflag);
+  			printf(" %s", tok2str(type2str, "type-%u", type));
+  			if (dp == NULL)
+  				goto trunc;
+--- 621,627 ----
+  
+  			TCHECK(dp[0]);
+  			type = ntohl(*dp++);
+! 			dp = parsesattr3(dp, vflag);
+  			printf(" %s", tok2str(type2str, "type-%u", type));
+  			if (dp == NULL)
+  				goto trunc;
+***************
+*** 673,683 ****
+  
+  			switch (nfsvers) {
+  			case NFS_VER3:
+! 				TCHECK2(dp[0], 3 * sizeof(*dp));
+! 				len = (u_int32_t)ntohl(dp[1]);
+! 				TCHECK2(dp[0], len + sizeof(*dp));
+! 				printf(" %u bytes",
+! 				    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[1]));
+  				printquad(" @ ", dp);
+  				return;
+  
+--- 673,681 ----
+  
+  			switch (nfsvers) {
+  			case NFS_VER3:
+! 				TCHECK2(dp[0], 5 * sizeof(*dp));
+! 				len = (u_int32_t)ntohl(dp[4]);
+! 				printf(" %u bytes", len);
+  				printquad(" @ ", dp);
+  				return;
+  
+***************
+*** 701,717 ****
+  		    (dp = parsefh(dp)) != NULL) {
+  			register u_int32_t len;
+  
+! 			TCHECK2(dp[0], 3 * sizeof(*dp));
+! 			len = (u_int32_t)ntohl(dp[1]);
+! 			TCHECK2(dp[0], len + 2 * sizeof(*dp));
+  
+  			/*
+  			 * Print the offset as signed, since -1 is common,
+  			 * but offsets > 2^31 aren't.
+  			 */
+! 			printf(" %u bytes %u max",
+! 			    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[1]),
+! 			    (u_int32_t)ntohl((u_int32_t)((u_char *)dp + len)[2]));
+  			printquad(" @ ", dp);
+  			return;
+  		}
+--- 699,712 ----
+  		    (dp = parsefh(dp)) != NULL) {
+  			register u_int32_t len;
+  
+! 			TCHECK2(dp[0], 6 * sizeof(*dp));
+! 			len = (u_int32_t)ntohl(dp[4]);
+  
+  			/*
+  			 * Print the offset as signed, since -1 is common,
+  			 * but offsets > 2^31 aren't.
+  			 */
+! 			printf(" %u bytes %u max", ntohl(dp[4]), ntohl(dp[5]));
+  			printquad(" @ ", dp);
+  			return;
+  		}
+***************
+*** 725,730 ****
+--- 720,727 ----
+  
+  	case NFSPROC_FSINFO:
+  		printf(" fsinfo");
++ 		if ((dp = parsereq(rp, length)) != NULL && parsefh(dp) != NULL)
++ 			return;
+  		break;
+  
+  	case NFSPROC_PATHCONF:
+***************
+*** 1060,1069 ****
+  	/* print lots more stuff */
+  	if (verbose > 1) {
+  		TCHECK(fap->fa3_fileid);
+! 		printf(" nlink %u rdev %x fsid %x",
+! 		    (u_int32_t)ntohl(fap->fa_nlink),
+! 		    (u_int32_t)ntohl(fap->fa2_rdev),
+! 		    (u_int32_t)ntohl(fap->fa2_fsid));
+  		printquad(" nodeid ", (u_int32_t *)&fap->fa3_fileid);
+  		printf(" a/m/ctime");
+  		TCHECK(fap->fa3_atime);
+--- 1057,1067 ----
+  	/* print lots more stuff */
+  	if (verbose > 1) {
+  		TCHECK(fap->fa3_fileid);
+! 		printquad(" used ", (u_int32_t *)&fap->fa3_used);
+! 		printf(" rdev %x/%x",
+! 		    (u_int32_t)ntohl(fap->fa3_rdev.specdata1),
+! 		    (u_int32_t)ntohl(fap->fa3_rdev.specdata2));
+! 		printquad(" fsid ", (u_int32_t *)&fap->fa3_fsid);
+  		printquad(" nodeid ", (u_int32_t *)&fap->fa3_fileid);
+  		printf(" a/m/ctime");
+  		TCHECK(fap->fa3_atime);
+***************
+*** 1118,1124 ****
+  	if (!ntohl(*dp++))
+  		return (dp);
+  
+! 	return (parsefattr3(dp, !qflag));
+  
+  trunc:
+  	return (NULL);
+--- 1116,1122 ----
+  	if (!ntohl(*dp++))
+  		return (dp);
+  
+! 	return (parsefattr3(dp, vflag));
+  
+  trunc:
+  	return (NULL);
+***************
+*** 1241,1266 ****
+  }
+  
+  static int
+! parserddires(const u_int32_t *dp)
+  {
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  	if (!qflag) {
+  		switch (nfsvers) {
+  		case NFS_VER2:
+! 			TCHECK(dp[0]);
+! 			printf(" offset %x", (u_int32_t)ntohl(dp[0]));
+! 			TCHECK(dp[1]);
+! 			printf(" size %u", (u_int32_t)ntohl(dp[1]));
+! 			TCHECK(dp[2]);
+  			if (dp[2] != 0)
+  				printf(" eof");
+  			break;
+  
+  		case NFS_VER3:
+! 			if (parsepostopattr(dp) == NULL)
+  				return (0);
+  			break;
+  		}
+  	}
+--- 1239,1297 ----
+  }
+  
+  static int
+! parserddires(const u_int32_t *dp, int plus)
+  {
++ 	int count;
++ 
+  	dp = parsestatus(dp);
+  	if (dp == NULL)
+  		return (0);
+  	if (!qflag) {
+  		switch (nfsvers) {
+  		case NFS_VER2:
+! 			for (;;) {
+! 				TCHECK(dp[0]);
+! 				if (!*dp++)
+! 					break;
+! 				TCHECK(dp[0]);
+! 				if (vflag)
+! 					printf(" nodeid %u", ntohl(*dp++));
+! 				if ((dp = parsefn(dp)) == NULL)
+! 					goto trunc;
+! 				dp++;	/* Skip cookie */
+! 			}
+  			if (dp[2] != 0)
+  				printf(" eof");
++ 			/* XXX - format the entries */
+  			break;
+  
+  		case NFS_VER3:
+! 			if ((dp = parsepostopattr(dp)) == NULL)
+  				return (0);
++ 			dp += 2;	/* Skip cookieverfier */
++ 			for (;;) {
++ 				TCHECK(dp[0]);
++ 				if (!*dp++)
++ 					break;
++ 				TCHECK2(dp[0], 2 * sizeof(*dp));
++ 				if (vflag)
++ 					printquad(" nodeid ", dp);
++ 				dp += 2;
++ 				if ((dp = parsefn(dp)) == NULL)
++ 					goto trunc;
++ 				dp += 2;	/* Skip cookie */
++ 				if (!plus)
++ 					continue;
++ 				/* The following are only for readdir plus */
++ 				if ((dp = parsepostopattr(dp)) == NULL)
++ 					goto trunc;
++ 				TCHECK(dp[0]);
++ 				if (ntohl(*dp++) && (dp = parsefh(dp)) == NULL)
++ 					goto trunc;
++ 			}
++ 			TCHECK(dp[0]);
++ 			if (ntohl(*dp++))
++ 				printf(" eof");
+  			break;
+  		}
+  	}
+***************
+*** 1285,1291 ****
+  	case NFSPROC_GETATTR:
+  		printf(" getattr");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parseattrstat(dp, !qflag) != 0)
+  			return;
+  		break;
+  
+--- 1316,1322 ----
+  	case NFSPROC_GETATTR:
+  		printf(" getattr");
+  		dp = parserep(rp, length);
+! 		if (dp != NULL && parseattrstat(dp, vflag) != 0)
+  			return;
+  		break;
+  
+***************
+*** 1296,1302 ****
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER2:
+! 			if (parseattrstat(dp, !qflag) != 0)
+  				return;
+  			break;
+  
+--- 1327,1333 ----
+  			break;
+  		switch (nfsvers) {
+  		case NFS_VER2:
+! 			if (parseattrstat(dp, vflag) != 0)
+  				return;
+  			break;
+  
+***************
+*** 1517,1532 ****
+  
+  	case NFSPROC_READDIR:
+  		printf(" readdir");
+! 		dp = parserep(rp, length);
+! 		if (dp != NULL && parserddires(dp) != 0)
+  			return;
+  		break;
+  
+  	case NFSPROC_READDIRPLUS:
+  		printf(" readdirplus");
+  		if ((dp = parserep(rp, length)) != NULL &&
+! 		    (dp = parsestatus(dp)) != NULL &&
+! 		    parsepostopattr(dp) != NULL)
+  			return;
+  		break;
+  
+--- 1548,1562 ----
+  
+  	case NFSPROC_READDIR:
+  		printf(" readdir");
+! 		if ((dp = parserep(rp, length)) != NULL &&
+! 		    parserddires(dp, FALSE) != 0)
+  			return;
+  		break;
+  
+  	case NFSPROC_READDIRPLUS:
+  		printf(" readdirplus");
+  		if ((dp = parserep(rp, length)) != NULL &&
+! 		    parserddires(dp, TRUE) != 0)
+  			return;
+  		break;
+  
+Index: print-arp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-arp.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-arp.c
+*** print-arp.c	1998/02/02 19:04:20	1.1.1.1
+--- print-arp.c	1998/06/05 18:38:00
+***************
+*** 55,63 ****
+--- 55,255 ----
+  #ifndef REVARP_REPLY
+  #define REVARP_REPLY		4
+  #endif
++ #ifndef	INARP_REQUEST
++ #define	INARP_REQUEST		8
++ #endif
++ #ifndef	INARP_REPLY
++ #define	INARP_REPLY		9
++ #endif
++ #ifndef	ARP_NAK
++ #define	ARP_NAK			10
++ #endif
++ #ifndef	ARPHDR_ATM
++ #define	ARPHDR_ATM		19
++ #endif
++ 
++ struct	atmarphdr {
++ 	u_short	ar_hrd;		/* format of hardware address */
++ 	u_short	ar_pro;		/* format of protocol address */
++ 	u_char	ar_shtl;	/* Type & length of source ATM number (q) */
++ 	u_char	ar_sstl;	/* Type & length of source ATM subaddress (r) */
++ 	u_short	ar_op;		/* Operation code (request, reply, or NAK) */
++ 	u_char	ar_spln;	/* Length of source protocol address (s) */
++ 	u_char	ar_thtl;	/* Type & length of target ATM number (x) */
++ 	u_char	ar_tstl;	/* Type & length of target ATM subaddress (y) */
++ 	u_char	ar_tpln;	/* Length of target protocol address (z) */
++ #ifdef	COMMENT_ONLY
++ 	u_char	ar_sha[];	/* qoctets  source ATM number */
++ 	u_char	ar_ssa[];	/* roctets  source ATM subaddress */
++ 	u_char	ar_spa[];	/* soctets  source protocol address */
++ 	u_char	ar_tha[];	/* xoctets  target ATM number */
++ 	u_char	ar_tsa[];	/* yoctets  target ATM subaddress */
++ 	u_char	ar_tpa[];	/* zoctets  target protocol address */
++ #endif
++ };
+  
+  static u_char ezero[6];
+  
++ #define	ATMARP_TL_E164	0x40	/* Is an E164 address */
++ #define	ATMARP_TL_LEN	0x3f	/* Length mask */
++ 
++ static int octet_clusters[] = { 1, 2, 1, 3, 2, 2, 2, 6 , 1 };
++ 
++ static char *
++ arp_atm_fmt(u_int tl, u_char *ap, u_int stl, u_char *sap)
++ {
++ 	u_int i, len;
++ 	static char buf[100];
++ 	char *bp;
++ 	
++ 	bp = buf;
++ 
++ 	len = tl & ATMARP_TL_LEN;
++ 	if (len != 0) {
++ 		if (tl & ATMARP_TL_E164)
++ 			for (i = 0; i < len; i++)
++ 				bp += sprintf(bp, "%02x:", ap[i]);
++ 		else
++ 			bp += sprintf(bp,
++ 			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
++ 			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
++ 			    ap[0], ap[1], ap[2], ap[3], ap[4],
++ 			    ap[5], ap[6], ap[7], ap[8], ap[9],
++ 			    ap[10], ap[11], ap[12], ap[13], ap[14],
++ 			    ap[15], ap[16], ap[17], ap[18], ap[19]);
++ 	}
++ 	len = stl & ATMARP_TL_LEN;
++ 	if (len != 0) {
++ 		*bp++ = '/';
++ 		if (stl & ATMARP_TL_E164)
++ 			for (i = 0; i < len; i++)
++ 				bp += sprintf(bp, "%02x:", sap[i]);
++ 		else
++ 			bp += sprintf(bp,
++ 			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
++ 			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
++ 			    sap[0], sap[1], sap[2], sap[3], sap[4],
++ 			    sap[5], sap[6], sap[7], sap[8], sap[9],
++ 			    sap[10], sap[11], sap[12], sap[13], sap[14],
++ 			    sap[15], sap[16], sap[17], sap[18], sap[19]);
++ 	}
++ 
++ 	return (buf);
++ }
++ 
++ static void
++ arp_atm_print(register const u_char *bp, u_int length, u_int caplen)
++ {
++ 	register const struct atmarphdr *ap;
++ 	register u_short pro, hrd, op;
++ 	register u_char shl, ssl, thl, tsl;
++ 	register u_char *sha, *ssa, *spa, *tha, *tsa, *tpa;
++ 
++ 	ap = (struct atmarphdr *)bp;
++ 	if ((u_char *)(ap + 1) > snapend) {
++ 	Trunc:
++ 		printf("[|atmarp]");
++ 		return;
++ 	}
++ 	if (length < sizeof(struct atmarphdr)) {
++ 		(void)printf("truncated-atmarp");
++ 		default_print((u_char *)ap, length);
++ 		return;
++ 	}
++ 
++ 	pro = EXTRACT_16BITS(&ap->ar_pro);
++ 	hrd = EXTRACT_16BITS(&ap->ar_hrd);
++ 	op = EXTRACT_16BITS(&ap->ar_op);
++ 
++ 	shl = ap->ar_shtl & ATMARP_TL_LEN;
++ 	ssl = ap->ar_sstl & ATMARP_TL_LEN;
++ 	thl = ap->ar_thtl & ATMARP_TL_LEN;
++ 	tsl = ap->ar_tstl & ATMARP_TL_LEN;
++ 	sha = (u_char *)(ap + 1);
++ 	ssa = sha + shl;
++ 	spa = ssa + ssl;
++ 	tha = spa + ap->ar_spln;
++ 	tsa = tha + thl;
++ 	tpa = tsa + tsl;
++ 
++ 	if (tpa + ap->ar_tpln > snapend)
++ 		goto Trunc;
++ 
++ 	if (pro != ETHERTYPE_IP) {
++ 		(void)printf("atmarp-#%d for proto #%d hardware #%d",
++ 				op, pro, hrd);
++ 		return;
++ 	}
++ 
++ 	switch (op) {
++ 	case ARPOP_REQUEST:
++ 		(void)printf("atmarp who-has %s", ipaddr_string(tpa));
++ 		if (thl || tsl)
++ 			(void)printf(" (%s)", arp_atm_fmt(thl, tha, tsl, tsa));
++ 		(void)printf(" tell %s", ipaddr_string(spa));
++ 		if (shl || ssl)
++ 			(void)printf(" (%s)", arp_atm_fmt(shl, sha, ssl, ssa));
++ 		break;
++ 
++ 	case ARPOP_REPLY:
++ 		(void)printf("atmarp reply %s is-at %s", 
++ 		    ipaddr_string(spa), arp_atm_fmt(shl, sha, ssl, ssa));
++ 		(void)printf(" to %s", ipaddr_string(tpa));
++ 		if (thl || tsl)
++ 			(void)printf(" (%s)", arp_atm_fmt(thl, tha, tsl, tsa));
++ 		break;
++ 
++ 	case REVARP_REQUEST:
++ 		(void)printf("ratmarp who-is %s", 
++ 		    arp_atm_fmt(thl, tha, tsl, tsa));
++ 		(void)printf(" tell %s (%s)", 
++ 		    arp_atm_fmt(shl, sha, ssl, ssa),
++ 		    ipaddr_string(spa));
++ 		break;
++ 
++ 	case REVARP_REPLY:
++ 		(void)printf("ratmarp reply %s at %s",
++ 			arp_atm_fmt(thl, tha, tsl, tsa),
++ 			ipaddr_string(tpa));
++ 		(void)printf(" to %s", ipaddr_string(spa));
++ 		if (shl || ssl)
++ 			(void)printf(" (%s)", arp_atm_fmt(shl, sha, ssl, ssa));
++ 		break;
++ 
++ 	case INARP_REQUEST:
++ 		(void)printf("inatmarp who-is %s", 
++ 		    arp_atm_fmt(thl, tha, tsl, tsa));
++ 		if (ap->ar_tpln)
++ 			(void)printf(" (%s)", ipaddr_string(tpa));
++ 		(void)printf(" tell %s", ipaddr_string(spa));
++ 		if (shl || ssl)
++ 			(void)printf(" (%s)", arp_atm_fmt(shl, sha, ssl, ssa));
++ 		break;
++ 
++ 	case INARP_REPLY:
++ 		(void)printf("inatmarp reply %s", arp_atm_fmt(thl, tha, tsl, tsa));
++ 		(void)printf(" is %s", ipaddr_string(tpa));
++ 		(void)printf(" to %s", ipaddr_string(spa));
++ 		if (thl || tsl)
++ 			(void)printf(" (%s)", arp_atm_fmt(shl, sha, ssl, ssa));
++ 		break;
++ 
++ 	case ARP_NAK:
++ 		(void)printf("atmarp nak don't-know %s", ipaddr_string(tpa));
++ 		if (thl || tsl)
++ 			(void)printf(" (%s)", arp_atm_fmt(thl, tha, tsl, tsa));
++ 		(void)printf(" to %s", ipaddr_string(spa));
++ 		if (shl || ssl)
++ 			(void)printf(" (%s)", arp_atm_fmt(shl, sha, ssl, ssa));
++ 		break;
++ 
++ 	default:
++ 		(void)printf("atmarp-#%d", op);
++ 		default_print((u_char *)ap, caplen);
++ 		return;
++ 	}
++ }
++ 
+  void
+  arp_print(register const u_char *bp, u_int length, u_int caplen)
+  {
+***************
+*** 79,84 ****
+--- 271,281 ----
+  	pro = EXTRACT_16BITS(&ap->arp_pro);
+  	hrd = EXTRACT_16BITS(&ap->arp_hrd);
+  	op = EXTRACT_16BITS(&ap->arp_op);
++ 
++ 	if (hrd == ARPHDR_ATM) {
++ 		arp_atm_print(bp, length, caplen);
++ 		return;
++ 	}
+  
+  	if ((pro != ETHERTYPE_IP && pro != ETHERTYPE_TRAIL)
+  	    || ap->arp_hln != sizeof(SHA(ap))
+Index: print-nfs.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-nfs.c,v
+retrieving revision 1.4
+diff -c -r1.4 print-nfs.c
+*** print-nfs.c	1998/05/29 17:42:20	1.4
+--- print-nfs.c	1998/07/02 02:55:37
+***************
+*** 975,980 ****
+--- 975,1013 ----
+  	return (NULL);
+  }
+  
++ static struct tok err2str[] = {
++ 	{ NFSERR_PERM,		"Operation not permitted" },
++ 	{ NFSERR_NOENT,		"No such file or directory" },
++ 	{ NFSERR_IO,		"Input/output error" },
++ 	{ NFSERR_NXIO,		"Device not configured" },
++ 	{ NFSERR_ACCES,		"Permission denied" },
++ 	{ NFSERR_EXIST,		"File exists" },
++ 	{ NFSERR_XDEV,		"Cross-device link" },
++ 	{ NFSERR_NODEV,		"Operation not supported by device" },
++ 	{ NFSERR_NOTDIR,	"Not a directory" },
++ 	{ NFSERR_ISDIR,		"Is a directory" },
++ 	{ NFSERR_INVAL,		"Invalid argument" },
++ 	{ NFSERR_FBIG,		"File too large" },
++ 	{ NFSERR_NOSPC,		"No space left on device" },
++ 	{ NFSERR_ROFS,		"Read-only file system" },
++ 	{ NFSERR_MLINK,		"Too many links" },
++ 	{ NFSERR_NAMETOL,	"File name too long" },
++ 	{ NFSERR_NOTEMPTY,	"Directory not empty" },
++ 	{ NFSERR_DQUOT,		"Disc quota exceeded" },
++ 	{ NFSERR_STALE,		"Stale NFS file handle" },
++ 	{ NFSERR_REMOTE,	"Too many levels of remote in path" },
++ 	{ NFSERR_WFLUSH,	"Write cache flushed" },
++ 	{ NFSERR_BADHANDLE,	"Illegal NFS file handle" },
++ 	{ NFSERR_NOT_SYNC,	"Synchronization mismatch" },
++ 	{ NFSERR_BAD_COOKIE,	"Stale NFS cookie" },
++ 	{ NFSERR_NOTSUPP,	"Operation not supported" },
++ 	{ NFSERR_TOOSMALL,	"Buffer or request is too small" },
++ 	{ NFSERR_SERVERFAULT,	"Server fault" },
++ 	{ NFSERR_BADTYPE,	"Object type not supported" },
++ 	{ NFSERR_JUKEBOX,	"Operation in progress" },
++ 	{ 0,			NULL }
++ };
++ 
+  static const u_int32_t *
+  parsestatus(const u_int32_t *dp)
+  {
+***************
+*** 984,990 ****
+  	errnum = ntohl(dp[0]);
+  	if (errnum != 0) {
+  		if (!qflag)
+! 			printf(" ERROR: %s", pcap_strerror(errnum));
+  		nfserr = 1;		/* suppress trunc string */
+  		return (NULL);
+  	}
+--- 1017,1023 ----
+  	errnum = ntohl(dp[0]);
+  	if (errnum != 0) {
+  		if (!qflag)
+! 			printf(" ERROR: %s", tok2str(err2str, "%u", errnum));
+  		nfserr = 1;		/* suppress trunc string */
+  		return (NULL);
+  	}
+Index: print-nfs.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-nfs.c,v
+retrieving revision 1.5
+diff -c -r1.5 print-nfs.c
+*** print-nfs.c	1998/07/02 02:56:28	1.5
+--- print-nfs.c	1999/02/02 05:03:27
+***************
+*** 1291,1297 ****
+  					printf(" nodeid %u", ntohl(*dp++));
+  				if ((dp = parsefn(dp)) == NULL)
+  					goto trunc;
+! 				dp++;	/* Skip cookie */
+  			}
+  			if (dp[2] != 0)
+  				printf(" eof");
+--- 1291,1299 ----
+  					printf(" nodeid %u", ntohl(*dp++));
+  				if ((dp = parsefn(dp)) == NULL)
+  					goto trunc;
+! 				if (vflag)
+! 					printquad(" cky ", dp);
+! 				dp++;
+  			}
+  			if (dp[2] != 0)
+  				printf(" eof");
+***************
+*** 1301,1307 ****
+  		case NFS_VER3:
+  			if ((dp = parsepostopattr(dp)) == NULL)
+  				return (0);
+! 			dp += 2;	/* Skip cookieverfier */
+  			for (;;) {
+  				TCHECK(dp[0]);
+  				if (!*dp++)
+--- 1303,1311 ----
+  		case NFS_VER3:
+  			if ((dp = parsepostopattr(dp)) == NULL)
+  				return (0);
+! 			if (vflag)
+! 				printquad(" ckyvrf ", dp);
+! 			dp += 2;
+  			for (;;) {
+  				TCHECK(dp[0]);
+  				if (!*dp++)
+***************
+*** 1312,1318 ****
+  				dp += 2;
+  				if ((dp = parsefn(dp)) == NULL)
+  					goto trunc;
+! 				dp += 2;	/* Skip cookie */
+  				if (!plus)
+  					continue;
+  				/* The following are only for readdir plus */
+--- 1316,1324 ----
+  				dp += 2;
+  				if ((dp = parsefn(dp)) == NULL)
+  					goto trunc;
+! 				if (vflag)
+! 					printquad(" cky ", dp);
+! 				dp += 2;
+  				if (!plus)
+  					continue;
+  				/* The following are only for readdir plus */
+Index: print-token.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-token.c,v
+retrieving revision 1.2
+diff -c -r1.2 print-token.c
+*** print-token.c	1998/02/17 14:47:39	1.2
+--- print-token.c	1999/09/18 22:51:34
+***************
+*** 175,201 ****
+  	}
+  	if (vflag) {
+  		printf("dir=%d ", macp->rif.rcf1 >> 7);
+! 		switch (macp->rif.rcf1 & RCF_FRAME_MASK) {
+! 		case RCF_FRAME0:
+! 			route = RCF_FRAME0_MAX;
+  			break;
+! 		case RCF_FRAME1:
+! 			route = RCF_FRAME1_MAX;
+  			break;
+! 		case RCF_FRAME2:
+! 			route = RCF_FRAME2_MAX;
+  			break;
+! 		case RCF_FRAME3:
+! 			route = RCF_FRAME3_MAX;
+  			break;
+! 		case RCF_FRAME4:
+! 			route = RCF_FRAME4_MAX;
+  			break;
+! 		case RCF_FRAME5:
+! 			route = RCF_FRAME5_MAX;
+  			break;
+! 		case RCF_FRAME6:
+! 			route = RCF_FRAME6_MAX;
+  			break;
+  		case 0x70:
+  			route = -1;
+--- 175,201 ----
+  	}
+  	if (vflag) {
+  		printf("dir=%d ", macp->rif.rcf1 >> 7);
+! 		switch (macp->rif.rcf1 & RCF1_FRAME_MASK) {
+! 		case RCF1_FRAME0:
+! 			route = RCF1_FRAME0_MAX;
+  			break;
+! 		case RCF1_FRAME1:
+! 			route = RCF1_FRAME1_MAX;
+  			break;
+! 		case RCF1_FRAME2:
+! 			route = RCF1_FRAME2_MAX;
+  			break;
+! 		case RCF1_FRAME3:
+! 			route = RCF1_FRAME3_MAX;
+  			break;
+! 		case RCF1_FRAME4:
+! 			route = RCF1_FRAME4_MAX;
+  			break;
+! 		case RCF1_FRAME5:
+! 			route = RCF1_FRAME5_MAX;
+  			break;
+! 		case RCF1_FRAME6:
+! 			route = RCF1_FRAME6_MAX;
+  			break;
+  		case 0x70:
+  			route = -1;
+? log
+? .gdbinit
+? nfs_args
+? temp
+Index: ethertype.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/ethertype.h,v
+retrieving revision 1.2
+diff -c -r1.2 ethertype.h
+*** ethertype.h	1998/02/17 14:47:35	1.2
+--- ethertype.h	2000/02/18 20:12:18
+***************
+*** 77,79 ****
+--- 77,82 ----
+  #ifndef	ETHERTYPE_LOOPBACK
+  #define	ETHERTYPE_LOOPBACK	0x9000
+  #endif
++ #ifndef	ETHERTYPE_8021Q
++ #define	ETHERTYPE_8021Q	0x8100
++ #endif
+Index: print-ether.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ether.c,v
+retrieving revision 1.3
+diff -c -r1.3 print-ether.c
+*** print-ether.c	1998/02/17 14:47:37	1.3
+--- print-ether.c	2000/02/18 20:12:18
+***************
+*** 54,59 ****
+--- 54,60 ----
+  #include "interface.h"
+  #include "addrtoname.h"
+  #include "ethertype.h"
++ #include "extract.h"
+  
+  const u_char *packetp;
+  const u_char *snapend;
+***************
+*** 150,155 ****
+--- 151,192 ----
+  }
+  
+  /*
++  * Prints the vLAN ID for 8021Q packets
++  */
++ static int
++ ether_8021q_print(const u_char *p, u_int length, u_int caplen)
++ {
++ 	u_short ether_type;
++ 	u_short tci;
++ 	u_int id, prio, cfi;
++ 
++ 	if (caplen < 4) {
++ 		printf("[|vlan]");
++ 		return (0);
++ 	}
++ 
++ 	tci = EXTRACT_16BITS(p);
++ 	p += 2;
++ 	ether_type = EXTRACT_16BITS(p);
++ 	p += 2;
++ 	id = tci & 0xfff;
++ 	tci >>= 12;
++ 	cfi = tci & 1;
++ 	tci >>= 1;
++ 	prio = tci & 7;
++ 	if (prio != 0)
++ 		printf("prio %u", prio);
++ 	if (id > 0)
++ 		printf("vlan %u ", id);
++ 	if (!cfi) {
++ 		caplen -= 4;
++ 		length -= 4;
++ 		ether_encap_print(ether_type, p, length, caplen);
++ 	}
++ 	return (1);
++ }
++ 
++ /*
+   * Prints the packet encapsulated in an Ethernet data segment
+   * (or an equivalent encapsulation), given the Ethernet type code.
+   *
+***************
+*** 197,202 ****
+--- 234,242 ----
+  	case ETHERTYPE_AARP:
+  		aarp_print(p, length);
+  		return (1);
++ 
++ 	case ETHERTYPE_8021Q:
++ 		return ether_8021q_print(p, length, caplen);
+  
+  	case ETHERTYPE_LAT:
+  	case ETHERTYPE_SCA:
+Index: tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/tcpdump.c,v
+retrieving revision 1.5
+diff -c -r1.5 tcpdump.c
+*** tcpdump.c	1998/02/15 03:58:39	1.5
+--- tcpdump.c	2000/02/18 20:12:19
+***************
+*** 92,97 ****
+--- 92,100 ----
+  
+  static struct printer printers[] = {
+  	{ ether_if_print,	DLT_EN10MB },
++ #ifdef	DLT_8021Q
++ 	{ ether_if_print,	DLT_8021Q },
++ #endif
+  	{ token_if_print,	DLT_IEEE802 },
+  	{ sl_if_print,		DLT_SLIP },
+  	{ sl_if_print,		DLT_SLIP_BSDOS },
+Index: print-ether.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ether.c,v
+retrieving revision 1.5
+diff -c -r1.5 print-ether.c
+*** print-ether.c	2000/03/06 18:50:46	1.5
+--- print-ether.c	2000/03/06 21:35:43
+***************
+*** 178,186 ****
+--- 178,190 ----
+  		printf("prio %u", prio);
+  	if (id > 0)
+  		printf("vlan %u ", id);
++ 	if (cfi)
++ 		printf("cfi ");
+  	if (!cfi) {
+  		caplen -= 4;
+  		length -= 4;
++ 		if (eflag && !qflag)
++ 			printf("%04x: ", ether_type);
+  		ether_encap_print(ether_type, p, length, caplen);
+  	}
+  	return (1);
+Index: interface.h
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/interface.h,v
+retrieving revision 1.7
+diff -c -r1.7 interface.h
+*** interface.h	1998/03/10 00:14:25	1.7
+--- interface.h	2000/03/20 17:59:17
+***************
+*** 67,73 ****
+   * In particular, it allows for an ethernet header, tcp/ip header, and
+   * 14 bytes of data (assuming no ip options).
+   */
+! #define DEFAULT_SNAPLEN 76
+  
+  #ifndef BIG_ENDIAN
+  #define BIG_ENDIAN 4321
+--- 67,73 ----
+   * In particular, it allows for an ethernet header, tcp/ip header, and
+   * 14 bytes of data (assuming no ip options).
+   */
+! #define DEFAULT_SNAPLEN 96
+  
+  #ifndef BIG_ENDIAN
+  #define BIG_ENDIAN 4321
+Index: print-bootp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-bootp.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 print-bootp.c
+*** print-bootp.c	1998/02/02 19:04:20	1.1.1.1
+--- print-bootp.c	2001/05/11 19:58:31
+***************
+*** 279,285 ****
+  				if (c == 'i')
+  					printf("%s", ipaddr_string(&ul));
+  				else
+! 					printf("%u", ul);
+  				bp += sizeof(ul);
+  				size -= sizeof(ul);
+  				first = 0;
+--- 279,285 ----
+  				if (c == 'i')
+  					printf("%s", ipaddr_string(&ul));
+  				else
+! 					printf("%u", ntohl(ul));
+  				bp += sizeof(ul);
+  				size -= sizeof(ul);
+  				first = 0;

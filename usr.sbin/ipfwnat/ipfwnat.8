@@ -1,0 +1,381 @@
+.\"	BSDI	ipfwnat.8,v 1.3 1999/11/18 01:26:37 prb Exp
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd September 5, 1999
+.Dt IPFWNAT 8
+.Sh NAME
+.Nm ipfwnat
+.Nd compile and install NAT filters
+.Sh SYNOPSIS
+.Nm ipfwnat
+.Op Fl v
+.Op Fl s Ad server
+.Fl i Ar interface
+.br
+.Nm ipfwnat
+.Op Fl v
+.Ar conffile
+.br
+.Nm ipfwnat
+.Fl r Ar tag
+.br
+.Nm ipfwnat
+.Op Fl v
+.Fl l
+.Sh DESCRIPTION
+The
+.Nm ipfwnat
+utility installs, queries, and removes NAT boxes from the system.
+A NAT box, or Network Address Translation box, translates IP addresses
+from an internal name space to an external name space.  The most common
+use is to allow multiple machines on a local area network to all share
+a single external IP address assigned by an ISP.
+.Pp
+The BSD/OS IP NAT (IPFWNAT) implementation is built on top of the BSD/OS
+IP Filter framework (IPFW) (see
+.Xr ipfw 8 ) .
+The NAT filter type may only be called from the
+.Nm pre-input
+and
+.Nm pre-output
+filter points.  The
+.Nm pre-input
+filter point is used to translate externally visible (external) addresses
+to internally visible addresses (internal).  The
+.Nm pre-output
+filter point is used to do the reverse, translate internal addresses to
+external addresses.
+The NAT boxes attached to these two filters points are
+.Qq glued
+together such that they reference the same data.
+For the TCP and UDP IP protocols the port number associated with the
+external or internal address may also be mapped.
+The
+.Nm ipfwnat
+utility takes care of all of this and provides an easy to use interface.
+Simple environments can be set up on the command line.  More complicated
+environments are specified via a NAT configuration file,
+.Ar conffile .
+.Pp
+The options available are
+.Bl -tag -width indent
+.It Fl i
+This option takes an interface name (i.e., ppp0) as an argument.
+A simple NAT box is configured such that all outgoing traffic is
+mapped onto the IP address assigned to the IP address associated
+with the interface.  The
+.Fl s
+option, below, may be used to assign incoming service requests to
+a machine other than the machine doing the NAT.
+.It Fl l
+List out tags of the installed NAT boxes.
+These are used with the
+.Fl r
+option below.
+If the
+.Fl v
+option is also specified, a more complete definition of the NAT boxes are
+displayed.  If
+.Fl vv
+is specified then additional debugging information about the NAT boxes are
+display.
+.It Fl r
+Remove the NAT box with the associated
+.Ar tag .
+The NAT box on both the
+.Nm pre-input
+and
+.Nm pre-output
+filter chains are removed.
+.It Fl s
+Used in conjunction with the
+.Fl i
+option, this option specifies what machine should handle all incoming
+requests to the IP address of the interface.  By default this is the
+box running the NAT.  The
+.Fl s
+option allows an internal machine to be used.
+.It Fl v
+When installing filters the serial number of the filter is displayed
+as it is installed.
+When used with the
+.Fl l
+option a full description of the nat is displayed (see the
+.Fl display
+command in
+.Xr ipfw 8 . )
+.El
+.Pp
+If
+.Ar conffile
+is specified, it is read and the filter defined therein is installed
+on the
+.Nm pre-input
+and
+.Nm pre-output
+filter chains.
+(See
+.Xr ipfw 8 . )
+.SH NAT CONFIGURATION FILE
+.Pp
+The
+.Ar conffile
+consists of commands, each terminated by a
+.Sq \; .
+.Bl -tag -width indent
+.It Nm tag Xo
+.Qq Ar string
+.Nm ;
+.Xc
+Set the tag for this NAT box (See
+.Xr ipfw 8 ).
+Only one NAT box may have any given tag specified by the quoted
+.Ar string .
+Configuring a new NAT box with the tag that is already in use will cause
+the previous NAT box to be destroyed and replaced with the new NAT box.
+Example:
+.Bd -literal -offset indent
+tag "my nat";
+.Ed
+.It Nm priority Ar number Nm ;
+Set the priority for this NAT box to
+.Ar number
+(See
+.Xr ipfw 8 ).
+The priority may be any signed 32 bit number.
+The priority can be used to make sure that various
+.Nm pre-input
+and
+.Nm pre-output
+filters are executed in the correct order.
+The default priority is 1024.  Example:
+.Bd -literal -offset indent
+priority 4096;
+.Ed
+.It Nm buckets Ar number Nm ;
+Set the number of hash buckets to be used to
+.Ar number .
+The default setting of 997 is probably good for most situations.
+If you are expecting a large number of simultaneous NAT sessions
+you may want to increase this value.  The value should be reasonably
+prime.  To support about 50,000 NAT sessions a value of 9967 would
+probably work fine.  Example:
+.Bd -literal -offset indent
+buckets 997;
+.Ed
+.It Nm prefill Ar number Nm ;
+Pre-allocate
+.Ar number
+NAT session structures for later use.
+Typically this option is not needed and the kernel will allocate NAT
+sessions in chunks as needed.
+Example
+.Bd -literal -offset indent
+prefill 1024;
+.Ed
+.It Nm maxsessions Ar number Nm ;
+Limit the number of NAT sessions to
+.Ar number .
+When the number of active NAT sessions reaches this value, no new NAT
+sessions will be created.  Once the number of active NAT sessions goes
+below this value NAT sessions will once again be able to be created.
+This option is probably not needed.
+Example
+.Bd -literal -offset indent
+maxsessions 10000;
+.Ed
+.It Nm interface Ar name Nm ;
+Limit the NAT box to only work on packets going in or out the interface
+.Ar name .
+This will also allow wild cards to work with the
+.Nm service
+and
+.Nm map
+commands.
+Example
+.Bd -literal -offset indent
+interface ppp0;
+.Ed
+.It Nm timeout Ar proto seconds Nm ;
+Set the timeout for NAT sessions of the protocol
+.Ar proto
+to be
+.Ar seconds .
+The value of
+.Ar proto
+may be a positive integer less than 256 or one of the known protocols
+.Nm tcp , udp , No or Nm icmp .
+The default timeout is 300 seconds (5 minutes) except for TCP sessions,
+in which case it is 28800 seconds (8 hours).
+Example
+.Bd -literal -offset indent
+timeout tcp 86400;	# 24 hours
+timeout udp 900;	# 15 minutes
+.Ed
+.It Nm service Xo
+.Op Ar serial
+.Op Ar proto
+.Ar external Ns Op :port
+.Nm ->
+.Ar internal Ns Op :port
+.Op Nm expire in Ar seconds
+.Nm ;
+.Xc
+A service line is required for each incoming service that is supported.
+It may be used to direct a single address port pair, or all requests to
+a specified address, or all requests from the interface.
+If an
+.Nm interface
+was already specified then the external address can be 0.0.0.0, which matches
+the address associated with the interface (when the interface as more
+than 1 address assigned it is indeterminate which address will be used).
+This can also be abbreviated as 0.
+If the external port number is missing, or is 0, all incoming requests
+will be matched by this line.  If the internal port number is missing,
+or is 0, the internal port number will be the same as the external
+port number.
+.Pp
+Packets are limited to the protocol
+.Ar proto
+The value of
+.Ar proto
+may be a positive integer less than 256 or one of the known protocols
+.Nm tcp , udp , No or Nm icmp .
+If no
+.Ar proto
+is specified then this line applies to all protocols.
+.Pp
+A serial number may be specified to allow the easy removal or replacement.
+The serial number must be in square brackets:
+.Op 101 .
+Serial numbers must be below 1,000,000,000.  Numbers above this value
+are automatically assigned by the system to requests that have no serial
+number or a serial number of 0.
+No two requests can have the same serial number in the same NAT box.
+Attempting to install a new request with the same serial number as
+an existing request will cause the existing request to be replaced.
+.Pp
+If an expire time is provided it is given as the number of
+.Ar seconds
+from the time
+.Nm ipfwnat
+was run in which to expire this service entry.  This feature normally
+is only needed by daemons that install temporary service entries,
+such as
+.Xr ftp-proxy 8 .
+.Pp
+Example mapping all incoming requests to a single machine:
+.Bd -literal -offset indent
+service 0 -> 0;
+.Ed
+.Pp
+Example mapping telnet to one machine and http to another:
+.Bd -literal -offset indent
+service tcp 0:23 -> 198.162.42.17;
+service tcp 0:80 -> 198.162.42.31;
+.Ed
+.Pp
+Example setting up multiple telnet options:
+.Bd -literal -offset indent
+service tcp 0:23 -> 198.162.42.17;
+service tcp 0:223 -> 198.162.42.18;
+service tcp 0:323 -> 198.162.42.19;
+service tcp 0:423 -> 198.162.42.20;
+.Ed
+.Pp
+Example tying specific external addresses to internal machines
+(assuming you were assigned 210.42.17.64/29):
+.Bd -literal -offset indent
+service tcp 210.42.17.65:23 -> 198.162.42.17;
+service tcp 210.42.17.65:80 -> 198.162.42.31;
+service tcp 210.42.17.66 -> 198.162.42.17;
+service tcp 210.42.17.67 -> 198.162.42.18;
+service tcp 210.42.17.68 -> 198.162.42.19;
+service tcp 210.42.17.69 -> 198.162.42.20;
+service tcp 210.42.17.70 -> 198.162.42.21;
+.Ed
+.It Nm map Xo
+.Op Ar serial
+.Op Ar proto
+.Ar internal Ns Op /mask
+.Nm ->
+.Ar external Ns Op /mask
+.Op port - port
+.Op , external/mask port - port Op , ...
+.Op Nm expire in Ar seconds
+.Nm ;
+.Xc
+Set up a mapping for outgoing requests.
+If an
+.Nm interface
+was already specified then the external address can be 0.0.0.0, which matches
+the address associated with the interface (when the interface as more
+than 1 address assigned it is indeterminate which address will be used).
+This can also be abbreviated as 0.
+.Pp
+If the internal address is 0 then all outgoing packets may be affected
+by this map.
+The masks are integers between 0 and 32.  A mask of 0 implies and address
+of 0.  A mask of 32 implies no mask (i.e., only this address).
+.Pp
+When a packet that matches the internal network attempts to go through
+the NAT box (and is not part of an existing NAT session) it will be mapped
+to an external address within the specified subnet and within the specified
+port range.  If the port range is not specified then the port number will
+not be mapped.  If all possible external addresses and ports are already
+in use for a given remote address and port the mapping will fail.
+.Pp
+Packets are limited to the protocol
+.Ar proto
+The value of
+.Ar proto
+may be a positive integer less than 256 or one of the known protocols
+.Nm tcp , udp , No or Nm icmp .
+If no
+.Ar proto
+is provided then this line will apply to all protocols.
+.Pp
+Multiple external addresses and port ranges may be specified by separating
+them with commas.
+.Pp
+A serial number may be specified to allow the easy removal or replacement.
+The serial number must be in square brackets:
+.Op 101 .
+Serial numbers must be below 1,000,000,000.  Numbers above this value
+are automatically assigned by the system to requests that have no serial
+number or a serial number of 0.
+No two requests can have the same serial number in the same NAT box.
+Attempting to install a new request with the same serial number as
+an existing request will cause the existing request to be replaced.
+.Pp
+If an expire time is provided it is given as the number of
+.Ar seconds
+from the time
+.Nm ipfwnat
+was run in which to expire this map.  This feature normally
+is only needed by daemons that install temporary service entries.
+.Pp
+The easiest example is:
+.Bd -literal -offset indent
+map 0 -> 0;
+.Ed
+.Pp
+To remap tcp requests to one of 3 addresses:
+.Bd -literal -offset indent
+map tcp 0 -> 210.42.17.67, 210.42.17.68, 210.42.17.69;
+.Ed
+.Pp
+To remap tcp requests from specific addresses:
+.Bd -literal -offset indent
+map tcp 198.162.42.17 -> 210.42.17.66;
+map tcp 198.162.42.18 -> 210.42.17.67;
+map tcp 198.162.42.19 -> 210.42.17.68;
+map tcp 198.162.42.20 -> 210.42.17.69;
+map tcp 198.162.42.21 -> 210.42.17.70;
+.Ed
+.Sh SEE ALSO
+.Xr ipfw 8

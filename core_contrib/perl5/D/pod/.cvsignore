@@ -1,0 +1,9 @@
+pod2man
+Makefile
+pod2html
+pod2latex
+pod2text
+pod2usage
+podchecker
+podselect
+buildtoc

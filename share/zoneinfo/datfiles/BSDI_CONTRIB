@@ -1,0 +1,18 @@
+Software Package:       
+	tzdata
+
+Release/Version:
+	tzdata2001a.tar.gz
+
+Retrieved from:
+	ftp://elsie.nci.nih.gov/pub
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and tz@elsie.nci.nih.gov
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

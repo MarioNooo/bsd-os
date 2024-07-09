@@ -1,0 +1,141 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI tdump.8,v 1.3 2001/10/03 17:30:00 polk Exp
+.\"
+.Dd December 8, 1997
+.Dt TDUMP 8
+.Os BSD/OS
+.Sh NAME
+.Nm tdump
+.Nd "Dump kernel trace buffer"
+.Sh SYNOPSIS
+.Nm tdump
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Fl a
+.Op Fl c clks_per_usec
+.Op Fl n
+.Op Fl v
+.Sh DESCRIPTION
+The
+.Nm
+utility extracts the entries from the in kernel wrap around trace buffers,
+merge sorts the entries by time, and formats a display based on the data.
+.Pp
+The trace entries are displayed newest first, oldest last.
+.Pp
+The fields in each trace entry are:
+.Bl -tag -width xxxxxxxxxx
+.It C
+The cpu number making the trace entry (a hex digit from 0 through f).
+.It Idx
+The index (entry number) in the respective CPU's trace buffer (in hex).
+.It Delta-T
+Number of CPU clocks between this entry (older) and the entry above it
+(newer). The time span of a clock cycle depends on the speed of the
+CPU, for Intel Pentium systems one can use the rated internal
+clock speed (a Pentium-233/MMX would perform 1 clock per 1/233000000
+seconds (~4.29 nS)).
+.It Trace data
+The trace data takes up the remainder of the line, this may be almost
+any output that can be generated via a printf statement with up to
+5 arguments.
+.El
+.Pp
+In verbose mode the full 64 bit time stamp and the time from the start of
+the trace are also printed; in addition the 5 possible arguments (relevant
+or not) are printed in hex as well as decoded in the normal printf() format.
+.Pp
+When the delta-T is a large negative number (0xffff....) this usually 
+indicates that the trace buffer wrapped around while the trace dump
+was being taken (this can happen when running
+.Nm
+from a running system or via an ICE probe).
+.Pp
+The options are:
+.Bl -tag -width string-data
+.It Fl M Ar core
+Specifies physical memory image; this could be a core dump or
+.Pa /dev/mem
+(to access live system memory). Default:
+.Pa /dev/mem
+
+.It Fl M Ar system
+Specifies location of kernel executable used to extract symbol tables. This
+kernel must be the kernel that corresponds to the physical memory image
+being debugged. Default:
+.Pa /bsd
+
+.It Fl a
+Print time stamps as absolute, not relative.
+
+.It Fl c Ar clks_per_usec
+On systems that use a cycle counter based time stamp for trace entries
+this value will be used to convert the values to seconds and
+microseconds.
+
+.It Fl n
+Do not cache strings locally (read from image each time). Default is to
+cache strings locally.
+
+.It Fl v
+Verbose (but fairly cluttered) display.
+
+.El
+
+.Sh EXAMPLES
+Normal output:
+.Bd -literal
+bash# tdump
+C Idx Delta-T  Trace
+= === ======== =====
+0 35d newest   syscall p=0xf07ee200 #0x3
+0 35c       ef syscall: re-entering kernel
+0 35b      13c syscall: run user p=0xf07ee200
+0 35a       8c syscall p=0xf07ee200 err=0 ret=f016800c
+0 359       e6 syscall p=0xf07ee200 #0xc7
+0 358      17f syscall: re-entering kernel
+0 357      c78 syscall: run user p=0xf07ee200
+0 356       c3 syscall p=0xf07ee200 err=0 ret=4
+0 355      9c3 syscall p=0xf07ee200 #0x3
+0 354       ef syscall: re-entering kernel
+0 353      112 syscall: run user p=0xf07ee200
+0 352       83 syscall p=0xf07ee200 err=0 ret=f019abe8
+[...]
+.Ed
+.Pp
+Verbose output:
+.Bd -literal
+bash# tdump -v
+C Idx Time Stamp       Delta-T  T from start
+= === ================ ======== ================
+0 399 000027d9c0cdffdf newest   
+syscall p=0xf07ee200 #0x3
+        f07ee200 00000003 7fffa7a0 7fffefe0 f012bcbb
+0 398 000027d9c0cdfef0       ef 000000ef
+        syscall: re-entering kernel
+        f014fc75 00000183 7fffa7a0 7fffa7a0 a0000200
+0 397 000027d9c0cdfdd6      11a 00000209
+        syscall: run user p=0xf07ee200
+        f07ee200 00000183 7fffefe0 7fffa7a0 08060aa3
+0 396 000027d9c0cdfd4e       88 00000291
+        syscall p=0xf07ee200 err=0 ret=f016800c
+        f07ee200 00000000 f016800c 7fffefe0 08060a90
+0 395 000027d9c0cdfc99       b5 00000346
+        syscall p=0xf07ee200 #0xc7
+        f07ee200 000000c7 7fffa7a0 7fffefe0 a00c5ca6
+.Ed
+
+.Sh "FILES
+.Bl -tag -width /dev/kmem -compact
+.It Pa /bsd
+Default kernel namelist.
+.It Pa /dev/kmem
+Default memory file.
+.El
+.Sh "SEE ALSO
+.Xr ktr 4

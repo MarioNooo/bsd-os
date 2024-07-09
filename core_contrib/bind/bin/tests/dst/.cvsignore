@@ -1,0 +1,6 @@
+Makefile
+dst_test
+t_dst
+.libs
+dst_test.lo
+t_dst.lo

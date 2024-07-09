@@ -1,0 +1,2 @@
+setenv LC_CTYPE ISO8859-1
+setenv LESSCHARSET latin1

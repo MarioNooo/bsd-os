@@ -1,0 +1,39 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI tesetup.8,v 1.5 1997/01/16 00:12:25 bostic Exp
+.\"	Author: ewv Tue May 30 17:26:49 MDT 1995
+.\"
+.Dd December 13, 1996
+.Dt TESETUP 8
+.Os
+.Sh NAME
+.Nm tesetup
+.Nd download microcode to SMC TokenCard Elite token ring adapter
+.Sh SYNOPSIS
+.Nm tesetup
+.Ar interface-name
+.Sh DESCRIPTION
+The
+.Nm tesetup
+utility loads microcode into the SMC TokenCard Elite token 
+ring adapter (driven by the
+.Xr te 4
+driver). This must
+be done before the interface is configured up and need not be repeated
+until power is lost (although it does not hurt to load new microcode over
+old). Each
+.Nm te
+adapter in the system must be loaded individually (typically from a script in
+.Pa /etc/rc.hardware
+). Adapter microcode can only be loaded when the adapter
+is down.
+The microcode image is built into the
+.Nm tesetup
+binary.
+
+.Sh EXAMPLES
+.Dl "# tesetup te0
+.Sh SEE ALSO
+.Xr te 4 ,
+.Xr ifconfig 8

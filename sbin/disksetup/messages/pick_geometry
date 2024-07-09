@@ -1,0 +1,5 @@
+There are several methods of initializing the geometry.  Note that
+probing some SCSI disks or busy SCSI disks, may have undesired results
+(such has hanging) hence you should only probe a disk from single user.
+
+Your options are:

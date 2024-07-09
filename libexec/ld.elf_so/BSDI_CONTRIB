@@ -1,0 +1,222 @@
+Software Package:       
+        ld.elf_so
+
+Release/Version:
+        from NetBSD-current some time after NetBSD 1.5.2
+
+Retrieved from:
+	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/libexec/ld.elf_so
+
+Bug reports:
+	This software package is maintained by BSDI.  Please report
+	bugs to support@bsdi.com.
+
+Comments:
+
+There were a number of header files from NetBSD that had to be
+borrowed / stolen to make this code compile.  Here's a list:
+
+	arch/i386/machine/asm.h
+	arch/i386/machine/cdefs.h
+	arch/i386/machine/elf_machdep.h
+	arch/i386/machine/int_const.h
+	arch/i386/machine/int_fmtio.h
+	arch/i386/machine/int_limits.h
+	arch/i386/machine/int_mwgwtypes.h
+	arch/i386/machine/int_types.h
+	arch/powerpc/machine/asm.h
+	arch/powerpc/machine/cdefs.h
+	arch/powerpc/machine/elf_machdep.h
+	arch/powerpc/machine/int_const.h
+	arch/powerpc/machine/int_fmtio.h
+	arch/powerpc/machine/int_limits.h
+	arch/powerpc/machine/int_mwgwtypes.h
+	arch/powerpc/machine/int_types.h
+	arch/powerpc/machine/reloc.h
+	dlfcn.h
+	inttypes.h
+	link.h
+	link_elf.h
+	sys/cdefs.h
+	sys/cdefs_aout.h
+	sys/cdefs_elf.h
+	sys/exec_elf.h
+	sys/inttypes.h
+	sys/queue.h
+	sys/stdint.h
+
+The Makefile was extensively modified:
+
+diff -c -r1.1 -r1.2
+*** Makefile	2001/11/20 00:01:13	1.1
+--- Makefile	2001/11/27 23:28:57	1.2
+***************
+*** 1,8 ****
+--- 1,26 ----
+  #	$NetBSD: Makefile,v 1.39 2001/10/31 18:26:23 skrll Exp $
+  
++ __bsdi__=1
++ 
++ .ifndef __bsdi__
++ 
+  .include <bsd.own.mk>			# for OBJECT_FMT definition
+  
+  ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
++ 
++ .else
++ 
++ .SUFFIXES:
++ .SUFFIXES: .o .s .S .c
++ 
++ OBJECT_FMT= ELF
++ MKPIC= yes
++ MACHINE_ARCH= ${MACHINE}
++ ARCHSUBDIR= ${MACHINE_ARCH}
++ BINDIR= /shlib
++ 
++ .endif
++ 
+  M= ${.CURDIR}/arch/${ARCHSUBDIR}
+  
+  .if ((${MACHINE_ARCH} == "alpha") ||					\
+***************
+*** 17,23 ****
+--- 35,48 ----
+       (${MACHINE_ARCH} == "vax")) &&					\
+      ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
+  
++ .ifndef __bsdi__
+  PROG=	ld.elf_so
++ .else
++ PROG=	ld-bsdi.so
++ MAN8=	ld-bsdi.so.0
++ MLINKS+= ld-bsdi.so.8 ld.so.8
++ STRIP=
++ .endif
+  
+  # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
+  # is first.
+***************
+*** 29,46 ****
+  	map_object.c load.c search.c headers.c paths.c
+  CPPFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
+  CPPFLAGS+= -I${.CURDIR}
+  CPPFLAGS+= -DDEBUG -DRTLD_LOADER
+  CPPFLAGS+= -D_RTLD_SOURCE
+  #CPPFLAGS+= -DRTLD_DEBUG
+  #CPPFLAGS+= -DRTLD_DEBUG_RELOC
+  #DBG=	-g
+  
+  LDADD+=	-non_shared -L${DESTDIR}/${LIBDIR} -lc_pic
+  DPADD+=	${LIBC_PIC}
+  
+  STRIPFLAG=
+  
+! .PATH: $M
+  
+  ${PROG}: ${OBJS} ${DPADD}
+  	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+--- 54,89 ----
+  	map_object.c load.c search.c headers.c paths.c
+  CPPFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
+  CPPFLAGS+= -I${.CURDIR}
++ .ifdef __bsdi__
++ CPPFLAGS+= -I${M}
++ .endif
+  CPPFLAGS+= -DDEBUG -DRTLD_LOADER
+  CPPFLAGS+= -D_RTLD_SOURCE
+  #CPPFLAGS+= -DRTLD_DEBUG
+  #CPPFLAGS+= -DRTLD_DEBUG_RELOC
++ .ifdef __bsdi__
++ CPPFLAGS+= -DDDBCTL_MAXID=0
++ CPPFLAGS+= -D_rtld_debug_state=_r_debug_state
++ RELEASE!= uname -r
++ CPPFLAGS+= -DRELEASE=\"${RELEASE}\"
++ CFLAGS+= ${CPPFLAGS}
++ .endif
+  #DBG=	-g
+  
+  LDADD+=	-non_shared -L${DESTDIR}/${LIBDIR} -lc_pic
++ .ifdef __bsdi__
++ LIBC_PIC=${LIBC:S/libc/libc_pic/}
++ .endif
+  DPADD+=	${LIBC_PIC}
+  
+  STRIPFLAG=
++ 
++ .PATH: ${M}
+  
+! .ifdef __bsdi__
+! .S.o:
+! 	${CPP} ${CPPFLAGS} ${.IMPSRC} | ${AS} -o ${.TARGET}
+! .endif
+  
+  ${PROG}: ${OBJS} ${DPADD}
+  	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+
+The sysident.h file was modified to generate a BSD/OS ABI tag:
+
+diff -c -r1.1 -r1.2
+*** sysident.h	2001/11/20 00:01:15	1.1
+--- sysident.h	2001/11/27 23:18:39	1.2
+***************
+*** 34,39 ****
+--- 34,41 ----
+   * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
+   */
+  
++ #ifndef __bsdi__
++ 
+  /*
+   * Here we define the NetBSD OS Version in an ELF .note section, structured
+   * like:
+***************
+*** 74,76 ****
+--- 76,100 ----
+  
+  	"\t.p2align 2\n"
+  );
++ 
++ #else
++ 
++ /*
++  * Implement Linux/FreeBSD/NetBSD ELF style binary branding.
++  * See http://www.netbsd.org/Documentation/kernel/elf-notes.html
++  * for more information.
++  */
++ #define ABI_OSNAME	"BSD/OS"
++ #define ABI_NOTETYPE	1
++ 
++ static const struct {
++ 	Elf32_Nhdr hdr;
++ 	char	name[roundup(sizeof (ABI_OSNAME), sizeof (int32_t))];
++ 	char	desc[roundup(sizeof (RELEASE), sizeof (int32_t))];
++ } ident __attribute__ ((__section__ (".note.ABI-tag"))) = {
++ 	{ sizeof (ABI_OSNAME), sizeof (RELEASE), ABI_NOTETYPE },
++ 	ABI_OSNAME,
++ 	RELEASE
++ };
++ 
++ #endif
+
+The PowerPC start-up code requires an argc parameter to appear on the
+stack.  I don't believe that this was required by the ABI, but in any
+event, we now copy the argc value from register to the stack:
+
+diff -c -r1.1 -r1.2
+*** arch/powerpc/rtld_start.S	2001/11/20 00:01:15	1.1
+--- arch/powerpc/rtld_start.S	2001/11/27 23:16:12	1.2
+***************
+*** 42,47 ****
+--- 42,50 ----
+  /*	stw	6,24(1)			# obj		(always 0) */
+  /*	stw	7,28(1)			# cleanup	(always 0) */
+  	stw	8,32(1)			# ps_strings
++ #ifdef __bsdi__
++ 	stw	3,-4(4)			# argc compatibility with NetBSD
++ #endif
+  
+  	bl	1f
+  	.long	_GLOBAL_OFFSET_TABLE_-.-4
+
+BSDI BSDI_CONTRIB,v 1.3 2001/11/28 04:42:32 donn Exp

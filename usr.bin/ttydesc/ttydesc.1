@@ -1,0 +1,70 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ttydesc.1,v 1.3 1996/08/12 18:19:23 prb Exp
+.Dd May 30th, 1996
+.Os
+.Dt TTYDESC 1
+.Sh NAME
+.Nm ttydesc
+.Nd "display description of tty from /etc/ttys file"
+.Sh SYNOPSIS
+.Nm
+.Op Fl r
+.Op Fl t Ar tty
+.Op Ar field Op n
+.Sh DESCRIPTION
+The
+.Nm
+program reads the
+.Pa /etc/ttys
+file (see
+.Xr ttys 5 )
+looking for the entry specified by
+.Ar tty
+or for the current controlling terminal if
+.Ar tty
+was not specified.
+If
+.Ar field
+is not specified, the entire database entry constructed for the terminal
+is displayed
+(see
+.Xr ttys.conf 5 ) .
+.Pp
+If
+.Ar field
+is specified, only the value(s) for that
+.Ar field
+in the database entry are printed.
+If
+.Ar n
+is also specified, which should be a numeric argument,
+only the
+.Ar n Ns No -th
+element of
+.Ar field
+is displayed.
+The first element is element 0 (zero).
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl r
+Do not append a trailing newline when the elements are printed.
+This is generally only useful when
+.Ar n
+is also specified, or
+.Ar field
+only has a single value.
+.It Fl t
+Use the entry associated with
+.Ar tty
+instead of the entry associated with the current controlling terminal.
+.El
+.Sh SEE ALSO
+.Xr ttys 5 ,
+.Xr ttys.conf 5
+.Sh HISTORY
+This command first appeared in BSD/OS 3.0.
+.\" .Sh BUGS

@@ -1,0 +1,4 @@
+Disksetup will default the DOS geometry to the geometry to be used by
+BSD/OS.  It is possible that this is the wrong geometry, so please check
+the geometry by using it.
+Press <ENTER> to continue.

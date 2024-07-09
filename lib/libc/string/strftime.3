@@ -1,0 +1,273 @@
+.\"	BSDI strftime.3,v 2.2 1995/08/10 17:35:20 bostic Exp
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" the American National Standards Committee X3, on Information
+.\" Processing Systems.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)strftime.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd June 4, 1993
+.Dt STRFTIME 3
+.Os
+.Sh NAME
+.Nm strftime
+.Nd format date and time
+.Sh SYNOPSIS
+.Fd #include <time.h>
+.Ft size_t
+.Fn strftime "char *buf" "size_t maxsize" "const char *format" "const struct tm *timeptr"
+.Sh DESCRIPTION
+The
+.Fn strftime
+function formats the information from
+.Fa timeptr
+into the buffer
+.Fa buf
+according to the string pointed to by
+.Fa format .
+.Pp
+The
+.Fa format
+string consists of zero or more conversion specifications and
+ordinary characters.
+All ordinary characters are copied directly into the buffer.
+A conversion specification consists of a
+.Dq \&%
+character and one other character.
+.Pp
+No more than
+.Fa maxsize
+characters will be placed into the array.
+If the total number of resulting characters, including the terminating
+null character, is not more than
+.Fa maxsize ,
+.Fn strftime
+returns the number of characters in the array, not counting the
+terminating null.
+Otherwise, zero is returned.
+.Pp
+Each conversion specification is replaced by the characters as
+follows which are then copied into the buffer.
+.Bl -tag -width "xxxx"
+.It Cm \&%a
+is replaced by the locale's abbreviated weekday name.
+In the default locale, it is equivalent to one of the following:
+.Dq "Sun" ,
+.Dq "Mon" ,
+.Dq "Tue" ,
+.Dq "Wed" ,
+.Dq "Thu" ,
+.Dq "Fri"
+or
+.Dq "Sat" .
+.It Cm \&%A
+is replaced by the locale's full weekday name.
+In the default locale, it is equivalent to one of the following:
+.Dq "Sunday" ,
+.Dq "Monday" ,
+.Dq "Tuesday" ,
+.Dq "Wednesday" ,
+.Dq "Thursday" ,
+.Dq "Friday" ,
+or
+.Dq "Saturday" .
+.It Cm \&%b
+is replaced by the locale's abbreviated month name.
+In the default locale, it is equivalent to one of the following:
+.Dq "Jan" ,
+.Dq "Feb" ,
+.Dq "Mar" ,
+.Dq "Apr" ,
+.Dq "May" ,
+.Dq "Jun" ,
+.Dq "Jul" ,
+.Dq "Aug" ,
+.Dq "Sep" ,
+.Dq "Oct" ,
+.Dq "Nov"
+or
+.Dq "Dec" .
+.It Cm \&%B
+is replaced by the locale's full month name.
+In the default locale, it is equivalent to one of the following:
+.Dq "January" ,
+.Dq "February" ,
+.Dq "March" ,
+.Dq "April" ,
+.Dq "May" ,
+.Dq "June" ,
+.Dq "July" ,
+.Dq "August" ,
+.Dq "September" ,
+.Dq "October" ,
+.Dq "November"
+or
+.Dq "December" .
+.It Cm \&%c
+is replaced by the locale's date and time representation.
+In the default locale, it is equivalent to
+.Dq "%x %X" ,
+i.e.,
+.Dq "mm/dd/yy hh:mm:ss" .
+.It Cm \&%C
+is replaced by the century (a year divided by 100 and truncated
+to an integer) as a decimal number (00-99).
+.It Cm \&%d
+is replaced by the day of the month as a decimal number (01-31).
+.It Cm \&%D
+is equivalent to
+.Dq %m/%d/%y ,
+i.e
+.Dq mm/dd/yy .
+.It Cm \&%e
+is replaced by the day of month as a decimal number (1-31); single
+digits are preceded by a blank.
+.It Cm \&%h
+is replaced by the locale's abbreviated month name.
+In the default locale, it is equivalent to one of the following:
+.Dq "Jan" ,
+.Dq "Feb" ,
+.Dq "Mar" ,
+.Dq "Apr" ,
+.Dq "May" ,
+.Dq "Jun" ,
+.Dq "Jul" ,
+.Dq "Aug" ,
+.Dq "Sep" ,
+.Dq "Oct" ,
+.Dq "Nov"
+or
+.Dq "Dec" .
+.It Cm \&%H
+is replaced by the hour (24-hour clock) as a decimal number (00-23).
+.It Cm \&%I
+is replaced by the hour (12-hour clock) as a decimal number (01-12).
+.It Cm \&%j
+is replaced by the day of the year as a decimal number (001-366).
+.It Cm \&%k
+is replaced by the hour (24-hour clock) as a decimal number (0-23);
+single digits are preceded by a blank.
+.It Cm \&%l
+is replaced by the hour (12-hour clock) as a decimal number (1-12);
+single digits are preceded by a blank.
+.It Cm \&%m
+is replaced by the month as a decimal number (01-12).
+.It Cm \&%M
+is replaced by the minute as a decimal number (00-59).
+.It Cm \&%n
+is replaced by a newline.
+.It Cm \&%p
+is replaced by locale's equivalent of
+.Dq AM
+(ante meridiem)
+or
+.Dq PM
+(post meridiem) as appropriate.
+In the default locale, it is replaced by
+.Dq AM
+or
+.Dq PM .
+.It Cm \&%r
+is equivalent to
+.Dq "%I:%M:%S %p" ,
+i.e.,
+.Dq "hh:mm:ss AM|PM" .
+.It Cm \&%R
+is equivalent to
+.Dq %H:%M ,
+i.e.,
+.Dq hh:mm .
+.It Cm \&%s
+is replaced by the number of seconds since the Epoch, UCT (see
+.Xr mktime 3 ) .
+.It Cm \&%S
+is replaced by the second as a decimal number (00-60).
+.It Cm \&%t
+is replaced by a tab.
+.It Cm \&%T
+is equivalent to
+.Dq %H:%M:%S ,
+i.e.,
+.Dq hh:mm:ss .
+.It Cm \&%u
+is replaced by the weekday (Monday as the first day of the week)
+as a decimal number (1-7).
+.It Cm \&%U
+is replaced by the week number of the year (the first Sunday as
+the first day of week 1) as a decimal number (00-53).
+.It Cm \&%V
+is replaced by the week number of the year (the first Monday as
+the first day of week 1) as a decimal number (00-53).
+.It Cm \&%w
+is replaced by the weekday (Sunday as the first day of the week)
+as a decimal number (0-6).
+.It Cm \&%W
+is replaced by the week number of the year (the first Monday as
+the first day of week 1) as a decimal number (00-53).
+.It Cm \&%x
+is replaced by the locale's date representation.
+In the default locale, it is equivalent to
+.Dq %m/%d/%y ,
+i.e.,
+.Dq mm/dd/yy .
+.It Cm \&%X
+is replaced by the locale's time representation.
+In the default locale, it is equivalent to
+.Dq %H:%M:%S ,
+i.e.,
+.Dq hh:mm:ss .
+.It Cm \&%y
+is replaced by the year without century as a decimal number (00-99).
+.It Cm \&%Y
+is replaced by the year with century as a decimal number.
+.It Cm \&%Z
+is replaced by the time zone name.
+.It Cm \&%%
+is replaced by a single % character.
+.El
+.Sh SEE ALSO
+.Xr date 1 ,
+.Xr printf 1 ,
+.Xr ctime 3 ,
+.Xr printf 3
+.Sh STANDARDS
+The
+.Fn strftime
+function
+conforms to
+.St -ansiC .
+The %C, %D, %e, %h, %k, %l, %n, %r, %R, %s, %t, %T, %u and %V
+conversion specifications are extensions to that standard.
+.Sh BUGS
+There is no conversion specification for the phase of the moon.

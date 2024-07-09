@@ -1,0 +1,27 @@
+Software Package:       
+	sendmail
+
+Release/Version:
+	8.12.10
+
+Retrieved from:
+	ftp://ftp.sendmail.org/sendmail/
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and sendmail@sendmail.org
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added:
+	BSDI_CONTRIB
+	makefile
+	cf/cf/bsdi.mc
+	devtools/Site/site.config.m4
+Changed:
+	devtools/OS/BSD-OS to remove the -DNETISO define
+

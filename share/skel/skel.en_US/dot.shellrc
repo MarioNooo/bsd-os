@@ -1,0 +1,34 @@
+#
+#	$HOME/.shellrc
+#
+
+reset() { stty sane intr ^C erase ^H kill ^U quit ^\\ echoe ${1+"$@"}; }
+
+#	WWW short-cuts
+
+dict() { www -na 'http://c.gp.cs.cmu.edu:5103/prog/webster?' ${1+"$@"}; }
+
+#	TEXT DATABASE
+#	for areacodes see areacode(1)
+
+airport() { grep -ih -- "$*" /usr/share/misc/airport; }
+zipcode() { grep -ih -- "$*" /usr/share/misc/zipcodes ; }
+
+case "$SHELL" in
+*/bash)
+	back() { cd - ${1+"$@"}; }
+	h() { fc -l ${1+"$@"}; }
+	eval 'functions() { typeset -f ${1+"$@"}; }'
+	whence() { type -path ${1+"$@"}; }
+	;;
+*/sh)
+	eval 'functions() { typeset -f ${1+"$@"}; }'
+	whence() { type -path ${1+"$@"}; }
+	;;
+*/ksh)
+	back() { cd - ${1+"$@"}; }
+	h() { fc -l ${1+"$@"}; }
+	;;
+esac
+
+if [ -f $HOME/.shellrc.locale ] ; then . $HOME/.shellrc.locale ; fi

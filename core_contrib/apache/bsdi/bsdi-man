@@ -1,0 +1,510 @@
+#!/usr/bin/perl
+#
+# BSDI bsdi-man,v 1.2 2000/03/07 22:10:59 polk Exp
+#
+# bsdi-man -- HTML hypertext BSDI man page interface
+# based on bsdi-man.pl,v 2.17 1995/10/05 16:48:58 sanders Exp
+# converted to CGI by polk@BSDI.COM 1/10/1995
+# Dual CGI/Plexus mode and new interface by sanders@bsdi.com 9/22/1995
+# Netscape 3.0 broke entity decoding in forms so we had to change the protocol.
+
+package bsdi_man;
+
+$BSDICON = '/bsdi/bsd-daemon.gif';
+
+# Config Options
+# map sections to their man command argument(s)
+%sections = (
+    "", "",
+    "1", "-s 1",
+    "1L", "-s 1",
+    "1X", "-s 1",
+    "2", "-s 2",
+    "3", "-s 3",
+    "3C", "-s 3",
+    "3N", "-s 3",
+    "3R", "-s 3",
+    "3X", "-s 3",
+    "3X11", "-M X11 -s 3",
+    "3X1F", "-s 3",
+    "3X1X", "-s 3",
+    "3XT", "-s 3",
+    "3XX", "-s 3",
+    "3XXL", "-s 3",
+    "3Xt", "-s 3",
+    "4", "-s 4",
+    "5", "-s 5",
+    "5F", "-s 5",
+    "5F", "-s 5",
+    "6", "-s 6",
+    "7", "-s 7",
+    "8", "-s 8",
+    "8C", "-s 8",
+    "l", "-s local",
+    "n", "-s new",
+    "o", "-s old",
+    "bsdi", "-M bsdi",
+    "mh", "-M mh",
+    "sendmail", "-M sendmail",
+    "X11", "-M X11",
+);
+@sections = keys %sections; shift @sections;	# all but the "" entry
+$sections = join("|", @sections);		# sections regexp
+$protocol = "1.1";				# version of the form protocol
+
+# this can easily overridden by setting $bsdi_man'webmaster
+$webmaster = $webmaster || $main'plexus{'admin'};
+
+# CGI Interface -- runs at load time
+&main'do_bsdi_man(&env('SCRIPT_NAME'), &env('PATH_INFO'), &env('QUERY_STRING'))
+    unless defined($main'plexus_configured);
+
+# Plexus Native Interface
+sub main'do_bsdi_man {
+    local($BASE, $path, $form) = @_;
+    local($_, %form, $query, $proto, $name, $section, $apropos);
+
+    $BASE = "/" . $BASE unless $BASE =~ /^\//;
+
+    # we serve up our own bitmap if needed
+    return &bitmap if ($path =~ /bsdi-man.xbm$/);
+
+    # indexpage if no query data
+    return &indexpage unless $form;
+
+    # check to see if it's an old- or new-style query
+    if ($form =~ m/^proto=[\d\.]*&/) {
+	# New-style query, process the form data
+	# We are expecting: proto=$protocol, query, section, apropos, title
+	&decode_form($form, *form, 0);
+
+	$proto = $form{'proto'};		# new-style proto
+	die "Invalid Query Protocol Version\n"
+	    unless $proto eq '1.0' || $proto eq $protocol;
+	# V1.0 used `section' for the section but Netscape 3.0 broke
+	# entity decoding so we had to change to msection in V1.1.
+
+	$name = $query = $form{'query'};
+	if (defined $form{'msection'}) {
+	    $section = $form{'msection'};
+	}
+	else {
+	    $section = $form{'section'};
+	}
+	$section = "" if $section eq "ALL";
+	$apropos = $form{'apropos'};
+	$alttitle = $form{'title'};
+	if (!$apropos && $query =~ m/^(.*)\(([^\)]*)\)/) {
+	    $name = $1; $section = $2;
+	}
+    } else {
+	# Old-style query, look for `foo', `foo()', `foo(sect)' patterns.
+	undef $proto;				# old-style
+
+	$query = join(" ", &splitquery($form));
+	($name, $section) =
+		$query =~ m/^([\w\s\+\,\.\_\-]+)\\*\(([\w\,]*)\\*\)/;
+	$apropos = !(defined($name) && defined($section));
+    }
+
+    $apropos  ?  &apropos($query)  :  &man($name, $section);
+}
+
+# --------------------- support routines ------------------------
+
+sub debug {
+    &http_header("text/plain");
+    print @_,"\n----------\n\n\n";
+}
+
+sub http_header {
+    local($content_type) = @_;
+    if (defined($main'plexus_configured)) {
+	&main'MIME_header('ok', $content_type);
+    } else {
+	print "Content-type: $content_type\n\n";
+    }
+}
+
+sub env { defined($main'ENV{$_[0]}) ? $main'ENV{$_[0]} : undef; }
+
+sub apropos {
+    local($query) = @_;
+    local($_, $title, $head, *APROPOS);
+    local($names, $section, $msg, $key);
+    local($prefix);
+
+    $prefix = "Apropos ";
+    if ($alttitle) {
+	$prefix = "";
+	$title = &encode_title($alttitle);
+	$head = &encode_data($alttitle);
+    } else {
+	$title = &encode_title($query);
+	$head = &encode_data($query);
+    }
+
+    &http_header("text/html");
+    print "<HTML>\n";
+    print "<HEAD>\n";
+    print "<TITLE>BSDI Hypertext Man Pages: Apropos $title</TITLE>\n";
+    print "</HEAD>\n";
+    print "<BODY>\n";
+    print "<H1><A HREF=\"http://www.bsdi.com/\"><IMG SRC=\"$BSDICON\" ALT=\"[BSDI Home Page] \"></A><IMG SRC=\"$BASE/bsdi-man.xbm\" ALT=\"\"> $prefix$head</H1>\n";
+    print "<P>\n";
+    print "<A HREF=\"$BASE\">Index Page and Help</A>\n";
+
+    &formquery;
+
+    print "<HR>\n";
+
+    print "<DL>\n";
+
+    &proc(*APROPOS, "/usr/bin/apropos", "--", $query) ||
+	die "$0: open of /usr/bin/apropos failed: $!\n";
+    while (<APROPOS>) {
+	if (m/nothing appropriate/) {
+		print "Sorry, no data found...\n";
+		last;
+	}
+
+    	# matches whatis.db lines: name[, name ...] (sect) - msg
+	$names = $section = $msg = $key = undef;
+        ($names, $section, $msg) = m/^([^()]+)\(([^)]*)\)\s+-\s+(.*)/;
+        ($key) = m/^([^,\s]*)/;		# match first element only
+	print "<DT><A HREF=\"$BASE?proto=$protocol&query=", &encode_url($key),
+	    "&msection=", &encode_url($section), "&apropos=0\">",
+	    &encode_data("$names($section)"), "</A>\n<DD>",
+	    &encode_data($msg), "\n";
+    }
+    close(APROPOS);
+
+    print "</DL>\n</BODY>\n</HTML>\n";
+}
+
+sub man {
+    local($name, $section) = @_;
+    local($_, $title, $head, *MAN);
+    local($html_name, $html_section, $prefix);
+    local(@manargs);
+
+    $prefix = "MAN ";
+    if ($alttitle) {
+	$prefix = "";
+	$title = &encode_title($alttitle);
+	$head = &encode_data($alttitle);
+    } elsif ($section) {
+	$title = &encode_title("${name}($section)");
+	$head = &encode_data("${name}($section)");
+    } else {
+	$title = &encode_title("${name}");
+	$head = &encode_data("${name}");
+    }
+
+    &http_header("text/html");
+    print "<HTML>\n";
+    print "<HEAD>\n";
+    print "<TITLE>BSDI Hypertext Man Pages: $title </TITLE>\n";
+    print "</HEAD>\n";
+    print "<BODY>\n";
+    print "<H1><A HREF=\"http://www.bsdi.com/\"><IMG SRC=\"$BSDICON\" ALT=\"[BSDI Home Page] \"></A><IMG SRC=\"$BASE/bsdi-man.xbm\" ALT=\"\"> $prefix$head</H1>\n";
+    print "<P>\n";
+    print "<A HREF=\"$BASE\">Index Page and Help</A>\n";
+
+    &formquery;
+
+    print "<P>\n";
+    print "This data is part of a licensed program from BERKELEY SOFTWARE\n";
+    print "DESIGN, INC.  Portions are copyrighted by BSDI, The Regents of\n";
+    print "the University of California, Massachusetts Institute of\n";
+    print "Technology, Free Software Foundation, and others.\n";
+    print "<BR>\n";
+    print "<HR>\n";
+    print "<PRE>\n";
+
+    $html_name = &encode_data($name);
+    $html_section = &encode_data($section);
+
+    if (!defined($sections{$section})) {
+	print "Sorry, section ``$html_section'' is not valid\n";
+	return;
+    }
+
+    @manargs = split(/ /, $sections{$section});
+
+    &proc(*MAN, "/usr/bin/man", @manargs, "--", $name) ||
+	die ("$0: open of man command failed: $!\n");
+    if (eof(MAN)) {
+	print "Sorry, no data found for $html_name($html_section)...\n";
+	return;
+    }
+    while(<MAN>) {
+	$_ = &encode_data($_);
+	if(m,(<B>)?\#include(</B>)?\s+(<B>)?\&#lt\;(.*\.h)\&#gt\;(</B>)?,) {
+	    $match = $4; ($regexp = $match) =~ s/\./\\\./;
+	    s,$regexp,\<A HREF=\"file:/usr/include/$match\"\>$match\</A\>,;
+        }
+	/^\s/ && 			# skip headers
+	    s,((<[IB]>)?[\w\_\.\-]+\s*(</[IB]>)?\s*\(($sections)\)),&mlnk($1),oige;
+	print;
+    }
+    close(MAN);
+    print "</PRE>\n";
+    print "</BODY>\n";
+    print "</HTML>\n";
+}
+
+sub mlnk {
+    local($matched) = @_;
+    local($link, $section);
+    ($link = $matched) =~ s/[\s]+//g;
+    $link =~ s/<\/?[IB]>//g;
+    ($link, $section) = ($link =~ m/^([^\(]*)\((.*)\)/);
+    $link = &encode_url($link);
+    $section = &encode_url($section);
+    return "<A HREF=\"$BASE?proto=$protocol&query=$link&msection=$section&apropos=0\">$matched</A>";
+}
+
+sub proc {
+    local(*FH, $prog, @args) = @_;
+    local($pid) = open(FH, "-|");
+    return undef unless defined($pid);
+    if ($pid == 0) {
+	exec $prog, @args;
+	die "exec $prog failed\n";
+    }
+    1;
+}
+
+# $indent is a bit of optional data processing I put in for
+# formatting the data nicely when you are emailing it.
+# This is derived from code by Denis Howe <dbh@doc.ic.ac.uk>
+# and Thomas A Fine <fine@cis.ohio-state.edu>
+sub decode_form {
+    local($form, *data, $indent, $key, $_) = @_;
+    foreach $_ (split(/&/, $form)) {
+	($key, $_) = split(/=/, $_, 2);
+	$_   =~ s/\+/ /g;				# + -> space
+	$key =~ s/\+/ /g;				# + -> space
+	$_   =~ s/%([\da-f]{1,2})/pack(C,hex($1))/eig;	# undo % escapes
+	$key =~ s/%([\da-f]{1,2})/pack(C,hex($1))/eig;	# undo % escapes
+	$_   =~ s/[\r\n]+/\n\t/g if defined($indent);	# indent data after \n
+	$data{$key} = $_;
+    }
+}
+
+#
+# Splits up a query request, returns an array of items.
+# usage: @items = &main'splitquery($query);
+#
+sub splitquery {
+    local($query) = @_;
+    grep((s/%([\da-f]{1,2})/pack(C,hex($1))/eig, 1), split(/\+/, $query));
+}
+
+# encode unknown data for use in a URL <A HREF="...">
+sub encode_url {
+    local($_) = @_;
+    # rfc1738 says that ";"|"/"|"?"|":"|"@"|"&"|"=" may be reserved.
+    # And % is the escape character so we escape it along with
+    # single-quote('), double-quote("), grave accent(`), less than(<),
+    # greater than(>), and non-US-ASCII characters (binary data),
+    # and white space.  Whew.
+    s/([\000-\032\;\/\?\:\@\&\=\%\'\"\`\<\>\177-\377])/sprintf('%%%02x',ord($1))/eg;
+    $_;
+}
+# encode unknown data for use in <TITLE>...</TITILE>
+sub encode_title {
+    # like encode_url but less strict (I couldn't find docs on this)
+    local($_) = @_;
+    s/([\000-\031\%\&\<\>\177-\377])/sprintf('%%%02x',ord($1))/eg;
+    $_;
+}
+# encode unknown data for use inside markup attributes <MARKUP ATTR="...">
+sub encode_attribute {
+    # rfc1738 says to use entity references here
+    local($_) = @_;
+    s/([\000-\031\"\'\`\%\&\<\>\177-\377])/sprintf('\&#%03d;',ord($1))/eg;
+    $_;
+}
+# encode unknown text data for using as HTML,
+# treats ^H as overstrike ala nroff.
+sub encode_data {
+    local($_) = @_;
+    local($str);
+    # Escape binary data except for ^H which we process below
+    # \375 gets turned into the & for the entity reference
+    s/([^\010\012\015\032-\176])/sprintf('\375#%03d;',ord($1))/eg;
+
+    # Process ^H sequences, we use \376 and \377 (already escaped
+    # above) to stand in for < and > until those characters can
+    # be properly escaped below.
+    s,((.\010.)+),($str = $1) =~ s/.\010//g; "\376B\377$str\376/B\377";,ge;
+    s,((_\010[^_])+),($str = $1) =~ s/.\010//g; "\376I\377$str\376/I\377";,ge;
+    s,\376[IB]\377_\376/[IB]\377,,g;
+    s/.[\b]//g;			# just do an erase for anything else
+
+    # Escape &, < and >
+    s/\&/\&amp\;/g; s/\</\&lt\;/g; s/\>/\&gt\;/g;
+
+    # Now convert our magic chars into our tag markers
+    s/\375/\&/g; s/\376/</g; s/\377/>/g;
+
+    $_;
+}
+
+sub indexpage {
+    &http_header("text/html");
+    print <<ETX;
+<HTML>
+<HEAD>
+<TITLE>BSDI Hypertext Man Pages: Index Page</TITLE>
+</HEAD>
+<BODY>
+<H1><A HREF=\"http://www.bsdi.com/\"><IMG SRC=\"$BSDICON\" ALT=\"[BSDI Home Page] \"></A><IMG SRC=\"$BASE/bsdi-man.xbm\" ALT=\"\"> BSDI Man Pages</H1>
+
+<P>
+<I>Man Page Lookup</I> searches for man pages name and section as
+given in the selection menu and the query dialog.  <I>Apropos
+Keyword Search</I> searches the database for the string given in
+the query dialog.  There are also several hypertext links provided
+as short-cuts to various queries:  <I>Section Indexes</I> is apropos
+listings of all man pages by section.  <I>Explanations of Man
+Sections</I> contains pointers to the intro pages for various man
+sections.  Or you can select a catagory from <I>Quick Reference
+Categories</I> and see man pages relevant to the selected topic.
+<P>
+ETX
+
+    &formquery;
+
+    print <<ETX;
+<B><I>Section Indexes</I></B>:
+<A HREF="$BASE?proto=$protocol&query=%281&msection=&apropos=1&title=Section%201%20Index">1</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%282&msection=&apropos=1&title=Section%202%20Index">2</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%283%29&msection=&apropos=1&title=Section%203%20Index">3</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%283X11&msection=&apropos=1&title=Section%203X11%20Index">3X11</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%284&msection=&apropos=1&title=Section%204%20Index">4</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%285&msection=&apropos=1&title=Section%205%20Index">5</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%286&msection=&apropos=1&title=Section%206%20Index">6</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%287&msection=&apropos=1&title=Section%207%20Index">7</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=%288&msection=&apropos=1&title=Section%208%20Index">8</A>
+<BR>
+<B><I>Explanations of Man Sections:</I></B>
+<A HREF="$BASE?proto=$protocol&query=intro&msection=1&apropos=0&title=Introduction%20Section%201">intro(1)</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=intro&msection=2&apropos=0&title=Introduction%20Section%202">intro(2)</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=intro&msection=3&apropos=0&title=Introduction%20Section%203">intro(3)</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=intro&msection=4&apropos=0&title=Introduction%20Section%204">intro(4)</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=intro&msection=7&apropos=0&title=Introduction%20Section%207">intro(7)</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=intro&msection=8&apropos=0&title=Introduction%20Section%208">intro(8)</A>
+<BR>
+<B><I>Quick Reference Categories:</I></B>
+<A HREF="$BASE?proto=$protocol&query=network&msection=&apropos=1&title=Quick%20Ref%20Networking">Networking</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=nfs&msection=&apropos=1&title=Quick%20Ref%20NFS">NFS</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=mail&msection=&apropos=1&title=Quick%20Ref%20Mail">Mail</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=languag&msection=&apropos=1&title=Quick%20Ref%20Languages">Languages</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=sco%20(1)&msection=&apropos=1&title=Quick%20Ref%20SCO%20Emulation">SCO Emulation</A> &#164;
+<A HREF="$BASE?proto=$protocol&query=dos&msection=&apropos=1&title=Quick%20Ref%20DOS">DOS</A>
+<BR>
+ETX
+
+    print <<ETX if $webmaster;
+<HR>
+Please direct questions about this server to
+<I><A HREF="/feedback.html">&lt;${webmaster}&gt;</A></I>
+<P>
+ETX
+
+    print "</BODY>\n</HTML>\n";
+    0;
+}
+
+sub formquery {
+    local($astring, $bstring);
+    if (!$apropos) {
+	$astring = " CHECKED";
+    } else {
+	$bstring = " CHECKED";
+    }
+    print <<ETX;
+<FORM METHOD="GET" ACTION="$BASE">
+<INPUT NAME="proto" TYPE="HIDDEN" VALUE="$protocol">
+<DL>
+<DT><B><I>Type of Search:</I></B>
+<DD>
+<INPUT NAME="apropos" VALUE="0" TYPE="RADIO"$astring> <A HREF="$BASE?proto=$protocol&query=man&msection=1&apropos=0">Man</A> Page Lookup
+<SELECT NAME="msection">
+<OPTION VALUE="ALL">All Sections</OPTION>
+<OPTION VALUE="1">1 - General Commands</OPTION>
+<OPTION VALUE="2">2 - System Calls</OPTION>
+<OPTION VALUE="3">3 - Subroutines</OPTION>
+<OPTION VALUE="4">4 - Special Files</OPTION>
+<OPTION VALUE="5">5 - File Formats</OPTION>
+<OPTION VALUE="6">6 - Games</OPTION>
+<OPTION VALUE="7">7 - Macros and Conventions</OPTION>
+<OPTION VALUE="8">8 - Maintenance Commands</OPTION>
+<OPTION VALUE="X11">X11 - X Window System</OPTION>
+<OPTION VALUE="mh">MH - Mail Handler</OPTION>
+<OPTION VALUE="bsdi">BSDI Docs</OPTION>
+<OPTION VALUE="sendmail">Sendmail Docs</OPTION>
+</SELECT>
+<DT><DD>
+<INPUT NAME="apropos" VALUE="1" TYPE="RADIO"$bstring> <A HREF="$BASE?proto=$protocol&query=apropos&msection=1&apropos=0">Apropos</A> Keyword Search (all sections)
+<DT>
+<B><I>Man Page or Keyword Search:</I></B> <INPUT NAME="query">
+<INPUT TYPE="submit" VALUE="Submit">
+<INPUT TYPE="reset" VALUE="Reset">
+<DD>
+</DL>
+</FORM>
+ETX
+    0;
+}
+
+sub bitmap {
+    &http_header("image/x-xbitmap");
+    print <<ETX;
+#define manpage_width 64
+#define manpage_height 54
+static char manpage_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+   0x00, 0x00, 0x00, 0x00, 0x00, 0xdc, 0xff, 0xff, 0xff, 0xff, 0x03, 0x00,
+   0x00, 0x72, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0xaa, 0x8a, 0x08,
+   0x00, 0xa8, 0x1c, 0x00, 0x00, 0x32, 0x55, 0x00, 0x00, 0x40, 0x3d, 0x00,
+   0x00, 0xa2, 0x02, 0x00, 0x00, 0x82, 0x7c, 0x01, 0x00, 0x32, 0x91, 0x04,
+   0x26, 0x01, 0xad, 0x02, 0x00, 0xaa, 0xa0, 0x0a, 0x29, 0x80, 0x7c, 0x01,
+   0x00, 0x32, 0x41, 0x0e, 0x29, 0x00, 0xbd, 0x02, 0x00, 0xa2, 0x20, 0x02,
+   0x29, 0x00, 0x7c, 0x01, 0x00, 0x32, 0x11, 0x0c, 0x66, 0x80, 0xbc, 0x02,
+   0x00, 0xaa, 0x02, 0x00, 0x00, 0x50, 0x74, 0x01, 0x00, 0x32, 0x04, 0x00,
+   0x00, 0x00, 0xb5, 0x02, 0x00, 0x22, 0x00, 0x00, 0x00, 0x00, 0x7c, 0x01,
+   0x00, 0x32, 0x7e, 0xf8, 0xf8, 0x30, 0xbc, 0x02, 0x00, 0x2a, 0xc6, 0x8c,
+   0x99, 0x31, 0x74, 0x01, 0x00, 0x32, 0xc6, 0x8c, 0x19, 0x33, 0xb4, 0x02,
+   0x00, 0x22, 0xc6, 0x38, 0x18, 0x33, 0x74, 0x01, 0x00, 0x32, 0x7e, 0xe0,
+   0x18, 0x33, 0xbc, 0x02, 0x00, 0x2a, 0xc6, 0xc0, 0x19, 0x33, 0x7c, 0x01,
+   0x00, 0x32, 0xc6, 0x8c, 0x19, 0x33, 0xbc, 0x02, 0x00, 0x22, 0xc6, 0x8c,
+   0x99, 0x31, 0x7c, 0x01, 0x00, 0x32, 0x7e, 0xf8, 0xf8, 0x30, 0xbc, 0x02,
+   0x00, 0x2a, 0x00, 0x00, 0x00, 0x00, 0x74, 0x01, 0x00, 0xb2, 0x00, 0x00,
+   0x00, 0x00, 0xb4, 0x02, 0x00, 0x22, 0x85, 0x1d, 0x49, 0x00, 0x6d, 0x01,
+   0x00, 0xb2, 0x4a, 0xa4, 0x4a, 0xa0, 0xac, 0x02, 0x00, 0x2a, 0x85, 0x9c,
+   0x4b, 0x40, 0x6d, 0x01, 0x00, 0xb2, 0x02, 0x85, 0x48, 0x80, 0xb4, 0x02,
+   0x00, 0x22, 0xc1, 0x04, 0xdb, 0x00, 0x7d, 0x01, 0x00, 0xb2, 0x00, 0x00,
+   0x00, 0x10, 0xac, 0x02, 0x00, 0x2a, 0x09, 0xc6, 0x04, 0x09, 0x75, 0x01,
+   0x00, 0xb2, 0x08, 0x29, 0x85, 0x02, 0xbc, 0x02, 0x00, 0x22, 0x38, 0x29,
+   0x95, 0x03, 0x7d, 0x01, 0x00, 0xb2, 0x48, 0x29, 0x8d, 0x80, 0xbc, 0x02,
+   0x00, 0x2a, 0x39, 0xc6, 0x14, 0x03, 0x7d, 0x01, 0x00, 0xb2, 0x02, 0x00,
+   0x00, 0x00, 0xb4, 0x02, 0x00, 0x22, 0x01, 0x00, 0x00, 0x40, 0x6d, 0x01,
+   0x00, 0xb2, 0x02, 0x80, 0x00, 0x80, 0xb4, 0x02, 0x00, 0x2a, 0x55, 0x10,
+   0x40, 0x01, 0x75, 0x01, 0x00, 0xb2, 0xaa, 0xa2, 0x00, 0x80, 0xb4, 0x02,
+   0x00, 0x22, 0x55, 0x55, 0x15, 0x50, 0x75, 0x01, 0x00, 0xb2, 0xaa, 0xaa,
+   0x0a, 0xa0, 0xbc, 0x02, 0x00, 0x2a, 0x55, 0x55, 0x55, 0x51, 0x7c, 0x01,
+   0x00, 0xb2, 0xaa, 0x22, 0x88, 0x00, 0xac, 0x02, 0x00, 0x62, 0x00, 0x00,
+   0x00, 0x00, 0x6e, 0x01, 0x00, 0xdc, 0xff, 0xff, 0xff, 0xff, 0xab, 0x02,
+   0x00, 0x62, 0x3f, 0x1e, 0xfb, 0x3f, 0x7d, 0x01, 0x00, 0xa2, 0xfa, 0xaf,
+   0xef, 0xff, 0xbb, 0x02, 0x00, 0xfc, 0xff, 0xff, 0xff, 0xff, 0x5f, 0x01,
+   0x00, 0xa0, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0x02, 0x00, 0x40, 0x55, 0x55,
+   0x55, 0x55, 0x55, 0x01, 0x00, 0x80, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0x02};
+ETX
+   0;
+}
+
+1;

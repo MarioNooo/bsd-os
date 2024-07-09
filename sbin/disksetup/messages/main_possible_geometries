@@ -1,0 +1,7 @@
+The geometry (number of heads, sectors per track and number of
+cylinders) for the disk is needed.  Disksetup will do its best
+to assist you in picking the geometry.  It is possible to find
+the geometry from several places.  Below is a table of geometries
+easily determined by disksetup.  (The BSD/OS geometry is only defined
+if this disk has been previously labeled.)
+

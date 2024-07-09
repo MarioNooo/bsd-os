@@ -1,0 +1,170 @@
+.\"	BSDI	ipfwflow.8,v 1.1 1999/10/14 02:24:36 prb Exp
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd Aug 12, 1999
+.Dt IPFWFLOW 8
+.Sh NAME
+.Nm ipfwflow
+.Nd monitor IP flows
+.Sh SYNOPSIS
+.Nm ipfwflow
+.Op Ar filter
+.Op Fl mnov
+.Op Fl f Ar flows
+.Op Fl F Ar maxflows
+.Op Fl g Ar serial
+.Op Fl i Ar index
+.Op Fl s Ar serial
+.Op Fl t Ar when
+.Op {in|out|both} Ar size
+.Sh DESCRIPTION
+The
+.Nm ipfwflow
+utility is used to insert, maintain, and examine flow monitoring data.
+The filter, which may be at any point, but most typically is
+.Nm pre-input ,
+the default filter, may be any of:
+.Bl -tag -width indent
+.It Nm pre-input
+A filter on all IP packets as they first enter IP processing
+.It Nm input
+A filter on IP packets destined for the local machine, after fragment
+re-assembly.
+.It Nm forward
+A filter on IP packets being forwarded through this machine.
+.It Nm pre-output
+A filter on all IP packets leaving this machine, prior to routing.
+.It Nm output
+A filter on IP packets generated locally by this machine.
+.It Nm call
+Not an actual filtering point, this chain should contain filters to
+be called from a BPF based filter.
+.El
+.Pp
+A filter is installed by specifying
+.Nm in ,
+.Nm out ,
+or
+.Nm both
+along with the size of the hash table that is used to hold the
+flows.  The size of the hash table does not limit the number of flows,
+however, having 100x more flows than hash table entries will certainly
+impact performance.  In general the hash table should be no more than
+5x or 10x the number of expected flows.
+.Pp
+With no arguments (options only), statistics about the flows are displayed,
+and old entries may be timed out
+(see the
+.Fl t
+option below.)
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl f Ar flows
+Specify the number of empty flows that should be pre-allocated upon
+creation.  If the number of flows exceeds the pre-allocated amount, a
+call to malloc() will be placed inside of the kernel, impacting performance
+while it is being processed.
+.It Fl F Ar maxflows
+Specify the maximum number of flows we will allow.  If more than this number
+of flows are used, the oldest flow will be removed and reported.
+.It Fl g Ar serial
+Glue this ipfwflow to the already existing flow which has the specified
+.Ar serial
+number.
+This is used to coordinate
+.Nm in
+and
+.Nm out
+flows on different interfaces.
+.It Fl i Ar index
+Index number of the interface to limit flow monitoring to.
+.It Fl m
+Monitor the IPFW Flow socket for reports of flows that are discarded because
+of too many flows.
+.It Fl n
+Do not sort the output when examining flows.
+.It Fl o
+Print flows in machine readable format.
+.It Fl s Ar serial
+Specify the serial number of the flow to examine.
+.It Fl t Ar when
+Remove all entries which have not seen a packet in the last
+.Ar when
+seconds.
+Times may be modified with s, m, h, d, w, and y to specify seconds,
+minutes, hours, days, weeks and years.  For example: 1m30s is 1 minute
+and 30 seconds.  A year is always considered to have 365 days.
+.It Fl v
+Only display how many flows have been allocated.
+.El
+.Sh "HUMAN DISPLAY FORMAT
+.Pp
+The human readable display format displays 11 fields:
+.Bl -tag -offset indent -width indent
+.It P
+The protocol number of the flow (6 is TCP)
+.It srcaddr
+One of the 2 address of the flow.
+.It port
+The port number of the flow associated with the srcaddr.
+This value is 0 for protocols other than TCP and UDP.
+.It dstaddr
+One of the 2 address of the flow.
+.It port
+The port number of the flow associated with the dstaddr.
+This value is 0 for protocols other than TCP and UDP.
+.It duration
+The number of seconds this flow saw data.
+.It lastuse
+The number of seconds since this flow last saw data.
+.It "b-in"
+Number of bytes that flowed from srcaddr to dstaddr.
+.It "b-out"
+Number of bytes that flowed from dstaddr to srcaddr.
+.It "p-in"
+Number of packets that flowed from srcaddr to dstaddr.
+.It "p-out"
+Number of packets that flowed from dstaddr to srcaddr.
+.El
+.Sh "MACHINE DISPLAY FORMAT
+.Pp
+The machine readable format displays 13 space seperated values:
+.Bl -tag -offset indent -width xxx
+.It \(bu
+Serial number of the filter this flow belongs to.
+.It \(bu
+Protocol number of the flow.
+.It \(bu
+First address associated with the flow.
+.It \(bu
+Port number (0 if not TCP or UDP) associated with the first address of
+the flow.
+.It \(bu
+Second address associated with the flow.
+.It \(bu
+Port number (0 if not TCP or UDP) associated with the second address of
+the flow.
+.It \(bu
+Time the flow started.
+The time is represented in the number of seconds since 00:00 01/01/70 GMT
+(\fB\s-1UNIX\s+1\fP\(tm time stamp).
+.It \(bu
+Time the last packet was seen through the flow.
+.It \(bu
+Duratation of the flow (last time - start time).
+.It \(bu
+Number of bytes sent from the first address of the flow.
+.It \(bu
+Number of bytes sent from the second address of the flow.
+.It \(bu
+Number of packets sent from the first address of the flow.
+.It \(bu
+Number of packets sent from the second address of the flow.
+.El
+.Sh SEE ALSO
+.Xr ipfw 8

@@ -1,0 +1,238 @@
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd June 6, 1993
+.Dt UUENCODE 1
+.Os BSD 4
+.Sh NAME
+.Nm uuencode ,
+.Nm uudecode
+.Nd encode/decode a binary file
+.Sh SYNOPSIS
+.Nm uuencode
+.Op Fl m
+.Op Ar file
+.Ar name
+.Nm uudecode
+.Op Fl dm
+.Op Fl o Ar output
+.Op Ar file ...
+.Sh DESCRIPTION
+.Nm Uuencode
+and
+.Nm uudecode
+are used to transmit binary files over transmission mediums
+that do not support other than simple
+.Tn ASCII
+data.
+.Pp
+.Nm Uuencode
+reads
+.Ar file
+(or by default the standard input) and writes an encoded version to
+the standard output.
+The encoding uses only printing
+.Tn ASCII
+characters and includes the file permissions of the file and the argument
+.Ar name
+for use by
+.Nm uudecode .
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl m
+Use MIME Base 64 encoding instead of the default encoding.
+.El
+.Pp
+.Nm Uudecode
+reads encoded files (or by default,
+the standard input) and writes an unencoded version to the file named
+.Ar name .
+This file will have the mode of the original file except that no setuid
+or execute bits are retained.
+The encoding format
+includes header and trailer lines.
+The
+.Nm uudecode
+utility ignores lines preceding the header line or following the trailer line.
+Lines preceding the header line must not,
+of course,
+look like the header line.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl d
+The input has no header or trailer lines,
+and is encoded in the default format.
+.It Fl m
+The input has no header or trailer lines,
+and is encoded in the MIME Base64 format.
+.It Fl o
+Put the output into the file named
+.Ar output
+instead of the file name specified when the file was encoded.
+.El
+.Pp
+Only a single file argument may be specified when the
+.Fl d ,
+.Fl m
+or
+.Fl o
+options are specified,
+.Pp
+When using the default encoding format,
+the encoded form of the file is expanded by 38%
+(each 45 bytes becomes 60 bytes, plus character count and newline).
+control information).
+When using MIME Base64 encoding,
+the encoded form of the file is expanded by 35%
+(eacah 56.25 bytes becomes 75 bytes, plus newline).
+.Pp
+The
+.Nm uuencode
+and
+.Nm uudecode
+utilities exit 0 on success, and >0 if an error occurs.
+.Sh EXAMPLES
+The following example packages up a source tree, compresses it,
+encodes it and mails it to a user on another system.
+When
+.Nm uudecode
+is run on the target system, the file
+.Dq src_tree.tar.gz
+will be created which may then be uncompressed and extracted into the
+original tree.
+.Pp
+.Bd -literal -offset indent -compact
+tar cf \- src_tree \&| gzip \&|\e
+uuencode src_tree.tar.gz \&| mail user@foo.bar.com
+.Ed
+.Sh FORMAT
+Files output by
+.Nm uuencode
+consist of a header line,
+followed by a number of lines of encoded text,
+and a trailer line.
+.Pp
+The header line is distinguished by having either
+.Dq "begin\ \&"
+or
+.Dq "begin-base64\ \&"
+as its first word
+(note the trailing spaces).
+This word is followed by a mode (in octal),
+one or more whitespace characters,
+and a string which names the file.
+If the first character of the file name is a tilde
+.Pq Dq \&~ ,
+the first slash-separated token of the pathname is expanded to that
+user's home directory,
+similar to shell pathname expansions.
+.Pp
+If the header line contains
+.Dq "begin\ \&" ,
+the body is encoded in the default format.
+If the header line contains
+.Dq "begin-base64\ \&" ,
+the body is encoded in the MIME Base64 format.
+.Sh "DEFAULT ENCODING"
+The lines of encoded text,
+in the default format,
+are at most 62 characters long (including the trailing newline).
+Each line consists of a character count,
+followed by encoded characters,
+followed by a newline.
+The character count is a single printing character.
+This character represents the number of bytes encoded in the rest of
+the line,
+and is that number offset from the space character (octal 040).
+Such integers are always in the range from 0 to 45 and can be determined
+by subtracting the space character from the character.
+.Pp
+Groups of 3 bytes are stored in 4 characters, 6 bits per character.
+All except zero values are offset from the space character in the
+.Tn ASCII
+character set to make the characters printing.
+(Zero values are stored as backquote
+.Pq \&`
+characters).
+The last line may be shorter than the normal 62 characters.
+If the size is not a multiple of 3, this fact can be determined
+by the value of the count on the last line.
+Extra garbage will be included to make the character count a multiple of 4.
+.Pp
+The body is terminated by a line with a count of zero.
+This line historically consisted of one
+.Tn ASCII
+space (octal 040),
+but this was changed to be a backquote (octal 140) to avoid problems
+with some mailers.
+.Pp
+The trailer line consists of
+.Dq end
+on a line by itself.
+.Sh "MIME BASE64 ENCODING"
+The lines of encoded text,
+in the MIME Base64 encoding,
+are at most 76 characters long (including the trailing newline).
+Each line consists of the encoded characters,
+followed by a newline.
+.Pp
+Groups of 3 bytes are stored in 4 characters, 6 bits per character.
+Each group of 6 bits is converted to a printable character based on
+the conversion table specified by the MIME Base64 standard encoding.
+The last line may be shorter than the normal 76 characters.
+If the size is not a multiple of 3, 0 bits are added to form an integral
+number of 6 bit groups.
+Output character positions that are not required to represent input data
+are written as equal signs
+.Pq Dq \&= .
+.Pp
+The body is terminated by a trailer line,
+which consists of
+.Dq ====
+on a line by itself.
+.Sh SEE ALSO
+.Xr gzip 1 ,
+.Xr mail 1
+.br
+.Rs
+.%T "Internet MIME RFC 1341"
+.Re
+.Sh HISTORY
+The
+.Nm uuencode
+and
+.Nm uudecode
+commands appeared in
+.Bx 4.0 .

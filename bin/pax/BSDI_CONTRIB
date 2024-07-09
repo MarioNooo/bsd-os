@@ -1,0 +1,92 @@
+Software Package:       
+	pax
+
+Release/Version:
+	N/A.
+
+Retrieved from:
+	N/A.
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and muller@sdcc3.ucsd.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+*** -	Wed Dec 31 17:00:00 1969
+--- file_subs.c	Fri Oct  6 10:11:47 1995
+***************
+*** 561,566 ****
+--- 561,571 ----
+  	if (kflag)
+  		return(-1);
+  
++ 	/* if file immutable bits are on, try and turn them off. */
++ 	if (sb.st_flags & (SF_IMMUTABLE | UF_IMMUTABLE))
++ 		(void)chflags(name,
++ 		    sb.st_flags & ~(SF_IMMUTABLE | UF_IMMUTABLE));
++ 
+  	if (S_ISDIR(sb.st_mode)) {
+  		/*
+  		 * try to remove a directory, if it fails and we were going to
+*** -	Wed Dec 31 17:00:00 1969
+--- options.c	Thu Aug 10 10:46:44 1995
+***************
+*** 648,654 ****
+  			pmtime = 0;
+  			break;
+  		case 'o':
+! 			if (opt_add("write_opt=nodir") < 0)
+  				tar_usage();
+  			break;
+  		case 'p':
+--- 648,654 ----
+  			pmtime = 0;
+  			break;
+  		case 'o':
+! 			if (opt_add(strdup("write_opt=nodir")) < 0)
+  				tar_usage();
+  			break;
+  		case 'p':
+Index: file_subs.c
+===================================================================
+RCS file: /master/bin/pax/file_subs.c,v
+retrieving revision 2.3
+diff -c -r2.3 file_subs.c
+*** file_subs.c	1996/11/20 19:26:38	2.3
+--- file_subs.c	1997/01/30 03:20:10
+***************
+*** 570,581 ****
+  
+  	if (S_ISDIR(sb.st_mode)) {
+  		/*
+! 		 * try to remove a directory, if it fails and we were going to
+! 		 * create a directory anyway, tell the caller (return a 1)
+  		 */
+  		if (rmdir(name) < 0) {
+- 			if (type == PAX_DIR)
+- 				return(1); 
+  			syswarn(1,errno,"Unable to remove directory %s", name);
+  			return(-1);
+  		}
+--- 570,585 ----
+  
+  	if (S_ISDIR(sb.st_mode)) {
+  		/*
+! 		 * if we were going to create a directory anyway, just tell
+! 		 * the caller (return a 1).  Don't do an rmdir unless it's
+! 		 * necessary, it makes the entry opaque a union mount.
+! 		 */
+! 		if (type == PAX_DIR)
+! 			return(1); 
+! 		/*
+! 		 * try to remove the directory.
+  		 */
+  		if (rmdir(name) < 0) {
+  			syswarn(1,errno,"Unable to remove directory %s", name);
+  			return(-1);
+  		}

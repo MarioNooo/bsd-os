@@ -1,0 +1,141 @@
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)intro.7	8.1 (Berkeley) 6/5/93
+.\"
+.Dd June 5, 1993
+.Dt INTRO 7
+.Os BSD 4.2
+.Sh NAME
+.Nm intro
+.Nd miscellaneous information pages
+.Sh DESCRIPTION
+This section contains miscellaneous documentation:
+.Bl -tag -width /usr/
+.It Xr ascii 7
+The ASCII character set.
+.It Xr environ 7
+The user environment.
+.It Xr hier 7
+The system filesystem layout.
+.It Xr hostname 7
+A description of host name resolution.
+.It Xr mailaddr 7
+A description of electronic mail addressing.
+.It Xr mdoc 7
+A quick reference guide for the
+.Dq -mdoc
+macro package.
+.It Xr mdoc.samples 7
+A tutorial sampler for writing BSD manuals using the
+.Dq -mdoc
+macro package.
+.It Xr operator 7
+The C language operator precedence and order of evaluation.
+.It Xr rs-232 7
+RS-232 signal names and connector configurations.
+.El
+.Pp
+In addition, there are several miscellaneous dictionaries and data files on
+the system.
+.Pp
+.Bl -tag -width /usr/
+.It Pa /usr/share/dict/propernames
+A list of (largely American) proper names.
+.It Pa /usr/share/dict/web2
+Webster's Second International Dictionary, copyright 1934.
+.It Pa /usr/share/dict/web2a
+Webster's Second International Dictionary, copyright 1934,
+supplemental list with hyphenated terms as well as assorted
+noun and adverbial phrases.
+.It Pa /usr/share/dict/words
+A smaller dictionary style wordlist of unknown origin.
+.It Pa /usr/share/misc/airport
+Three-letter airport codes.
+.It Pa /usr/share/misc/ascii
+Octal, hexadecimal and decimal ASCII character sets.
+See
+.Xr ascii 7
+for more information.
+.It Pa /usr/share/misc/birthtoken
+Month-of-birth flowers and stones.
+.It Pa /usr/share/misc/countrycodes
+ISO 3166 country codes.
+.It Pa /usr/share/misc/flowers
+The secret language of flowers.
+.It Pa /usr/share/misc/inter.phone
+International area codes, indexed by city.
+Up-to-date information can be obtained from the Web in various locations.
+.It Pa /usr/share/misc/man.template
+A template for manual pages, using the historic
+.Dq -man
+macro package.
+.It Pa /usr/share/misc/mdoc.template
+A template for manual pages, using the Berkeley
+.Dq -mdoc
+macro package.
+.It Pa /usr/share/misc/na.phone
+North American area codes, indexed by city.
+Up-to-date information can be obtained from the Web in various locations.
+.It Pa /usr/share/misc/operator
+C operator precedence and order of evaluation.
+See
+.Xr operator 7
+for more information.
+.It Pa /usr/share/misc/zipcodes
+United States Postal Service Zipcodes, indexed by city.
+Up-to-date information can be obtained from the Postal Service
+Web information at
+.Dq http://www.usps.gov .
+.El    
+.Sh EXAMPLES
+To get Boise's ZIP codes:
+.Pp
+.Dl "grep Boise /usr/share/misc/zipcodes"
+.Pp
+To discover the state in which area code 207 resides:
+.Pp
+.Dl "grep 207 /usr/share/misc/na.phone"
+.Pp
+To find out what flower to send to communicate to your beloved the thought
+.Dq "I change but in death" :
+.Pp
+.Dl "grep death /usr/share/misc/flowers"
+.Sh BUGS
+The area codes and ZIP codes are always out of date.
+.Sh SEE ALSO
+.Xr man 1
+.Xr intro 1
+.Xr intro 2
+.Xr intro 3
+.Xr intro 4
+.Xr intro 6
+.Xr intro 8

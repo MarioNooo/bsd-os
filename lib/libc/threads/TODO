@@ -1,0 +1,16 @@
+Projects:
+
+- Look at requirements for SYSCONF stuff and Unistd.h.
+- Update the select stubs in the threads code to use the new 
+  POSIX 1.g select code.
+- Generalize the "monitor" code used in the thread kernel 
+  and make it available for use in other places.
+- Make the kernel monitor lock recursize (i.e. same thread
+  can re-enter monitor.)
+- Add PSHARED support to objects that allow it.
+  This includes mutexes, condition variables and semaphores (when implemented).
+- Add additional support from POSIX 1.j.
+  I.e. Barriers, pthread spinlocks (look at machine/threads/machdep_sync.s).
+  rwlocks, etc.  In particular rwlocks might be used to good effect in a 
+  number of places in libc.
+- Add examples to the man pages.

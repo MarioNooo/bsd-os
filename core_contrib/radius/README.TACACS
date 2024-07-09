@@ -1,0 +1,85 @@
+To: web@merit.edu
+Date: Tue, 18 Oct 1994 14:18:10 -0400 (EDT)
+From: Paul Schneidenbach <schneide@lab.cc.wmich.edu>
+Subject: readme...
+
+
+History:
+
+  I got this version of xtacacs from VMS.HUJI.AC.IL which was a variant
+of the Greg Satz orginal code modified by Yehavi to work with the VMS
+password file.  I added (with the assistance of Leonard Peirce) the MD5
+code to make the server work with a version of MD5 TACACS written into
+the RADIUS code by Al Rubens of Michnet.  I do not know if the code will
+still work on a Unix platform.
+
+
+To build:
+
+  To build the RADIUS modified XTACACS program run the command procedure
+"compile.com" followed by "link.com", the resulting .EXE file will end up
+in the parent directory of where the command procedure was executed.
+
+  You obviously need to run the program from a privileged account and need
+the following files in the same area as the executable file:
+
+  1. secfile.lis which contains the shared MD5 secret.
+  2. user-list.lis which contains accounts not to look up (such as system).
+
+  A log file called "tacacs_log." will be created in the smae directory from
+where the program is run.
+
+
+Futures:
+
+  1. Allow the user to put the secfile.lis and usr-list.lis anywhere.
+  2. Add CHAP support.
+  3. Add Rights Identifiers support.
+  4. Add improved security features.
+  5. Allow it to work only with certain IP hosts.
+
+
+The orginal readme.txt for xtacacs:
+
+-----%<-----SNIP-----%<-----SNIP-----%<-----SNIP-----%<-----SNIP-----
+
+             HUJI modifications for VMS and Unix
+             ===================================
+
+All modifications are marked with a comment that the word HUJI appears inside.
+The main modifications are:
+
+1. An NUI file is consulted before checking the system's user authorization
+   file.  This allows for special users to be handled.
+2. The VMS's verify_user() function replaces dashes in the username into
+   underscores.  If the username contains dots, it truncates it on the first
+   dot.  This is useful for verifying SLIP addresses (the user have to hit the
+   full domain name but only the first part is verified in the users' list).
+3. If the user added @hostname or %Hostname to his username, the query is
+   directed to that host.  This is done only if the host is listed inside the
+   program (the hosts list is compiled inside to enahnce the security).
+
+The format of the NUI file is as follows:
+
+UserID   Password  D/P  R/S  phone-number  comments
+
+where:
+
+D/P:  D for dial-back, P for password verification only.
+R/S:  R - reasearch, S - Student.  Not operative yet.
+
+When using Dial-back you need the modem's control system that was written
+at the Hebrew University which is specific to the Dynamode modems.
+
+For information you may call me at INFO@VMS.HUJI.AC.IL
+                                                            __Yehavi:
+
+-----%<-----SNIP-----%<-----SNIP-----%<-----SNIP-----%<-----SNIP-----
+
+Paul
+
+--
+Paul R. Schneidenbach        Internet:     schneide@mickey.acs.wmich.edu
+Western Michigan University		   schneidenbac@wmich.edu
+University Computing Services	Voice:	   (616) 387-5468
+Kalamazoo, MI  49008

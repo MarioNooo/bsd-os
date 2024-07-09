@@ -1,0 +1,80 @@
+Software Package:       
+        libdl
+
+Release/Version:
+        from NetBSD-current libc/dlfcn some time after NetBSD 1.5.2
+
+Retrieved from:
+	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/lib/libc/dlfcn
+
+Bug reports:
+	This software package is maintained by BSDI.  Please report
+	bugs to support@bsdi.com.
+
+Comments:
+
+For compatibility reasons, we build this code as a separate -ldl
+library.  Note that we continue to distribute our original manual
+page.
+
+To turn this code into a separate shared library, I disabled the
+'weak' symbol features and the symbol renaming.  We declare
+__mainprog_obj as a common symbol so that the dynamic linker can
+patch it here.
+
+Index: dlfcn_elf.c
+===================================================================
+RCS file: /master/lib/libdl/dlfcn_elf.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -c -r1.1.1.1 -r1.2
+*** dlfcn_elf.c	2001/12/05 22:30:52	1.1.1.1
+--- dlfcn_elf.c	2001/12/05 22:36:22	1.2
+***************
+*** 1,3 ****
+--- 1,4 ----
++ /*	BSDI BSDI_CONTRIB,v 1.1 2001/12/05 22:57:01 donn Exp	*/
+  /*	$NetBSD: dlfcn_elf.c,v 1.2 2000/07/06 02:48:41 christos Exp $	*/
+  
+  /*
+***************
+*** 31,45 ****
+  #endif /* LIBC_SCCS and not lint */
+  
+  #if defined(PIC) || defined(lint)
+  #include "namespace.h"
+  
+  #define ELFSIZE ARCH_ELFSIZE
+  #include "rtld.h"
+  
+  #ifdef __weak_extern
+  __weak_extern(__mainprog_obj)
+  #endif
+! extern const Obj_Entry *__mainprog_obj;
+  
+  #ifdef __weak_alias
+  __weak_alias(dlopen,__dlopen)
+--- 32,54 ----
+  #endif /* LIBC_SCCS and not lint */
+  
+  #if defined(PIC) || defined(lint)
++ #ifndef __bsdi__
+  #include "namespace.h"
++ #else
++ #undef	__weak_extern
++ #undef	__weak_alias
++ #endif
+  
+  #define ELFSIZE ARCH_ELFSIZE
+  #include "rtld.h"
+  
+  #ifdef __weak_extern
+  __weak_extern(__mainprog_obj)
++ #endif
++ #ifndef __bsdi__
++ extern
+  #endif
+! const Obj_Entry *__mainprog_obj;
+  
+  #ifdef __weak_alias
+  __weak_alias(dlopen,__dlopen)

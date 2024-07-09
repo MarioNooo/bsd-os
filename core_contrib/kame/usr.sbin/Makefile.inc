@@ -1,0 +1,3 @@
+BINDIR?=	/usr/sbin
+ETCDIR?=	/etc
+CFLAGS+=-DHAVE_SCOPELIB

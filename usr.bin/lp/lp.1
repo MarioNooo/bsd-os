@@ -1,0 +1,93 @@
+.\"	BSDI lp.1,v 2.1 1997/05/07 00:45:53 jch Exp
+.\"
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd June 29, 1993
+.Dt LP 1
+.Os BSD 3
+.Sh NAME
+.Nm lp
+.Nd send files to a printer
+.Sh SYNOPSIS
+.Nm lp
+.Op Fl c
+.Op Fl d Ar printer
+.Op Fl n Ar copies
+.Op Ar
+.Sh DESCRIPTION
+The
+.Nm lp
+utility prints the specified files, or the standard input by default.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Exit only after further access to the input files is no longer
+required.
+.It Fl d
+Use
+.Ar printer
+as the output device.
+If the
+.Fl d
+option is not specified, any value of the
+.Va LPDEST
+environment variable specifies the printer.
+If neither the
+.Fl d
+option nor
+.Va LPDEST
+is specified, any value of the
+.Va PRINTER
+environment variable specifies the printer.
+Otherwise, a default printer is used.
+.It Fl n
+Specify the number of copies to print instead of the default 1.
+.El
+.Pp
+If
+.Ql \&-
+is specified as a
+.Ar file ,
+the standard input is used.
+.Pp
+The
+.Nm lp
+utility is a front-end for the
+.Xr lpr 1
+utility, provided for compatibility with with the
+.St -p1003.2
+specification.
+See the
+.Xr lpr 1
+utility for additional information and options.
+.Pp
+The
+.Nm lp
+utility exits 0 on success, and >0 if an error occurs.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm lp :
+.Bl -tag -width PRINTER
+.It Ev LPDEST
+If the
+.Fl d
+option is not specified, any value of the
+.Va LPDEST
+environment variable specifies the output device.
+.It Ev PRINTER
+If the
+.Fl d
+option is not specified and the
+.Va LPDEST
+environment variable is not set, any value of the
+.Va PRINTER
+environment variable specifies the output device.
+.Sh SEE ALSO
+.Xr lpr 1
+.Sh HISTORY
+The
+.Nm lp
+command first appeared in BSD/OS release 2.1.

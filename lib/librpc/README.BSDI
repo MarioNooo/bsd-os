@@ -1,0 +1,8 @@
+Portions of Sun Microsystem's librpc distribution have been
+moved for better integration into the BSDI distribution.
+
+	rpcgen -> /usr/src/usr.bin/rpcgen
+	rpcsvc -> /usr/src/lib/librpcsvc
+	rpc    -> /usr/src/lib/libc/rpc
+
+Nothing is installed from this directory.

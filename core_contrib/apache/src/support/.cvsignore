@@ -1,0 +1,12 @@
+apaci
+Makefile
+Makefile.config
+modules.c
+Configuration.apaci
+htpasswd
+htdigest
+rotatelogs
+logresolve
+ab
+apxs
+checkgid

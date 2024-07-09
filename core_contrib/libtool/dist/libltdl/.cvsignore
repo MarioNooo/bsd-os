@@ -1,0 +1,11 @@
+acinclude.m4
+config.log
+config.h
+stamp-h1
+libtool
+config.status
+stamp-h
+Makefile
+ltdl.lo
+.libs
+libltdl.la

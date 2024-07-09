@@ -1,0 +1,21 @@
+Software Package:       
+	less
+
+Release/Version:
+	381
+
+Retrieved from:
+	ftp.gnu.org:/pub/gnu/less
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and marknu@flash.net.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+The only modification was the addition of the file "makefile"
+to do man page formatting and provide the standard BSDI targets.

@@ -1,0 +1,401 @@
+Software Package:       
+	libpcap
+
+Release/Version:
+	0.4a6
+
+Retrieved from:
+	ftp.ee.lbl.gov
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and libpcap@ee.lbl.gov.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Changes to support Cisco HDLC.
+
+Allow single character hostnames.
+
+Index: gencode.c
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/gencode.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 gencode.c
+*** gencode.c	1998/02/02 18:59:58	1.1.1.1
+--- gencode.c	1998/02/16 03:54:42
+***************
+*** 517,522 ****
+--- 517,528 ----
+  		off_nl = 22;
+  		return;
+  
++ #ifdef	DLT_C_HDLC
++ 	case DLT_C_HDLC:
++ 		off_linktype = 2;
++ 		off_nl = 4;
++ #endif
++ 
+  	case DLT_ATM_RFC1483:
+  		/*
+  		 * assume routed, non-ISO PDUs
+***************
+*** 607,618 ****
+  		}
+  		break;
+  
+  	case DLT_NULL:
+! 		/* XXX */
+! 		if (proto == ETHERTYPE_IP)
+! 			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET)));
+! 		else
+! 			return gen_false();
+  	}
+  	return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
+  }
+--- 613,648 ----
+  		}
+  		break;
+  
++ #ifdef	DLT_C_HDLC
++ 	case DLT_C_HDLC:
++ 		switch (proto) {
++ 		case ETHERTYPE_ARP:
++ 			/* Cisco's slarp packets use the REVARP ID, */
++ 			/* but that may be a bit obscure, also show */
++ 			/* them if arp packets are requested */
++ 			proto = ETHERTYPE_REVARP;
++ 			break;
++ 		}
++ 		break;
++ #endif	/* DLT_C_HDLC */
++ 
+  	case DLT_NULL:
+! 		/* The loopback interface stores the address family */
+! 		/* in the first word in host byte order */
+! 		switch (proto) {
+! 		case ETHERTYPE_IP:
+! 			proto = AF_INET;
+! 			break;
+! 
+! 		case ETHERTYPE_NS:
+! 			proto = AF_NS;
+! 			break;
+! 
+! 		case ETHERTYPE_ATALK:
+! 			proto = AF_APPLETALK;
+! 			break;
+! 		}
+! 		return gen_cmp(off_linktype, BPF_W, htonl(proto));
+  	}
+  	return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
+  }
+Index: scanner.l
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/scanner.l,v
+retrieving revision 1.2
+diff -c -r1.2 scanner.l
+*** scanner.l	1998/02/17 14:42:07	1.2
+--- scanner.l	1998/04/13 21:28:58
+***************
+*** 138,144 ****
+  {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
+  			  return EID; }
+  {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
+! [A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+  			 yylval.s = sdup((char *)yytext); return ID; }
+  "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
+  [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
+--- 138,144 ----
+  {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
+  			  return EID; }
+  {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
+! [A-Za-z0-9]([-_.A-Za-z0-9]*[.A-Za-z0-9])? {
+  			 yylval.s = sdup((char *)yytext); return ID; }
+  "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
+  [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
+Index: gencode.c
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/gencode.c,v
+retrieving revision 1.3
+diff -c -r1.3 gencode.c
+*** gencode.c	1998/02/17 14:42:06	1.3
+--- gencode.c	1998/07/02 13:36:49
+***************
+*** 20,26 ****
+   */
+  #ifndef lint
+  static const char rcsid[] =
+!     "@(#) /master/core_contrib/tcpdump/libpcap-0.4a6/BSDI_CONTRIB,v 1.5 2000/02/18 22:47:55 jch Exp (LBL)";
+  #endif
+  
+  #include <sys/types.h>
+--- 20,26 ----
+   */
+  #ifndef lint
+  static const char rcsid[] =
+!     "@(#) /master/core_contrib/tcpdump/libpcap-0.4a6/BSDI_CONTRIB,v 1.5 2000/02/18 22:47:55 jch Exp (LBL)";
+  #endif
+  
+  #include <sys/types.h>
+***************
+*** 534,539 ****
+--- 534,544 ----
+  
+  	case DLT_RAW:
+  		off_linktype = -1;
++ 		off_nl = 0;
++ 		return;
++ 
++ 	case DLT_FR:
++ 		off_linktype =  -1;
+  		off_nl = 0;
+  		return;
+  	}
+Index: gencode.c
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/gencode.c,v
+retrieving revision 1.4
+diff -c -r1.4 gencode.c
+*** gencode.c	1998/07/02 13:37:41	1.4
+--- gencode.c	1999/02/02 05:01:05
+***************
+*** 521,526 ****
+--- 521,527 ----
+  	case DLT_C_HDLC:
+  		off_linktype = 2;
+  		off_nl = 4;
++ 		return;
+  #endif
+  
+  	case DLT_ATM_RFC1483:
+Index: gencode.c
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/gencode.c,v
+retrieving revision 1.5
+diff -c -r1.5 gencode.c
+*** gencode.c	1999/02/02 05:02:28	1.5
+--- gencode.c	2000/02/18 22:47:07
+***************
+*** 465,470 ****
+--- 465,477 ----
+  		off_nl = 14;
+  		return;
+  
++ #ifdef	DLT_8021Q
++ 	case DLT_8021Q:
++ 		off_linktype = 16;
++ 		off_nl = 18;
++ 		return;
++ #endif
++ 
+  	case DLT_SLIP:
+  		/*
+  		 * SLIP doesn't have a link level type.  The 16 byte
+***************
+*** 539,546 ****
+  		return;
+  
+  	case DLT_FR:
+! 		off_linktype =  -1;
+! 		off_nl = 0;
+  		return;
+  	}
+  	bpf_error("unknown data link type 0x%x", linktype);
+--- 546,553 ----
+  		return;
+  
+  	case DLT_FR:
+! 		off_linktype = 2;
+! 		off_nl = 4;
+  		return;
+  	}
+  	bpf_error("unknown data link type 0x%x", linktype);
+***************
+*** 638,643 ****
+--- 645,675 ----
+  		break;
+  #endif	/* DLT_C_HDLC */
+  
++ 	case DLT_FR:
++ /* XXX - From print-fr.c */
++ #define	FR_UI			0x03
++ #define FR_NLPID_SNAP           0x80    /* IARP packet */
++ #define FR_NLPID_IP             0xcc    /* IP packet */
++ 
++ #define	FR_CISCO_IP		0x0800	/* IP for cisco */
++ 		switch (proto) {
++ 		case ETHERTYPE_IP:
++ 			b0 = gen_cmp(off_linktype, BPF_H, FR_UI << 8 | FR_NLPID_IP);
++ 			b1 = gen_cmp(off_linktype, BPF_H, FR_CISCO_IP);
++ 			gen_or(b0, b1);
++ 			return b1;
++ 
++ 		case ETHERTYPE_REVARP:
++ 			b0 = gen_cmp(off_linktype, BPF_B, FR_UI);
++ 			b1 = gen_cmp(off_linktype + 1, BPF_B, FR_NLPID_SNAP);
++ 			gen_and(b0, b1);
++ 			return b1;
++ 		       
++ 		default:
++ 			break;
++ 		}
++ 		return gen_true();
++ 
+  	case DLT_NULL:
+  		/* The loopback interface stores the address family */
+  		/* in the first word in host byte order */
+***************
+*** 955,967 ****
+  	case Q_IP:
+  	case Q_ARP:
+  	case Q_RARP:
+! 		if (linktype == DLT_EN10MB)
+  			b0 = gen_ehostop(eaddr, Q_OR);
+! 		else if (linktype == DLT_FDDI)
+  			b0 = gen_fhostop(eaddr, Q_OR);
+! 		else
+  			bpf_error(
+! 			    "'gateway' supported only on ethernet or FDDI");
+  
+  		b1 = gen_host(**alist++, 0xffffffff, proto, Q_OR);
+  		while (*alist) {
+--- 987,1009 ----
+  	case Q_IP:
+  	case Q_ARP:
+  	case Q_RARP:
+! 		switch (linktype) {
+! 		case DLT_EN10MB:
+! #ifdef	DLT_8021Q
+! 		case DLT_8021Q:
+! #endif
+  			b0 = gen_ehostop(eaddr, Q_OR);
+! 			break;
+! 
+! 		case DLT_FDDI:
+  			b0 = gen_fhostop(eaddr, Q_OR);
+! 			break;
+! 
+! 		default:
+  			bpf_error(
+! 			    "'gateway' supported only on Ethernet or FDDI");
+! 			break;
+! 		}
+  
+  		b1 = gen_host(**alist++, 0xffffffff, proto, Q_OR);
+  		while (*alist) {
+***************
+*** 1330,1335 ****
+--- 1372,1380 ----
+  			switch (linktype) {
+  
+  			case DLT_EN10MB:
++ #ifdef	DLT_8021Q
++ 			case DLT_8021Q:
++ #endif
+  				eaddr = pcap_ether_hostton(name);
+  				if (eaddr == NULL)
+  					bpf_error(
+***************
+*** 1532,1541 ****
+  	struct qual q;
+  {
+  	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
+! 		if (linktype == DLT_EN10MB)
+  			return gen_ehostop(eaddr, (int)q.dir);
+! 		if (linktype == DLT_FDDI)
+  			return gen_fhostop(eaddr, (int)q.dir);
+  	}
+  	bpf_error("ethernet address used in non-ether expression");
+  	/* NOTREACHED */
+--- 1577,1592 ----
+  	struct qual q;
+  {
+  	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
+! 		switch (linktype) {
+! 		case DLT_EN10MB:
+! #ifdef	DLT_8021Q
+! 		case DLT_8021Q:
+! #endif
+  			return gen_ehostop(eaddr, (int)q.dir);
+! 
+! 		case DLT_FDDI:
+  			return gen_fhostop(eaddr, (int)q.dir);
++ 		}
+  	}
+  	bpf_error("ethernet address used in non-ether expression");
+  	/* NOTREACHED */
+***************
+*** 1917,1926 ****
+  
+  	case Q_DEFAULT:
+  	case Q_LINK:
+! 		if (linktype == DLT_EN10MB)
+  			return gen_ehostop(ebroadcast, Q_DST);
+! 		if (linktype == DLT_FDDI)
+  			return gen_fhostop(ebroadcast, Q_DST);
+  		bpf_error("not a broadcast link");
+  		break;
+  
+--- 1968,1983 ----
+  
+  	case Q_DEFAULT:
+  	case Q_LINK:
+! 		switch (linktype) {
+! 		case DLT_EN10MB:
+! #ifdef	DLT_8021Q
+! 		case DLT_8021Q:
+! #endif
+  			return gen_ehostop(ebroadcast, Q_DST);
+! 
+! 		case DLT_FDDI:
+  			return gen_fhostop(ebroadcast, Q_DST);
++ 		}
+  		bpf_error("not a broadcast link");
+  		break;
+  
+***************
+*** 1948,1954 ****
+  
+  	case Q_DEFAULT:
+  	case Q_LINK:
+! 		if (linktype == DLT_EN10MB) {
+  			/* ether[0] & 1 != 0 */
+  			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
+  			s->s.k = 0;
+--- 2005,2015 ----
+  
+  	case Q_DEFAULT:
+  	case Q_LINK:
+! 		switch (linktype) {
+! 		case DLT_EN10MB:
+! #ifdef	DLT_8021Q
+! 		case DLT_8021Q:
+! #endif
+  			/* ether[0] & 1 != 0 */
+  			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
+  			s->s.k = 0;
+***************
+*** 1956,1964 ****
+  			b0->s.k = 1;
+  			b0->stmts = s;
+  			return b0;
+- 		}
+  
+! 		if (linktype == DLT_FDDI) {
+  			/* XXX TEST THIS: MIGHT NOT PORT PROPERLY XXX */
+  			/* fddi[1] & 1 != 0 */
+  			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);
+--- 2017,2024 ----
+  			b0->s.k = 1;
+  			b0->stmts = s;
+  			return b0;
+  
+! 		case DLT_FDDI:
+  			/* XXX TEST THIS: MIGHT NOT PORT PROPERLY XXX */
+  			/* fddi[1] & 1 != 0 */
+  			s = new_stmt(BPF_LD|BPF_B|BPF_ABS);

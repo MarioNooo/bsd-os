@@ -1,0 +1,4 @@
+.version
+Makefile
+ntpdc
+version.c

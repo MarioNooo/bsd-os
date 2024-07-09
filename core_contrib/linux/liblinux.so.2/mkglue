@@ -1,0 +1,71 @@
+#! /bin/sh
+#	BSDI mkglue,v 1.1 2000/02/12 18:05:27 donn Exp
+
+#
+# Dispatch inline syscalls to their respective emulation routines.
+#
+
+#
+# Generate the code for the inline syscall handler.
+# We perform a computed goto to a stub that makes
+# a PC-relative call to the appropriate glue code.
+# We carefully avoid modifying any register other than EAX
+# or using any run-time relocations.
+#
+cat << 'EOF'
+	# automatically generated, do not edit
+
+	.section ".text"
+	.global __bsdi_inline_syscall_handler
+	.type __bsdi_inline_syscall_handler,@function
+__bsdi_inline_syscall_handler:
+	cmpl $__NR_MAX,%eax
+	ja .Lnosys
+
+	call 0f
+0:
+	leal __bsdi_inline_syscall_dispatch-0b(,%eax,8),%eax
+	addl (%esp),%eax
+	jmp *%eax
+
+.Lnosys:
+	call 1f
+1:
+	popl %ebx
+	addl $_GLOBAL_OFFSET_TABLE_+[.-1b],%ebx
+	call __bsdi_nosys@PLT
+	hlt
+
+	.align 8
+__bsdi_inline_syscall_dispatch:
+EOF
+
+#
+# Generate the contents of the dispatch table.
+# It's a jump table so that we can avoid run-time relocations.
+#
+awk '
+BEGIN {
+	high = 0
+}
+
+$1 == "#define" && $2 ~ /^__NR_/ && $3 ~ /^[1-9][0-9]*$/ {
+	if ($3 > high) \
+		high = $3
+	syscalls[$3] = substr($2, 6)
+}
+
+END {
+	for (i = 0; i <= high; ++i) {
+		print "\t.align 8"
+		print "\tpopl %eax"
+		if (syscalls[i] != "") \
+			print "\tjmp __bsdi_glue_" syscalls[i]
+		else
+			print "\tjmp .Lnosys"
+	}
+	print ""
+	print "\t.set __NR_MAX," high
+}' $1
+
+exit 0

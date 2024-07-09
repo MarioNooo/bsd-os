@@ -1,0 +1,4 @@
+Makefile
+unshared
+.depend
+libXrender.so.1.0

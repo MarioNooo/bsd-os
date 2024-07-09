@@ -1,0 +1,7 @@
+po2tbl.sed
+VERSION
+Makefile
+intlh.inst
+*.lo
+.libs
+libintl.la

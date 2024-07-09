@@ -1,0 +1,10 @@
+a.out
+config.log
+config.h
+libtool
+config.status
+stamp-h
+Makefile
+.libs
+ltdl.lo
+libltdlc.la

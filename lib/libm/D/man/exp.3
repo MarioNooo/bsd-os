@@ -1,0 +1,458 @@
+.\"	BSDI exp.3,v 1.3 1998/03/04 18:41:26 donn Exp
+.\" Copyright (c) 1985, 1991 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
+.\"	exp.3,v 1.3 1998/03/04 18:41:26 donn Exp
+.\"
+.Dd February 17, 1998
+.Dt EXP 3
+.Os BSD 4
+.Sh NAME
+.Nm exp ,
+.Nm expf ,
+.Nm expm1 ,
+.Nm expm1f ,
+.Nm log ,
+.Nm logf ,
+.Nm log10 ,
+.Nm log10f ,
+.Nm log1p ,
+.Nm log1pf ,
+.Nm pow ,
+.Nm powf
+.Nd exponential, logarithm, power functions
+.Sh SYNOPSIS
+.Fd #include <math.h>
+.Ft double
+.Fn exp "double x"
+.Ft float
+.Fn expf "float x"
+.Ft double
+.Fn expm1 "double x"
+.Ft float
+.Fn expm1f "float x"
+.Ft double
+.Fn log "double x"
+.Ft float
+.Fn logf "float x"
+.Ft double
+.Fn log10 "double x"
+.Ft float
+.Fn log10f "float x"
+.Ft double
+.Fn log1p "double x"
+.Ft float
+.Fn log1pf "float x"
+.Ft double
+.Fn pow "double x" "double y"
+.Ft float
+.Fn powf "float x" "float y"
+.Sh DESCRIPTION
+The
+.Fn exp
+and the
+.Fn expf
+functions compute the exponential value of the given argument
+.Fa x .
+.Pp
+The
+.Fn expm1
+and the 
+.Fn expm1f
+functions compute the value exp(x)\-1 accurately even for tiny argument
+.Fa x .
+.Pp
+The
+.Fn log
+and the
+.Fn logf
+functions compute the value of the natural logarithm of argument 
+.Fa x.
+.Pp
+The
+.Fn log10
+and the
+.Fn log10f
+functions compute the value of the logarithm of argument
+.Fa x
+to base 10.
+.Pp
+The
+.Fn log1p
+and the
+.Fn log1pf
+functions compute
+the value of log(1+x) accurately even for tiny argument
+.Fa x .
+.Pp
+The
+.Fn pow
+and the
+.Fn powf
+functions compute the value
+of
+.Ar x
+to the exponent
+.Ar y .
+.Pp
+For a discussion of error reporting, see
+.Xr math 3 .
+.Sh ERRORS
+If the result of
+.Fn exp
+or
+.Fn expf
+would overflow or underflow, then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li +Inf
+or 0, respectively.
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv ERANGE .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv OVERFLOW
+or
+.Dv UNDERFLOW ,
+respectively.
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is
+.Dv MAXFLOAT
+or 0, respectively.
+.El
+.Pp
+For
+.Fn log ,
+.Fn logf ,
+.Fn log10
+or
+.Fn log10f ,
+if
+.Li "x = 0
+then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li \-Inf .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv ERANGE .
+.It Dv _XOPEN_
+Same as
+.Dv _IEEE_ ,
+but if
+.Xr matherr 3
+returns 0,
+.Va errno
+is set to
+.Dv EDOM .
+The exception type is
+.Dv SING .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is
+.Dv MAXFLOAT ,
+and a message is printed to
+.Va stderr
+if
+.Va errno
+is set.
+.El
+.Pp
+For 
+.Fn log ,
+.Fn logf ,
+.Fn log10
+or
+.Fn log10f ,
+if
+.Li "x < 0
+then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li \-Inf .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv EDOM .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv DOMAIN .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is
+.Dv MAXFLOAT ,
+and a message is printed to
+.Va stderr
+if
+.Va errno
+is set.
+.El
+.Pp
+For
+.Fn pow
+or
+.Fn powf ,
+if
+.Li "x = 0
+and
+.Li "y = 0
+then an error is reported in
+.Dv _SVID_
+mode.
+The return value is 0, and if
+.Xr matherr 3
+returns 0, a message is printed to
+.Va stderr
+and 
+.Va errno
+is set to
+.Dv EDOM .
+The exception type is
+.Dv DOMAIN .
+In all other modes,
+there is no error and the return value is 1.
+.Pp
+For
+.Fn pow
+or
+.Fn powf ,
+if
+.Li "x = 0
+and
+.Li "y < 0
+then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li \-Inf .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv EDOM .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv DOMAIN .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is 0,
+and a message is printed to
+.Va stderr
+if
+.Va errno
+is set.
+.El
+.Pp
+For
+.Fn pow
+or
+.Fn powf ,
+if
+.Li "x < 0
+and
+.Li y
+is not an integer, then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li NaN .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv EDOM .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv DOMAIN .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is 0,
+and a message is printed to
+.Va stderr
+if
+.Va errno
+is set.
+.El
+.Pp
+For
+.Fn pow
+or
+.Fn powf ,
+if the result would overflow or underflow, then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li \(+-Inf
+or 0, respectively.
+The sign on overflow is positive unless
+.Li x
+is negative and
+.Li y
+is an odd integer.
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv ERANGE .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv OVERFLOW
+or
+.Dv UNDERFLOW ,
+respectively.
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but on overflow the result is
+.Li \(+-MAXFLOAT .
+.El
+.Pp
+For
+.Fn pow
+or
+.Fn powf ,
+if
+.Li "x = NaN
+and
+.Li "y = 0
+then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is 1.
+.It Dv _POSIX_
+The return value is 1.  No error is reported.
+.It Dv _XOPEN_
+The return value is
+.Dv NaN .
+If
+.Xr matherr 3
+returns 0,
+.Va errno
+is set to
+.Dv EDOM .
+The exception type is
+.Dv DOMAIN .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ .
+.El
+.Sh SEE ALSO
+.Xr math 3
+.Sh HISTORY
+The
+.Fn exp ,
+.Fn log
+and
+.Fn pow
+functions
+appeared in
+.At v6 .
+A
+.Fn log10
+function
+appeared in
+.At v7 .
+The
+.Fn log1p
+and
+.Fn expm1
+functions appeared in
+.Bx 4.3 .

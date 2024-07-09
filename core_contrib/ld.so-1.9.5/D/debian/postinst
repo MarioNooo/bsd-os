@@ -1,0 +1,39 @@
+#! /bin/sh
+
+if [ ! -f /sbin/ldconfig.new ]; then
+    exit 0
+fi
+
+if [ "x$1" = xconfigure ]; then
+    case "$2" in
+    1.5.* | 1.6.* | '' )
+	echo Expect some cache has wrong version warnings if upgrading
+	echo to version 1.7.0 or later for the first time.
+	;;
+    esac
+fi
+
+if [ ! -f /etc/ld.so.conf ]; then
+    if [ -f /etc/ld.so.conf.save ]; then
+	cp /etc/ld.so.conf.save /etc/ld.so.conf
+    else
+	touch /etc/ld.so.conf
+    fi
+fi
+if [ -f /etc/ld.so.conf.save ]; then
+    rm /etc/ld.so.conf.save
+fi
+
+cd /lib
+if [ -f ld.so.VERSION ]; then
+    mv -f ld.so.VERSION ld.so
+    ln -f ld.so ld.so.VERSION
+fi
+
+cd /sbin
+mv -f ldconfig.new ldconfig
+
+ldconfig
+
+install-info --quiet --section "Development" "Development" \
+    /usr/info/ld.so.info.gz

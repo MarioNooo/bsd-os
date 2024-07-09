@@ -1,0 +1,383 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ttys.conf.5,v 1.7 1997/10/21 18:28:57 prb Exp
+.Dd October 16, 1997
+.Dt TTYS.CONF 5
+.Os
+.Sh NAME
+.Nm ttys.conf
+.Nd terminal line configuration file
+.Sh SYNOPSIS
+.Nm /etc/ttys.conf
+.br
+.Nm /etc/ttys.conf.local
+.Sh DESCRIPTION
+The
+.Pa /etc/ttys.conf
+file contains entries referenced by the
+.Pa /etc/ttys
+file as well user/group permissions/restrictions
+and destination information for outgoing calls.
+The over all format of the file is defined in the
+.Xr cgetent 3
+manual page.
+Most entries may have more than a single value.  Values are
+separated by the
+.Li |
+(pipe) symbol.
+For example:
+.sp
+.ti .5i
+.Li :entry=value1|value2|value3:
+.sp
+To specify a
+.Li |
+use
+.Li \e| .
+.Pp
+Entries which define restrictions or permissions for a given user or
+group are tagged by
+.Li user- Ns Ar name
+or
+.Li group- Ns Ar name .
+.Pp
+The following are the standard entries.
+There is no limit on the names for new entries.
+.Pp
+.Bl -tag -width "XXXXX"
+.It allow
+A list of the special sequences allowed by this user.
+If not defined, all special sequences not listed in the
+.Li restrict
+entry are allowed.
+The special sequences are defined by the
+.Li map
+entry for the chosen line.
+An example entry might be:
+.sp
+.Li :allow=<DIALTONE>|<PAUSE>:
+.It arguments
+A list of arguments which should be sent to the scripts defined by the
+.Li condition ,
+.Li dialer ,
+.Li hangup ,
+and
+.Li watcher
+entries.
+The arguments are names of entries for which the values should be passed.
+For example:
+.sp
+.Li :arguments=dte-speeds|term|line:
+.sp
+might cause the following arguments to be sent to a script
+.sp
+.Li -dte-speeds 9600 -term unknown -line tty01
+.It auth
+The type of authentication for this line.
+This type is used as
+.Li auth- Ns Ar type
+in the
+.Pa /etc/login.conf
+file.
+.It banner
+Banner to be displayed by the
+.Xr login 8
+program.
+.It calltype
+Types of calls allowed on this line, or by this user or group.
+The special type
+.Li DIRECT
+implies the request is for the raw line itself with no dialing or setup.
+Other types of calls are defined by the
+.Pa /etc/dialer.rules
+file.  By convention these are:
+.Li LOCAL ,
+.Li NATIONAL ,
+.Li INTL ,
+.Li ASSISTED-NATIONAL ,
+and
+.Li ASSISTED-INTL .
+.It command
+The name of the command to execute when carrier is enabled on the line.
+By default this is
+.Pa /usr/bin/login .
+.It compression
+Types of automatic data compression available from the modem.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+.It condition
+Script called to condition a modem to accept incoming calls.
+The script should leave the modem in such a state that it will
+automatically answer incoming calls.
+The synopsis of the script is:
+.sp
+.Ar condition
+.Op Fl f Ar file
+.Op arguments
+.sp
+The
+.Ar file
+argument is the file associated with the line, typically
+.Pa /dev/fd/ Ns Ar xx .
+The arguments are the arguments specified by the 
+.Li arguments
+entry.
+.It cost
+The relative cost of the line.
+If multiple lines match the request, and a speed was requested,
+the line with the lowest cost is used.
+By default the cost of a line is the maximum value in
+the
+.Li speed
+entry for the line.
+If the request does not specify a speed, the lowest cost line with the
+highest available speed is used.
+.It dce-speeds
+The DCE speeds available for this modem.
+The DCE speed is the speed the modem communicates with the serial line.
+.It destination
+The name of a single entry in the database to merge with the request.
+This entry only has use in a request and has no effects on line definitions.
+A destination typically includes the phone number or numbers as well as
+the optimum dialing speeds.
+.It dialer
+Script to dial a number on a modem.
+The synopsis of the script is:
+.sp
+.Ar dialer
+.Op Fl f Ar file
+.Op arguments
+.sp
+The
+.Ar file
+argument is the file associated with the line, typically
+.Pa /dev/fd/ Ns Ar xx .
+The arguments are the union of the arguments specified by the 
+.Li arguments
+entry and entry which matched between the request
+and the entry for the line.
+.It dialin
+This line is marked to accept incoming calls.
+This is used for both hardwired and modem connected lines.
+.It dialout
+This line is marked to allow outgoing calls.
+See
+.Xr gettyd 8
+for more information.
+.It dte-speeds
+The DTE speeds available for this line (or the dte speeds desired).
+The DTE speed is the speed at which the serial line communicates with the
+modem.
+When both
+.Li dte-speeds
+and
+.Li dce-speeds
+are specified, the actual set of DTE speeds is the intersection of
+.Li dte-speeds
+and
+.Li dce-speeds.
+.It error-correction
+The types of error correction available from the modem.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+.It flow
+The types of flow control available from the modem.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+Use the
+.Li flowcontrol
+field to specify a specific type of flow control.
+.It flowcontrol
+Without a value, enable hardware flow control.
+If a value is specified it must be one of:
+.Bl -tag -width "XXXXX"
+.It hardware
+Enable hardware flow control for this line.
+(The same as not specifying a value).
+May also be abbreviated as
+.Li hw .
+.It none
+No flow control is enabled.
+.It software
+Enable software flow control for this line.
+May also be abbreviated as
+.Li sw .
+.El
+.It groups
+A list of groups allowed to access this line.
+.It hangup
+A script similar to
+.Li condition ,
+however, it simply assures the phone is hung up and the line is ready
+for another dialout session.  It is only called on dialout lines.
+The synopsis for
+.Li hangup
+is the same as that of the
+.Li condition
+script.
+.El
+.Pp
+.Bl -tag -compact -width "XXXXX"
+.It hcondition
+.It hdial
+.It hhangup
+.It hinit
+.It hquiet
+.It hreset
+See the
+.Xr hayes 8
+manual page for details on these fields.
+.El
+.Bl -tag -width "XXXXX"
+.It issue
+The name of a file to be displayed
+after the
+.Xr login 8
+program prints the login banner
+(specified by the
+.Li banner
+field.)
+No errors are generated if the file pointed to does not exist.
+.It line
+The list of devices to select from for this connection.
+It may only be specified as part of a request (or in a destination definition).
+.It manager
+The name of the program which manages this line.  This does not cause the
+named program to be run.  It is used by a program when it is searching
+for entries which it should control.  If this has no value, or is specified
+to be
+.Li none ,
+then the line is not managed.  Enabled lines normally have the value of
+.Li gettyd ,
+or
+.Li init
+for compatability with older systems.
+.It map
+A mapping of special sequences to strings used by the modem.
+Each entry is of the form:
+.Ar <sequence>string .
+For example, a hayes compatible modem might have the entry:
+.sp
+.Li :map=<FLASH>!|<TONE>T|<PULSE>P|<DIALTONE>W|<REVERSE>~
+.br
+.Li Ta Li |<SILENCE>@|<PAUSE>,:
+.It modemcontrol
+Enable modem control for this line.
+.It modemtype
+A verbose description of the modem.
+In general its presence indicates this entry is describing a modem.
+.It modulation
+The types of modulation (i.e.,
+.Li bell103 , v.21 , v.34  . . . )
+available from the modem.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+.It number
+The list of phone numbers to dial.  Phone number may be of the
+form
+.Li @ Ns Ar name
+in which case
+.Ar name
+is looked up in
+.Pa /etc/phones .
+Variable expansion, represented by
+.Li { Ns Ar variable Ns Li } ,
+is performed on the final number.
+Variables are defined in the
+.Pa /etc/dialer.rules
+file.
+(See
+.Xr dialer.rules 5 . )
+Special sequences are represented as
+.Li <SPECIAL> .
+(See the
+.Li map
+entry and
+.Xr dialer.rules 5 . )
+.sp
+.It porttype
+A verbose description of the type of serial port.
+In general its presence indicates this entry is describing a serial port.
+.It ppp
+Program called by
+.Xr login 8
+when PPP LCP negotiation is detected.  This defaults to the
+.Xr ppp 8
+program.
+.It pppname
+Name passed to the
+.Xr ppp 8
+program by
+.Xr login 8
+when PPP LCP negotiation is detected.  This defaults to
+.Li ppp_direct .
+.It required
+A list of fields that must be present in the request in order to match
+this entry.  A common example might be:
+.sp
+.Li :required=number:
+.It restrict
+A list of special sequences not allowed.
+.It secure
+This line is marked as secure.  A secure line allows direct root logins.
+.It speaker
+Describes the various settings the speaker may be set to.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+.It speed
+The various modulation speeds available with the connected modem.
+The modulation speed is the speed at which the modems communicate.
+The is different from
+.Li dte-speeds
+and
+.Li dce-speeds .
+.It stty-modes
+Additional modes to set on the line.  See
+.Xr stty 1
+for a list of modes.
+.It term
+The default terminal type for this line.
+.It users
+A list of users allowed to access this line.
+.It uucplocking
+This boolean option indicates of uucp style locking needs to be done on this
+line.
+.It verbose
+Request the dialer to be verbose with what it is doing.
+.It volume
+Describes the volume settings that may be set for the modem.
+While this value may be used to help select a line, the default
+dialing scripts provided with the system do not attempt to use
+this information.
+.It watcher
+A script similar to
+.Li condition ,
+however, it does not return unless there was an error in initializing
+the modem.  Normally it answers the phone and directly starts the getty
+program specified.
+The synopsis for
+.Li watcher
+is the same as that of the
+.Li condition
+script.
+.It window
+The name of the window manager to use on this line.
+This is archaic and is only present for backwards compatibility.
+It is only used by
+.Xr init 8 .
+.El
+.Sh SEE ALSO
+.Xr dialer.rules 5 ,
+.Xr ttys 5 ,
+.Xr gettyd 8 ,
+.Xr gettystat 8 ,
+.Xr hayes-condition 8 ,
+.Xr init 8 ,
+.Xr login 8

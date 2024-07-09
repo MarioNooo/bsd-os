@@ -1,0 +1,96 @@
+Software Package:       
+	sharutils
+
+Release/Version:
+	GNU sharutils 4.2
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu:pub/gnu/sharutils-4.2.tar.gz
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and bug-gnu-utils@prep.ai.mit.edu.
+
+Comments:
+	- wrote wrapper makefile
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Index: src/mailshar.in
+===================================================================
+RCS file: /master/contrib/shar/src/mailshar.in,v
+retrieving revision 1.1
+diff -c -r1.1 mailshar.in
+*** mailshar.in	1996/09/27 18:39:53	1.1
+--- mailshar.in	1996/09/27 19:00:31
+***************
+*** 33,39 ****
+  If none of -MTBzZ are given, -z is automatically selected if *none*
+  of the FILEs have an .arc, .exz, .gif, .z, .gz, .Z, .zip or .zoo suffix."
+  
+! temp=/usr/tmp/$$.shar
+  
+  ### Decode the options.
+  
+--- 33,39 ----
+  If none of -MTBzZ are given, -z is automatically selected if *none*
+  of the FILEs have an .arc, .exz, .gif, .z, .gz, .Z, .zip or .zoo suffix."
+  
+! temp=/var/tmp/$$.shar
+  
+  ### Decode the options.
+  
+Index: shar.c
+===================================================================
+RCS file: /master/contrib/shar/src/shar.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -c -r1.1 -r1.2
+*** shar.c	1996/09/27 18:39:57	1.1
+--- shar.c	1996/10/17 15:25:18	1.2
+***************
+*** 688,694 ****
+       const char *local_name;
+       const char *restore_name;
+  {
+!   fprintf (output, "# %6ld %s %s\n", struct_stat.st_size,
+  	   mode_string (struct_stat.st_mode), restore_name);
+    return 0;
+  }
+--- 688,694 ----
+       const char *local_name;
+       const char *restore_name;
+  {
+!   fprintf (output, "# %6lu %s %s\n", (unsigned long)struct_stat.st_size,
+  	   mode_string (struct_stat.st_mode), restore_name);
+    return 0;
+  }
+
+Index: src/shar.c
+===================================================================
+RCS file: /master/contrib/shar/src/shar.c,v
+retrieving revision 1.2
+diff -c -r1.2 shar.c
+*** shar.c	1996/10/17 15:25:18	1.2
+--- shar.c	1999/05/17 20:02:17
+***************
+*** 1492,1498 ****
+    $shar_touch -am %02d%02d%02d%02d%02d '%s' &&\n",
+  	       restore_time->tm_mon + 1, restore_time->tm_mday,
+  	       restore_time->tm_hour, restore_time->tm_min,
+! 	       restore_time->tm_year, restore_name);
+      }
+  
+    if (vanilla_operation_mode)
+--- 1492,1498 ----
+    $shar_touch -am %02d%02d%02d%02d%02d '%s' &&\n",
+  	       restore_time->tm_mon + 1, restore_time->tm_mday,
+  	       restore_time->tm_hour, restore_time->tm_min,
+! 	       restore_time->tm_year % 100, restore_name);
+      }
+  
+    if (vanilla_operation_mode)
+diff: Try `diff --help' for more information.
+diff: Try `diff --help' for more information.

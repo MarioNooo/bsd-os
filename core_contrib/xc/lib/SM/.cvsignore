@@ -1,0 +1,5 @@
+Makefile
+unshared
+libSM.so.6.0
+libSM_s
+.depend

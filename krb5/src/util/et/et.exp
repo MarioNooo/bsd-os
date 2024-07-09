@@ -1,0 +1,8 @@
+#
+# comerr library Macintosh export file
+#
+# /master/krb5/src/util/et/et.exp,v 1.1.1.1 2003/08/14 15:54:30 polk Exp
+
+error_message
+add_error_table
+remove_error_table

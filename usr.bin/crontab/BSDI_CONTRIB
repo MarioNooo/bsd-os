@@ -1,0 +1,18 @@
+Software Package:       
+	crontab
+
+Release/Version:
+	RCS revision: crontab.c,v 2.14 1994/01/26
+
+Retrieved from:
+	ftp.dec.com:pub/misc/vixie
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and paul@vix.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

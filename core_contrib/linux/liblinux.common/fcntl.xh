@@ -1,0 +1,45 @@
+/*	BSDI fcntl.xh,v 1.1.1.1 1998/12/23 19:57:25 prb Exp	*/
+
+/*
+ * Fcntl.h transforms.
+ */
+
+%{
+#include <fcntl.h>
+%}
+
+flag int openflags_t {
+	O_APPEND	02000;
+	O_ASYNC		020000;
+	O_CREAT		0100;
+	O_EXCL		0200;
+	O_FSYNC		010000;
+	O_NONBLOCK	04000;
+	O_TRUNC		01000;
+
+	LINUX_O_NOCTTY	0400;
+};
+
+cookie int fcntl_t {
+	F_GETFL		3;
+	F_SETFL		4;
+	F_GETLK		5;
+	F_SETLK		6;
+	F_SETLKW	7;
+	F_SETOWN	8;
+	F_GETOWN	9;
+};
+
+cookie short fcntllock_t {
+	F_RDLCK		0;
+	F_WRLCK		1;
+	F_UNLCK		2;
+};
+
+struct flock {
+	fcntllock_t	l_type;
+	short		l_whence;
+	off_t		l_start;
+	off_t		l_len;
+	pid_t		l_pid;
+};

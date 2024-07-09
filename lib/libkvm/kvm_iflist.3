@@ -1,0 +1,144 @@
+.\"	BSDI kvm_iflist.3,v 2.2 1998/07/15 19:11:35 jch Exp
+.\"
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software developed by the Computer Systems
+.\" Engineering group at Lawrence Berkeley Laboratory under DARPA contract
+.\" BG 91-66 and contributed to Berkeley.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd Sep 13, 1997
+.Dt KVM_IFLIST 3
+.Os
+.Sh NAME
+.Nm kvm_iflist ,
+.Nm kvm_ifmulti
+.Nd access network interface configuration
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/socket.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <net/if.h>
+.Fd #include <net/if_dl.h>
+.Fd #include <net/route.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.\" .Fa kvm_t *kd
+.br
+.Ft struct if_msghdr *
+.Fn kvm_iflist "kvm_t *kd" "int ifindex" "int af" "size_t *rlen"
+.Ft void *
+.Fn kvm_ifmulti "kvm_t *kd" "struct sockaddr_dl *sdl" "int pf" "size_t *rlen"
+.Sh DESCRIPTION
+.Fn kvm_iflist
+returns the current network interface configuration as a series of
+if_msghdr and ifa_msghdr structures.  Each if_msghdr structure
+describes a physical interface and is followed by a sockaddr_dl
+structure giving the name, and link-level address if applicable, of
+the interface.  The protocol addresses assigned to the interface are
+each represented by an ifa_msghdr structure followed by an appropriate
+number of the sockaddr structure variants.  See
+.Xr route 4
+for info on parsing routing socket-style messages.
+The variable
+.Fa rlen
+is set the length of the returned data.
+.Pp
+The returned information is restricted to a specified interface by
+setting
+.Fa ifindex
+to the index of that interface.  A value of zero specifies that the
+configuration of all interfaces should be returned.
+The returned protocol address information (ifa_msghdr structures) may
+be restricted to a specific address family by setting
+.Fa af
+to the identifier for that address family
+.Ns Pq e.g. Dv AF_INET or Dv AF_NS .
+A value of
+.Dv AF_UNSPEC
+.Pq i.e. 0
+specifies that the protocol information for all protocols should be
+returned.
+.Pp
+.Fn kvm_ifmulti
+returns a description of the multicast groups active on the interface
+specified by
+.Fa sdl .
+The 
+.Fa pf
+parameter specifies the protocol family for which multicast group
+membership information will be returned.
+If specified as
+.Dv PF_LINK ,
+a linked list of ether_multi structures
+.Pq as defined in Pa /usr/include/netinet/if_ether.h
+will be returned with the enm_next pointers will be corrected for the
+process' address space.
+If specified as
+.Dv PF_INET ,
+a linked list of in_multiaddr structures
+.Pq as defined in /usr/include/netinet/in.h
+will be returned with the ima_next field pointers corrected for the
+process' address space.
+The variable
+.Fa rlen
+is set the length of the returned data.
+.Pp
+The memory returned by
+.Fn kvm_iflist
+and
+.Fn kvm_ifmulti
+should be freed with
+.Xr free 3
+when no longer needed.  
+Note that memory is allocated and should be freed even if the returned
+value of rlen is zero.
+.Sh RETURN VALUES
+.Fn kvm_iflist ,
+and
+.Fn kvm_ifmulti
+both return
+.Dv NULL
+on failure.
+.Pp
+.Sh BUGS
+These routines do not belong in the kvm interface.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_geterr 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3

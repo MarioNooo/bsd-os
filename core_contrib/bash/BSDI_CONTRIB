@@ -1,0 +1,31 @@
+Software Package:
+        bash
+
+Release/Version:
+        2.02.1
+
+Retrieved from:
+        ftp.gnu.ai.mit.edu:pub/gnu/bash-2.02.1.tar.gz
+
+Bug reports:
+        This software package is maintained by both BSDI and the
+        software contributor.  Please send any bug reports to both
+        support@BSDI.COM and bug-bash@prep.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Be sure and run:
+
+# CC=shlicc ./configure
+
+Instead of just ./configure or else bash will try to use ldopen,
+ldclose, and ldsym which shlicc doesn't support in 4.0.  We should
+eventually change the configure.in file to make this automatic for
+BSDI 4.0.
+
+Addition of the file "makefile", to do man page formatting and
+provide the standard BSDI targets.
+

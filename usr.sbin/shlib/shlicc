@@ -1,0 +1,431 @@
+#! /bin/sh
+#
+# Copyright (c) 2002 Wind River Systems, Inc.  All rights reserved.
+#
+# Copyright (c) 1994, 1996 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI shlicc,v 2.23 2002/05/21 07:40:38 xavier Exp
+#
+
+#
+# A substitute for the C compiler that links against shared libraries.
+#
+
+IFS=''
+if [ -n "$WIND_HOST_TYPE" ]
+then 
+# Cross
+	CYGWIN_PATH="$WIND_BASE/host/$WIND_HOST_TYPE/cygwin/bin"
+	TORNADO_PATH="$WIND_BASE/host/$WIND_HOST_TYPE/bin"
+	TORNADO_PATH=`$CYGWIN_PATH/cygpath -u -a -p $TORNADO_PATH`
+	CYGWIN_PATH=`$CYGWIN_PATH/cygpath -u -a -p $CYGWIN_PATH`
+	PATH=$TORNADO_PATH:$CYGWIN_PATH
+	WIND_TARGET="$WIND_REF_DIR"
+	
+	case $ARCH in
+	i386)
+		ARCHID=386
+		;;
+	powerpc)
+		ARCHID=ppc
+		;;
+	*)
+		echo "architecture '$ARCH' is not supported: check ARCH variable"
+		exit 1
+		;;
+	esac
+else
+# Native
+	ARCHID=
+	WIND_TARGET=
+        PATH=/bin:/usr/bin
+fi
+
+CC=cc$ARCHID
+GPP=g$ARCHID++
+LD=ld$ARCHID
+AS=as$ARCHID
+
+SHLIB_MAP=$WIND_TARGET/etc/shlib.map
+LIB_CRT0=$WIND_TARGET/usr/lib/shlicrt0.o
+LIB_CRTI=$WIND_TARGET/usr/lib/crti.o
+LIB_CRTBEGIN=$WIND_TARGET/usr/lib/crtbegin.o
+LIB_CRTEND=$WIND_TARGET/usr/lib/crtend.o
+LIB_CRTN=$WIND_TARGET/usr/lib/crtn.o
+
+LIBCPLUSPLUS=
+
+case "$0" in
+*++)	CC=$GPP
+	LIBCPLUSPLUS="-lstdc++-lm-lgcc"
+	;;
+*)
+	;;
+esac
+
+SHLIB_MAP="${SHLIB_MAP:-/etc/shlib.map}"
+OBJECTS=/tmp/__library_table.$$.o
+OUTPUT=a.out
+NEEDCOMPILE=no
+NEEDLINK=no
+NEEDCSU=yes
+VFLAG=no
+
+#
+# strip our private options
+#
+ARGS=
+SKIP=no
+for a in "$@"
+do
+	case "$SKIP" in
+	-map)
+		SHLIB_MAP="$a"
+		SKIP=no
+		continue
+		;;
+	esac
+
+	case $a in
+	-map)
+		SKIP="$a"
+		;;
+	*)
+		ARGS="$ARGS$a"
+		;;
+	esac
+done
+set -- $ARGS
+
+if [ $# = 0 ]; then
+	echo "$0: No input files"
+	exit 1
+fi
+
+shift
+
+#
+# see if we need to compile anything
+#
+for a in "$@"
+do
+	case "$a" in
+	-[cSE]|-Bstatic|-M*)
+		exec $CC "$@"
+		;;
+	-l*)
+		NEEDLINK=yes
+		;;
+	-p|-pg) # don't use shared libraries when profiling
+		exec $CC "$@"
+		;;
+	-r)	# don't link in shlicrt0.o
+		NEEDCSU=no
+		;;
+	-v)
+		VFLAG=yes
+		;;
+	-*)	;;
+	*.c)
+		OBJECTS="$OBJECTS$(basename "$a" .c).o"
+		NEEDCOMPILE=yes
+		;;
+	*.cc)
+		OBJECTS="$OBJECTS$(basename "$a" .cc).o"
+		NEEDCOMPILE=yes
+		;;
+	*.c++)
+		OBJECTS="$OBJECTS$(basename "$a" .c++).o"
+		NEEDCOMPILE=yes
+		;;
+	*.cxx)
+		OBJECTS="$OBJECTS$(basename "$a" .cxx).o"
+		NEEDCOMPILE=yes
+		;;
+	*.C)
+		OBJECTS="$OBJECTS$(basename "$a" .C).o"
+		NEEDCOMPILE=yes
+		;;
+	*.i)
+		OBJECTS="$OBJECTS$(basename "$a" .i).o"
+		NEEDCOMPILE=yes
+		;;
+	*.ii)
+		OBJECTS="$OBJECTS$(basename "$a" .ii).o"
+		NEEDCOMPILE=yes
+		;;
+	*.s)
+		OBJECTS="$OBJECTS$(basename "$a" .s).o"
+		NEEDCOMPILE=yes
+		;;
+	*.S)
+		OBJECTS="$OBJECTS$(basename "$a" .S).o"
+		NEEDCOMPILE=yes
+		;;
+	*.[oa])	# this isn't quite right, but almost always works
+		NEEDLINK=yes
+		;;
+	esac
+done
+
+# Handle 'shlicc -v'.
+if [ $VFLAG = yes -a $NEEDCOMPILE = no -a $NEEDLINK = no ]
+then
+	exec $CC "$@"
+fi
+
+trap "rm -f $OBJECTS; exit 1" 1 2 10
+
+#
+# if we need to compile, do the work
+#
+if [ $NEEDCOMPILE = yes ]
+then
+	CMD="$CC-c"
+	SKIP=no
+
+	# Strip linker options
+	for a in "$@"
+	do
+		if [ $SKIP = no ]
+		then
+			case "$a" in
+			-l*|-Wl,*|*.o|*.a)
+				;;
+			-o|-Xlinker)
+				SKIP=yes
+				;;
+			*)
+				CMD="$CMD$a"
+				;;
+			esac
+		else
+			SKIP=no
+		fi
+	done
+	$CMD
+	STATUS=$?
+	if [ $STATUS -ne 0 ]
+	then
+		rm -f $OBJECTS
+		exit $STATUS
+	fi
+fi
+
+#
+# substitute shared libraries for the standard ones
+#
+case "$SHLIB_MAP" in
+*/*)
+	;;
+*)
+	[ -f $SHLIB_MAP ] || SHLIB_MAP="/etc/shlib.map.$SHLIB_MAP"
+	if [ ! -r $SHLIB_MAP ]
+	then
+		echo "${0}: can't open $SHLIB_MAP"
+		exit 1
+	fi
+	;;
+esac
+
+CMD=
+LIBTABLE=
+
+stub() {
+	(
+		echo "LIB='$1'"
+		cat << 'EOF'
+		MAP() {
+			[ "X$1" = "X$LIB" ] || return
+			echo -n -l
+			expr "$5" : '.*/lib\([^/]*\)'
+			exit 0
+		}
+EOF
+		sed -e 's/^-/MAP -/' $SHLIB_MAP
+		echo 'echo "$LIB"'
+	) |
+		sh
+}
+
+DEFAULTLIBS="${LIBCPLUSPLUS}${LIBCPLUSPLUS:+}-lc"
+
+SKIP=no
+for a in "$@" $DEFAULTLIBS
+do
+	case $SKIP in
+	no)
+		case "$a" in
+
+		# handle linker options passed as compiler options
+		-l*)
+			STUB=$(stub "$a")
+			if [ "X$STUB" = "X$a" ]
+			then
+				CMD="$CMD$a"
+			else
+				CMD="$CMD$STUB"
+				LIBTABLE="$a$LIBTABLE"
+			fi
+			;;
+		-Wl,*)
+			CMD="$CMD$(echo "$a" |
+			    sed -e 's/^-Wl,//' -e 's/,//g')"
+			;;
+		-Xlinker)
+			SKIP=literal
+			;;
+		-[eou]|-T*)
+			CMD="$CMD$a"
+			SKIP=literal;
+			;;
+		-[dNnstvz]|-L*)
+			CMD="$CMD$a"
+			;;
+
+		# ignore compiler flags by default
+		-i*|-[bVx])
+			SKIP=yes
+			;;
+		-*)
+			;;
+
+		# convert source file names to object file names
+		*.c)
+			CMD="$CMD$(basename $a .c).o"
+			;;
+		*.cc)
+			CMD="$CMD$(basename $a .cc).o"
+			;;
+		*.c++)
+			CMD="$CMD$(basename $a .c++).o"
+			;;
+		*.cxx)
+			CMD="$CMD$(basename $a .cxx).o"
+			;;
+		*.C)
+			CMD="$CMD$(basename $a .C).o"
+			;;
+		*.i)
+			CMD="$CMD$(basename $a .i).o"
+			;;
+		*.ii)
+			CMD="$CMD$(basename $a .ii).o"
+			;;
+		*.s)
+			CMD="$CMD$(basename $a .s).o"
+			;;
+		*.S)
+			CMD="$CMD$(basename $a .S).o"
+			;;
+
+		# arguments not associated with options are linker input files
+		*)
+			CMD="$CMD$a"
+			;;
+		esac
+		;;
+
+	literal)
+		CMD="$CMD$a"
+		SKIP=no
+		;;
+
+	*)
+		SKIP=no
+		;;
+	esac
+done
+
+
+if [ $NEEDCSU = yes ]
+then
+	LOADER=$( (echo 'MAP() { [ "X$1" = "X-lc" ] || return; echo "$5"; exit 0; }'; cat $SHLIB_MAP) | sh)
+	CMD="$LD-o$OUTPUT-static-dynamic-linker$LOADER-emain$LIB_CRT0/tmp/__library_table.$$.o$LIB_CRTI$LIB_CRTBEGIN$CMD$LIB_CRTEND$LIB_CRTN-lgcc"
+
+	#
+	# build the shared library initialization table
+	#
+	libmap() {
+		(
+			echo 'MAP() { echo map "$@"; }'
+			sed -e 's/^-/MAP -/' $SHLIB_MAP
+		) |
+			sh 2>&1 |
+			egrep '^map '
+
+		for i in "$@"
+		do
+			echo "$i"
+		done
+	}
+
+	libmap $LIBTABLE |
+		awk '
+		BEGIN {
+			prefix = ""
+			localsym = ".L."
+			const0 = " .section \".rodata\""
+			const1 = " .section \".rodata1\""
+			data = " .section \".data\""
+			string = " .string "
+			global = " .global "
+			align = " .align 4"
+
+			print const0
+			print align
+			print global prefix "__LIBRARY_TABLE"
+			print prefix "__LIBRARY_TABLE:"
+		}
+
+		/^[# 	]/ { next }
+
+		$1 == "map" {
+			addr[$2] = $3
+			image[$2] = $6
+			next
+		}
+
+		image[$1] && !seen[image[$1]] {
+			name = substr($1, 3)
+			gsub(/[+-]/, "$", name)
+			print const0
+			print "	.long " localsym name	# name
+			print "	.long 0x" addr[$1]	# address
+			print const1
+			print localsym name ":"
+			print string "\"" image[$1] "\""
+			seen[image[$1]] = 1
+			++nlibraries
+		}
+
+		END {
+			print const0
+			print "	.long 0"
+			print data
+			print "	.long __LIBRARY_TABLE"
+			for (i = 0; i < nlibraries; ++i) {
+				print "	.long 0"
+				print "	.long 0"
+			}
+			print "	.long _init"
+			print "	.long _fini"
+		}
+	' |
+		$AS -o /tmp/__library_table.$$.o
+else
+	CMD="ld-o$OUTPUT$CMD"
+fi
+
+#
+# do the link
+#
+[ $VFLAG = yes ] && echo $CMD
+$CMD
+STATUS=$?
+
+rm -f $OBJECTS
+
+exit $STATUS

@@ -1,0 +1,5 @@
+The following types of boot blocks are available:
+
+    bootdisk    Boot from disk
+    bootnet     Boot from network
+

@@ -1,0 +1,123 @@
+.\" Copyright (c) 1998 Berkeley Software Design, Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI cput.1,v 1.1 1998/05/01 18:38:14 donn Exp
+.Dd April 27, 1998
+.Dt CPUT 1
+.Os
+.Sh NAME
+.Nm cput
+.Nd "print capabilities from data bases
+.Sh SYNOPSIS
+.Nm cput
+.Op Fl f Ar database
+.Op Fl l
+.Ar entry
+.Op Ar capability Op Ar type
+.Sh DESCRIPTION
+The
+.Xr cput
+utility lets you print information from
+capability data base files like
+.Pa /etc/ppp.sys
+and
+.Pa /etc/login.conf .
+It provides a command line interface for the
+.Xr getcap 3
+library routines.
+.Pp
+.Nm Cput
+supports the following options:
+.Bl -tag -width Fl
+.It Fl f Ar database
+Add the given
+.Ar database
+to the list of database files to search.
+You can specify multiple
+.Fl f
+options to search multiple database files.
+.It Fl l
+Print the literal field; do not interpret strings or numbers.
+Without this flag,
+.Nm cput
+decodes the
+.Xr cgetstr 3
+character escapes in strings, and prints numeric fields
+(with type
+.Sq Li # )
+in decimal.
+See
+.Xr getcap 3
+for details about the encoding.
+.El
+.Pp
+If the environment variable
+.Ev CPUTPATH
+is set to a colon-separated list of database file names,
+.Nm cput
+adds the databases to its list.
+.Nm Cput
+first searches database files specified using
+.Fl f
+(going left to right),
+then database files specified using
+.Ev CPUTPATH
+(again going left to right).
+.Pp
+The
+.Ar entry
+name is required.
+If no capability name is provided,
+.Nm cput
+prints the entire entry on a line.
+Strings and numbers are not interpreted.
+.Pp
+If you provide a
+.Ar capability
+name,
+.Nm cput
+looks up the capability in the given entry.
+If the capability has a value,
+.Nm cput
+prints it;
+if it is a boolean capability, then
+.Nm cput
+prints the name of the capability instead.
+.Pp
+If you provide a capability
+.Ar type ,
+then
+.Nm cput
+only matches capabilities with the given type.
+A capability type is a single character that
+separates a capability name from its value.
+A type of
+.Sq Li =
+matches string capabilities, while
+.Sq Li #
+matches numeric capabilities and the special type
+.Sq Li \&:
+matches boolean capabilities.
+If you don't provide an explicit capability type, then
+.Nm cput
+tries
+.Sq Li = ,
+.Sq Li #
+and
+.Sq Li \&: .
+.Pp
+.Nm Cput
+exits with status 0 if it matches an entry,
+or both the entry and the capability when
+both values are given.
+If it can't find a match, it exits silently with status 1.
+If some other error occurs,
+.Nm cput
+prints an error message and exits with status 2.
+.Sh SEE ALSO
+.Xr ttydesc 1 ,
+.Xr getcap 3
+.Sh BUGS
+When printing complete entries,
+.Nm cput
+doesn't remove empty capabilities.

@@ -1,0 +1,21 @@
+
+Software Package:       
+	GNUPG (GNU implementation of OpenPGP)
+
+Release/Version:
+	1.0.4p1
+
+Retrieved from:
+	http://www.gnupg.org
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and gnupg-bugs@gnu.org
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to build using our rules
+

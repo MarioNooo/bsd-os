@@ -1,0 +1,4 @@
+#	BSDI Makefile.sparc_v9,v 2.1 1998/09/10 19:08:54 torek Exp
+
+CFLAGS+=	-DSPARC
+SRCS+=		sparc.c atof-ieee.c

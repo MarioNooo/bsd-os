@@ -1,0 +1,61 @@
+.\"     BSDI    fgetwc.3,v 2.2 1997/12/18 18:07:09 bostic Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd December 8, 1997
+.Dt FGETWC 3
+.Os
+.Sh NAME
+.Nm fgetwc, getwc, getwchar
+.Nd get wide-character code from stream
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Fd #include <wchar.h>
+.Ft wint_t
+.Fn fgetwc "FILE *stream"
+.br
+.Ft wint_t
+.Fn getwc "FILE *stream"
+.br
+.Ft wint_t
+.Fn getwchar
+.Sh DESCRIPTION
+The
+.Fn fgetwc
+and
+.Fn getwc
+functions
+are equivalent.
+The
+.Fn getwchar
+function is equivalent to
+.Fn fgetwc "stdin" . 
+They all read the next wide-character (if any) from the specified
+.Ar stream.
+This may cause more than a single byte to be read from the
+input stream.
+.Sh RETURN VALUES
+If successful, these routines return the next requested object from the
+.Ar stream .
+If the
+.Ar stream
+is at end-of-file or a read error occurs, the rou-
+tines return EOF. The routines
+.Xr feof 3
+and
+.Xr ferror 3
+must be used to distinguish between end-of-file and error.
+If an error occurs, the global variable
+.Va errno
+is set to indicate the error.
+The end-of-file condition is remembered, even on a terminal,
+and all subsequent attempts to read will return EOF until the
+condition is cleared with
+.Xr clearerr 3 .
+.Sh SEE ALSO
+.Xr ferror 3 ,
+.Xr fopen 3 ,
+.Xr fwputc 3 ,
+.Xr fwread 3

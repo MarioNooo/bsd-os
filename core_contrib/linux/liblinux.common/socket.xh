@@ -1,0 +1,108 @@
+/*	BSDI socket.xh,v 1.2 1999/01/08 16:14:43 prb Exp	*/
+
+/*
+ * Sockaddr transform.  This requires a length_* parameter in the overload.
+ */
+
+%{
+#include <sys/socket.h>
+
+struct sockopt { char bytes[4]; };
+%}
+
+typedef int socklen_t;
+
+/* God bless 'em, Linux chose to number address families their own way.  */
+cookie unsigned short familycookie_t {
+	LINUX_AF_AX25		3;
+	AF_IPX			4;
+	AF_APPLETALK		5;
+	LINUX_AF_NETROM		6;
+	LINUX_AF_BRIDGE		7;
+	AF_ATM			8;
+	LINUX_AF_ATM		8;
+	AF_CCITT		9;
+	AF_INET6		10;
+
+	in(family) {
+		switch (family) {
+		case LINUX_AF_AX25:
+		case LINUX_AF_NETROM:
+		case LINUX_AF_BRIDGE:
+			return (AF_UNSPEC);
+		default:
+			break;
+		}
+		return (family);
+	}
+
+	out(family) {
+		switch (family) {
+		case AF_IMPLINK:
+		case AF_PUP:
+		case AF_CHAOS:
+		case AF_NS:
+		case AF_ISO:
+		case AF_ECMA:
+		case AF_DATAKIT:
+		case AF_SNA:
+		case AF_DECnet:
+		case AF_DLI:
+		case AF_LAT:
+		case AF_HYLINK:
+		case AF_ROUTE:
+		case AF_LINK:
+		case pseudo_AF_XTP:
+		case AF_COIP:
+		case AF_CNT:
+		case pseudo_AF_RTIP:
+		case pseudo_AF_PIP:
+		case AF_KEY:
+			return (AF_UNSPEC);
+		default:
+			break;
+		}
+		return (family);
+	}
+};
+
+cookie int socklevel_t {
+	SOL_SOCKET	1;
+};
+
+cookie int sockopt_t {
+	SO_DEBUG        1;
+	SO_REUSEADDR    2;
+	SO_TYPE         3;
+	SO_ERROR        4;
+	SO_DONTROUTE    5;
+	SO_BROADCAST    6;
+	SO_SNDBUF       7;
+	SO_RCVBUF       8;
+	SO_KEEPALIVE    9;
+	SO_OOBINLINE    10;
+	LINUX_SO_NO_CHECK     11;
+	LINUX_SO_PRIORITY     12;
+	SO_LINGER       13;
+	LINUX_SO_BSDCOMPAT    14;
+};
+
+struct sockaddr {
+	familycookie_t sa_family;
+	char sa_data[14];
+
+	in(f, n, len) {
+		n->sa_len = len;
+	}
+};
+
+/* Bogus 'struct sockopt' as a placeholder for copying.  */
+struct sockopt {
+	char bytes[4];
+};
+
+flag int recvflags_t {
+	MSG_CTRUNC		8;
+	LINUX_MSG_PROXY		16;
+	/* clear BSD flags? */
+};

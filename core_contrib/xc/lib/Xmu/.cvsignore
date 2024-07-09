@@ -1,0 +1,7 @@
+Makefile
+unshared
+libXmu.so.6.0
+libXmu_s
+.depend
+libXmu.so.6.1
+libXmu.so.6.2

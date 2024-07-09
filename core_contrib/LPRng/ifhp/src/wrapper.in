@@ -1,0 +1,12 @@
+#!@SHELL@
+# /usr.../wrapper path [options]
+# wrapper script for a2ps, enscript and others
+#   path is the path to the program and options are the
+#   options to pass.  The program is run and then the exit
+#   code is corrected
+"$@"
+status=$?
+case "$status" in
+	1 ) exit $status;;
+esac
+exit 0

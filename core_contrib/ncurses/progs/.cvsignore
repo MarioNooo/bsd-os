@@ -1,0 +1,10 @@
+Makefile
+clear
+infocmp
+termsort.c
+tic
+toe
+tput
+tset
+.libs
+transform.h

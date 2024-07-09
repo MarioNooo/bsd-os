@@ -1,0 +1,40 @@
+Software Package:       
+	CVS -- Concurrent Version System
+
+Release/Version:
+	cvs 1.11.6
+
+Retrieved from:
+	http://www.cvshome.org
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and via the cvsbug program.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to call Makefile.
+
+Index: rcs.c
+===================================================================
+RCS file: /master/contrib/cvs/src/rcs.c,v
+retrieving revision 1.3
+diff -c -r1.3 rcs.c
+*** rcs.c	1998/12/03 17:32:06	1.3
+--- rcs.c	1999/10/16 00:39:32
+***************
+*** 4385,4390 ****
+--- 4385,4394 ----
+  	else
+  	    ouroptions = rcs->expand;
+  
++ 	/* BSDI HACK -- -kb in the file means we really mean it! */
++ 	if (rcs->expand != NULL && strcmp(rcs->expand, "b") == 0)
++ 	    ouroptions = rcs->expand;
++ 
+  	for (cpp = kflags; *cpp != NULL; cpp++)
+  	    if (STREQ (*cpp, ouroptions))
+  		break;

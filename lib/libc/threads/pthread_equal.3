@@ -1,0 +1,45 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_equal.3,v 1.3 1996/12/12 03:03:43 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_EQUAL 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_equal
+.Nd compare two pthreads for equality
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_equal "pthread_t t1" "pthread_t t2" 
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_equal
+function compares two thread IDs for equality.
+.Sh RETURN VALUES
+If 
+.Fa t1
+and
+.Fa t2
+are equal,
+.Fn pthread_equal
+returns non-zero.  Otherwise, zero is returned.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_self 3
+.Sh STANDARDS
+The
+.Nm pthread_equal
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_equal
+function first appeared in BSD/OS 3.0.

@@ -1,0 +1,101 @@
+.\"	BSDI pppattach.8,v 1.1 1997/01/23 06:52:57 prb Exp
+.Dd January 22, 1997
+.Dt PPPATTACH 8
+.Os BSD/OS
+.Sh NAME
+.Nm pppattach
+.Nd front end to ppp
+.Sh SYNOPSIS
+.Nm pppattach
+.Op Fl bdvx
+.Op Fl i Ar interface
+.Op Fl n Ar peerid
+.Op Fl p Ar passwd
+.Op Fl s Ar speed
+.Op Fl X Ar parameter
+.Ar device
+.Op Ar local\-ipaddr remote\-ipaddr
+.Sh DESCRIPTION
+The
+.Nm pppattach
+command
+builds a
+.Xr ppp 8
+command line and executes it.
+It is typically used for dedicated connections,
+both synchronous and asynchronous,
+that do not require interaction with a modem.
+The
+.Ar device
+argument must either be the name of a tty device (e.g.,
+.Li tty00
+or
+.Li /dev/tty00 )
+or the name of a synchronous interface (e.g.,
+.Li ntwo0 ) .
+If specified,
+.Ar local\-ipaddr
+and
+.Ar remote\-ipaddr
+refer to the local and remote IP addresses to be assigned to the interface.
+If not specified, it is expected that the remote side will provide the
+addresses.
+The following options are available.
+.Bl -tag -width indent
+.It Fl b
+Background mode.  See
+.Xr ppp 8
+for more information.
+.It Fl d
+Daemon mode.  See
+.Xr ppp 8
+for more information.
+.It Fl i
+Only valid for asynchronous requests, specify the ppp unit number (e.g, 0).
+.It Fl n
+Specify the PAP (Password Authentication Protocol) peerid.
+.It Fl p
+Specify the PAP passwd.
+.It Fl s
+Only valid for asynchronous requests, specify the baud rate for the line (e.g, 57600).
+.It Fl v
+Display the ppp command that would be executed, but do not execute it.
+.It Fl X
+Add
+.Ar parameter
+to the constructed
+.Xr ppp.sys 5
+entry.  This is generally used to add debug options, such as
+.Li debug-all .
+See
+.Xr ppp.sys 5
+for more details.
+.It Fl x
+Debug mode.  See
+.Xr ppp 8
+for more information.
+.El
+.Sh EXAMPLES
+To connect to a remote system over an N2 interface having the remote
+system specify the IP addresses:
+.sp
+.ti +.5i
+.Li pppattach ntwo0
+.sp
+To connect to a remote system over an N2 interface assigning the local
+IP address of 198.1.1.1 and a remote IP address of 198.2.1.1:
+.sp
+.ti +.5i
+.Li pppattach ntwo0 198.1.1.1 198.2.1.1
+.sp
+To connect over a serial line, tty01, at 57600 baud using PAP and allowing
+the other side to specify IP addresses:
+.sp
+.ti +.5i
+.Li pppattach -n MYPAPNAME -p MYPAPPASSWD -s 57600 tty01
+.Sh SEE ALSO
+.Xr ppp.sys 5 ,
+.Xr ifconfig 8 ,
+.Xr pppstat 8 ,
+.Xr appp 4 ,
+.Xr ppp 4

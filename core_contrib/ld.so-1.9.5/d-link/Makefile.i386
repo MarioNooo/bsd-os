@@ -1,0 +1,8 @@
+#	BSDI Makefile.i386,v 1.1 1997/06/10 23:27:46 donn Exp
+
+SRCS+=	elfinterp.c resolve.S
+
+.SUFFIXES: .S
+
+.S.o:
+	${CC} ${CFLAGS} -c ${.IMPSRC}

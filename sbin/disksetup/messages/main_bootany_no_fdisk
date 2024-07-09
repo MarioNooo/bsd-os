@@ -1,0 +1,8 @@
+It appears that somehow bootany expects to be installed but there is
+no FDISK table to install.  This probably indicates a logic error
+someplace in disksetup.  Please inform support@bsdi.com of this and
+how you got to this point.  Disksetup will not be modifying the
+boot record to contain the bootany data.  When asked about installing
+the Master Boot Record, you are advised to answer no.
+
+Press <ENTER> to continue.

@@ -1,0 +1,18 @@
+#! /bin/sh
+#
+#
+# uupoll - Poll each system in /etc/uucp/Poll if the current hour
+#          matches an hour in the Poll file entry for that host.
+#          This should be run out of cron once an hour!
+#          copyright 95/07/15 by Brett Wynkoop (wynkoop@wynn.com)
+########################################################################
+PATH=/usr/sbin:/bin:/usr/bin:/usr/ucb:/sbin:/usr/contrib/bin
+ 
+MYNAME=`basename $0`
+POLLFILE=/etc/uucp/Poll
+HOUR=`date +%H`
+ 
+for NODE in `grep -v ^\# $POLLFILE | grep $HOUR | cut -f1 `
+do
+  uucico -r1 -s$NODE
+done

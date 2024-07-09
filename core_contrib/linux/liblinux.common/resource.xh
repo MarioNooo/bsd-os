@@ -1,0 +1,28 @@
+/*	BSDI resource.xh,v 1.2 2000/12/08 04:20:17 donn Exp	*/
+
+/*
+ * Resource.h transformations.
+ */
+
+%{
+#include <sys/time.h>
+#include <sys/resource.h>
+%}
+
+cookie int rlimit_t {
+	RLIMIT_NPROC		6;
+	RLIMIT_NOFILE		7;
+	RLIMIT_MEMLOCK		8;
+	LINUX_RLIMIT_AS		9;
+};
+
+struct rlimit {
+	long rlim_cur;
+	long rlim_max;
+};
+
+/* Believe it or not, the Linux rusage structure is conformable.  */
+
+cookie int rusage_t {
+	LINUX_RUSAGE_BOTH	-2;
+};

@@ -1,0 +1,4 @@
+There is no root filesystem (BSD partition a) defined for the
+BSD partition.  It is highly unlikely that this partition is
+actually bootable.
+

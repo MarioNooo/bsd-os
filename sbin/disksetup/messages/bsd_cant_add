@@ -1,0 +1,5 @@
+There is not enough free space left in any of the
+FDISK partitions marked for BSD.
+
+(Use the [I]mport command to add a BSD partition
+which resides in a non-BSD FDISK partition.)

@@ -1,0 +1,134 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1994 Berkeley Software Design, Inc.  All rights reserved.
+.\"
+.\" BSDI	bootany.8,v 2.6 2001/10/03 17:29:56 polk Exp
+.\"
+.Dd "December 5,1994"
+.Dt BOOTANY 8
+.Os
+.Sh NAME
+.Nm bootany
+.Nd install/update bootany master boot record
+.Sh SYNOPSIS
+.Nm bootany
+.Op Fl CLdfinSz
+.Op Fl A Ar part
+.Op Fl F Ar bootfile
+.Op Fl s Ar savembr
+.Ar disk0
+.Op Ar disk1
+.Sh DESCRIPTION
+.Pp
+The
+.Nm bootany
+utility allows the installation of the bootany master boot record (MBR)
+or editing of the partitions from which to boot on
+.Ar disk0 .
+The bootany MBR allows
+booting from up to 4 partitions on either of the two disks accessible through
+the BIOS.  Although BSD/OS, starting with version 2, may be booted from
+either disk defined by the BIOS, other operating systems may not be able
+to be booted from other than the first disk.
+.Pp
+.Ar disk0
+should refer to the primary disk (e.g., /dev/rwd0c or /dev/rsd0c).
+In order to boot from the second drive, it must be specified as
+.Ar disk1
+(e.g., /dev/rwd1c).
+.Pp
+With no options,
+.Nm bootany
+lists the current partitions from which to boot.
+The options available are:
+.Bl -tag -width Ds
+.It Fl A
+Set the partition defined by
+.Ar part ,
+which must be a number between 1 and 4,
+as the current active partition.
+.It Fl C
+Use the old style Cylinder/Head/Sector (CHS) boot record.  The CHS boot
+record must be used for booting from the second disk, however, it does
+not support booting from a partition that is more than 8GB into a disk.
+This is the default if two disks are specified.
+.It Fl d
+Treat the secondary drive as bootable with no FDISK table (i.e. it
+is dedicated to BSD/OS.)  In this case the
+.Ar disk1
+argument may be omitted.
+.It Fl f
+Print the FDISK tables as well as bootany tables.
+.It Fl F
+Use
+.Ar bootfile
+as the path to the file which contains the bootany MBR
+instead of /usr/bootstraps/bootany.sys.
+.It Fl i
+Ask for each of the partitions if they are bootable, and if so,
+what to call them.
+.It Fl L
+Use the new style Logical Block Addressing (LBA) boot record.  The LBA boot
+record does not support booting from the second disk, however, it does
+support booting from a partition that is more than 8GB into a disk.
+This is the default if only one disk is specified.
+.It Fl n
+Install a new copy of bootany.sys.
+.It Fl s
+Save a copy of the old MBR in
+.Ar savembr .
+.It Fl S
+Used during the express install.
+Do not ask any questions, simply intuit the answers.
+.It Fl z
+Zero the bootany tables.  If specified with the
+.Fl i
+flag, the tables are first zeroed and then interactive
+mode is entered.
+.El
+.Pp
+The
+.Nm bootany
+program is called by
+.Xr disksetup 8
+to install the BSD/OS MBR.
+.Pp
+If no partitions are marked as bootable then the
+.Nm bootany
+bootstrap
+will automatically try to boot what ever partition is marked active.
+It is undefined as to what happens if
+no partition is marked active or the active partition does not have
+a valid boot sector.
+In this case, the
+.Nm bootany
+bootstrap will still attempt to load and boot some random sector for the disk.
+.Sh CHS vs LBA mode
+.Nm Bootany
+will automatically determine if the currently installed bootany record is
+the CHS or LBA mode record.  When initializing a disk, the LBA mode record
+is used unless
+.Fl C
+is specified,
+a specific bootstrap is given via
+.Fl F ,
+or
+.Ar disk1
+is specified.
+.Pp
+The CHS mode record uses BIOS INT 0x13 AH=0x02 to read sectors.  This
+call, while universal, is limited to 1024 cylinders, 256 heads and 63
+sectors per track.  The LBA mode record will use BIOS INT 0x13 AH=0x42
+to read sectors.  This call is limited to 2^64 sectors.
+This call is not universal (it is found in virtually all
+modern BIOSes) so this record can fall back to the AH=0x02 if AH=0x42
+is not supported by the BIOS.  The downside of the LBA record is that
+the extra code space needed to support both types of interrupts prevents
+the record from supporting boots on the second drive.
+.Sh FILES
+/usr/bootstraps/bootany.sys
+.br
+/usr/bootstraps/bootany.lba
+.Sh SEE ALSO
+.Xr boot 8 ,
+.Xr disksetup 8

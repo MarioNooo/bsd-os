@@ -1,0 +1,6 @@
+#	BSDI 0.math.0,v 1.1 1998/01/22 15:46:51 donn Exp
+
+if [ -f /sbin/mathlink ] ; then
+	echo 'setting math library links'
+	mathlink
+fi

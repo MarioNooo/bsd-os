@@ -1,0 +1,4 @@
+Though there appear to be FDISK table entries on this disk,
+disksetup cannot verify them.  Disksetup was not able to determine
+the geometry used with these entries.
+

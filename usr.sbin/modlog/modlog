@@ -1,0 +1,57 @@
+#!/usr/bin/perl5
+
+#	BSDI	modlog,v 1.2 1999/03/11 21:32:15 chrisk Exp
+
+$stm{"apply"} = "Applied";
+$stm{"commit"} = "Committed";
+$stm{"partial"} = "Partially Applied";
+$stm{"undo"} = "Backed Out";
+$stm{"installed"} = "Installed";
+
+use Getopt::Long;
+$0 =~ s#.*/##;
+die "Usage: $0 [-p root] [logfile]\n" 
+	if ! &GetOptions("p|root");
+if (defined($l = shift)) {
+	&plog("Mods", $l);
+	exit 0;
+}
+
+$r = $ENV{"ROOT"};
+$r = $opt_p if (defined($opt_p));
+&plog("User mode mods", "$r/var/db/install.log");
+&plog("Kernel mods", "$r/usr/src/sys/PATCHLOG");
+&plog("Kernel mods (from current directory)", "PATCHLOG");
+
+exit 0;
+
+sub plog {
+	local($desc, $lfn) = @_;
+	local(@mn, %mstat);
+	open(L, $lfn) or return;
+	while (<L>) {
+		next if (!/patch (\S+) (\S+) (.*)$/);
+		push @mn, $1 if (!defined($mstat{$1}));
+		$mstat{$1} = $2;
+		$mdate{$1} = $3;
+	}
+	close(L);
+	$- = 0;
+	$dstr = "$desc   [$lfn]";
+	foreach $m (@mn) { next if $stm{$mstat{$m}} eq ""; write; }
+	print "\n";
+}
+
+format STDOUT_TOP =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$dstr
+
+Mod name                        Status           Date
+----------                      ---------        --------------------
+.
+
+format STDOUT =
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$m, $stm{$mstat{$m}}, $mdate{$m}
+.
+

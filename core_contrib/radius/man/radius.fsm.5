@@ -1,0 +1,227 @@
+'\" t
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH RADIUS.FSM 5 "5 March 1997"
+.SH NAME
+radius.fsm \- Merit \s-2AAA\s+2 server finite state machine configuration file
+.SH SYNOPSIS
+.B ../raddb/radius.fsm
+.SH DESCRIPTION
+.LP
+The
+.I radius.fsm
+file resides in the
+.I ../raddb
+directory.  It contains an entry for each state in the Merit \s-2AAA\s+2
+server finite state machine (\s-2FSM\s+2) table.
+This file is optional and is used to modify the built-in (default)
+sequence of actions performed by the Merit \s-2AAA\s+2 server.
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+Each state consists of one or more entries described below.
+Each state starts with a line containing just the name of the state
+followed by a colon
+.RB (' : ')
+character.
+Subsequent lines have three required, and two optional, white-space delimited
+fields.
+There is one line of the following form for each expected event this state
+should handle:
+.IP
+.I "   <event>" "        <action>"    "         <next-state>"  "     [<name=value>]"   "   [<name=string>]"
+.LP
+For example:
+.IP
+.ft B
+.TS
+;
+l l l l.
+Start:
+	*.*.\s-2AUTHEN\s+2	\s-2AUTHENTICATE\s+2	Await
+Await:
+	Start.\s-2AUTHENTICATE.ACK\s+2	\s-2REPLY\s+2	Hold
+Hold:
+	*.*.\s-2TIMEOUT\s+2	\s-2NULL\s+2	End
+.TE
+.sp
+.ft R
+.LP
+The
+.I <event>
+field describes an event which has occurred and upon which the current state
+may be able to act.
+The event field consists of three sub-fields separated by the period
+.RB (' . ')
+character.
+The first sub-field is the name of the state from which the event was generated.
+This field may contain the "*" character to indicate a wild card state which
+matches
+.I any
+state.
+The second sub-field is the name of the action which generated the event.
+This field may contain the "*" character to indicate a wild card action which
+matches
+.I any
+action.
+This action is the name of an Authentication/Authorization Transfer Vector
+(\s-2AATV\s+2, see below).
+The third sub-field is the name of an event from the list found in the
+include file,
+.IR radius.h,
+for the Merit \s-2AAA\s+2 server.
+The current list of these events is:
+.LP
+.TS
+;
+l l l.
+	\s-2ACK\s+2	acknowledgment of the previous action
+	\s-2NAK\s+2	negative acknowledgment of the previous action
+	\s-2WAIT\s+2	the previous action generated a pending event
+	\s-2ERROR\s+2	the previous action generated an error
+	\s-2FATAL\s+2	the previous action generated a fatal error
+	\s-2DUP\s+2	the incoming request is a duplicate
+	\s-2TIMER\s+2	the timer value has expired
+	\s-2TIMEOUT\s+2	the request has timed out due to inactivity
+	\s-2AUTHEN\s+2	the incoming request is an Access-Request
+	\s-2ACCT\s+2	the incoming request is an Accounting-Request
+	\s-2PASSWD\s+2	the incoming request is a Passwd-Request
+	\s-2REACCESS\s+2	the incoming request is is an Access-Request with State
+	\s-2ACC_CHAL\s+2	the incoming request is and Access-Challenge
+	\s-2MGT_POLL\s+2	the incoming request is is a Status-Server
+	\s-2AUTH_ONLY\s+2	the incoming request is for Authentication-Only
+	\s-2RC1\s+2	general purpose return code of one
+	\s-2RC2\s+2	general purpose return code of two
+	\s-2RC3\s+2	general purpose return code of three
+	\s-2RC4\s+2	general purpose return code of four
+	\s-2RC5\s+2	general purpose return code of five
+	\s-2RC6\s+2	general purpose return code of six
+	\s-2RC7\s+2	general purpose return code of seven
+	\s-2RC8\s+2	general purpose return code of eight
+	\s-2RC9\s+2	general purpose return code of nine
+	\s-2RC10\s+2	general purpose return code of ten
+	\s-2RC11\s+2	general purpose return code of eleven
+	\s-2RC12\s+2	general purpose return code of twelve
+.TE
+.LP
+The
+.I <action>
+field is the name of an \s-2AATV\s+2 action function to invoke when the
+associated
+.I <event>
+occurs.
+The current list of these \s-2AATV\s+2s is:
+.LP
+.TS
+;
+l l l.
+	\s-2ACCT\s+2	the \s-2AATV\s+2 for Accounting requests
+	\s-2ACK\s+2	utility \s-2AATV\s+2 used to always signify success
+	\s-2AKERB\s+2	the \s-2AATV\s+2 for \s-2AFS\s+2 Kerberos Authentication
+	\s-2AUTHENTICATE\s+2	the \s-2AATV\s+2 for Authentication requests
+	\s-2CLEANUP\s+2	utility \s-2AATV\s+2 used to exit the \s-2FSM\s+2
+	\s-2FILE\s+2	the \s-2AATV\s+2 for \s-2FILE\s+2 Authentication
+		The \s-2FILE\s+2 type is available only with the enhanced Merit \s-2AAA\s+2 server.
+	\s-2KCHAP\s+2	the \s-2AATV\s+2 for \s-2KCHAP\s+2 Authentication
+	\s-2KILL\s+2	utility \s-2AATV\s+2 used to unconditionally remove pending events
+	\s-2LOG\s+2	utility \s-2AATV\s+2 used to log some error
+	\s-2MKERB\s+2	the \s-2AATV\s+2 for \s-2MIT\s+2 Kerberos Authentication
+	\s-2NULL\s+2	utility \s-2NULL\s+2 \s-2AATV\s+2
+	\s-2PASSWD\s+2	the \s-2AATV\s+2 used to handle Passwd-Requests
+	\s-2PENDING\s+2	utility \s-2AATV\s+2 used to test for pending events
+	\s-2RAD2RAD\s+2	the \s-2AATV\s+2 used to send \s-2RADIUS\s+2 proxy requests
+	\s-2RADDNS\s+2	the \s-2AATV\s+2 for resolving \s-2DNS\s+2 names
+	\s-2RADIUS\s+2	the main \s-2AATV\s+2 in the Merit \s-2AAA\s+2 server
+	\s-2REALM\s+2	the \s-2AATV\s+2 for handling realm based Authentication
+	\s-2REDO\s+2	utility \s-2AATV\s+2 used to re-invoke an action
+	\s-2REPLY\s+2	utility \s-2AATV\s+2 used to send a \s-2RADIUS\s+2 reply
+	\s-2SRV_STATUS\s+2	the \s-2AATV\s+2 for Status-Server requests
+	\s-2TACACS\s+2	the \s-2AATV\s+2 for \s-2TACACS\s+2 Authentication
+	\s-2TIMEOUT\s+2	utility \s-2AATV\s+2 used to do timeout logging
+	\s-2TIMER\s+2	utility \s-2AATV\s+2 used to initialize the timeout value
+	\s-2UNIX-PW\s+2	the \s-2AATV\s+2 for for \s-2UNIX\s+2 password file Authentication
+.TE
+.LP
+The
+.I <next-state>
+field indicates which state the \s-2FSM\s+2 should enter following the
+completion of the
+.IR <action> ,
+even if that
+.I <action>
+was deferred in one of several ways allowed for an \s-2AATV\s+2.
+Each such state must appear in the configuration file alone on a line and
+followed by a colon
+.RB (' : ')
+character.
+.LP
+The optional
+.I <name=value>
+and
+.I <name=string>
+fields are simple keyword/value pairs which allow any \s-2AATV\s+2 to be
+given an arbitrary integer or string value (or both) as configured in the
+\s-2FSM\s+2 table.
+The
+.I name
+for integer values is
+.B \s-2XVALUE\s+2
+and the
+.I name
+for string values is
+.BR \s-2XSTRING\s+2 .
+.LP
+\s-2NOTE\s+2: Only one action may result from entering any state and this
+from the
+.I first
+entry which matches the given event.
+.LP
+If the file
+.I radius.fsm
+does not exist, the server will use the following built-in \s-2FSM\s+2 table:
+.IP
+.ft B
+.TS
+;
+l l l l .
+Start:
+	*.\s-2+AUTHEN\s+2.\s-2ACK\s+2	\s-2AUTHENTICATE\s+2	\s-2REPLY\s+2hold
+	*.\s-2+AUTH_ONLY\s+2.\s-2ACK\s+2	\s-2AUTHENTICATE\s+2	\s-2REPLY\s+2hold
+	*.\s-2+ACCT\s+2.\s-2ACK\s+2	\s-2ACCT\s+2	\s-2REPLY\s+2hold
+	*.\s-2+MGT_POLL\s+2.\s-2ACK\s+2	\s-2SRV_STATUS\s+2	\s-2REPLY\s+2hold
+	*.*.\s-2NAK\s+2	\s-2REPLY\s+2	End
+\s-2REPLY\s+2hold:
+	*.*.\s-2ACK\s+2	\s-2REPLY\s+2	Hold
+	*.*.\s-2NAK\s+2	\s-2REPLY\s+2	Hold
+	*.*.\s-2ACC_CHAL\s+2	\s-2REPLY\s+2	Hold
+Hold:
+	*.*.\s-2TIMEOUT\s+2	\s-2NULL\s+2	End
+End:
+.TE
+.sp
+.ft R
+.LP
+The
+.I radius.fsm
+file is read by
+.B radiusd
+upon startup, or when a \s-2HUP\s+2 signal is received by
+.BR radiusd .
+The Merit \s-2AAA\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+This file is maintained by the system administrator using a text editor.
+.SH FILES
+.PD 0
+.TP
+.I ../raddb/radius.fsm
+finite state machine configuration file
+.TP
+.I ../src/radius.h
+the main Merit \s-2AAA\s+2 server include file
+.PD
+.SH "SEE ALSO"
+.BR signal (3),
+.BR radiusd (8)

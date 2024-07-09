@@ -1,0 +1,26 @@
+#!/bin/sh
+#	BSDI Dialout.up,v 2.9 1998/04/22 17:05:05 chrisk Exp
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-debug)	shift; echo $(date): $0 $* ; set -x ;;
+        --)	shift; break ;;
+        -*|+*)	shift ;;
+        *)	break ;;
+        esac
+done
+
+SYSTEM=$1	# System
+INTERFACE=$2	# Interface
+LOCAL=$3	# Local address
+REMOTE=$4	# Remote address
+
+#
+# If there is no default route then add one through this interface
+# Comment out these lines if you do not want a default route defined
+#
+if [ "$REMOTE" ] ; then
+    route -qn get default || route -n add default $REMOTE
+fi
+exit 0

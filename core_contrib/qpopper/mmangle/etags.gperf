@@ -1,0 +1,47 @@
+%{ /* etags.gperf -*- C -*- Map enriched to html tags
+    * Praveen Yaramada
+    * gperf -tpacCg -k "*" -N etags_lookup -H etags_hash -K enriched_tag etags.gperf > etags.c
+    */
+
+#include "string.h"
+#include "enriched.h"
+
+%}
+struct etags_rec { const char *enriched_tag; const char *html_tag; int html_tag_len; EnrichedTag et; };
+%%
+<<,            "&lt;",                    4, CHARTAG
+<param>,       "<?param >",               6, PARAM
+</param>,      "\">",                     2, XPARAM
+<nofill>,      "<pre>",                   5, NOFILLV
+</nofill>,     "</pre>",                  6, XNOFILLV
+<bold>,        "<b>",                     3, BOLD
+</bold>,       "</b>",                    4, XBOLD
+<italic>,      "<i>",                     3, ITALIC
+</italic>,     "</i>",                    4, XITALIC
+<fixed>,       "<tt>",                    4, FIXED
+</fixed>,      "</tt>",                   5, XFIXED
+<underline>,   "<u>",                     3, UNDERLINE
+</underline>,  "</u>",                    4, XUNDERLINE
+<smaller>,     "<small>",                 7, SMALLER
+</smaller>,    "</small>",                8, XSMALLER
+<bigger>,      "<big>",                   5, BIGGER
+</bigger>,     "</big>",                  6, XBIGGER
+<center>,      "<center>",                8, CENTER
+</center>,     "</center>",               9, XCENTER
+<flushleft>,   "<div align=left>",       16, FLUSHLEFT
+<flushright>,  "<div align=right>",      17, FLUSHRIGHT
+<flushboth>,   "<div align=justify>",    19, FLUSHBOTH
+</flushleft>,  "</div>",                  6, XFLUSHLEFT
+</flushright>, "</div>",                  6, XFLUSHRIGHT
+</flushboth>,  "</div>",                  6, XFLUSHBOTH
+<excerpt>,     "<blockquote type=cite>", 22, EXCERPT
+</excerpt>,    "</blockquote>",          13, XEXCERPT
+>,             "&gt;",                    4, CHARTAG
+&,             "&amp;",                   5, CHARTAG
+<fontfamily>,  "<font face=\"",          12, FONTFAMILY
+</fontfamily>, "</font>",                 7, XFONTFAMILY
+<color>,       "<font color=\"",         13, COLOR
+</color>,      "</font>",                 7, XCOLOR
+<paraindent>,  "",                        0, PARAINDENT
+</paraindent>, "",                        0, XPARAINDENT
+%%

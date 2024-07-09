@@ -1,0 +1,862 @@
+#
+# Copyright (c) 1997,1999 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI scsicmdtab,v 2.4 1999/10/28 20:47:53 richards Exp
+#
+
+COMMAND: test unit ready (tur)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x00
+	BYTE 1 BITS 5-7: logical unit (lun)
+
+COMMAND: rewind (rew)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x01
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 0: immediate return (immed)
+
+COMMAND: request sense (rs): CMD_RS
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x03
+	BYTE 1 BITS 5-7: logical unit (lun)
+	BYTE 4: transfer length (tl): 0xff
+BUFFER: request sense data (rsd)
+	BYTE 0	BIT 7: valid sense data (valid)
+		BITS 0-6: error code (ec)
+	BYTE 1: segment number (sn)
+	BYTE 2	BIT 7: filemark read (filemark)
+		BIT 6: end of medium (eom)
+		BIT 5: incorrect length indicator (ili)
+		BITS 0-3: sense key (sk): FORMAT_CODE
+	BYTES 3-6: information (info)
+	BYTE 7: additional sense length (addlen)
+	BYTES 8-11: command specific information (csi)
+	BYTE 12: additional sense code (asc): FORMAT_CODE
+	BYTE 13: additional sense code qualifier (ascq)
+	BYTE 14: field replaceable unit code (fruc)
+	BYTE 15 BIT 7: sense key specific valid (sksv)
+	BYTE 15 BITLENGTH 23: sense key specific (sks)
+BUFFER: field pointer bytes (fpb)
+	BYTE 15 BIT 6: command/data (cd)
+	BYTE 15 BIT 3: bit pointer valid (bpv)
+	BYTE 15 BITS 0-2: bit pointer (bp)
+	BYTES 16-17: field pointer (fp)
+BUFFER: actual retry count bytes (arcb)
+	BYTES 16-17: actual retry count (arc)
+BUFFER: format progress indication bytes (fpib)
+	BYTES 16-17: format progress indication (fpi)
+
+COMMAND: format unit (fu): CMD_WRITE
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x04
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 4: format data (fmtdata)
+		BIT 3: complete list (cmplst)
+		BITS 0-2: defect list format (dlf)
+	BYTE 2: vendor specific (vendor)
+	BYTES 3-4: interleave (intlv)
+BUFFER: parameter list (pl)
+	BYTE 1	BIT 7: format options valid (fov)
+		BIT 6: disable primary (dpry)
+		BIT 5: disable certification (dcrt)
+		BIT 4: stop format (stpf)
+		BIT 3: initialization pattern (ip)
+		BIT 2: disable saving parameters (dsp)
+		BIT 1: immediate status (immed)
+		BIT 0: vendor specific bit (vs)
+	BYTES 2-3: defect list length (dll)
+
+COMMAND: reassign blocks (rb): CMD_WRITE
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x07
+BUFFER: defect list (dlb)
+	BYTES 2-3: defect list length (dll): 0x04
+	BYTES 4-7: defect logical block address: (dlba)
+
+COMMAND: read disk blocks, short format (read6): CMD_READ_DATA
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x08
+	BYTE 1 BITS 5-7: logical unit (lun)
+	BYTE 1 BITLENGTH 21: logical block address (lba)
+	BYTE 4: transfer length (tl)
+
+COMMAND: read tape (tread): CMD_READ_DATA
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x08
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 1: suppress incorrect length indicator (sili)
+		BIT 0: fixed-length records (fixed)
+	BYTES 2-4: transfer length (tl)
+
+COMMAND: space (sp)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x11
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BITS 0-2: code field (cf)
+	BYTES 2-4: count (count)
+
+COMMAND: inquiry (in): CMD_READ_VAR
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x12
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 0: enable vital product data (evpd)
+	BYTE 2: page code (pc)
+	BYTE 4: allocation length (length): 255
+
+BUFFER: standard inquiry data [evpd=0] (sid)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1	BIT 7: removable medium (rmb)
+		BITS 0-6: device type modifier (dtm)
+	BYTE 2	BITS 6-7: ISO version (iso)
+		BITS 3-5: ECMA version (ecma)
+		BITS 0-2: ANSI version (ansi): FORMAT_CODE
+	BYTE 3	BIT 7: asynchronous event notification capability (aenc)
+		BIT 6: terminate I/O process (trmiop)
+		BITS 0-3: response data format (rdf): FORMAT_CODE
+	BYTE 4: additional length (addlen)
+	BYTE 7	BIT 7: relative addressing (reladr)
+		BIT 6: wide bus, 32 bits (wbus32)
+		BIT 5: wide bus, 16 bits (wbus16)
+		BIT 4: synchronous transfers (sync)
+		BIT 3: linked commands (linked)
+		BIT 1: tagged command queuing (cmdque)
+		BIT 0: soft resets (sftre)
+	BYTES 8-15: vendor identification (vi): FORMAT_STRING
+	BYTES 16-31: product identification (pi): FORMAT_STRING
+	BYTES 32-35: product revision level (prl): FORMAT_STRING
+	BYTES 36-55: vendor specific information (vsi): FORMAT_STRING
+
+BUFFER: supported vital product data pages [evpd,pc=0] (svpdp)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1: page code (pc)
+	BYTE 3: page length (pl)
+	BYTE 4: supported page list (spl/0)
+	BYTE 5: supported page list (spl/1)
+	BYTE 6: supported page list (spl/2)
+	BYTE 7: supported page list (spl/3)
+	BYTE 8: supported page list (spl/4)
+	BYTE 9: supported page list (spl/5)
+	BYTE 10: supported page list (spl/6)
+	BYTE 11: supported page list (spl/7)
+	BYTE 12: supported page list (spl/8)
+	BYTE 13: supported page list (spl/9)
+
+BUFFER: ASCII information page [evpd,pc=0x01-0x7f] (aip)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1: page code (pc)
+	BYTE 3: page length (pl)
+	BYTE 4: ASCII length (al)
+	BYTES 5-255: ASCII information (ai): FORMAT_STRING
+
+BUFFER: unit serial number page [evpd,pc=0x80] (usnp)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1: page code (pc)
+	BYTE 3: page length (pl)
+	BYTE 4-255: product serial number (psn): FORMAT_STRING
+
+BUFFER: implemented operating definitions page [evpd,pc=0x81] (iodp)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1: page code (pc)
+	BYTE 3: page length (pl)
+	BYTE 4 BITS 0-6: current operating definition (cod)
+	BYTE 5	BIT 7: save implemented (savimp/dod)
+		BITS 0-6: default operating definition (dod)
+	BYTE 6	BIT 7: save implemented (savimp/0)
+		BITS 0-6: supported operating definition list (sodl/0)
+	BYTE 7	BIT 7: save implemented (savimp/1)
+		BITS 0-6: supported operating definition list (sodl/1)
+	BYTE 8	BIT 7: save implemented (savimp/2)
+		BITS 0-6: supported operating definition list (sodl/2)
+	BYTE 9	BIT 7: save implemented (savimp/3)
+		BITS 0-6: supported operating definition list (sodl/3)
+	BYTE 10	BIT 7: save implemented (savimp/4)
+		BITS 0-6: supported operating definition list (sodl/4)
+	BYTE 11	BIT 7: save implemented (savimp/5)
+		BITS 0-6: supported operating definition list (sodl/5)
+	BYTE 12	BIT 7: save implemented (savimp/6)
+		BITS 0-6: supported operating definition list (sodl/6)
+	BYTE 13	BIT 7: save implemented (savimp/7)
+		BITS 0-6: supported operating definition list (sodl/7)
+	BYTE 14	BIT 7: save implemented (savimp/8)
+		BITS 0-6: supported operating definition list (sodl/8)
+	BYTE 15	BIT 7: save implemented (savimp/9)
+		BITS 0-6: supported operating definition list (sodl/9)
+
+BUFFER: ASCII implemented operating definition page [evpd,pc=0x82] (aiodp)
+	BYTE 0	BITS 5-7: peripheral qualifier (pq)
+		BITS 0-4: peripheral device type (pdt): FORMAT_CODE
+	BYTE 1: page code (pc)
+	BYTE 3: page length (pl)
+	BYTE 4: ASCII operating definition description length (aoddl)
+	BYTES 5-255: ASCII operating definition description data (aoddd): FORMAT_STRING
+
+COMMAND: mode select (msel): CMD_SELECT
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code)
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 4: page format [select] (pf)
+		BIT 3: disable block descriptors [sense] (dbd)
+		BIT 0: save pages [select] (sp)
+	BYTE 2	BITS 6-7: page control [sense] (pc)
+		BITS 0-5: page code [sense] (pcode)
+	BYTE 4: allocation or parameter list length (length)
+BUFFER: mode page (mp)
+	BYTE 0: mode descriptor length [sense] (mdl)
+	BYTE 1: medium type (mt)
+	BYTE 2	BIT 7: write protect (wp)
+		BIT 4: DPO/FUA support [disk] (dpofua)
+		BITS 4-6: buffered mode [tape] (bm)
+		BITS 0-3: speed [tape] (speed)
+	BYTE 3: block descriptor length (bdl)
+
+BUFFER+4: mode parameter block descriptor (mpbl)
+	BYTE 0: density code (dc)
+	BYTES 1-3: number of blocks (nob)
+	BYTES 4-7: block length (bl)
+
+# mode parameters that are independent of device type:
+BUFFER+12: disconnect-reconnect page [pcode=0x02] (drp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2: buffer full ratio (bfr)
+	BYTE 3: buffer empty ratio (ber)
+	BYTES 4-5: buffer inactivity limit (bil)
+	BYTES 6-7: disconnect time limit (dtl)
+	BYTES 8-9: connect time limit (ctl)
+	BYTES 10-11: maximum burst size (mbs)
+	BYTE 12 BITS 0-1: data transfer disconnect control (dtdc)
+
+BUFFER+12: peripheral device page [pcode=0x09] (pdp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: interface identifier (ii)
+	BYTES 8-11: peripheral device vendor specific (pdvs/1)
+	BYTES 12-15: peripheral device vendor specific (pdvs/2)
+	BYTES 16-19: peripheral device vendor specific (pdvs/3)
+	BYTES 20-23: peripheral device vendor specific (pdvs/4)
+
+BUFFER+12: control mode page [pcode=0x0a] (cmp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2 BIT 1: report log exception condition (rlec)
+	BYTE 3	BITS 4-7: queue algorithm modifier (qam)
+		BIT 1: queue error management (qerr)
+		BIT 0: disable queuing (dque)
+	BYTE 4	BIT 7: enable extended contingent allegiance (eeca)
+		BIT 2: ready AEN permission (raenp)
+		BIT 1: unit attention AEN permission (uaenp)
+		BIT 0: error AEN permission (eaenp)
+	BYTES 6-7: ready AEN holdoff period (raenhp)
+
+# mode parameters for disks:
+BUFFER+12: disk read-write error recovery page [pcode=0x01] (drwerp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 7: automatic write allocation enabled (awre)
+		BIT 6: automatic read reallocation enabled (arre)
+		BIT 5: transfer block (tb)
+		BIT 4: read continuous (rc)
+		BIT 3: enable early recovery (eer)
+		BIT 2: post error recovery (per)
+		BIT 1: disable transfer on error (dte)
+		BIT 0: disable correction (dcr)
+	BYTE 3: read retry count (rrc)
+	BYTE 4: correction span (cs)
+	BYTE 5: head offset count (hoc)
+	BYTE 6: data strobe offset count (dsoc)
+	BYTE 8: write retry count (wrc)
+	BYTES 10-11: recovery time limit (rtl)
+
+BUFFER+12: disk format device page [pcode=0x03] (dfdp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: tracks per zone (tpz)
+	BYTES 4-5: alternate sectors per zone (aspz)
+	BYTES 6-7: alternate tracks per zone (atpz)
+	BYTES 8-9: alternate tracks per logical unit (atplu)
+	BYTES 10-11: sectors per track (spt)
+	BYTES 12-13: data bytes per physical sector (dbpps)
+	BYTES 14-15: interleave (il)
+	BYTES 16-17: track skew factor (tsf)
+	BYTES 18-19: cylinder skew factor (csf)
+	BYTE 20	BIT 7: soft sectoring enable control (ssec)
+		BIT 6: hard sectoring enable control (hsec)
+		BIT 5: removable media (rmb)
+		BIT 4: surfaces instead of cylinders (surf)
+
+BUFFER+12: rigid disk drive geometry page [pcode=0x04] (rddgp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-4: number of cylinders (noc)
+	BYTE 5: number of heads (noh)
+	BYTES 6-8: starting cylinder for write precompensation (scwp)
+	BYTES 9-11: starting cylinder for reduced write current (scrwc)
+	BYTES 12-13: drive step rate (dsr)
+	BYTES 14-16: landing zone cylinder (lzc)
+	BYTE 17 BITS 0-1: rotational position locking (rpl)
+	BYTE 18: rotational offset (ro)
+	BYTES 20-21: medium rotation rate (mrr)
+
+BUFFER+12: flexible disk page [pcode=0x05] (fdp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+# we prepend 'f' for 'floppy' to names to prevent name collisions
+	BYTES 2-3: floppy transfer rate (ftr)
+	BYTE 4: floppy number of heads (fnoh)
+	BYTE 5: floppy sectors per track (fspt)
+	BYTES 6-7: floppy data bytes per sector (fdbps)
+	BYTES 8-9: floppy number of cylinders (fnoc)
+	BYTES 10-11: floppy starting cylinder for write precompensation (fscwp)
+	BYTES 12-13: floppy starting cylinder for reduced write current (fscrwc)
+	BYTES 14-15: floppy drive step rate (fdsr)
+	BYTE 16: floppy drive step pulse width (fdspw)
+	BYTES 17-18: floppy head settle delay (fhsd)
+	BYTE 19: floppy motor on delay (fmond)
+	BYTE 20: floppy motor off delay (fmoffd)
+	BYTE 21	BIT 7: floppy true ready (ftrdy)
+		BIT 6: floppy start sector number (sfsn)
+		BIT 5: floppy motor on (fmo)
+	BYTES 22 BITS 0-3: floppy step pulse per cylinder (fspc)
+	BYTE 23: floppy write compensation (fwc)
+	BYTE 24: floppy head load delay (fhld)
+	BYTE 25: floppy head unload delay (fhud)
+	BYTE 26	BITS 4-7: floppy pin 34 (fp34)
+		BITS 0-3: floppy pin 2 (fp2)
+	BYTE 27	BITS 4-7: floppy pin 4 (fp4)
+		BITS 0-3: floppy pin 1 (fp1)
+	BYTES 28-29: floppy medium rotation rate (fmrr)
+
+BUFFER+12: disk verify error recovery page [pcode=0x07] (dverp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+# EER, PER, DTE, DCR are identical to r/w error recovery page
+	BYTE 2	BIT 3: enable early recovery (eer)
+		BIT 2: post error recovery (per)
+		BIT 1: disable transfer on error (dte)
+		BIT 0: disable correction (dcr)
+	BYTE 3: verify retry count (vrc)
+	BYTE 4: verify correction span (vcs)
+	BYTES 10-11: verify recovery time limit (vrtl)
+
+BUFFER+12: disk caching page [pcode=0x08] (dcp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 2: write cache enable (wce)
+		BIT 1: multiplication factor (mf)
+		BIT 0: read cache disable (rcd)
+	BYTE 3	BITS 4-7: demand read retention priority (drrp)
+		BITS 0-3: write retention priority (wrp)
+	BYTES 4-5: disable pre-fetch transfer length (dpftl)
+	BYTES 6-7: minimum pre-fetch (minpf)
+	BYTES 8-9: maximum pre-fetch (maxpf)
+	BYTES 10-11: maximum pre-fetch ceiling (maxpfc)
+
+BUFFER+12: disk medium types supported page [pcode=0x0b] (dmtsp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 4: medium type supported (mts/1)
+	BYTE 5: medium type supported (mts/2)
+	BYTE 6: medium type supported (mts/3)
+	BYTE 7: medium type supported (mts/4)
+
+BUFFER+12: disk notch and partition page [pcode=0x0c] (dnapp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 7: notched drive (nd)
+		BIT 6: logical vs. physical notch (lpn)
+	BYTES 4-5: maximum number of notches (mnon)
+	BYTES 6-7: active notch (an)
+	BYTES 8-11: starting boundary (sb)
+	BYTES 12-15: ending boundary (eb)
+	BYTES 16-19: pages notched (pn/1)
+	BYTES 20-23: pages notched (pn/2)
+
+# mode parameters for tapes:
+BUFFER+12: tape read-write error recovery page [pcode=0x01] (trwerp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+# all parameters in this page overlap with disk version
+	BYTE 2	BIT 5: transfer block (tb)
+		BIT 3: enable early recovery (eer)
+		BIT 2: post error recovery (per)
+		BIT 1: disable transfer on error (dte)
+		BIT 0: disable correction (dcr)
+	BYTE 3: read retry count (rrc)
+	BYTE 8: write retry count (wrc)
+
+BUFFER+12: tape data compression characteristics page [pcode=0x0f] (tdccp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 7: data compression enable (dce)
+		BIT 6: data compression capable (dcc)
+	BYTE 3	BIT 7: data decompression enable (dde)
+		BITS 5-6: report error on decompression (red)
+	BYTES 4-7: compression algorithm (ca)
+	BYTES 8-11: decompression algorithm (da)
+
+BUFFER+12: tape device configuration page [pcode=0x10] (tdcp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 6: change active partition (cap)
+		BIT 5: change active format (caf)
+		BITS 0-4: active format (af)
+	BYTE 3: active partition (ap)
+	BYTE 4: write buffer full ratio (wbfr)
+	BYTE 5: read buffer empty ratio (rber)
+	BYTES 6-7: write delay time (wdt)
+	BYTE 8	BIT 7: data buffer recovery (dbr)
+		BIT 6: block identifiers supported (bis)
+		BIT 5: report setmarks (rsmk)
+		BIT 4: automatic velocity control (avc)
+		BITS 2-3: stop on consecutive filemarks (socf)
+		BIT 1: recover buffer order (rbo)
+		BIT 0: report early warning (rew)
+	BYTE 9: gap size (gs)
+	BYTE 10	BITS 5-7: end-of-data defined (eodd)
+		BIT 4: enable EOD generation (eeg)
+		BIT 3: synchronize at early warning (sew)
+	BYTES 11-13: buffer size at early warning (bsaew)
+	BYTE 14: select data compression algorithm (sdca)
+
+BUFFER+12: tape medium partition page 1 [pcode=0x11] (tmpp1)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2: maximum additional partitions (map)
+	BYTE 3: additional partitions defined (apd)
+	BYTE 4	BIT 7: fixed data partitions (fdpart)
+		BIT 6: select data partitions (sdpart)
+		BIT 5: initiator-defined partitions (idpart)
+		BITS 3-4: partition size unit of measure (psum)
+	BYTE 5: medium format recognition (mfr)
+	BYTES 8-9: partition size (ps/1)
+	BYTES 10-11: partition size (ps/2)
+	BYTES 12-13: partition size (ps/3)
+	BYTES 14-15: partition size (ps/4)
+
+BUFFER+12: tape medium partition page 2 [pcode=0x12] (tmpp2)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: partition size (ps/65)
+	BYTES 4-5: partition size (ps/66)
+	BYTES 6-7: partition size (ps/67)
+	BYTES 8-9: partition size (ps/68)
+
+BUFFER+12: tape medium partition page 3 [pcode=0x13] (tmpp3)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: partition size (ps/129)
+	BYTES 4-5: partition size (ps/130)
+	BYTES 6-7: partition size (ps/131)
+	BYTES 8-9: partition size (ps/132)
+
+BUFFER+12: tape medium partition page 4 [pcode=0x14] (tmpp4)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: partition size (ps/193)
+	BYTES 4-5: partition size (ps/194)
+	BYTES 6-7: partition size (ps/195)
+	BYTES 8-9: partition size (ps/196)
+
+# mode parameters for medium changer devices:
+BUFFER+12: element address assignment page [pcode=0x1d] (eaap)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTES 2-3: medium transport element address (mtea)
+	BYTES 4-5: number of medium transport elements (nomte)
+	BYTES 6-7: first storage element address (fsea)
+	BYTES 8-9: number of storage elements (nose)
+	BYTES 10-11: first import/export element address (fieea)
+	BYTES 12-13: number of import/export elements (noiee)
+	BYTES 14-15: first data transfer element address (fdtea)
+	BYTES 16-17: number of data transfer elements (nodte)
+
+# The following hack for devices that omit block descriptors always XXX
+BUFFER+4: element address assignment page [pcode=0x1d,dbd] (eaap.d)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps.d)
+		BITS 0-5: mode page code (mpcode.d)
+	BYTE 1: mode page length (mpl.d)
+	BYTES 2-3: medium transport element address (mtea.d)
+	BYTES 4-5: number of medium transport elements (nomte.d)
+	BYTES 6-7: first storage element address (fsea.d)
+	BYTES 8-9: number of storage elements (nose.d)
+	BYTES 10-11: first import/export element address (fieea.d)
+	BYTES 12-13: number of import/export elements (noiee.d)
+	BYTES 14-15: first data transfer element address (fdtea.d)
+	BYTES 16-17: number of data transfer elements (nodte.d)
+
+BUFFER+12: medium changer device capabilities page [pcode=0x1f] (mcdcp)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps)
+		BITS 0-5: mode page code (mpcode)
+	BYTE 1: mode page length (mpl)
+	BYTE 2	BIT 3: storage in data transfer element (stordt)
+		BIT 2: storage in import/export element (storie)
+		BIT 1: storage in storage element (storst)
+		BIT 0: storage in medium transport element (stormt)
+	BYTE 4	BIT 3: medium transport to data transfer (mt2dt)
+		BIT 2: medium transport to import/export (mt2ie)
+		BIT 1: medium transport to storage (mt2st)
+		BIT 0: medium transport to medium transport (mt2mt)
+	BYTE 5	BIT 3: storage -> data transfer (st2dt)
+		BIT 2: storage -> import/export (st2ie)
+		BIT 1: storage -> storage (st2st)
+		BIT 0: storage -> medium transport (st2mt)
+	BYTE 6	BIT 3: import/export -> data transfer (ie2dt)
+		BIT 2: import/export -> import/export (ie2ie)
+		BIT 1: import/export -> storage (ie2st)
+		BIT 0: import/export -> medium transport (ie2mt)
+	BYTE 7	BIT 3: data transfer -> data transfer (dt2dt)
+		BIT 2: data transfer -> import/export (dt2ie)
+		BIT 1: data transfer -> storage (dt2st)
+		BIT 0: data transfer -> medium transport (dt2mt)
+	BYTE 12	BIT 3: medium transport <> data transfer (mtxdt)
+		BIT 2: medium transport <> import/export (mtxie)
+		BIT 1: medium transport <> storage (mtxst)
+		BIT 0: medium transport <> medium transport (mtxmt)
+	BYTE 13	BIT 3: storage <> data transfer (stxdt)
+		BIT 2: storage <> import/export (stxie)
+		BIT 1: storage <> storage (stxst)
+		BIT 0: storage <> medium transport (stxmt)
+	BYTE 14	BIT 3: import/export <> data transfer (iexdt)
+		BIT 2: import/export <> import/export (iexie)
+		BIT 1: import/export <> storage (iexst)
+		BIT 0: import/export <> medium transport (iexmt)
+	BYTE 15	BIT 3: data transfer <> data transfer (dtxdt)
+		BIT 2: data transfer <> import/export (dtxie)
+		BIT 1: data transfer <> storage (dtxst)
+		BIT 0: data transfer <> medium transport (dtxmt)
+
+# The following hack for devices that omit block descriptors always XXX
+BUFFER+4: medium changer device capabilities page [pcode=0x1f,dbd] (mcdcp.d)
+	BYTE 0	BIT 7: parameters saveable [sense] (ps.d)
+		BITS 0-5: mode page code (mpcode.d)
+	BYTE 1: mode page length (mpl.d)
+	BYTE 2	BIT 3: storage in data transfer element (stordt.d)
+		BIT 2: storage in import/export element (storie.d)
+		BIT 1: storage in storage element (storst.d)
+		BIT 0: storage in medium transport element (stormt.d)
+	BYTE 4	BIT 3: medium transport to data transfer (mt2dt.d)
+		BIT 2: medium transport to import/export (mt2ie.d)
+		BIT 1: medium transport to storage (mt2st.d)
+		BIT 0: medium transport to medium transport (mt2mt.d)
+	BYTE 5	BIT 3: storage -> data transfer (st2dt.d)
+		BIT 2: storage -> import/export (st2ie.d)
+		BIT 1: storage -> storage (st2st.d)
+		BIT 0: storage -> medium transport (st2mt.d)
+	BYTE 6	BIT 3: import/export -> data transfer (ie2dt.d)
+		BIT 2: import/export -> import/export (ie2ie.d)
+		BIT 1: import/export -> storage (ie2st.d)
+		BIT 0: import/export -> medium transport (ie2mt.d)
+	BYTE 7	BIT 3: data transfer -> data transfer (dt2dt.d)
+		BIT 2: data transfer -> import/export (dt2ie.d)
+		BIT 1: data transfer -> storage (dt2st.d)
+		BIT 0: data transfer -> medium transport (dt2mt.d)
+	BYTE 12	BIT 3: medium transport <> data transfer (mtxdt.d)
+		BIT 2: medium transport <> import/export (mtxie.d)
+		BIT 1: medium transport <> storage (mtxst.d)
+		BIT 0: medium transport <> medium transport (mtxmt.d)
+	BYTE 13	BIT 3: storage <> data transfer (stxdt.d)
+		BIT 2: storage <> import/export (stxie.d)
+		BIT 1: storage <> storage (stxst.d)
+		BIT 0: storage <> medium transport (stxmt.d)
+	BYTE 14	BIT 3: import/export <> data transfer (iexdt.d)
+		BIT 2: import/export <> import/export (iexie.d)
+		BIT 1: import/export <> storage (iexst.d)
+		BIT 0: import/export <> medium transport (iexmt.d)
+	BYTE 15	BIT 3: data transfer <> data transfer (dtxdt.d)
+		BIT 2: data transfer <> import/export (dtxie.d)
+		BIT 1: data transfer <> storage (dtxst.d)
+		BIT 0: data transfer <> medium transport (dtxmt.d)
+
+COMMAND: erase (er)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x19
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 1: immediate return (immed)
+		BIT 0: long erase for entire tape (long)
+
+COMMAND: mode sense (msen): CMD_SENSE
+
+COMMAND: load/unload (lu)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x1b
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 0: immediate return (immed)
+	BYTE 2: media ID 0 (media/0)
+	BYTE 3: media ID 1 (media/1)
+	BYTE 4	BIT 2: end of tape positioning (eot)
+		BIT 1: retension (re-ten)
+		BIT 0: load rather than unload (load)
+
+COMMAND: read capacity (rc)
+CDB: command descriptor block (cdb): 10
+	BYTE 0: operation code (code): 0x25
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 0: relative address (reladr)
+	BYTES 2-5: logical block address (lba)
+	BYTE 8 BIT 0: partial medium indicator (pmi)
+BUFFER: read capacity data (rcd): 8
+	BYTES 0-3: returned logical block address (rlba)
+	BYTES 4-7: block length in bytes (blib)
+
+COMMAND: read disk blocks, long format (read10): CMD_READ_DATA
+CDB: command descriptor block (cdb): 10
+	BYTE 0: operation code (code): 0x28
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 4: disable page out (dpo)
+		BIT 3: force unit access (fua)
+		BIT 0: relative address (reladr)
+	BYTES 2-5: logical block address (lba)
+	BYTES 7-8: transfer length (tl)
+
+COMMAND: move medium (mm)
+CDB: command descriptor block (cdb): 12
+	BYTE 0: operation code (code): 0xa5
+	BYTE 1	BITS 5-7: logical unit (lun)
+	BYTES 2-3: transport element address (tea)
+	BYTES 4-5: source address (sa)
+	BYTES 6-7: destination address (da)
+	BYTE 10	BIT 0: invert (inv)
+
+COMMAND: exchange medium (em)
+CDB: command descriptor block (cdb): 12
+	BYTE 0: operation code (code): 0xa6
+	BYTE 1	BITS 5-7: logical unit (lun)
+	BYTES 2-3: transport element address (tea)
+	BYTES 4-5: source address (sa)
+	BYTES 6-7: first destination address (fda)
+	BYTES 8-9: second destination address (sda)
+	BYTE 10	BIT 0: invert1 (inv1)
+		BIT 1: invert2 (inv2)
+
+COMMAND: position to element (pte)
+CDB: command descriptor block (cdb): 10
+	BYTE 0: operation code (code): 0x2b
+	BYTE 1	BITS 5-7: logical unit (lun)
+	BYTES 2-3: transport element address (tea)
+	BYTES 4-5: destination element address (dea)
+	BYTE 8 BIT 0: invert (inv)
+
+# This version of the command only lets you read one element at a time.
+COMMAND: read element status (res)
+CDB: command descriptor block (cdb): 12
+	BYTE 0: operation code (code): 0xb8
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 4: volume tag (voltag)
+		BITS 0-3: element type code (etc)
+	BYTES 2-3: starting element address (sea)
+	BYTES 4-5: number of elements (noe)
+	BYTES 7-9: allocation length (length): 255
+
+BUFFER: element status data (esd)
+	BYTES 0-1: first element address reported (fear)
+	BYTES 2-3: number of elements available (noea)
+	BYTES 5-7: byte count of report available (bcora)
+
+BUFFER+8: element status page (esp)
+	BYTE 0: element type code (etc)
+	BYTE 1	BIT 7: primary volume tag (pvoltag)
+		BIT 6: alternate volume tag (avoltag)
+	BYTES 2-3: element descriptor length (edl)
+	BYTES 5-7: byte count of descriptor data available (bcodda)
+
+BUFFER+16: medium transport element descriptor (mted)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: storage element descriptor (sed)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: import/export element descriptor (ieed)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 5: import enable (inenab)
+		BIT 4: export enable (exenab)
+		BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 1: imported media (impexp)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: data transfer element descriptor (dted)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 6	BIT 7: not this bus (ntb)
+		BIT 5: SCSI bus address valid (idvalid)
+		BIT 4: LUN valid (luvalid)
+		BITS 0-2: logical unit number (lun)
+	BYTE 7: SCSI bus address (sba)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+COMMAND: request volume element address (rvea)
+CDB: command descriptor block (cdb): 12
+	BYTE 0: operation code (code): 0xb5
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BIT 4: volume tag (voltag)
+		BITS 0-3: element type code (etc)
+	BYTES 2-3: element address (ea)
+	BYTES 4-5: number of elements (noe)
+	BYTES 7-9: allocation length (length): 255
+
+BUFFER: element status data (esd)
+	BYTES 0-1: first element address reported (fear)
+	BYTES 2-3: number of elements available (noea)
+	BYTES 5-7: byte count of report available (bcora)
+
+BUFFER+8: element status page (esp)
+	BYTE 0: element type code (etc)
+	BYTE 1	BIT 7: primary volume tag (pvoltag)
+		BIT 6: alternate volume tag (avoltag)
+	BYTES 2-3: element descriptor length (edl)
+	BYTES 5-7: byte count of descriptor data available (bcodda)
+
+BUFFER+16: medium transport element descriptor (mted)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: storage element descriptor (sed)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: import/export element descriptor (ieed)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 5: import enable (inenab)
+		BIT 4: export enable (exenab)
+		BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 1: imported media (impexp)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+BUFFER+16: data transfer element descriptor (dted)
+	BYTES 0-1: element address (ea)
+	BYTE 2	BIT 3: accessible to medium transport (access)
+		BIT 2: exception (except)
+		BIT 0: contains media (full)
+	BYTE 4: additional sense code (asc)
+	BYTE 5: additional sense code qualifier (ascq)
+	BYTE 6	BIT 7: not this bus (ntb)
+		BIT 5: SCSI bus address valid (idvalid)
+		BIT 4: LUN valid (luvalid)
+		BITS 0-2: logical unit number (lun)
+	BYTE 7: SCSI bus address (sba)
+	BYTE 9	BIT 7: source valid (svalid)
+		BIT 6: inverted (invert)
+	BYTES 10-11: source storage element address (ssea)
+	BYTES 12-44: primary volume tag (pvt): FORMAT_STRING
+	BYTES 46-47: primary volume sequence number (pvsn)
+	BYTES 48-79: alternate volume tag (avt): FORMAT_STRING
+	BYTES 82-83: alternate volume sequence number (avsn)
+
+COMMAND: initialize element status (ies)
+CDB: command descriptor block (cdb): 6
+	BYTE 0: operation code (code): 0x07
+	BYTE 1	BITS 5-7: logical unit (lun)
+
+COMMAND: send volume tag (svt): CMD_WRITE
+CDB: command descriptor block (cdb): 12
+	BYTE 0: operation code (code): 0xb6
+	BYTE 1	BITS 5-7: logical unit (lun)
+		BITS 0-3: element type code (etc)
+	BYTES 2-3: element address (ea)
+	BYTE 5	BITS 0-4: send action code (sac)
+	BYTES 8-9: allocation length (length): 40
+
+BUFFER: volume tag data (vtd)
+	BYTES 0-31: volume identification template (vit): FORMAT_STRING
+	BYTES 34-35: minimum volume sequence number (minvsn)
+	BYTES 38-39: maximum volume sequence number (maxvsn)
+

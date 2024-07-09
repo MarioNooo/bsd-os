@@ -1,0 +1,25 @@
+@(#) BLURB 1.25 96/02/21 16:39:19
+
+This patch upgrades the tcp wrappers 7.2 source code to version 7.3.
+The patch improves portability. It does not add any new features. If
+versions 7.0 .. 7.2 work for you do not bother applying this patch.
+
+The most significant changes with respect to the previous release:
+
+    - Portability: support or workarounds for Unixware 1.x and 2.x;
+    CRAY Unicos 8.x; MachTen; Interactive UNIX; SCO OpenServer 5;
+    FreeBSD 2.0. Specific hints and tips for Solaris 2.x and AIX.
+
+    - Bugfix: there was an amusing fencepost error when handling very
+    long access control rules.
+
+    - Other: more tests and diagnostics in the tcpdmatch/tcpdchk
+    configuration checking programs.
+
+A complete change log is given in the CHANGES document.  As always,
+problem reports and suggestions for improvement are welcome.
+
+	Wietse Venema (wietse@wzv.win.tue.nl),
+	Department of Mathematics and Computing Science,
+	Eindhoven University of Technology,
+	The Netherlands.

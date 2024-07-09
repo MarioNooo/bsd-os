@@ -1,0 +1,4 @@
+Enter the number of sectors per cylinder on the disk.
+(A value of 0 implies disksetup should compute the value)
+
+[ESC]cancel [ENTER]apply [TAB]next [?]Help

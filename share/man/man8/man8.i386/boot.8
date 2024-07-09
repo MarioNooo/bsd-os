@@ -1,0 +1,1145 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1993,1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI boot.8,v 2.21 2002/11/20 15:20:01 polk Exp
+.\"
+.Dd September 17, 1999
+.Dt BOOT 8
+.Os
+.Sh NAME
+.Nm boot
+.Nd bootstrap procedures for
+.Tn BSD Ns /OS
+.Sh DESCRIPTION
+.Tn BSD Ns /OS
+is normally booted by simply turning on the power to the
+computer and waiting.  Under normal conditions, the floppy drive will
+be empty, so the BIOS will read and execute the boot block from the
+hard disk, which will read and execute the program
+.Pa /boot .
+Then,
+.Pa /boot
+will normally size memory, then read and execute the kernel,
+.Pa /bsd .
+Next, the kernel does a series of probes to determine what hardware is
+present, then executes the program
+.Xr init 8 .
+Init then runs the shell script
+.Pa /etc/rc .
+This script checks the file systems, configures the network hardware
+and starts background system tasks.  If it completes normally, init
+will spawn getty processes for the terminals listed in
+.Pa /etc/ttys ,
+to allow users to log in.
+If 
+.Pa /etc/rc
+exits with an error code, init will instead run a single user shell.
+.Pp
+A number of these steps may be configured or modified
+during a single execution, or in configuration files.
+.Pp
+The bootstrap normally uses the standard PC display and keyboard
+for output and input when needed.
+If no keyboard is present, and if carrier is present on the primary
+serial port, com0 (known as COM1 to DOS),
+the bootstrap ``auto switches'' to that port for input.
+It copies output to both possible consoles.
+For permanent use of a serial console, see the
+.Fl console
+command below.
+.Pp
+During the normal loading procedure, you will be presented with the
+following message:
+.Pp
+.Bd -literal -offset indent
+press ESC to boot now, any other key to interrupt boot sequence
+.Ed
+.Pp
+A counter will then start to count down backwards.  If you strike the
+ESC key during this countdown the counter will be terminated and the
+normal loading procedure will continue.  If you strike any other
+key during this countdown the normal boot sequence will be aborted
+and you will be prompted with:
+.Pp
+.Dl Boot:
+.Pp
+At this point, you can specify an alternate kernel to boot,
+potentially on a different device.
+If the kernel named has a suffix of
+.Pa gz
+(e.g.,
+.Pa bsd.gz )
+it is assumed to be compressed by
+.Xr gzip 1
+using the deflate compression method.
+The
+.Nm
+program will decompress the file as it is read.
+The default boot flags for the kernel are changed
+to request a boot to single user, possibly asking for a root filesystem
+location (see below).
+.Pp
+The bootstrap checks the amount of memory in the system just before
+loading the kernel.
+On a PC, memory is in two sections.
+Base memory starts at location 0 and is usually 640K,
+although the BIOS may reserve some of this memory.
+Extended memory starts at 1 MB and continues upward.
+.Pp
+The complete boot command is:
+.Pp
+.Bd -ragged -offset indent
+.Ar dev\| Ns ( Ar adapter , Ar controller , " "
+.Ar unit , Ar partition ) Ns Ar pathname
+.Op Fl adrsw | Ar howto
+.Ed
+.Pp
+or
+.Pp
+.Bd -ragged -offset indent
+.Fl \& Ns Ar bootcommand
+.Ed
+.Pp
+If the command begins with
+.Fl \&
+the line is treated as a boot command (see below),
+otherwise the line is used as a boot specification.
+The device specification
+.Pf ( Ar dev
+through the closing parenthesis) is optional;
+if omitted, the kernel is loaded from the device and partition from which
+the bootstrap was loaded.
+Otherwise,
+.Ar dev
+is the type of the desired device:
+.Bd -ragged -offset indent
+.Bl -tag -compact -width "eahaxx"
+.It Cm bios
+any disk defined by the BIOS (A:, B:, C: or D:)
+.It Cm fd
+floppy disk
+.It Cm wd
+.Tn ST506/RLL/ESDI/IDE
+hard disks
+.It Cm sd
+.Tn SCSI
+hard disks on supported host adapters
+.It Cm aha
+disk on 
+.Tn Adaptec
+or 
+.Tn Buslogic
+.Tn ISA
+.Tn SCSI
+host adapter
+.It Cm eaha
+disk on
+.Tn Adaptec
+.Tn EISA
+.Tn SCSI
+host adapter
+.El
+.Ed
+.Pp
+The values
+inside the parentheses should be numbers.
+If fewer than 4 arguments are provided, the left most (i.e. starting
+with
+.Ar adapter No Ns )
+will be defaulted to 0,  e.g., 
+.Cm wd(1,2)
+is the same as
+.Cm wd(0,0,1,2) Ns .
+The arguments have the following general meanings.  Specific device
+types use them somewhat differently as indicated.
+.Bl -tag -width controllerx
+.It Ar adapter
+The adapter to use.  Normally unused, but see below
+for special use with sd and bios types.
+.It Ar controller
+When more than a single controller is present,
+.Ar controller
+determines which controller to use.
+See below for special use with any 
+.Tn SCSI
+controller.
+.It Ar unit
+A single controller may have more than a single disk assigned to it.
+The
+.Ar unit
+value selects which disk, 0 being the lowest disk number.
+See below for special use with any 
+.Tn SCSI
+disk.
+.It Ar partition
+The
+.Ar partition
+determines which 
+.Tn BSD Ns /OS
+partition on the selected disk will be used.
+Partition
+.Cm 0
+is the 
+.Cm a
+partition,
+.Cm 1
+is
+.Cm b
+and so on.
+.El
+.Pp
+The BIOS device type uses the
+.Ar adapter
+field differently.
+If the adaptor is 0, the
+.Ar unit
+is a floppy unit (A: or B:);
+otherwise,
+.Ar unit
+is a hard disk known to the BIOS (C: or D:).
+.Pp
+Aliases are provided to making using the BIOS device easier.  There are
+two forms:
+.sp
+.ti 1i
+.Ar drive Ns :
+.br
+and
+.br
+.ti 1i
+.Ar drive . Ns Ar partition :
+.sp
+where
+.Ar drive
+is the drive letter (e.g., A, B, C or D)
+and the optional partition is the partition to boot from (a - h).
+For example,
+.Nm C:
+maps to
+.Nm bios(1,0,0,0)
+and
+.Nm D.e:
+maps to
+.Nm bios(1,0,1,4) .
+.Pp
+.Tn SCSI
+disks use the
+.Ar adapter ,
+.Ar controller
+and
+.Ar unit
+fields slightly differently.
+When used with the
+.Cm sd
+device
+an
+.Ar adapter
+of
+.Cm 0
+implies the use of an
+.Cm aha
+host adapter, and an
+.Ar adapter
+of
+.Cm 1
+implies the use of an
+.Cm eaha
+host adapter.  The
+.Cm aha
+and 
+.Cm eaha
+device types are shorthand for this (and hence do not need the adapter number
+set).
+For
+.Cm sd ,
+.Cm aha
+and
+.Cm eaha
+devices
+the
+.Ar controller
+number actually refers to the physical 
+.Tn SCSI
+target ID (0-7, normally
+set with jumpers or switches on the device).
+The
+.Ar unit
+number actually refers to the logical disk number to which 
+.Tn BSD Ns /OS
+maps
+the device, i.e. the
+.Cm 1
+in
+.Cm sd1 .
+The
+.Ar controller
+determines which disk
+.Ar pathname
+will be loaded from while the
+.Ar unit
+determines which disk the kernel will be told to use as the root device.
+.Pp
+The pathname identifies the desired file to be booted.
+If no device specification or pathname is present
+(that is, only a RETURN is typed),
+the default boot sequence is initiated.
+The default boot command is
+.Pa /bsd .
+.Pp
+The following options to the loaded kernel are available.
+With no options, the default is the same as specifying the 
+.Fl as
+options if the boot was interrupted, and no options if the bootstrap was
+automatic.
+If any options are present, only those present are actually used; a
+.Fl \&
+alone explicitly disables all options.
+.Bl -tag -width indent
+.It Fl a
+Askname; if loading a generic kernel, the kernel will prompt
+for the name of the root filesystem device.
+If loading a bootstrap program, prompt for a boot command.
+.It Fl d
+Enable debugging.
+Currently, this enables diagnostic output during the startup operations
+of the kernel.
+.It Fl r
+Use the default (compiled-in) root filesystem
+rather than using the load device as the root.
+.It Fl s
+Boot to a single-user shell rather than checking filesystems
+and going into multiuser operation.
+Also, if specified to the bootstrap using the
+.Fl bootflags
+command (below)
+or implicitly by interrupting the boot sequence,
+the bootstrap prompts for commands rather than booting automatically.
+.It Fl w
+Mount the root filesystem read/write rather than read-only (not yet
+implemented in the kernel).
+.El
+.Pp
+The boot flags may also be set using the
+.Ar howto
+parameter, which is a decimal, octal or hex number that sets the
+boot flags\(em see the RB_* constants in
+.Pa sys/reboot.h .
+The use of the flags above is generally recommended rather than a numeric value.
+.Pp
+If a bootstrap command line begins with
+.Fl \& ,
+it is treated as an internal boot command.
+.Pp
+If the file
+.Pa /etc/boot.default
+exists, the
+.Pa /boot
+program reads this as a series of commands to be executed, one
+command per line, just as if they were typed from the keyboard.
+This can be used to boot the kernel from a different device than
+the BIOS uses to boot, or to change various parameters listed
+in the next section. 
+.Pp
+The commonly-used boot commands are the following:
+.Bl -tag -width noflushcachex
+.It Fl cat Ar filename
+Display the contents of the file named by
+.Ar filename .
+For example:
+.Dl -cat /etc/boot.default
+.It Fl console Ar dev
+Set the console to be
+.Ar dev
+for the bootstrap and for the kernel that is booted.
+Valid device names are:
+.Bl -tag -width comXXX
+.It Cm kbd
+The standard keyboard and display (the default if a keyboard is present
+or the com0 port does not have carrier asserted).
+.\"XXX the following puts the arguments in the body of the item...
+.It Cm com
+.Oo
+.Ar X
+.Oo
+.Ar port
+.Op Ar speed
+.Oc
+.Oc
+.br
+The serial device
+.Cm com Ns Ar X
+where
+.Ar X
+refers to the given port, default 0.
+Note that 
+.Tn BSD Ns /OS
+starts with
+.Cm com0
+where as DOS labels this
+.Dv COM1 .
+The port address can be specified, or the standard PC values
+for com0 through com3 will be used.
+The speed defaults to 9600.
+.It Cm auto
+If the bootstrap detects no keyboard and if the com0 port has carrier,
+it will ``auto switch'' to com0 as its input, copying output to both
+possible consoles.
+If this situation exists,
+.Cm auto
+causes the bootstrap to act as if
+.Dl "-console com"
+was used, causing the kernel to use the serial console;
+otherwise it has no effect.
+Note that when the bootstrap auto switches its output, it does
+not automatically direct the kernel to use the serial console;
+this must be done either with
+.Dl "-console com"
+or
+.Dl "-console auto" .
+.El
+.It Fl continue
+Continue processing
+.Pa /etc/boot.default
+after an error or interrupt.
+.It Fl dev Ar devname Ar ioconf=value ...
+Reconfigure the device specified by
+.Ar devname
+to have the field specified by
+.Ar ioconf
+set to
+.Ar value .
+Wild card parameters (such as
+.Ar sd*
+) are overridden by specific parameters (such as
+.Ar sd1
+).
+If both wild card and specific entries match a given device,
+only the specific parameters are used.
+.sp
+Valid
+.Ar ioconf
+fields are:
+.sp
+.Bl -tag -compact -width flagsx
+.It port
+Base port address for device; if \-1, the device is not probed.
+.It iosiz
+Number of ports used by device
+.It maddr
+Base address of memory mapped by device.
+.It msize
+Amount of memory mapped by device.
+.It irq
+The IRQ interrupt used by device.
+If the value is
+.Li IRQNONE ,
+no IRQ is used; if the value is
+.Li IRQUNK ,
+then the IRQ definition in the kernel config file is ignored.
+.It drq
+The DRQ (DMA) channel used by device
+.It flags
+The flags field for the device
+.El
+.It Fl help
+Display list of available commands.
+.It Fl ls Ar directory
+Display the contents of the requested directory.  The inode number
+and name of each file in the directory are displayed.
+.It Fl parm Ar recipient Ar parameter=value
+Pass in a parameter for subsystem or device 
+.Ar recipient.
+Typically the
+.Ar recipient
+field is used to specify a hardware device(s) such as
+.Ar ncr1
+or
+.Ar ncr* .
+The value part
+of the
+.Ar parameter=value
+pair can be a comma separated list. For example:
+.Pp
+.Dl -parm ncr0 disconnect=target1,target2
+.Pp
+It is also possible to specify a class answer such as:
+.Pp
+.Dl -parm ncr0 disconnect=all
+.Pp
+When a class is used it is then possible to subtract one or more
+individuals from the class. An example of this would be:
+.Pp
+.Dl -parm ncr0 disconnect=all-target1
+.Pp
+or:
+.Pp
+.Dl -parm ncr0 disconnect=all-target1-target2
+.Pp
+Specific legal values for the
+.Ar parameter=value 
+pair
+are not discussed here because they are
+are specific to the
+.Ar recipient .
+These are discussed in the man
+page associated with the 
+.Ar recipient .
+.Pp
+If multiple 
+.Fl parm
+commands are issued with same 
+.Ar recipient
+and 
+.Ar parameter ,
+but different
+.Ar values ,
+the last one will be used. If an error is made entering a 
+.Fl parm 
+command it can be correctly by simply re-entering it correctly.
+.Pp
+No priority is given to 
+.Ar recipients
+specified specifically over
+.Ar recipients 
+specified with wild cards. Specific
+.Ar recipients
+should be entered after wild cards
+for them to override wild card specifications.
+.It Fl pnpid Ar devname Ar pnpid
+Assign an alternate
+.Ar pnpid
+for 
+.Ar devname .
+Hardware vendors are constantly creating basically compatible
+devices with new Plug and Play ids. This command is used
+to tell the kernel that a new Plug and Play id is assigned
+to a device that a given driver knows how to handle.
+The
+.Ar devname
+specified applies to all units; which means that a tailing unit
+number should not be supplied. For instance a legal
+.Ar devname
+would be ``com'' while ``com0'' would be an illegal specification.
+.It Fl rootdev Ar devspec
+Rather than passing the load device to the kernel for use as root device,
+pass the value of
+.Ar devspec ,
+which has the same form as a device specification used when booting
+a kernel with no trailing pathname:
+.Ar dev\| Ns ( Ar adapter , Ar controller , " "
+.Ar unit , Ar partition ) .
+For example, this may be used to load the kernel from a floppy disk,
+then instruct the kernel to use a 
+.Tn SCSI
+.Tn CD-ROM
+as the root filesystem with
+.Cm "sr(0,0)"
+(\c
+.Pa /dev/sr0a ) .
+.El
+.Pp
+The following boot commands are used to modify the level of output
+from auto configuration and for debugging problems:
+.Bl -tag -width noflushcachex
+.It Fl autodebug Ar flag ...
+Modify output and/or enable debugging of auto configuration in the kernel.
+The available values for
+.Ar val
+are:
+.Bl -tag -width XXX
+.It Fl q
+Quieter output, suppresses addressing details.
+.It Fl v
+Verbose output, prints additional device configuration information.
+.It Fl d
+Print information about each device and location probed and the result,
+pausing after each screenful.
+.It Fl a
+Print information as in
+.Fl d ,
+but confirm whether each device should be probed.
+This is useful if probing some device location causes a failure.
+.It Fl p
+Page output if using the standard console (default with
+.Fl a ) .
+.El
+.It Fl bootdebug Ar val
+Enable debugging of the boot procedure.
+The available values for
+.Ar val
+are:
+.Bl -tag -width XXX
+.It Cm 0
+No debugging.
+.It Cm 1
+Print additional information about memory sizing and unusual events.
+.It Cm 2
+Very verbose messaging, depending on the device type used.
+.El
+.Pp
+If the left shift key is held down while loading the bootstrap
+(that is, until
+.Dl loading /boot
+is printed),
+.Fl bootdebug
+will be initialized to 1 instead of the default of 0.
+With some systems, this can cause a keyboard error message or a stuck key
+error message.  If this happens, simply clear the error and then depress
+the shift key again.
+.El
+.Pp
+The following boot commands are used primarily for debugging
+memory and cache problems:
+.Bl -tag -width noflushcachex
+.It Fl basemem Ar mem
+Normally the amount of base memory is determined automatically.
+The
+.Fl basemem
+command can be used to force the amount of base memory to the
+value specified by
+.Ar mem .
+Appending a
+.Cm G
+or
+.Cm K
+or
+.Cm M
+specifies an amount in gigabytes, kilobytes or megabytes respectively.
+.It Fl cmosmem
+Limit the auto sizing memory search to the amount of memory indicated by
+the CMOS.
+.It Fl extendend Ar mem
+Some large memory machines may cause the memory sizing code to hang the
+machine.
+In addition, the kernel needs to be re-configured to handle large
+amounts of memory
+.Pq over 1 gigabyte
+so the
+.Fl extendend
+can limit the amount of memory used by the default kernel to prevent
+it from failing.
+The
+.Fl extendend
+command limits the amount of memory to be checked to
+.Ar mem .
+Appending a
+.Cm G
+or
+.Cm K
+or
+.Cm M
+specifies an amount in gigabytes, kilobytes or megabytes respectively.
+.It Fl memsize Ar mem
+Normally the end of extended memory is determined automatically.
+The
+.Fl memsize
+command sets the size of extended memory to
+.Ar mem ,
+disabling the automatic memory sizing test.
+Appending a
+.Cm G
+or
+.Cm K
+or
+.Cm M
+specifies an amount in gigabytes, kilobytes, or megabytes respectively.
+.It Fl noflushcache
+While sizing memory, do not use the
+.Dv wbinvd
+instruction to flush the cache.
+This instruction hangs
+on some motherboards.
+.It Xo
+.Fl sizemem
+.Cm base | " "
+.Cm ext | " "
+.Cm both | " "
+.Cm acpi | " "
+.Op Cm no Ns
+.Cm acpi | " "
+.Cm best | " "
+.Op Cm no Ns
+.Cm bios | " "
+.Op Cm no Ns
+.Cm scan 
+.Cm debug
+.Xc
+Several methods are used to determine the amount of base or extended memory
+in the system just before loading the kernel.
+The
+.Tn "ACPI"
+.Tn "SMAP"
+interface is attempted first, followed by the
+.Tn "BIOS"
+interface, 
+followed by a scan for extended memory.
+The
+.Fl sizemem
+command allows the specification of methods to skip and/or an explicit
+list of methods to attempt.
+The argument is a space-separated list of methods to
+attempt, or not to attempt if prefixed with
+.Ns Cm no .
+The default is
+.Cm best
+which specifies that all the methods should be attempted.
+.Pp
+For example,
+.Bd -filled -offset center
+.Fl sizemem Cm acpi
+.Ed
+will only attempt to use
+.Tn "ACPI"
+to size memory and:
+.Bd -filled -offset center
+.Fl sizemem Cm nobios
+.Ed
+will only attempt to use
+.Tn "ACPI"
+and memory scanning.  This would be useful on a system where the value
+returned by the
+.Tn "BIOS"
+interface is known to be incorrect.
+.Pp
+The
+.Cm base
+flag limits a selection to changing scans for base memory, while
+.Cm ext
+will choose methods for searching for extended memory.  For instance,
+.Bd -filled -offset center
+.Fl sizemem Cm base bios ext scan
+.Ed
+would use BIOS INT 12 to find base memory, and scan for external memory,
+while
+.Bd -filled -offset center
+.Fl sizemem Cm base best ext noacpi
+.Ed
+would use BIOS INT 12 and 
+.Tn "ACPI"
+to search for base memory, and BIOS INT 15/0xE801, followed by a scan,
+to search for extended memory.
+.Pp
+If none of the specified methods succeed in sizing extended memory,
+the kernel will most likely not work properly.
+.Pp
+The option
+.Cm debug
+will tell the memory sizing routine to run immediately with the existing
+selection of options.  This is intended only for debugging purposes, and
+may prevent a successful boot without a system reset.
+.El
+.Pp
+The following boot commands are used primarily in scripts in
+.Pa /etc/boot.default :
+.Bl -tag -width noflushcachex
+.It Fl apm
+Enable Advanced Power Management features.
+.It Fl bootflags Op Fl adrsw | Ar howto
+Set the boot flags
+.Op Fl adrsw | Ar howto .
+Note that specifying the bootflags on the load line will override
+the bootflags set by
+.Fl bootflags .
+.It Xo
+.Fl ckexec Ar file 
+.Op Fl adrsw | Ar howto
+.Xc
+Compute the checksum on
+.Ar file
+and compare it to the checksum recorded in the file
+.Ar file Ns Nm .cksum .
+If
+.Ar file Ns Nm .cksum
+does not exist or the checksums do not match, the command does nothing.
+If the checksum does match, the file is loaded and executed.
+.It Fl cksum Ar file
+Computes and displays the checksum for
+.Ar file .
+.It Fl default_kernel Ar file
+Specify an alternate default kernel pathname (the default is
+.Pa /bsd
+). This can be useful when a compressed kernel is used (by setting
+the default to
+.Pa /bsd.gz
+).
+.It Xo
+.Fl echo
+.Op Fl n
+.Ar str
+.Xc
+Print
+.Ar str
+to the console.
+If
+.Fl n
+is specified then do not append a newline to
+.Ar str .
+.It Fl echoon
+Turn on echoing of commands.
+.It Fl echooff
+Turn off echoing of commands.
+.It Fl estopon
+Stop parsing from file on error. This is the default.
+.It Fl estopoff
+Do no stop parsing from file on error.
+.It Xo
+.Fl exec Ar file 
+.Op Fl "adrsw | Ar howto"
+.Xc
+Load and execute
+.Ar file .
+.It Fl include Ar file
+Read boot commands from
+.Ar file .
+.It Xo Fl iomem 
+.Op Cm enable | Cm reserve
+.Ar addr size
+.Xc
+Mark
+.Ar size
+bytes of io memory starting at
+.Ar addr
+as available
+.Pq Cm enable
+or not available
+.Pq Cm reserve .
+This feature is normally only required when using
+.Ns Tn "PC Cards" .
+By default, the following ranges are disabled:
+.Bd -ragged -offset indent
+.nf
+0xa0000 0x10000
+0xb0000 0x10000
+0xc0000 0x10000
+0xe0000 0x10000
+0xf0000 0x10000
+.fi
+.Ed
+.It Xo Fl ioport
+.Op Cm enable | Cm reserve
+.Ar base count
+.Xc
+Mark
+.Ar count
+io ports starting at
+.Ar base
+as available
+.Pq Cm enable
+or not available
+.Pq Cm reserve .
+By default, the following range is disabled:
+.Bd -ragged -offset indent
+0x3b0 16
+.Ed
+.sp
+This feature is normally only required when using
+.Tn "PC Cards"
+or devices that fall into the default reserved range.
+.It Xo Fl irq
+.Op Cm enable | Cm reserve
+.Ar irq Op ...
+.Xc
+Mark the specified
+.Ar irq Ns No 's
+as available
+.Pq Cm enable
+or not available
+.Pq Cm reserve .
+This feature is normally only required when using
+.Ns Tn "PC Cards" .
+.It Xo Fl kdebug 
+.Op Fl i | Ar val
+.Xc
+Set kernel debugging flags.
+The
+.Fl i
+flag requests the kernel attach to the kgdb port as soon as that
+port is attached.
+The flags can be specified numerically by specifying
+.Ar val .
+This would be used when an older
+.Pa /boot
+is used with a newer kernel which supports more than just the
+.Fl i
+kdebug option.
+.It Fl kernspace Ar mem
+Supply an estimate of how much memory will be used by the kernel.
+This value is used to calculate the size of the buffer cache, and can be useful
+on small memory machines (to make the buffer pool smaller than the
+default).
+Appending a
+.Cm G
+or
+.Cm K
+or
+.Cm M
+specifies an amount in gigabytes, kilobytes or megabytes respectively.
+This option is primarily intended for use with installation floppies,
+reserving additional space for memory-based filesystems.
+.It Xo Fl load
+.Ar file
+.Op Fl adrsw | Ar howto
+.Xc
+Load the program
+.Ar file
+(which may include a device specification),
+optionally setting the boot flags to
+.Op Fl adrsw | Ar howto .
+.It Fl pause Ar sec
+Pause for up to
+.Ar sec
+seconds, counting the seconds down.
+Prompt the user to press any key to abort reading of the
+.Pa /etc/boot.default
+file.
+If the user presses a key and aborts the reading of
+.Pa /etc/boot.default
+, the boot flags are reset to
+.Fl as .
+.It Fl pccard_iowait Op on | off
+Turn on or off the inserting of wait states when using PC Cards.
+.It Fl ramdisk Ar size
+Create a ramdisk of
+.Ar size
+bytes at the end of memory.
+Currently only one ramdisk may be specified.
+.It Fl ramdiskimage Ar file
+Load a ramdisk image from
+.Ar file.
+The ramdisk must first be allocated by the
+.Fl ramdisk
+command.
+.It Fl show
+Show the boot parameters that are currently set.
+.It Fl start Op Fl adrsw | Ar howto
+Execute the program previously loaded with the
+.Fl load
+command,
+optionally setting the boot flags to
+.Op Fl adrsw | Ar howto .
+.It Fl waitnl
+Wait for the user to press <ENTER> on the keyboard.
+.El
+.Pp
+The boot instructions in a
+.Pa /etc/boot.default
+file can be used to override defaults (memory sizing, console device,
+or kernel name location).
+It should contain any
+.Fl console
+or
+.Fl dev
+commands first.
+If it then loads a kernel, it should include a
+.Fl pause
+line first to allow the script to be interrupted.
+If the file does not load a kernel,
+the bootstrap will pause for 5 seconds after running the script to allow
+interruption, and will then load the default kernel if not interrupted.
+.Sh BOOT HINTS
+Here are a few common boot procedures.  The sections that follow
+describe what is happening in more detail.
+.Pp
+To boot a single user shell from the hard disk: make sure the floppy
+drive is empty, reset the processor, press any key when prompted,
+then type a RETURN at the Boot: prompt.
+You should
+usually run
+.Xr fsck 8
+to check the file systems before doing anything else.
+If you type control-D, the system will come up multi-user.  Don't
+forget that the root is read-only at the start, so if you want to do
+maintenance in single-user mode, you need to do
+.Pp
+.Dl mount -u /
+.Pp
+to enable writes.
+.Pp
+To boot a backup kernel from the hard disk: make sure the floppy
+drive is empty, reset the processor, press any key when prompted,
+then type the desired kernel name at the Boot: prompt
+.Pq e.g., Pa /bsd.good .
+This will land you in a single user shell.
+.Pp
+To boot
+.Tn BSD Ns /OS
+from the hard disk, even though the FDISK label is set
+to boot DOS by default: insert a
+.Tn BSD Ns /OS
+boot floppy and reset the
+processor.  At the Boot: prompt, type
+.Dq Cm wd()bsd -
+.Po
+replace
+.Cm wd
+with
+.Cm sd
+for a 
+.Tn SCSI
+main disk on
+.Cm aha
+or
+.Cm bha ,
+or
+.Cm bios
+for other types of 
+.Tn SCSI
+disks
+.Pc .
+Leave off the
+.Cm \&-
+if you want a single user shell.
+The floppy drive is now free, and can be used normally when the system
+finishes booting.  (See below for creating a floppy that boots
+straight
+.Tn BSD Ns /OS
+without any operator intervention.)
+.Pp
+To boot with a
+.Tn CD-ROM
+root: insert a
+.Tn BSD Ns /OS
+boot floppy and a
+.Tn BSD Ns /OS
+.Tn CD-ROM
+and reset the processor.  At the Boot: prompt, press RETURN.
+Type RETURN again at when offered the chance to change floppies.
+After kernel auto configuration, you will be prompted
+.Dq Li "root device?" .
+Type
+.Dq Cm sd Ns Ar N Ns a
+for a 
+.Tn SCSI
+.Tn CD-ROM
+on
+.Tn SCSI
+drive
+.Ar N ,
+or
+.Dq Cm mcd0a
+for the 
+.Tn Mitsumi
+.Tn ISA
+.Tn CD-ROM .
+The boot floppy is no longer needed, so you may insert
+another floppy if desired.
+.Pp
+If there is a floppy in drive 0 when the processor is reset, then its
+boot block with be read and executed by the BIOS.  The boot floppies
+included with the system use a
+.Pa /etc/boot.default
+script to control the loading process.
+A boot floppy can also be constructed that sets the boot flags to
+.Fl s ,
+always starting at the Boot: prompt.  If you just type a RETURN, the
+default action is to boot
+.Pa /bsd
+from the floppy.
+.Pp
+If you boot with a floppy root, then you must not remove the floppy
+while running; however, if you specify an alternate device, then the
+floppy is free and can be used for any purpose.
+.Pp
+To make a floppy that boots straight to
+.Tn BSD Ns /OS
+on a hard disk, make
+a copy of your distribution boot floppy, and in the copy, put a line like
+.Pp
+.Dl wd(0,0)/bsd
+.Pp
+in the file
+.Pa /etc/boot.default .
+Replace
+.Cm wd
+with
+.Cm sd
+if you have a 
+.Tn SCSI
+main disk;
+change the unit numbers as needed.
+.Sh BOOT DETAILS
+The boot process on a PC consists of a number of stages.
+.Pp
+The first stage is handled by the system BIOS.
+It selects a boot device, then loads and executes the first sector
+of the device.
+The device selection is sometimes configurable, but often defaults
+to the
+.Dq A
+floppy if a diskette is present, otherwise the
+.Dq C
+(primary) hard disk.
+If the disk is a hard disk, the first block may be a
+.Tn BSD Ns /OS
+boot block, a standard PC master boot record, or a program
+like
+.Xr bootany
+(see
+.Xr disksetup 8 ) ,
+which allows a choice of systems to be booted.
+In the latter two cases, a PC FDISK partition table in the first block
+lists the PC-style partitions and indicates which should normally be booted.
+Another bootstrap facility may also be used, such as the OS/2
+boot manager.
+If a
+.Tn BSD Ns /OS
+partition is selected,
+a
+.Tn BSD Ns /OS
+boot block
+is then executed
+(usually one of
+.Pa fdboot ,
+.Pa wdboot ,
+.Pa ahaboot ,
+or
+.Pa eahaboot ) .
+The boot block loads a slightly larger program from the following
+15 sectors
+(usually one of
+.Pa bootfd ,
+.Pa bootwd ,
+.Pa bootaha ,
+or
+.Pa booteaha ) .
+That program prints
+.Dq Li "Loading /boot"
+and then loads and executes
+.Pa /boot
+from the indicated partition.
+.Pa /boot
+then loads and executes the kernel, passing the boot flags and additional
+information to the kernel.
+.Sh FILES
+.Bl -tag -width /etc/boot.default
+.It Pa /boot
+Second stage boot
+.It Pa /etc/boot.define
+Defines symbols used by -parm command
+.It Pa /sbin/init
+The first user program
+.It Pa /etc/rc
+Startup shell script
+.It Pa /etc/boot.default
+Default boot command
+.Sh SEE ALSO
+.Xr bootany 8 ,
+.Xr boot.define 5 ,
+.Xr disksetup 8 ,
+.Xr init 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8
+.Sh ACKNOWLEDGEMENTS
+The
+.Nm
+program
+incorporates de-compression code by the Info-ZIP group.
+There are no extra charges or costs due to the use of this code,
+and the original compression sources are freely available from
+CompuServe in the IBMPRO forum and by anonymous ftp from the
+Internet site ftp.uu.net:/pub/archiving/zip.  The sources used
+in the
+.Nm
+program are also available from ftp.bsdi.com:/pub/bsdi/misc/unziplib.

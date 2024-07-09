@@ -1,0 +1,13 @@
+aux
+config.log
+config.h
+config.cache
+a.out
+aclocal.m4
+libtool
+dbgcf.h
+config.status
+aux_conf.h
+stamp-h
+Makefile
+*.0

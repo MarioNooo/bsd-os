@@ -1,0 +1,8 @@
+.depend
+Makefile
+unshared
+XDPSpwraps.c
+XDPSpwraps.h
+XDPSswraps.c
+XDPSswraps.h
+libdpstk.so.1.0

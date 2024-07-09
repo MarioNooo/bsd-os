@@ -1,0 +1,14 @@
+#!/bin/sh
+
+for i in *.i ; do
+  file=`echo $i | sed -e 's/\.i$//'`
+  x=`echo $file | sed -e 's/^out\///'`
+  echo "$file \c"
+  run.pl $x retr "mangle(text=html)" > $file.r.h
+  if [ $? -eq 0 ]; then
+     echo "\tOK"
+  fi
+  
+done
+
+    

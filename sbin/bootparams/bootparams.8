@@ -1,0 +1,34 @@
+.\"	BSDI bootparams.8,v 1.1 2001/07/31 21:23:21 jch Exp
+.\"
+.Dd "July 31, 2001"
+.Dt BOOTPARAMS 8
+.Os
+.Sh NAME
+.Nm bootparams
+.Nd get system boot parameters
+.Sh SYNOPSIS
+.Nm bootparams
+.Op Ar prefix ...
+.Sh DESCRIPTION
+The
+.Nm bootparams
+utility retrieves system boot parameters.
+The boot parameters to be retrieved are described using a
+.Dq "Management Information Base"
+.Pq Dq MIB
+style name,
+described as a dotted set of components.
+.Pp
+If no arguments are given,
+.Nm
+will display all boot parameters.
+The display can be restricted by specifying one or more first level
+prefixes; the output will be limited to values that start with that
+prefix.
+.Pp
+Boot parameters contain information learned from the BIOS, or
+parameters specified to the boot command that are saved in memory and
+passed to the kernel.
+.Sh SEE ALSO
+.Xr boot 8
+

@@ -1,0 +1,12 @@
+Edit the vendor and type of the the disk.  This value is informational
+only in nature.
+
+ESC    Cancel all changes to the geometry.
+ENTER  Apply changes to the geometry.
+TAB    Go on to editing the number of heads per cylinder.
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.

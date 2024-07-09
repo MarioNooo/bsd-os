@@ -1,0 +1,27 @@
+Software Package:       
+	netest
+
+Release/Version:
+	Sept. 9, 1992
+
+Retrieved from:
+	ftp://ftp.cray.com/src/nettest/nettest.92.11.09.tar.Z
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	an employee of Wind River.  Please send any bug reports to
+	support@BSDI.COM.
+
+Comments:
+	- Placed distribution in a subdirectory "src".
+
+	- Created Makefiles and subdirectories to build both
+	  nettest and nettestd via standard BSD/OS makefiles.
+
+	- Added support for IPv6
+
+	- Changed UNIX (unix) to LOCAL (local)
+
+	- Converted man page to mdoc(7) format
+
+	- Install into /usr/sbin

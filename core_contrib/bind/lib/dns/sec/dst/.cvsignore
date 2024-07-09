@@ -1,0 +1,14 @@
+Makefile
+.libs
+dst_api.lo
+dst_lib.lo
+dst_parse.lo
+dst_result.lo
+gssapi_link.lo
+gssapictx.lo
+hmac_link.lo
+key.lo
+openssl_link.lo
+openssldh_link.lo
+openssldsa_link.lo
+opensslrsa_link.lo

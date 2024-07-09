@@ -1,0 +1,82 @@
+/*	BSDI types.xh,v 1.3 2000/02/12 18:35:36 donn Exp	*/
+
+/*
+ * Linux has an awkward problem which we have to worry about here...
+ *
+ * The GNU C library defines basic types that don't match Linux kernel types.
+ * The library applies transformations to these types when passing them
+ * to and from the Linux kernel.  By convention, the tranformation routines
+ * call stubs named __syscall_*() to perform the syscall using Linux
+ * kernel data types.  It's stupid to transform these data types twice,
+ * especially when the GNU C data types are generally wider and hence
+ * closer to BSD types, so we interpose our transformation routines over
+ * the GNU C library routines rather than the Linux __syscall_() routines.
+ */
+
+%{
+#include <sys/types.h>
+
+/* Convert Linux kernel types to BSD/OS native types.  */
+#define	kernel_dev_t	dev_t
+#define	kernel_gid_t	gid_t
+#define	kernel_mode_t	mode_t
+#define	kernel_nlink_t	nlink_t
+#define	kernel_uid_t	uid_t
+%}
+
+/*
+ * Here are the GNU C library types.
+ */
+typedef unsigned long long dev_t {
+	in(dev) { return (makedev(dev >> 8, dev & 0xff)); }
+	out(dev) { return (major(dev) << 8 | minor(dev)); }
+};
+
+typedef char *caddr_t;
+typedef long clock_t;
+typedef unsigned int gid_t;
+typedef unsigned long ino_t;
+typedef int key_t;
+typedef long long linux_loff_t;
+typedef unsigned int mode_t;
+typedef unsigned int nlink_t;
+typedef long off_t;
+typedef int pid_t;
+typedef int ptrdiff_t;
+typedef unsigned int size_t;
+typedef int ssize_t;
+typedef long time_t;
+typedef unsigned int uid_t;
+
+/*
+ * Linux didn't have a flag day where they switched to 64-bit file sizes.
+ * Instead, the old types coexist with the new ones, which have funny names.
+ * For consistency, we define the funny names here as transformable types.
+ */
+%{
+	/* BSD versions */
+	typedef ino_t ino64_t;
+	typedef off_t off64_t;
+	typedef quad_t blkcnt64_t;
+%}
+	/* Linux versions */
+	typedef unsigned long ino64_t;
+	typedef unsigned long long off64_t;
+	typedef long long blkcnt64_t;
+
+/*
+ * These Linux kernel types differ from the glibc types...
+ */
+typedef unsigned short kernel_dev_t {
+	in(dev) { return (makedev(dev >> 8, dev & 0xff)); }
+	out(dev) { return (major(dev) << 8 | minor(dev)); }
+};
+typedef unsigned short kernel_gid_t;
+typedef unsigned short kernel_mode_t;
+typedef unsigned short kernel_nlink_t;
+typedef unsigned short kernel_uid_t;
+
+
+typedef	unsigned int u_int;
+typedef	unsigned short u_short;
+typedef	unsigned long u_long;

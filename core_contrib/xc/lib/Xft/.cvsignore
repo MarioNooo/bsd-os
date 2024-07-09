@@ -1,0 +1,10 @@
+.depend
+Makefile
+unshared
+xftlex.c
+xftgram.c
+xftgram.h
+Xft.0
+libXft.so.1.0
+XftConfig
+Xft._man

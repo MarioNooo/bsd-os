@@ -1,0 +1,85 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.digi,v 1.2 1998/02/26 21:23:39 cp Exp
+#
+
+
+IFS=.
+set $0
+IFS=
+
+# The following strips the leading file name (including embedded dot). It
+# also gets rid of the leading run level.
+while [ "$1" != "digi" ]
+do
+	shift
+	if  [ $# -lt 2 ]
+	then
+		echo 
+		echo "digi setup script named illegally"
+		exit
+	fi
+done
+shift
+
+
+while [ $# != 1 ]
+do
+    case $1 in
+		[0-9][0-9])
+			lines="-l $1";
+			;;
+		[0-9])
+			lines="-l $1";
+			;;
+		a)
+			altpin="-a"
+			;;
+		o)
+			old="-o"
+			;;
+		v*)
+			version=`expr $1 : '[a-z]*0*\(..*\)'`
+			version=`echo -v$version`
+			;;
+		*)
+			echo 
+			echo "illegal digi option $1"
+			exit
+
+	esac
+	shift
+done
+
+case $1 in
+*0)
+	unit=0
+	letter=A
+	;;
+*1)
+	unit=1
+	letter=B
+	;;
+*2)	
+	unit=2
+	letter=C
+	;;
+*3)	
+	unit=3
+	letter=D
+	;;
+
+*)
+	echo 
+	echo "illegal digi unit $0"
+	exit
+esac
+
+
+echo -n " digi$unit"
+digisetup $altpin $version $lines $old /dev/tty${letter}00
+
+

@@ -1,0 +1,71 @@
+Software Package:       
+	telnetd
+
+Release/Version:
+	10/23/95
+
+Retrieved from:
+	ftp.cray.com:src/telnet
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and dab@borman.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+	Add the -m option
+	Make tty writeable by group if tty group exists.
+
+cvs server: Diffing .
+Index: sys_term.c
+===================================================================
+RCS file: /master/libexec/telnetd/sys_term.c,v
+retrieving revision 2.7
+retrieving revision 2.8
+diff -r2.7 -r2.8
+1869c1869,1877
+< 		    strncmp(*cpp, "IFS=", 4))
+---
+> 		    strncmp(*cpp, "IFS=", 4) &&
+> 		    strncmp(*cpp, "LOCALDOMAIN=", 12) &&
+> 		    strncmp(*cpp, "RES_OPTIONS=", 12) &&
+> 		    strncmp(*cpp, "TERMINFO=", 9) &&
+> 		    strncmp(*cpp, "TERMINFO_DIRS=", 14) &&
+> 		    strncmp(*cpp, "TERMPATH=", 9) &&
+> 		    strncmp(*cpp, "TERMCAP=/", 9) &&
+> 		    strncmp(*cpp, "ENV=", 4))
+> 
+Index: telnetd.c
+===================================================================
+RCS file: /master/libexec/telnetd/telnetd.c,v
+retrieving revision 2.6
+retrieving revision 2.7
+diff -r2.6 -r2.7
+869c869
+< 			strcpy(line,lp);
+---
+> 			strncpy(line,lp,sizeof(line));
+1222c1222
+< 			(void) strcpy(host_name, HN);
+---
+> 			(void) strncpy(host_name, HN, sizeof(host_name));
+Index: utility.c
+===================================================================
+RCS file: /master/libexec/telnetd/utility.c,v
+retrieving revision 2.2
+retrieving revision 2.3
+diff -r2.2 -r2.3
+348c348
+< 	(void) sprintf(buf, "telnetd: %s.\r\n", msg);
+---
+> 	(void) snprintf(buf, sizeof(buf), "telnetd: %s.\r\n", msg);
+371c371
+< 	(void) sprintf(buf, "%s: %s", msg, strerror(errno));
+---
+> 	(void) snprintf(buf, sizeof(buf), "%s: %s", msg, strerror(errno));
+
+
+

@@ -1,0 +1,218 @@
+
+
+_________________________________
+
+Cyclom-Y Device Driver for BSDI.
+
+RELEASE NOTES V_4.0.0 11/19/97.
+_________________________________
+
+
+To obtain support or additional information:
+
+----------------------------------------------------------------
+Operating System Technical Support:
+
+	<support@bsdi.com>
+
+Cyclom-Y Installation and Configuration Support:
+
+	<support@cyclades.com>
+
+For the latest driver updates:
+
+	<http://www.cyclades.com>
+	<ftp://ftp.cyclades.com:/pub/cyclades>
+
+Cyclom-Y Driver bug reports:
+
+	<ivan@cyclades.com>
+----------------------------------------------------------------
+
+
+1) Compatibility.
+
+This driver was tested with the BSDI BSD/OS 3.0 and should work with 
+any and 3.x version of this Operating System. It should be incorporated 
+in the BSDI distribution in the BSDI BSD/OS 4.0.
+
+The driver currently supports the Cyclom-8Yo, Cyclom-8Ys, Cyclom-Ye 
+(ISA) and Cyclom-YeP (PCI) with up to 32 ports.
+
+2) Distribution Media.
+
+The driver is available in 3.5'' disks or for anonymous ftp from
+ftp.cyclades.com:~/pub/cyclades/cyclom-y/bsdi.
+
+The distribution package contains the following files:
+
+- README (this file) - with release notes ans installation instructions.
+- cy.c, cyreg.h and cl-cd1400.h - The driver source code.
+- cy.o - driver object file for kernels 3.x.
+- cy.0 - man page file.
+- cyy.patch - patch for the /sys/i386/conf/files.i386 file
+- mkcyc - script file to create the Cyclom-Y devices
+- cytty - Utility to activate "fast" RTS flow control.
+
+The distribution diskette is in TAR format. Use the following command to
+read it:
+
+	# mkdir /usr/cyclom
+	# cd /usr/cyclom
+	# tar xvf /dev/fd0
+
+The next chapter gives you installation/update instructions.
+
+3) Installation.
+
+The BSDI kernel comes with the Cyclades driver in the standard
+kernel distribution.
+
+THERE IS NO NEED TO INSTALL A DRIVER IN BSDI TO USE THE CYCLOM-Y.
+
+If you have kernel 3.x, the driver in the standard distribution 
+has limitations and bugs that may affect your application.
+
+The driver originally included in the 3.0 has a bug in HW
+flow control and is not able to send breaks. Furthermore, it 
+does not support PCI cards.
+
+These problems are fixed by the driver in this package.
+
+To update the driver, replace the file /sys/i386/OBJ/cy.o
+by the file cy.o in this package, enable the driver in the 
+/sys/i386/conf/<your config file> and use the instructions 
+below as a checklist before rebuilding the kernel. 
+
+To install the Cyclom-Y in you BSDI system, you will have
+to select an IRQ and one memory address. The default
+configuration is IRQ10, address 0xD4000. Make sure that
+these system resources are available, otherwise you will
+have to change the configuration and the dip-switches on
+the board.
+
+For more information about the board, please refer to
+the user manual that comes with the board.
+
+For more information on the driver configuration, please
+refer to the <cy> man page in your BSDI system.
+
+If something goes wrong during the kernel configuration,
+you could get to a situation where the system will not
+boot again. Any software reconfiguration or hardware
+installation should be preceeded by a complete backup.
+
+An overview of the driver configuration:
+
+a) Save the file /sys/i386/OBJ/cy.o to an alternative name and 
+   replace it by the cy.o provided in this package.
+
+b) The Cyclom-Y boards use one interrupt line and 8kB of memory
+   addressing space (for PCI cards, the memory addressing space 
+   required is 16kB).
+
+   The IRQ and address are selected by the dip-switches on the
+   board. The factory default settings are IRQ 10 and address
+   0xD4000. If you need to change it, please refer to the
+   Cyclom-Y User's manual booklet. For PCI cards, there is no 
+   need for hardware configuration.
+
+c) Shutdown the system and turn the power off. Install the board
+   in any available slot of the machine. Boot the system and check 
+   that everything works. If the machine does not boot or if any 
+   other expansion adapter stops working, you probably have a 
+   hardware conflict.
+
+d) Add/modify the Cyclom-Y configuration line in the kernel
+   configuration file (usually "/sys/i386/conf/LOCAL").
+
+	cy<b>	at isa? irq <IRQ> iomem <ADDR>		(for ISA cards) 
+
+				- or -
+
+	cy<b>	at pci?					(for PCI cards) 
+
+	where:
+	        <b> - 0 for the first board, 1 for the second, etc.
+	        <IRQ> - interrupt to be used.
+	        <ADDR> - memory address.
+
+	For example, to install a Cyclom-8Yo using the default
+	configuration, add the following line to the LOCAL file:
+
+	cy0	at isa? irq 10 iomem 0xd4000
+	
+	To install 2 boards with 32 ports each using 0xd4000, IRQ10
+        and 0xd8000, IRQ12:
+
+	cy0	at isa? irq 10 iomem 0xd4000
+	cy1	at isa? irq 12 iomem 0xd8000
+
+	To install one ISA and one PCI board, where the ISA board uses
+	0xd0000, IRQ9:
+
+	cy0	at pci?
+	cy1	at isa? irq 9 iomem 0xd0000
+
+e) Apply the pacth cyy.patch to update the file /sys/i386/conf/files.i386:
+
+	# cd /usr/cyclom
+	# cp cyy.patch /usr/src
+	# cd /usr/src
+	# patch < cyy.patch
+
+f) Update the man page file cy.0:
+
+	# cd /usr/cyclom
+	# cp cy.0 /usr/share/man/cat4/i386/cy.0
+
+g) Rebuild the kernel (refer to the BSDI documentation if necessary):
+
+	# cd /sys/i386/conf
+	# config <your configuration file>
+
+	# cd /sys/compile/<your configuration file>
+	# make clean
+	# make depend
+	# make
+
+   It will rebuild the kernel with the Cyclom-Y included in it.
+
+h) Save the current kernel and copy the new kernel to the root directory:
+
+	# cp /bsd /bsd.save
+	# cp bsd /bsd
+
+i) The installation is complete. Reboot the system.
+
+j) Check the boot messages (you may use "dmesg | more"). You
+   should get something similar to (for one 8-port board,
+   default configuration):
+
+	Cyclom-Y V_X.X.X (MM/DD/YY): Cyclom-Y/ISA board ready.
+	cy0 at isa0 irq 10 maddr 0xd0000-0xd1fff (8 ports found)
+
+k) Make sure the devices for the Cyclom-Y exist under /dev.
+
+   You can create the devices manually by using the mknod utility or
+   use the "mkcyc" script provided in the driver distribution package:
+
+	# cd /usr/cyclom
+	# sh mkcyc
+
+   mkcyc will ask you how many boards and ports per board you are
+   installing and create the special files under the /dev directory as
+   ttyy1a, ttyy1b, ttyy1c, etc for the first board, ttyy2a, ttyy2b,
+   ttyy2c, etc for the second board and so on.
+
+l) The driver is installed and active. Access the ttyy1x devices as
+   you would do with the standard serial ports.
+
+
+4) Special Topics.
+
+This package also includes a utility program (cytty) to control a 
+driver flag that allows the user to enable/disable an additional 
+feature in the CD1400 communications controller . This program is 
+not necessary for normal operation and should be used only by 
+advanced users.

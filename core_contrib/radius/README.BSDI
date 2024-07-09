@@ -1,0 +1,38 @@
+    BSD/OS includes the Basic Merit AAA Server for the RADIUS
+    protocol.  It is provided by Merit Network, Inc.  and The
+    Regents of the University of Michigan More information about
+    this RADIUS server, along with information about the enhanced
+    Merit AAA Server is available at their website: http://www.merit.edu/aaa
+
+The BSD/OS Internet Server now comes standards with with Merit AAA Radius
+server.  Sources for this server may be obtained directly from Merit Network,
+Inc..  The older Livingston based server is no longer supported, though
+the sources for it may be found in /usr/src/contrib/XXXX on the contributed
+source CD.
+
+The Merit AAA Radius server has builtin support for BSD Authentication.
+The new authentication type ``BSD-Auth'' was been added to support BSD
+Authentication.  This may be used in the /etc/raddb/users and
+/etc/raddb/authfile configuration files.  See authfile(5) for more
+details on the BSD-Auth authentication type.
+
+By default, the RADIUS server is not enabled and the configuration files
+associated with it are not installed or upgraded.  To install the configuration
+files the command
+
+	# radiusc install
+
+should be used.  Once the standard RADIUS configuration files have been
+installed they should be customized for the local site.  Please read
+the /usr/contrib/lib/radiusd/TUTORIAL for more information about radiusd
+configuration.
+
+To actually enable the RADIUS server, use the command
+
+	# radiusc start
+
+See the radiusc(8) manual page for additional information about the
+radiusc command.
+
+To use a RADIUS server on another machine for authentication (that is,
+be a RADIUS client) please review the login_radius(8) manual page.

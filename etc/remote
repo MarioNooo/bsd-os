@@ -1,0 +1,59 @@
+#	BSDI remote,v 2.3 1998/01/06 00:50:52 prb Exp
+#
+#	@(#)remote      8.1 (Berkeley) 6/10/93
+#
+# remote -- remote host description file
+#           see tip(1), remote(5), phones(5), gettyd(8)
+#
+# br	baud rate
+# du	contact gettyd(8) (dial up)
+# dv	device to use
+# ms	stty-style mode string (e.g., :ms=-icanon,cs8,-parenb,-istrip:)
+# pn	phone numbers (@ means look up the system name in the phones file)
+#       The PHONE environment variable can be used to specify the phones file.
+# tc	to continue a capability
+
+# Access to hardwired devices on the standard serial ports
+tty00:dv=/dev/tty00:br#9600:
+tty01:dv=/dev/tty01:br#9600:
+tty02:dv=/dev/tty02:br#9600:
+tty03:dv=/dev/tty03:br#9600:
+
+# The generic "modem".  Uses gettyd(8) to grab the line.
+modem:du:tc=stdchar:
+
+# EXAMPLE: #1
+# If you define a phone number for "remote" in /etc/phones then
+# ``tip remote'' will dial this system at 9600 baud.  You could
+# also plug the phone number in place of the `@'.
+remote:pn=@:br#9600:tc=modem:
+
+# EXAMPLE: #2
+# Same thing only at 57600 baud.  Note that @remote overrides the default
+# so it still gets the phone number for the system named "remote" instead
+# of trying "remote57600", but it dials at a different baud rate.
+remote57600:pn=@remote:br#57600:tc=modem:
+
+# This entry is used by ``tip phone''
+tip0:tc=modem:
+
+# These are used by ``tip -speed phone''.
+# ``tip -speed @system'' will look up "system" in the phones file.
+tip300:br#300:tc=modem:
+tip1200:br#1200:tc=modem:
+tip2400:br#2400:tc=modem:
+tip9600:br#9600:tc=modem:
+tip19200:br#19200:tc=modem:
+tip38400:br#38400:tc=modem:
+tip57600:br#57600:tc=modem:
+
+cu300:br#300:tc=modem:
+cu1200:br#1200:tc=modem:
+cu2400:br#2400:tc=modem:
+cu9600:br#9600:tc=modem:
+cu19200:br#19200:tc=modem:
+cu38400:br#38400:tc=modem:
+cu57600:br#57600:tc=modem:
+
+# standard tty characters
+stdchar:el=^U^C^R^O^D^S^Q:ie=%$:oe=^D:

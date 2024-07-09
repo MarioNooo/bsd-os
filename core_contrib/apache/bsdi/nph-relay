@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+#	BSDI	nph-relay,v 1.2 1996/08/30 21:10:37 sanders Exp
+#
+# Tony Sanders <sanders@earth.com>, Feb 1996
+# Configure under CGI as a Non-Parsed Header script.
+#
+# HTTPD-style Configuration:
+#     ScriptAlias /relay /var/www/cgi-private/nph-relay
+# HTML Usage:
+#     <A HREF="/relay/http://www.otherplace.com/">OtherPlace</A>
+#
+# This script allows you track links that point offsite.  When
+# the user selects OtherPlace the real URL will be sent to this
+# script (causing a hit to be logged in the log file) and then
+# the users browser will be automatically redirected to the final
+# destination.
+#
+URL="`echo $PATH_INFO | sed -e 's,^/*,,'`"
+# If your date command supports the strftime syntax then we'll use it.
+# If not, you'll need some other way of getting the current date/time.
+TZ=GMT; export TZ
+DATE="`date +'%A, %e-%b-%y %H:%M:%S %Z' 2>/dev/null`"
+echo 'HTTP/1.0 302 Moved Temporarily'
+echo 'Date:' ${DATE:-"Wednesday, 14-Feb-96 17:25:57 GMT"}
+echo 'Server: External-Redirect-SH/1.0'
+echo 'Location:' "$URL"
+echo 'Content-type: text/html'
+echo ''
+echo '<TITLE>Redirect</TITLE>'
+echo 'Bummer, your browser does not appear to to support redirect.<BR>'
+echo 'Please follow the link to your final destination:<BR>'
+echo 'Redirect URL: &lt;<A HREF="'"$URL"'">'"$URL"'</A>&gt;'
+exit 0

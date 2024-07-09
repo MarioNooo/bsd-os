@@ -1,0 +1,25 @@
+.\" Copyright (c) 1995 Berkeley Software Design Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI fdeject.1,v 1.1 1995/04/17 17:48:33 torek Exp
+.\"
+.Dd April 17, 1995
+.Dt FDEJECT 1
+.Os
+.Sh NAME
+.Nm fdeject
+.Nd eject SparcStation floppy disk
+.Sh SYNOPSIS
+.Nm fdeject
+.Op Fl f Ar device
+.Sh DESCRIPTION
+The
+.Nm fdeject
+command ejects the floppy from the built-in drive
+on a SparcStation.
+.Sh FILES
+.Bl -tag -width /dev/rfd0c -compact
+.It Pa /dev/rfd0c
+default floppy device
+.El

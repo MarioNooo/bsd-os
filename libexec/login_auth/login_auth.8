@@ -1,0 +1,111 @@
+.\"	BSDI login_auth.8,v 1.2 1997/08/27 17:23:38 prb Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd May 16, 1997
+.Dt LOGIN_AUTH 8
+.Os
+.Sh NAME
+.Nm login_auth
+.Nd remote authentication service
+.Sh SYNOPSIS
+.Nm login_auth
+.Op Fl d
+.Op Fl s Ar service
+.Op Fl t Ar tracefile
+.Op Fl T Ar tracefile
+.Op Fl v Ar name=value
+.Ar name
+.Op Ar class
+.Sh DESCRIPTION
+The
+.Nm login_auth
+program implements remote authentication (see
+.Xr login.conf 5 ) .
+The
+.Li authserver
+entry in the
+.Pl /etc/login.conf
+for the users class is used as the hostname of a machine running
+the
+.Xr authsrv 8
+daemon.
+.Pp
+Available options are:
+.Bl -tag -width indent
+.It Fl d
+Allow stand-alone debugging.
+.It Fl s
+Specify the service.  Currently only
+.Li challenge ,
+.Li login ,
+and
+.Li response
+are supported.
+.It Fl t
+Place a trace of all data sent and received as it appears on the wire into
+the file
+.Ar tracefile .
+The data is displayed in hexadecimal.
+.It Fl T
+Same as the
+.Fl t
+flag except the clear text information is also reported.  THIS WILL REPORT
+SENSITIVE INFORMATION, SUCH AS PASSWORDS, IN THE CLEAR AND SHOULD ONLY BE
+USED WHEN DIAGNOSING A PROBLEM AND NEVER USED IN PRODUCTION.
+.It Fl v
+This option and its value are ignored.
+.El
+.Pp
+Before contacting the server,
+.Nm login_auth
+first searches the
+.Pa /etc/authsrv.keys
+directory for a file which matches the IP address of the server.
+A file is deemed to match the IP address if one of the IP addresses
+associated with the name (as provided by
+.Xr gethostbyname 3 )
+match the servers IP address.  The first match is used.
+The file matched is expected to contain a single line of text
+which consists of a authentication mode
+followed by a single space and authentication mode specific data.
+The supported authentication modes are:
+.Bl -tag -width indent
+.It DES
+Use DES to encrypt the data.  A new random session key is used
+for each session, limiting the exposure of the long lived shared
+secret key.
+.It MD5
+Use MD5 to encrypt the data.  A new random noise vector is generated
+by each side for each session to confound analysis of multiple sessions.
+.El
+.Pp
+It is expected that rather than requesting the auth style directly
+(in which case
+.Xr authsrv 8
+uses a default style)
+that
+.Nm login_auth
+will be linked to the various mechanisms desired.  For instance,
+to have all CRYPTOCard and ActivCard authentication take place on
+a remote server via the remote authentication protocol, remove the
+.Pa login_activ
+and
+.Pa login_crypto
+modules and link
+.Pa login_auth
+to both of those names.  Now when the user requests one of those
+authentication styles,
+.Nm
+will automatically forward the request to the remote
+.Xr authsrv 8
+and request it do the requested style of authentication.
+.Sh "SEE ALSO
+.Xr auth 4 ,
+.Xr login.conf 5 ,
+.Xr auth-keyx 8 ,
+.Xr authsrv 8 ,
+.Xr login 8

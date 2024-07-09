@@ -1,0 +1,180 @@
+#	BSDI Makefile.cx,v 1.2 2003/03/11 16:05:25 dab Exp
+
+.if !defined(TARG) || !defined(BUILDARCH)
+cantbuild:
+	@echo TARG and BUILDARCH must be defined
+.endif
+ARCH=${BUILDARCH}
+MACHINE_ARCH?=${MACHINE}
+.if ${MACHINE} == "i386" && ${OSNAME} == "BSD/OS"
+HOST=		x86-bsdos4
+.elif ${MACHINE_ARCH} == "powerpc" && ${OSNAME} == "Darwin"
+HOST=		powerpc-darwin
+CXDIR=		/usr/local/cx
+.else
+HOST=		unknown-unknown
+.endif
+
+CXDIR?=		/usr/cx
+
+#WIND_BASE=	${CXDIR}
+WIND_BASE=	${.CURDIR}/cx
+
+WIND_HOST_TYPE=	${HOST}
+.EXPORT:	WIND_BASE WIND_HOST_TYPE
+
+
+BISONDIR=	bison-1.33
+FLEXDIR=	flex-2.5.4
+GPERFDIR=	gperf-2.7.2
+BINUTILSDIR=	src/binutils-2.10.1
+EGCSDIR=	src/egcs
+MAKEDIR=	${WIND_BASE}/share/mk
+HOSTDIR=	${WIND_BASE}/host/${HOST}
+ARCHDIR=	${HOSTDIR}/${ARCH}-bsdielf
+INCDIR=		${ARCHDIR}/include
+
+BISONDIST=	${.CURDIR}/dist/${BISONDIR}.tar.gz
+FLEXDIST=	${.CURDIR}/dist/${FLEXDIR}a.tar.gz
+GPERFDIST=	${.CURDIR}/dist/${GPERFDIR}.tar.gz
+TARGDIST=	${.CURDIR}/dist/${ARCH}.tgz
+
+BISON=		${PREFIXDIR}/bin/bison
+FLEX=		${PREFIXDIR}/bin/flex
+GPERF=		${PREFIXDIR}/bin/gperf
+
+PREFIXDIR=	${.CURDIR}/local
+PREFIX=		--prefix ${PREFIXDIR}
+
+
+BINUTILS_MARK=	${HOSTDIR}/bin/ld${ARCH}
+EGCS_MARK=	${HOSTDIR}/bin/cc${ARCH}
+MAKE_MARK=	${MAKEDIR}/sys.mk
+
+PATH:=		${PREFIXDIR}/bin:${PATH}
+.EXPORT:	PATH CVSROOT WIND_BASE
+
+all:	egcs
+
+install depend obj objdir tags mansourceinstall:
+
+clean cleandir:
+	rm -rf ${BISONDIR} ${FLEXDIR} ${GPERFDIR} ${PREFIXDIR} ${WIND_BASE}
+	if [ -r ${BINUTILSDIR}/Makefile.cx ] ; then \
+		cd ${BINUTILSDIR} ; gmake -f Makefile.cx $@ ; \
+	fi
+	if [ -r ${EGCSDIR}/Makefile.cx ] ; then \
+		cd ${EGCSDIR} ; gmake -f Makefile.cx $@ ; \
+	fi
+
+#
+# Rules to build up varios directories we will need
+#
+
+dirs:	${PREFIXDIR} ${MAKE_MARK} ${WIND_BASE}/target/${ARCH}
+
+${WIND_BASE}/target/${ARCH}:
+	mkdir -p ${WIND_BASE}/target/${ARCH}
+	gzcat ${TARGDIST} | (cd ${WIND_BASE}/target/${ARCH} && pax -r)
+	rm -rf $$(find ${WIND_BASE}/target/${ARCH} -name frame.h) __no_file__
+	if [ ! -e ${HOSTDIR}/include ] ; then \
+		mkdir -p ${HOSTDIR}; \
+		ln -s ${WIND_BASE}/target/${ARCH}/usr/include ${HOSTDIR}; \
+	fi
+	if [ ! -e ${INCDIR} ] ; then \
+		mkdir -p ${ARCHDIR}; \
+		ln -s ${WIND_BASE}/target/${ARCH}/usr/include ${ARCHDIR}; \
+	fi
+
+${MAKE_MARK}:
+	mkdir -p ${WIND_BASE}/share
+	cd src && pax -rw mk ${WIND_BASE}/share
+
+${PREFIXDIR}:
+	mkdir ${PREFIXDIR}
+
+#
+# Rules for building binutils
+#
+
+binutils:	${BINUTILS_MARK}
+
+${BINUTILS_MARK}: dirs tools
+	cd ${.CURDIR}/${BINUTILSDIR} && \
+	sed s/ARCH.*=.*i386/ARCH=${ARCH}/ < Makefile.gnu > Makefile.cx && \
+	gmake MACHINE=${ARCH} -f Makefile.cx
+
+#
+# Rules for building egcs
+#
+
+egcs:	${EGCS_MARK}
+
+egcs-only:
+	cd ${.CURDIR}/${EGCSDIR} && \
+	sed s/ARCH.*=.*i386/ARCH=${TARG}/ < Makefile.gnu > Makefile.cx && \
+	gmake MACHINE=${ARCH} -f Makefile.cx
+
+${EGCS_MARK}: binutils
+	cd ${.CURDIR}/${EGCSDIR} && \
+	sed s/ARCH.*=.*i386/ARCH=${TARG}/ < Makefile.gnu > Makefile.cx && \
+	gmake MACHINE=${ARCH} -f Makefile.cx
+
+#
+# All the rules below are for building tools we need
+#
+
+tools:	${BISON} ${FLEX} ${GPERF}
+
+${BISON}:	${BISONDIR}
+	(cd ${BISONDIR}; ./configure ${PREFIX}; make; make install)
+
+${FLEX}:	${FLEXDIR}
+	(cd ${FLEXDIR}; ./configure ${PREFIX}; make; make install)
+
+${GPERF}:	${GPERFDIR}
+	(cd ${GPERFDIR}; ./configure ${PREFIX}; make; make install)
+
+${BISONDIR}:
+	cd ${.CURDIR} ; gzcat ${BISONDIST} | pax -r
+
+${FLEXDIR}:
+	cd ${.CURDIR} ; gzcat ${FLEXDIST} | pax -r
+
+${GPERFDIR}:
+	cd ${.CURDIR} ; gzcat ${GPERFDIST} | pax -r
+
+.if ${OSNAME} == "Darwin"
+TOOLS=	awk config lorder make mkdep tsort
+
+finishup:
+	for tool in ${TOOLS} ; do \
+		if [ ! -x ${HOSTDIR}/bin/$$tool ] ; then \
+			cp ${WIND_BASE}/sbin/$$tool ${HOSTDIR}/bin/$$tool ; \
+		fi ; \
+	done
+.else
+finishup:
+.endif
+
+install:
+	mkdir -p ${DESTDIR}${CXDIR}/host/${HOST}
+	mkdir -p ${DESTDIR}${CXDIR}/target/${TARG}
+	cd ${WIND_BASE}/host/${HOST} ; pax -rw . ${DESTDIR}${CXDIR}/host/${HOST}
+	if [ -r ${TARGDIST} ] ; then \
+	 gzcat ${TARGDIST} | (cd ${DESTDIR}${CXDIR}/target/${TARG} && pax -r); \
+	fi
+	if [ ${OSNAME} = Darwin ] ; then \
+		cd ${WIND_BASE} ; pax -rw share ${DESTDIR}${CXDIR} ; \
+	else \
+		cd ${DESTDIR}${CXDIR} ; rm -f share ; ln -s /usr/share ; \
+	fi
+	rm -f ${DESTDIR}${CXDIR}/host/${HOST}/lib/*a 
+	rm -rf ${DESTDIR}${CXDIR}/host/${HOST}/info
+	rm -rf ${DESTDIR}${CXDIR}/host/${HOST}/man
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/bin/*
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/${ARCH}-bsdielf/bin/*
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/lib/gcc-lib/${ARCH}-bsdielf/2.95.3/cc1
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/lib/gcc-lib/${ARCH}-bsdielf/2.95.3/cc1plus
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/lib/gcc-lib/${ARCH}-bsdielf/2.95.3/collect2
+	strip ${DESTDIR}${CXDIR}/host/${HOST}/lib/gcc-lib/${ARCH}-bsdielf/2.95.3/cpp0

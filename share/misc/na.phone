@@ -1,0 +1,454 @@
+#
+# North American Telephone Area Codes (as of 8/06/2000)
+# courtesy of LincMad Consulting <http://www.LincMad.com>
+# This file may be redistributed with the above notice.
+# CREATED: 07/27/1998 by LincMad
+# UPDATED: 07/28/2000 by LincMad reflecting data for 8/6/00
+#
+# areacode:city:state:abbrevstate
+#
+201:Hackensack:New Jersey:NJ
+201:Jersey City:New Jersey:NJ
+202:Washington:District of Columbia:DC
+203:New Haven:Connecticut:CT
+203:Stamford:Connecticut:CT
+204::Manitoba:MB
+204:Winnipeg:Manitoba:MB
+205:Birmingham:Alabama:AL
+205:Tuscaloosa:Alabama:AL
+206:Seattle:Washington:WA
+207::Maine:ME
+207:Portland:Maine:ME
+208::Idaho:ID
+208:Boise:Idaho:ID
+209:Stockton:California:CA
+209:Modesto:California:CA
+210:San Antonio:Texas:TX
+212:Manhattan NYC (overlay):New York:NY
+212:New York (overlay):New York:NY
+213:Los Angeles (inner downtown):California:CA
+214:Dallas and suburbs (overlay):Texas:TX
+215:Philadelphia (overlay):Pennsylvania:PA
+216:Cleveland:Ohio:OH
+217:Champaign:Illinois:IL
+217:Springfield:Illinois:IL
+218:Duluth:Minnesota:MN
+219:Ft. Wayne:Indiana:IN
+224:Skokie (overlay pending):Illinois:IL
+225:Baton Rouge:Louisiana:LA
+228:Biloxi:Mississippi:MS
+229:Albany:Georgia:GA
+229:Valdosta:Georgia:GA
+231:Muskegon:Michigan:MI
+231:Traverse City:Michigan:MI
+234:Akron (overlay eff. 10/31/2000):Ohio:OH
+234:Canton (overlay eff. 10/31/2000):Ohio:OH
+234:Youngstown (overlay eff. 10/31/2000):Ohio:OH
+240:Bethesda:Maryland:MD
+242::Bahamas:
+246::Barbados:
+248:Pontiac:Michigan:MI
+250:Victoria:British Columbia:BC
+252:Greenville:North Carolina:NC
+253:Tacoma:Washington:WA
+254:Waco:Texas:TX
+256:Huntsville:Alabama:AL
+262:Racine:Wisconsin:WI
+262:Waukesha:Wisconsin:WI
+264::Anguilla:
+267:Philadelphia (overlay):Pennsylvania:PA
+268::Antigua and Barbuda:
+270:Bowling Green:Kentucky:KY
+278:Ann Arbor (overlay suspended):Michigan:MI
+281:Houston and suburbs:Texas:TX
+284::British Virgin Islands:BVI
+301:Bethesda:Maryland:MD
+302::Delaware:DE
+303:Denver (overlay):Colorado:CO
+304::West Virginia:WV
+305:Miami:Florida:FL
+305:Key West:Florida:FL
+306::Saskatchewan:SK
+307::Wyoming:WY
+308:North Platte:Nebraska:NE
+309:Peoria:Illinois:IL
+310:Santa Monica:California:CA
+310:Los Angeles (airport):California:CA
+312:Chicago (downtown):Illinois:IL
+313:Detroit:Michigan:MI
+314:St. Louis:Missouri:MO
+315:Syracuse:New York:NY
+316:Wichita:Kansas:KS
+317:Indianapolis:Indiana:IN
+318:Shreveport:Louisiana:LA
+319:Cedar Rapids:Iowa:IA
+320:St. Cloud:Minnesota:MN
+321:Orlando (overlay):Florida:FL
+321:Melbourne (not overlay):Florida:FL
+323:Hollywood:California:CA
+330:Akron:Ohio:OH
+330:Canton:Ohio:OH
+330:Youngstown:Ohio:OH
+331:Hinsdale (overlay pending):Illinois:IL
+334:Montgomery:Alabama:AL
+334:Mobile:Alabama:AL
+336:Greensboro-High Point:North Carolina:NC
+336:Winston-Salem:North Carolina:NC
+337:Lafayette:Louisiana:LA
+339:Lexington (overlay 4/2/2001):Massachusetts:MA
+340::U.S. Virgin Islands:VI
+341:Oakland (overlay suspended):California:CA
+345::Cayman Islands:
+347:Bronx NYC (overlay):New York:NY
+347:Brooklyn NYC (overlay):New York:NY
+347:Queens NYC (overlay):New York:NY
+347:Staten Island NYC (overlay):New York:NY
+347:New York (overlay):New York:NY
+351:Lowell (overlay 4/2/2001):Massachusetts:MA
+352:Gainesville:Florida:FL
+360:Vancouver:Washington:WA
+360:Olympia:Washington:WA
+360:Bellingham:Washington:WA
+361:Corpus Christi:Texas:TX
+369:Vallejo (planned split suspended):California:CA
+385:Ogden (eff. 12/31/2000):Utah:UT
+385:Provo (eff. 12/31/2000):Utah:UT
+401::Rhode Island:RI
+401:Providence:Rhode Island:RI
+402:Omaha:Nebraska:NE
+403:Calgary:Alberta:AB
+404:Atlanta (overlay):Georgia:GA
+405:Oklahoma City:Oklahoma:OK
+406::Montana:MT
+407:Orlando:Florida:FL
+408:San Jose:California:CA
+409:Galveston:Texas:TX
+409:Beaumont:Texas:TX
+410:Baltimore:Maryland:MD
+412:Pittsburgh:Pennsylvania:PA
+413:Springfield:Massachusetts:MA
+414:Milwaukee:Wisconsin:WI
+415:San Francisco:California:CA
+416:Toronto:Ontario:ON
+417:Joplin:Missouri:MO
+417:Springfield:Missouri:MO
+418:Quebec:Quebec:QC
+419:Toledo:Ohio:OH
+423:Chattanooga:Tennessee:TN
+423:Johnson City:Tennessee:TN
+424:Santa Monica (overlay/split suspended):California:CA
+425:Everett:Washington:WA
+425:Redmond:Washington:WA
+435:Logan:Utah:UT
+440:Lorain:Ohio:OH
+441::Bermuda:
+442:Escondido (split suspended; see 760):California:CA
+442:Oceanside (split suspended; see 760):California:CA
+443:Baltimore:Maryland:MD
+445:Philadelphia (overlay eff. 5/1/2001):Pennsylvania:PA
+450:Laval:Quebec:QC
+450:Montreal suburbs:Quebec:QC
+456::international 56K data calls:
+464:La Grange (overlay pending):Illinois:IL
+469:Dallas and suburbs (overlay):Texas:TX
+473::Grenada:
+475:New Haven (future overlay):Connecticut:CT
+475:Stamford (future overlay):Connecticut:CT
+478:Macon:Georgia:GA
+480:Scottsdale:Arizona:AZ
+484:Allentown (overlay):Pennsylvania:PA
+500::Personal Communications Services:
+501:Little Rock:Arkansas:AR
+501:Ft. Smith:Arkansas:AR
+502:Louisville:Kentucky:KY
+503:Portland:Oregon:OR
+504:New Orleans:Louisiana:LA
+505::New Mexico:NM
+505:Albuquerque:New Mexico:NM
+506::New Brunswick:NB
+507:Rochester:Minnesota:MN
+508:Cape Cod:Massachusetts:MA
+508:Worcester:Massachusetts:MA
+509:Spokane:Washington:WA
+510:Oakland:California:CA
+512:Austin:Texas:TX
+513:Cincinnati:Ohio:OH
+514:Montreal:Quebec:QC
+515:Des Moines:Iowa:IA
+515:Mason City (until 12/3/2000):Iowa:IA
+516:Nassau County, Long Island:New York:NY
+517:Lansing:Michigan:MI
+517:Saginaw (planned split to 989 suspended):Michigan:MI
+518:Albany:New York:NY
+519:London:Ontario:ON
+520:Tucson:Arizona:AZ
+530:Redding:California:CA
+533::Personal Communications Services:
+540:Roanoke:Virginia:VA
+541:Eugene:Oregon:OR
+559:Fresno:California:CA
+561:West Palm Beach:Florida:FL
+561:Boca Raton:Florida:FL
+562:Long Beach:California:CA
+562:Los Angeles:California:CA
+564:Olympia (overlay eff. 10/20/2001):Washington:WA
+564:Vancouver (overlay eff. 10/20/2001):Washington:WA
+564:Bellingham (overlay eff. 10/20/2001):Washington:WA
+564:Seattle (overlay eff. 10/20/2001):Washington:WA
+564:Tacoma (overlay eff. 10/20/2001):Washington:WA
+564:Redmond (overlay eff. 10/20/2001):Washington:WA
+564:Everett (overlay eff. 10/20/2001):Washington:WA
+570:Scranton:Pennsylvania:PA
+571:Arlington (overlay):Virginia:VA
+573:Columbia:Missouri:MO
+580:Lawton:Oklahoma:OK
+586:Flint (overlay suspended):Michigan:MI
+600::Canada special numbers:
+601:Jackson:Mississippi:MS
+602:Phoenix:Arizona:AZ
+603::New Hampshire:NH
+604:Vancouver:British Columbia:BC
+605::South Dakota:SD
+606:Lexington (until 10/1/2000; see 859):Kentucky:KY
+606:Covington (until 10/1/2000; see 859):Kentucky:KY
+606:Pikeville:Kentucky:KY
+607:Binghamton:New York:NY
+608:Madison:Wisconsin:WI
+609:Trenton:New Jersey:NJ
+609:Atlantic City:New Jersey:NJ
+610:Allentown (overlay):Pennsylvania:PA
+612:Minneapolis:Minnesota:MN
+612:Brooklyn Park (until 1/14/2001; see 763):Minnesota:MN
+612:Bloomington (until 1/14/2001; see 952):Minnesota:MN
+613:Ottawa:Ontario:ON
+614:Columbus:Ohio:OH
+615:Nashville:Tennessee:TN
+616:Grand Rapids:Michigan:MI
+617:Boston:Massachusetts:MA
+618:East St. Louis:Illinois:IL
+619:San Diego:California:CA
+619:Coronado (split to 935 suspended):California:CA
+619:National City (split to 935 suspended):California:CA
+623:Glendale:Arizona:AZ
+626:Pasadena:California:CA
+626:Los Angeles:California:CA
+627:Napa (split suspended):California:CA
+627:Santa Rosa (split suspended):California:CA
+627:Sonoma (split suspended):California:CA
+628:San Francisco (overlay suspended):California:CA
+630:Hinsdale:Illinois:IL
+631:Suffolk County, Long Island:New York:NY
+636:St. Charles:Missouri:MO
+641:Mason City:Iowa:IA
+646:Manhattan NYC (overlay):New York:NY
+646:New York (overlay):New York:NY
+647:Toronto (will overlay 416 in 2000 or 2001):Ontario:ON
+649::Turks and Caicos Islands:
+650:San Mateo:California:CA
+651:St. Paul:Minnesota:MN
+657:Anaheim (overlay suspended):California:CA
+660:Sedalia:Missouri:MO
+661:Bakersfield:California:CA
+661:Santa Clarita:California:CA
+662:Greenville:Mississippi:MS
+664::Montserrat:
+669:San Jose (overlay suspended):California:CA
+670::Commonwealth of the Northern Mariana Islands CNMI:MP
+670:Saipan:Commonwealth of the Northern Mariana Islands CNMI:MP
+671::Guam:GU
+671:Agana:Guam:GU
+678:Atlanta (city and suburbs) (overlay):Georgia:GA
+678:Marietta (overlay):Georgia:GA
+679:Detroit (overlay suspended):Michigan:MI
+682:Fort Worth (overlay eff. 10/7/2000):Texas:TX
+700::Special carrier-specific numbers:
+701::North Dakota:ND
+702:Las Vegas:Nevada:NV
+703:Arlington (overlay):Virginia:VA
+704:Charlotte:North Carolina:NC
+705:Sudbury:Ontario:ON
+706:Columbus:Georgia:GA
+706:Athens:Georgia:GA
+707:Eureka:California:CA
+707:Napa (split to 627 suspended):California:CA
+707:Sonoma (split to 627 suspended):California:CA
+707:Santa Rosa (split to 627 suspended):California:CA
+707:Vallejo (split to 369 suspended):California:CA
+708:La Grange:Illinois:IL
+709::Newfoundland:NF
+710::U.S. Government special numbers:
+712:Sioux City:Iowa:IA
+713:Houston (overlay):Texas:TX
+714:northern Orange County:California:CA
+714:Anaheim:California:CA
+715:Eau Claire:Wisconsin:WI
+716:Buffalo:New York:NY
+716:Rochester:New York:NY
+717:Harrisburg:Pennsylvania:PA
+718:Bronx NYC (overlay):New York:NY
+718:Brooklyn NYC (overlay):New York:NY
+718:Queens NYC (overlay):New York:NY
+718:Staten Island NYC (overlay):New York:NY
+718:New York (overlay):New York:NY
+719:Colorado Springs:Colorado:CO
+720:Denver (overlay):Colorado:CO
+724:New Castle:Pennsylvania:PA
+727:St. Petersburg:Florida:FL
+732:New Brunswick:New Jersey:NJ
+732:Asbury Park:New Jersey:NJ
+734:Ann Arbor:Michigan:MI
+737:Austin (overlay eff. 11/10/2001):Texas:TX
+740:Marion:Ohio:OH
+747:San Fernando Valley (planned future split of 818):California:CA
+752:San Bernardino (overlay suspended):California:CA
+757:Norfolk:Virginia:VA
+758::St. Lucia:
+760:Palm Springs:California:CA
+760:Oceanside (split to 442 suspended):California:CA
+763:Brooklyn Park:Minnesota:MN
+764:San Mateo (overlay suspended):California:CA
+765:Lafayette:Indiana:IN
+767::Dominica:
+770:Marietta (overlay):Georgia:GA
+770:Atlanta suburbs (overlay):Georgia:GA
+773:Chicago (not downtown):Illinois:IL
+774:Cape Cod (overlay eff. 4/2/2001):Massachusetts:MA
+774:Worcester (overlay eff. 4/2/2001):Massachusetts:MA
+775:Reno:Nevada:NV
+780:Edmonton:Alberta:AB
+781:Lexington:Massachusetts:MA
+784::St. Vincent & the Grenadines:
+785:Topeka:Kansas:KS
+786:Miami (overlay):Florida:FL
+787::Puerto Rico:PR
+787:San Juan:Puerto Rico:PR
+800::Toll-free numbers:
+801:Salt Lake City:Utah:UT
+801:Ogden (until 6/30/2001):Utah:UT
+801:Provo (until 6/30/2001):Utah:UT
+802::Vermont:VT
+803:Columbia:South Carolina:SC
+804:Richmond:Virginia:VA
+805:Oxnard:California:CA
+805:San Luis Obispo:California:CA
+806:Amarillo:Texas:TX
+806:Lubbock:Texas:TX
+807:Thunder Bay:Ontario:ON
+808::Hawaii:HI
+808:Honolulu:Hawaii:HI
+809::Dominican Republic:DR
+810:Flint:Michigan:MI
+812:Evansville:Indiana:IN
+813:Tampa:Florida:FL
+814:Altoona:Pennsylvania:PA
+814:Erie:Pennsylvania:PA
+815:Joliet:Illinois:IL
+816:Kansas City:Missouri:MO
+817:Ft. Worth:Texas:TX
+818:San Fernando:California:CA
+818:Los Angeles:California:CA
+819:Sherbrooke:Quebec:QC
+822::future toll-free numbers:
+828:Asheville:North Carolina:NC
+830:Del Rio:Texas:TX
+830:New Braunfels:Texas:TX
+831:Monterey:California:CA
+831:Santa Cruz:California:CA
+832:Houston and suburbs (overlay):Texas:TX
+833::future toll-free numbers:
+835:Allentown (overlay eff. 5/1/2001):Pennsylvania:PA
+843:Charleston:South Carolina:SC
+844::future toll-free numbers:
+845:Poughkeepsie:New York:NY
+847:Skokie:Illinois:IL
+850:Tallahassee:Florida:FL
+855::future toll-free numbers:
+856:Camden:New Jersey:NJ
+857:Boston (overlay eff. 4/2/2001):Massachusetts:MA
+858:La Jolla:California:CA
+859:Covington:Kentucky:KY
+859 Lexington:Kentucky:KY
+860:Hartford:Connecticut:CT
+863:Lakeland:Florida:FL
+864:Greenville-Spartanburg:South Carolina:SC
+865:Knoxville:Tennessee:TN
+866::Toll-free numbers:
+867::Yukon Territory:YT
+867::Northwest Territories:NT
+867::Nunavut:NT
+868::Trinidad and Tobago:
+869::St. Kitts and Nevis:
+870:Jonesboro:Arkansas:AR
+870:Pine Bluff:Arkansas:AR
+870:Texarkana:Arkansas:AR
+872:Chicago, downtown and outside (overlay pending for 312 and 773):Illinois:IL
+876::Jamaica:
+877::Toll-free numbers:
+878:Pittsburgh (overlay eff. 8/17/2001):Pennsylvania:PA
+878:New Castle (overlay eff. 8/17/2001):Pennsylvania:PA
+880::Paid international calls to +1 800:
+881::Paid international calls to +1 888:
+882::Paid international calls to +1 877:
+888::Toll-free numbers:
+900::Pay-per-call numbers:
+901:Memphis:Tennessee:TN
+902::Nova Scotia:NS
+902::Prince Edward Island:PE
+903:Tyler:Texas:TX
+904:Jacksonville:Florida:FL
+905:Toronto suburbs:Ontario:ON
+905:Hamilton:Ontario:ON
+906:Upper Peninsula:Michigan:MI
+907::Alaska:AK
+907:Anchorage:Alaska:AK
+908:Elizabeth:New Jersey:NJ
+909:San Bernardino:California:CA
+909:Riverside (split to 951 suspended):California:CA
+910:Wilmington:North Carolina:NC
+912:Savannah:Georgia:GA
+912:Macon (until 8/1/2001; see 478):Georgia:GA
+912:Albany (until 8/1/2001; see 229):Georgia:GA
+912:Valdosta (until 8/1/2001; see 229):Georgia:GA
+913:Kansas City:Kansas:KS
+914:White Plains:New York:NY
+914:Poughkeepsie (until 12/9/2000):New York:NY
+915:El Paso:Texas:TX
+916:Sacramento:California:CA
+917:New York (overlay):New York:NY
+917:Bronx NYC (overlay):New York:NY
+917:Brooklyn NYC (overlay):New York:NY
+917:Manhattan NYC (overlay):New York:NY
+917:Queens NYC (overlay):New York:NY
+917:Staten Island NYC (overlay):New York:NY
+918:Tulsa:Oklahoma:OK
+919:Raleigh:North Carolina:NC
+920:Green Bay:Wisconsin:WI
+925:Walnut Creek:California:CA
+931:Clarksville:Tennessee:TN
+935:Coronado (split suspended; use 619):California:CA
+935:National City (split suspended; use 619):California:CA
+936:Conroe:Texas:TX
+937:Dayton:Ohio:OH
+939:(overlay eff. 8/1/2001):Puerto Rico:PR
+939:San Juan (overlay eff. 8/1/2001):Puerto Rico:PR
+940:Wichita Falls:Texas:TX
+940:Denton:Texas:TX
+941:Sarasota:Florida:FL
+947:Pontiac (overlay suspended):Michigan:MI
+949:southern Orange County:California:CA
+949:Irvine:California:CA
+951:Riverside (split to 951 suspended; use 909):California:CA
+952:Bloomington:Minnesota:MN
+954:Ft. Lauderdale:Florida:FL
+956:Brownsville:Texas:TX
+956:Laredo:Texas:TX
+959:Hartford (future overlay):Connecticut:CT
+970:Grand Junction:Colorado:CO
+971:Portland (overlays most of 503 as of 10/1/2000):Oregon:OR
+972:Dallas and suburbs (overlay):Texas:TX
+973:Newark:New Jersey:NJ
+973:Paterson:New Jersey:NJ
+978:Lowell:Massachusetts:MA
+979:Bryan/College Station:Texas:TX
+980:Charlotte (overlay eff. 2/10/2001):North Carolina:NC
+989:Saginaw (as of 8/19/2000):Michigan:MI

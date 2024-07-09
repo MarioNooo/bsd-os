@@ -1,0 +1,78 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI login_radius.8,v 1.2 1996/11/11 18:42:02 prb Exp
+.Dd August 23, 1996
+.Dt LOGIN_RADIUS 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_radius
+.Nd contact radiusd for authentication
+.Sh SYNOPSIS
+.Nm login_radius
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm
+utility contacts the
+.Xr radiusd 8
+daemon to authenticate a user.
+When executed as the name
+.Pa login_ Ns Ar style
+it will request
+.Xr radiusd 8
+to use the authentication specified by
+.Xr style .
+.Pp
+The
+.Nm
+utility needs to know a shared secret for each radius server it talks to.
+Shared secrets are stored in the file
+.Pa /etc/raddb/servers
+with the format:
+.sp
+.Ti +.5i
+.Li server shared_secret
+.Pp
+The primary and possible secondary radius servers are defined in the
+.Pa login.conf 5
+file by the fields:
+.Li radius-server
+and
+.Li radius-server-alt .
+.Pp
+It is expected that rather than requesting the radius style directly
+(in which case the
+.Xr radiusd 8
+server uses a default style)
+that
+.Nm
+will be linked to the various mechanisms desired.  For instance,
+to have all CRYPTOCard and ActivCard authentication take place on
+a remote server via the radius protocol, remove the
+.Pa login_activ
+and
+.Pa login_crypto
+modules and link
+.Pa login_radius
+to both of those names.  Now when the user requests one of those
+authentication styles,
+.Nm
+will automatically forward the request to the remote
+.Xr radiusd 8
+and request it do the requested style of authentication.
+.Pp
+Unless the the style being used is listed in the
+.Li radius-challenge-styles
+entry of the
+.Pa /etc/login.conf
+file, a password will be requested before sending the request to the
+radius server.
+.Sh SEE ALSO
+.Xr login.conf 5 ,
+.Xr login 8 ,
+.Xr radiusd 8

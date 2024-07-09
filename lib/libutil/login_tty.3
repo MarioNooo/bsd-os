@@ -1,0 +1,34 @@
+.\"	BSDI login_tty.3,v 1.2 1996/05/22 21:52:47 jch Exp
+.\"
+.Dd May 8, 1996
+.Dt LOGIN_TTY 3
+.Os
+.Sh NAME
+.Nm login_tty
+.Nd setup controlling terminal for a process
+.Sh SYNOPSIS
+.Ft int
+.Fn login_tty "int fd"
+.Sh DESCRIPTION
+The
+.Fn login_tty
+function creates a new session and new process group,
+making the calling process their session and process group leader.
+The terminal associated with
+.Fa fd
+becomes the controlling terminal for the process,
+and replaces file descriptors 0, 1 and 2
+.Pq stdin, stdout and stderr ,
+which, if open, are closed.
+.Sh RETURN VALUES
+Upon successful completion, 
+.Fn login_tty
+returns 0, otherwise,
+-1 is return and
+.Va errno
+is set.
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr setsid 2 ,
+.Xr tty 4
+

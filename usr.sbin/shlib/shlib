@@ -1,0 +1,838 @@
+#! /bin/sh
+#
+# Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+#
+# Copyright (c) 1994,1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI shlib,v 2.23 2001/10/03 17:30:00 polk Exp
+#
+
+#
+# Convert a normal archive library into a static shared library.
+#
+
+#
+# Layout of a sharable image:
+#
+# library loader:
+#	first instruction jumps to code
+#	padding to page boundary (includes QMAGIC header)
+# jump table:
+#	jump to initialization routine
+#	jump table elements (8 bytes each)
+#	padding to page boundary
+# const data:
+#	const data in specified order
+# ordinary text:
+#	code for library functions
+#	[big break]
+# exported data:
+#	data in specified order
+# private data:
+#	data in any order
+#
+
+#
+# Scan the library archive and generate a symbol map file
+# that can be used to produce a jump table and other
+# data structures that are useful to a shared library.
+#
+scan() {
+	nm -op "$1" 2> /dev/null |
+	egrep -v ":($XCLUDE):" |
+	awk -v CONST=$CONST -v EXCEPT=$EXCEPT '
+
+	BEGIN {
+		while (getline < CONST > 0) \
+			const[$0] = 1
+		if (EXCEPT != "none") \
+			while (getline < EXCEPT > 0) \
+				except[$0] = 1
+	}
+
+	/ [a-zU] / {
+		next
+	}
+
+	{
+		sub(/^[^:]*:/, "")
+		sub(/:/, " ")
+	}
+
+	$3 == "W" {
+		$3 = "T"
+	}
+
+	const[$4] {
+		$3 = "R"
+	}
+
+	# If an exceptional form and not on the exception list, drop it
+	EXCEPT != "none" && $4 !~ /^[^_]/ && !except[$4] {
+		next
+	}
+
+	# If a normal form but on the exception list, drop it
+	$4 ~ /^[^_]/ && except[$4] {
+		next
+	}
+
+	$3 == "C" {
+		print $1, $3, $4, $2
+		next
+	}
+
+	{
+		print $1, $3, $4
+	}'
+
+	return 0
+}
+
+#
+# Build the .o file for the jump table.
+# The table is an array of code fragments
+# whose offsets are exported to user programs
+# through the stub library.
+# Each code fragment is a jump to the appropriate
+# library routine inside the shared library.
+# The jump table lets us change the offsets
+# (that is, the contents) of library routines
+# in the shared library without disturbing
+# the interface to user programs.
+#
+jump() {
+	PREFIX=__JUMP_
+	if [ -f "$IMAGE" -a -r "$IMAGE" ]
+	then
+		nm -n "$IMAGE" |
+			sed -n -e "/ T $PREFIX/s/^.* T $PREFIX//p" > jump
+	else
+		if [ -n "$IMAGE" ]
+		then
+			echo "shlib: warning: can't open $IMAGE, continuing"
+		fi
+		touch jump
+	fi
+	sort jump > jump.sorted
+	sed -n -e 's/^.* T //p' $1 | sort -u > text
+	if [ -s jump.sorted ]
+	then
+		egrep -v DELETED jump.sorted | comm -23 - text > deleted
+		if [ -s deleted ]
+		then
+			echo ''
+			echo Deleted entry points:
+			column deleted
+		fi
+		comm -13 jump.sorted text > added
+		if [ -s added ]
+		then
+			echo ''
+			echo Added entry points:
+			column added
+		fi
+	else
+		touch deleted
+		mv text added
+	fi
+	awk -v DELETED=deleted -v ADDED=added -v PREFIX=$PREFIX '
+
+	BEGIN {
+		print "#include <machine/shlib.h>"
+		while (getline < DELETED > 0) \
+			deleted[$0] = 1
+		print "\t.section \".text\""
+		print "\tJUMPTO(" "loader)"
+	}
+
+	deleted[$0] {
+		$0 = "_DELETED_" NR
+	}
+
+	{
+		jump()
+	}
+
+	END {
+		while (getline < ADDED > 0) \
+			jump()
+		print "PAGE_ALIGN"
+	}
+
+	function jump() {
+		j = PREFIX $0
+		if ($0 ~ /^_DELETED_/) \
+			print "\tJUMPENTRY(" j ",abort)"
+		else \
+			print "\tJUMPENTRY(" j "," $0 ")"
+	}' jump | cpp -DLOCORE | as -o jump_table.o
+
+	return 0
+}
+
+#
+# Given an old shared library image and a map file,
+# generate an ordered list of object files
+# to be linked into the new image that
+# matches the old image's data offsets,
+# insofar as this is possible.
+#
+imagedata() {
+	nm -n "$IMAGE" |
+	awk -v MAP="$1" '
+	BEGIN {
+		while (getline < MAP > 0) {
+			if ($2 !~ /[CDR]/) \
+				continue
+			if ($2 == "C") {
+				if (common[$3] == 0) \
+					common[$3] = 1
+				continue
+			}
+			sym2obj[$3] = $1
+			common[$3] = -1
+			if ($2 == "R") \
+				obj2type[$1] = "R"
+			else if (obj2type[$1] == "") \
+				obj2type[$1] = "D"
+		}
+		for (c in common) {
+			if (common[c] == 1) {
+				obj2type["COMMON" c ".o"] = "C"
+				sym2obj[c] = "COMMON" c ".o"
+			}
+		}
+	}
+
+	$2 !~ /[DR]/ { next }
+
+	{
+		f = sym2obj[$3]
+		if (f == "") \
+			next
+	}
+
+	$2 == "R" && obj2type[f] == "R" {
+		print f
+		obj2type[f] = "X"
+	}
+
+	$2 == "D" && obj2type[f] ~ /[CD]/ {
+		finish("R")
+		print f
+		obj2type[f] = "X"
+	}
+
+	END {
+		finish("R")
+		finish("C")
+		finish("D")
+	}
+
+	function finish(type) {
+		if (checked[type] == 0) \
+			for (o in obj2type) \
+				if (obj2type[o] == type) {
+					print o
+					obj2type[o] = "X"
+				}
+		checked[type] = 1
+	}'
+
+	return 0
+}
+
+#
+# Generate a list of 'common' definition files from the map,
+# for use in forcing a specific link order for data.
+#
+commonfiles() {
+	awk '
+	$2 == "D" {
+		common[$3] = -1
+		next
+	}
+
+	$2 == "C" && common[$3] == 0 {
+		common[$3] = 1
+		next
+	}
+
+	END {
+		for (c in common) {
+			if (common[c] == 1) \
+				print "COMMON" c ".o"
+		}
+	}' "$1"
+}
+
+#
+# Generate a list of .o files from the archive
+# that contain exported data.
+# We try to duplicate the order of files
+# in an old image if one is available,
+# appending new data in no fixed order;
+# otherwise, we list const data first,
+# blank data second and regular data third,
+# because we hypothesize that this will lead
+# to fewer possible inconsistencies in future updates.
+#
+data() {
+	if [ "$2" = "yes" ]
+	then
+		# hack: make up for old .rodata junk in loader.libc.c
+		echo '.section .rodata; .space 40' | as -o libc_pad.o
+		echo libc_pad.o
+	fi
+	if [ -f "$IMAGE" -a -r "$IMAGE" ]
+	then
+		imagedata "$1"
+	else
+		# const data first, blank data second, regular data third
+		awk '$2 == "R" { print $1 }' map | sort -u > dtmp1
+		commonfiles map | sort -u >> dtmp1
+		awk '$2 == "D" { print $1 }' map | sort -u |
+			comm -23 - dtmp1 > dtmp2
+		cat dtmp1 dtmp2
+	fi
+}
+
+#
+# Complain about added or deleted exported data.
+# This works like imagedata but it's interested in symbols rather than files.
+# Note that we assume here that the current exception file
+# applies to the old library.  The alternative would be
+# to require a stub library for the old library.
+#
+reportnewdata() {
+
+	[ -f "$IMAGE" -a -r "$IMAGE" ] || return
+
+	nm -n "$IMAGE" |
+	awk -v MAP="$1" -v EXCEPT="$2" -v LIBC="$3" '
+	BEGIN {
+		while (getline < MAP > 0) {
+			if ($2 !~ /[CDR]/) \
+				continue
+			if ($2 == "C") \
+				common[$3] = 1
+			else if ($2 == "R") \
+				sym2type[$3] = "R"
+			else if (sym2type[$3] == "") \
+				sym2type[$3] = "D"
+		}
+		for (c in common) \
+			if (sym2type[c] == "") \
+				sym2type[c] = "D"
+		if (EXCEPT != "none") \
+			while (getline < EXCEPT > 0) \
+				except[$0] = 1
+	}
+
+	$2 !~ /[DR]/ { next }
+
+	$2 == "R" && sym2type[$3] == "R" {
+		sym2type[$3] = ""
+		next
+	}
+
+	$2 == "D" && sym2type[$3] == "D" {
+		sym2type[$3] = ""
+		next
+	}
+
+	# If an exceptional form and not on the exception list, drop it
+	EXCEPT != "none" && $3 !~ /^[^_]/ && !except[$3] {
+		next
+	}
+
+	# If a normal form but on the exception list, drop it
+	$3 ~ /^[^_]/ && except[$3] {
+		next
+	}
+
+	LIBC != "" && $3 == "__progname" { next }
+	LIBC != "" && $3 == "__ps_strings" { next }
+	LIBC != "" && $3 == "environ" { next }
+
+	{
+		print $3 >> "rnd.del." $2
+	}
+
+	END {
+		for (s in sym2type) \
+			if (sym2type[s] != "") \
+				print s >> "rnd.new." sym2type[s]
+	}'
+
+	if [ -s rnd.del.R ]
+	then
+		echo ''
+		echo Deleted exported const data:
+		sort -u rnd.del.R | column
+	fi
+	if [ -s rnd.new.R ]
+	then
+		echo ''
+		echo New exported const data:
+		sort -u rnd.new.R | column
+	fi
+	if [ -s rnd.del.D ]
+	then
+		echo ''
+		echo Deleted exported data:
+		sort -u rnd.del.D | column
+	fi
+	if [ -s rnd.new.D ]
+	then
+		echo ''
+		echo New exported data:
+		sort -u rnd.new.D | column
+	fi
+}
+
+#
+# Create stub files to define blank common data.
+#
+commonobjs() {
+	awk -v MAP="$1" '
+	BEGIN {
+		while (getline < MAP > 0) \
+			if ($2 == "C") \
+				common[$3] = $4
+	}
+
+	/^COMMON.*\.o$/ {
+		c = substr($0, 7)
+		c = substr(c, 1, length(c) - 2)
+		print "(echo '\''#include <machine/shlib.h>'\''"
+		print "echo '\''DEFDATA(" c ",0x" common[c] ")'\'') | "
+		print "cpp -DLOCORE -DDATASIZE=0x" common[c] " |"
+		print "as -o", $0
+	}
+	' "$2" |
+	sh
+}
+
+#
+# Compare global data addresses in the old library with the new library
+# and report any mismatches.  These mismatches are the most common and
+# most annoying source of problems in statically linked shared libraries.
+# The parameters are the old library, the new library, the map file
+# and the file containing the link order of the global data objects.
+#
+reportmismatches() {
+
+	[ -f "$IMAGE" -a -r "$IMAGE" ] || return
+
+	# collect data symbols (and object names)
+	(
+		awk '$2 ~ /[DR]/ { print $3, $1 }' "$3"
+		awk '/^COMMON/ { print substr($1, 7, length - 2), $1 }' "$4"
+	) | sort -u > rtmp1
+
+	# extract data addresses from old and new libraries, and merge them
+	nm "$1" | join -2 3 -o 2.3,2.1 rtmp1 - > rtmp2
+	nm "$2" | join -2 3 -o 2.3,2.1 rtmp1 - > rtmp3
+	join -o 1.1,1.2,2.2 rtmp2 rtmp3 > rtmp4
+
+	# add object names, sort by address, identify mismatches and format
+	join -o 2.2,1.1,1.2,1.3 rtmp4 rtmp1 |
+		sort -k 3,4 |
+		awk '
+		$3 != $4 {
+			printf "%-24s %-32s %8s %8s\n", $1, $2, $3, $4
+		}' > rtmp5
+
+	if [ -s rtmp5 ]
+	then
+		echo ''
+		echo 'WARNING: incompatibilities in global data addresses:'
+		echo ''
+		printf '%-24s %-32s %8s %8s\n' 'object file' symbol old new
+		cat rtmp5
+		echo ''
+
+		# print the objects that are most likely to be involved
+		FILE1=$(awk 'NR == 1 { print $1 }' rtmp5)
+		FILE2=$(awk -v FILE1=$FILE1 '
+			$1 == FILE1 { if (p != "") print p }
+			{ p = $1 }' $4)
+		echo -n 'Check '
+		[ -n "$FILE2" ] && echo -n "$FILE2 and "
+		echo "$FILE1 for changes in sizes or layout."
+	fi
+}
+
+#
+# Generate the object files for the stub archive
+# corresponding to a new shared library image.
+# The stub objects are empty except for symbol definitions
+# that provide offsets to jump table entries and global data
+# in the new shared library image.
+# Users link against a stub library rather than
+# the actual sharable image so that they may
+# redefine symbols that occur in the library without
+# generating a linking conflict with a library symbol.
+# Note that the library will use the library's internal
+# version of the function or data regardless of any redefinition,
+# however.
+#
+stubobjs() {
+	nm -p "$1" |
+	awk -v MAP="$2" -v LIBC="$3" '
+	BEGIN {
+		JUMP = "__JUMP_"
+		while ("cat " MAP | getline > 0) \
+			if ($2 != "C" || map[$3] != "D") \
+				map[$3] = $2
+	}
+
+	substr($3, 1, length(JUMP)) == JUMP && \
+	map[substr($3, length(JUMP) + 1)] == "T" {
+		map[substr($3, length(JUMP) + 1)] = "0x" $1
+		next
+	}
+
+	map[$3] ~ /^[CDR]$/ {
+		map[$3] = "0x" $1
+	}
+
+	function set_abs(s) {
+		print "echo '"'"'.globl " s "; .set " s ",0x" $1 "'"'"' |"
+		print "\tas -o " s ".o"
+	}
+
+	LIBC != "" && $3 == "environ" {
+		set_abs("environ")
+	}
+
+	LIBC != "" && $3 == "__progname" {
+		set_abs("__progname")
+	}
+
+	LIBC != "" && $3 == "__ps_strings" {
+		set_abs("__ps_strings")
+	}
+
+	END {
+		first = 1
+		obj = ""
+		while (getline < MAP > 0) {
+			if ($1 !~ /\.o$/) \
+				$1 = $1 ".o"
+			if (obj != $1) {
+				if (!first) \
+					print ") | cpp -DLOCORE | as -o", obj
+				first = 0
+				print "("
+				print "\techo '"'"'#include <machine/shlib.h>'"'"'"
+			}
+			obj = $1
+			if (substr(map[$3], 1, 1) != "0") \
+				print "shlib: warning: no address for", $3 \
+					> "/dev/stderr"
+			else {
+				if ($2 == "T") \
+					f = "STUB_TEXT"
+				else \
+					f = "STUB_DATA"
+				print "\techo '"'"'" f "(" $3 "," map[$3] ")'"'"'"
+			}
+		}
+		print ") | cpp -DLOCORE | as -o", obj
+	}
+	' |
+	sh
+}
+
+stubarchive() {
+	(
+		echo "LIB='$1'"
+		cat << 'EOF'
+		MAP() {
+			[ "X$1" = "X$LIB" ] || return
+			echo -n -l
+			expr "$5" : '.*/lib\([^/]*\)'
+			exit 0
+		}
+EOF
+		sed -e 's/^-/MAP -/' $SHLIB_MAP
+		echo 'echo "$LIB"'
+	) |
+		sh
+}
+
+umask 022
+
+CONST=/dev/null
+DSTART=
+EXCEPT=/dev/null
+NOEXCEPT=
+NEWIMAGE=
+IMAGE=
+STUB=
+TSTART=
+ARCHIVE=
+SHLIB_MAP=/etc/shlib.map
+BOOT=/usr/lib/loader.c
+CFLAGS=-O
+LDADD=
+LIBC=
+XCLUDE=
+LDSCRIPT="${SHLIB_LDSCRIPT-/usr/lib/ldscripts/shlib}"
+PWD=$(pwd)
+export PWD
+
+#
+# parse arguments
+#
+while [ $# -gt 0 ]
+do
+	case "$1" in
+	-[DIOU]*) # C compilation flags for loader.c
+		CFLAGS="$CFLAGS $1"
+		;;
+	-L*) # link path flag
+		LDADD="$LDADD $1"
+		;;
+	-b) # bootstrap file (default: loader.c)
+		shift
+		BOOT="$1"
+		;;
+	-c) # global const data file (1 symbol per line, with '_')
+		shift
+		CONST="$1"
+		;;
+	-d) # data start address (defaults to text start + 0x4000000)
+		shift
+		DSTART="$1"
+		;;
+	-e) # exceptions file (1 symbol per line, with '_')
+		shift
+		EXCEPT="$1"
+		;;
+	-E) # no exceptions, period
+		NOEXCEPT=true
+		;;
+	-i) # old shared image
+		shift
+		IMAGE="$1"
+		;;
+	-l) # additional shared library to link against
+		shift
+		L="$1"
+		if [ ! -f "$L" ]
+		then
+			echo "shlib: can't access library $L"
+			exit 1
+		fi
+		if [ $(expr "$L" : /.) -lt 2 ]
+		then
+			L=$PWD/"$L"
+		fi
+		LDADD="$LDADD $L"
+		;;
+	-l*) # additional shared library to link against
+		S=$(stubarchive "$1")
+		LDADD="$LDADD $S"
+		;;
+	-m) # alternate shlib.map file
+		shift
+		SHLIB_MAP="$1"
+		;;
+	-n) # new shared image
+		shift
+		NEWIMAGE="$1"
+		;;
+	-s) # new stub archive
+		shift
+		STUB="$1"
+		;;
+	-t) # text start address (hex, no 0x prefix)
+		shift
+		TSTART="$1"
+		;;
+	-X) # exclude the given object file
+		shift
+		if [ -n "$XCLUDE" ]
+		then
+			XCLUDE="$XCLUDE|$1"
+		else
+			XCLUDE="$1"
+		fi
+		;;
+	*)  # archive file
+		ARCHIVE="$1"
+		;;
+	esac
+	shift
+done
+
+if [ "X$ARCHIVE" = "X" ]
+then
+	echo "shlib: archive name required"
+	exit 1
+fi
+if [ ! -f "$ARCHIVE" ]
+then
+	echo "shlib: $ARCHIVE: not found"
+	exit 1
+fi
+if [ $(basename "$ARCHIVE" .a) = libc ]
+then
+	LIBC=yes
+fi
+if [ "X$TSTART" = "X" ]
+then
+	if [ -f "$IMAGE" ]
+	then
+		TSTART=$(nm -n $IMAGE |
+		   sed -n -e '/ T /{s/^\(.....\)....*$/\1000/p;q;}')
+	else
+		echo "shlib: text address required"
+		exit 1
+	fi
+fi
+if [ "X$DSTART" = "X" ]
+then
+	if [ -f "$IMAGE" ]
+	then
+		DSTART=$(nm -n $IMAGE |
+		   sed -n -e '/ D /{s/^\(.....\)....*$/\1000/p;q;}')
+	else
+		echo "shlib: data address required"
+		exit 1
+	fi
+fi
+
+TSTART=$(echo $TSTART | tr a-z A-Z)
+DSTART=$(echo $DSTART | tr a-z A-Z)
+
+#
+# GNU ld thinks that -Ttext is the start of the text section,
+# not the start of the text segment, so we use -Tinit instead.
+# Here we add 0x200 to the text segment address to skip over the
+# ELF header, producing the start address for the .init section.
+#
+ISTART="$(echo $TSTART | sed -e 's/^\(.....\)....*$/\1200/')"
+
+NEWIMAGE=${NEWIMAGE:-$PWD/$(basename $ARCHIVE .a)_s}
+STUB=${STUB:-$NEWIMAGE.a}
+
+#
+# convert to absolute pathnames
+#
+if [ $(expr "$ARCHIVE" : /.) -lt 2 ]
+then
+	ARCHIVE=$PWD/$ARCHIVE
+fi
+if [ -f "$IMAGE" ]
+then
+	if [ $(expr "$IMAGE" : /.) -lt 2 ]
+	then
+		IMAGE=$PWD/$IMAGE
+	fi
+fi
+if [ $(expr "$NEWIMAGE" : /.) -lt 2 ]
+then
+	NEWIMAGE=$PWD/$NEWIMAGE
+fi
+if [ $(expr "$STUB" : /.) -lt 2 ]
+then
+	STUB=$PWD/$STUB
+fi
+if [ $(expr "$CONST" : /.) -lt 2 ]
+then
+	CONST=$PWD/$CONST
+fi
+if [ $(expr "$EXCEPT" : /.) -lt 2 ]
+then
+	EXCEPT=$PWD/$EXCEPT
+fi
+if [ -n "$NOEXCEPT" ]
+then
+	EXCEPT=none
+fi
+if [ $(expr "$BOOT" : /.) -lt 2 ]
+then
+	BOOT=$PWD/$BOOT
+fi
+
+XIFS="$IFS"
+IFS=:
+for L in ${LIBRARY_PATH:-/usr/lib}
+do
+	[ -z "$CI" ] && [ -r $L/crti.o ] && CI=$L/crti.o
+	[ -z "$CB" ] && [ -r $L/crtbegin.o ] && CB=$L/crtbegin.o
+	[ -z "$CE" ] && [ -r $L/crtend.o ] && CE=$L/crtend.o
+	[ -z "$CN" ] && [ -r $L/crtn.o ] && CN=$L/crtn.o
+done
+IFS="$XIFS"
+
+#
+# preliminaries
+#
+
+trap "cd /var/tmp; rm -fr /var/tmp/shlib.build.$$; exit 1" 1 2 15 25
+
+SAVEPWD=$PWD
+mkdir /var/tmp/shlib.build.$$
+cd /var/tmp/shlib.build.$$
+
+#
+# the real work
+#
+
+scan "$ARCHIVE" > map
+
+jump map
+
+data map $LIBC > dataobjs
+
+reportnewdata map $EXCEPT $LIBC
+
+cc $CFLAGS -c -o loader.o -DDATA_ADDRESS=0x${DSTART} $BOOT
+
+commonobjs map dataobjs
+
+DATAOBJS=$(cat dataobjs)
+ar -x $ARCHIVE $DATAOBJS 2> /dev/null
+
+ld -o $NEWIMAGE.tmp -Bstatic -T $LDSCRIPT -e loader -Tinit $ISTART \
+	-Tdata $DSTART -L $(dirname $ARCHIVE) \
+	loader.o $CI $CB jump_table.o $DATAOBJS $ARCHIVE $LDADD $CE $CN
+
+if [ ! -x $NEWIMAGE.tmp ]
+then
+	sleep 5
+	cd $SAVEPWD
+	rm -f $NEWIMAGE.tmp
+	rm -fr /var/tmp/shlib.build.$$
+	exit 1
+fi
+mv $NEWIMAGE.tmp $NEWIMAGE
+rm -f loader.o jump_table.o $DATAOBJS
+
+reportmismatches "$IMAGE" "$NEWIMAGE" map dataobjs
+
+#
+# build the stub archive library
+#
+
+stubobjs $NEWIMAGE map $LIBC
+
+rm -f $STUB
+ar -crT $STUB *.o 2> /dev/null
+ranlib $STUB
+
+#
+# clean up
+#
+cd $SAVEPWD
+rm -fr /var/tmp/shlib.build.$$
+
+exit 0

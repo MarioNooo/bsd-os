@@ -1,0 +1,4 @@
+Makefile
+.depend
+unshared
+libpsres.so.1.0

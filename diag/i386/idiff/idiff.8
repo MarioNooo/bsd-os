@@ -1,0 +1,31 @@
+.Dd Dec 7, 1997
+.Dt IDIFF 8
+.Sh NAME
+.Nm idiff
+.Nd Compare kernel text with memory image
+.Sh SYNOPSIS
+.Nm idiff
+.Fl M Op memory-file
+.Fl N Op kernel-file
+.Sh DESCRIPTION
+The
+.Nm idiff
+utility reads a kernel binary and compares the test memory in 
+the running system or a crash dump against it. This is intended to
+check if kernel text has been corrupted for any reason.
+.Pp
+The options are as follows:
+.Bl -tag -width passcount
+.It Fl M Op memory-file
+Kernel memory, either from a core dump (bsdcore.N) or the running system (
+.Pa /dev/mem
+). If no argument is given
+.Pa /dev/mem
+is assumed.
+.It Fl N Op kernel-file
+The file from which the kernel was booted, if not given
+.Pa /bsd
+is used.
+.El
+.Sh SEE ALSO
+.Xr kanal 8

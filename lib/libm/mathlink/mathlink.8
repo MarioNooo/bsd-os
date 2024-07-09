@@ -1,0 +1,63 @@
+.\"	BSDI mathlink.8,v 1.1 1998/03/04 18:41:37 donn Exp
+.Dd March 4, 1998
+.Dt MATHLINK 8
+.Os
+.Sh NAME
+.Nm mathlink
+.Nd configure math libraries
+.Sh SYNOPSIS
+.Nm
+.Op Fl hs
+.Op Fl r Ar root
+.Sh DESCRIPTION
+The
+.Nm mathlink
+script sets up hard links to math library files.
+With no arguments,
+it sets up hard links so that
+programs that are linked to the
+.Fl lm
+library
+(see
+.Xr ld 1 )
+will use an efficient hardware-dependent version
+if hardware floating point is available,
+or a standardized, generic version if not.
+The generic library avoids the use of instructions
+that are not supported by the system's floating point emulation,
+and it provides multiple modes of error reporting.
+.Nm Mathlink
+will create all appropriate links for
+static and dynamic shared libraries,
+as well as archive libraries.
+.Pp
+The options are as follows:
+.Bl -tag -width Fl
+.It Fl h
+Force the use of the hardware-dependent version.
+.It Fl r
+Treat
+.Ar root
+as the root of the filesystem.
+This option is useful for building distributions.
+.It Fl s
+Force the use of the standardized, generic version.
+.El
+.Pp
+.Nm Mathlink
+is normally run at boot time to set up math library links
+before any users of the math libraries are run.
+.Sh FILES
+.Bl -tag -compact -width /etc/rc.configure/0.math.0\0
+.It Pa /etc/rc.configure/0.math.0
+boot time configuration script
+.El
+.Sh SEE ALSO
+.Xr math 3
+.Sh BUGS
+.Nm Mathlink
+uses
+.Xr dmesg 3
+to check for a floating point unit,
+which isn't reliable if the system has been running
+for a significant period of time.

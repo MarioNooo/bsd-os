@@ -1,0 +1,90 @@
+/*	BSDI if.xh,v 1.1 2000/04/16 14:47:41 donn Exp	*/
+
+/*
+ * Network interface flags and structures, excluding ioctl() cookies.
+ */
+
+%{
+#include <sys/socket.h>
+#include <net/if.h>
+%}
+
+struct ifconf {
+	int ifc_len;
+	struct ifreq *linux_ifc_req;
+
+	in(f, n, len) { n->ifc_req = f->linux_ifc_req; }
+	out(n, f, len) {
+		caddr_t base = (caddr_t)n->ifc_req;
+		struct ifreq *ifrp;
+		int noff;
+		int foff;
+
+		/*
+		 * Weed out all but Internet sockaddrs,
+		 * and convert them into old (Linux) format.
+		 */
+		for (noff = 0, foff = 0; noff < f->ifc_len; ) {
+			ifrp = (struct ifreq *)(base + noff);
+			noff += sizeof (ifrp->ifr_name) + ifrp->ifr_addr.sa_len;
+			if (ifrp->ifr_addr.sa_family != AF_INET)
+				continue;
+			/* XXX little endian! */
+			ifrp->ifr_addr.sa_len = AF_INET;
+			ifrp->ifr_addr.sa_family = 0;
+			if (noff != foff)
+				*(struct ifreq *)(base + foff) = *ifrp;
+			foff += sizeof (struct ifreq);
+		}
+
+		f->ifc_len = foff;
+	}
+};
+
+flag short ifflags_t {
+	LINUX_IFF_MASTER	0x0400;
+	LINUX_IFF_SLAVE		0x0200;
+	IFF_MULTICAST		0x1000;
+	LINUX_IFF_PORTSEL	0x2000;
+	LINUX_IFF_AUTOMEDIA	0x4000;
+	LINUX_IFF_DYNAMIC	0x8000;
+	IFF_OACTIVE;
+	IFF_SIMPLEX;
+	IFF_LINK0;
+	IFF_LINK1;
+	IFF_LINK2;
+};
+
+%{
+/* Expose the flags field of an ifreq to transformation.  */
+struct ifflags {
+	char ifflags_name[16];
+	ifflags_t ifflags_flags;
+};
+%}
+
+struct ifflags {
+	char ifflags_name[16];
+	ifflags_t ifflags_flags;
+};
+
+%{
+/* Expose the sockaddr fields of an ifreq addr field to transformations.  */
+struct ifraddr {
+	char ifra_name[16];
+	unsigned char ifra_addr_len;
+	sa_family_t ifra_addr_family;
+	char ifra_addr_data[14];
+};
+%}
+
+struct ifraddr {
+	char ifra_name[16];
+	familycookie_t ifra_addr_family;
+	char ifra_addr_data[14];
+
+	in(f, n, len) {
+		/* XXX */
+		n->ifra_addr_len = sizeof (struct sockaddr);
+	}
+};

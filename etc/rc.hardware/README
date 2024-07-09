@@ -1,0 +1,21 @@
+/*
+ * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README,v 1.1 1995/08/17 16:04:39 cp Exp
+ */
+
+Files in /etc/rc.hardware directory will be run if they are of the
+general form numeric.id*.numeric. The leading numeric field is
+used to force execution in a prescribed order. The trailing numeric
+field always represents the particular unit number which is being
+initialized. The id field is used as an identifier for what particular
+piece of hardware is being initialized. An example of this is
+"5.xxx.0". This runs the xxx setup program on unit 0. The leading
+5 means that it doesn't need to be run early or late compared to
+the other programs in /etc/rc.hardware.
+
+It is permissible to have more than 2 dots. For example "5.zzz.2.4.0".
+This means run the zzz setup program on unit 0. The digits 2 and 4
+have a meaning which is specific to the zzz setup script.

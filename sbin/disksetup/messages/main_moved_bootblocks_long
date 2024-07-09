@@ -1,0 +1,2 @@
+The location for the BSD/OS boot blocks has moved and hence the
+old boot blocks will not work.

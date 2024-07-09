@@ -1,0 +1,55 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI rpasswd.1,v 1.1 1996/08/26 15:09:26 prb Exp
+.Dd August 23, 1996
+.Dt RPASSWD 1
+.Os BSD 4
+.Sh NAME
+.Nm rpasswd
+.Nd modify a user's remote password
+.Sh SYNOPSIS
+.Nm rpasswd Ar user
+.Sh DESCRIPTION
+The
+.Nm
+utility
+changes the user's remote password, which is stored in the
+.Pa /etc/rpasswd.db
+database file.
+First, if
+.Nm
+is not being run by the super user,
+.Nm
+prompts for the current password of
+.Ar user .
+If the current password is correctly typed, a new password is requested.
+The new password must be entered twice to avoid typing errors.
+.Pp
+The new password should be at least six characters long and not
+purely alphabetic.
+Its total length must be less than
+.Dv _PASSWORD_LEN
+(currently 128 characters).
+Numbers, upper case letters and meta characters
+are encouraged.
+.Pp
+If run by the super user and there currently is no entry in
+.Pa /etc/rpasswd.db
+for
+.Ar user ,
+an entry is added.
+.Pp
+The intended use of the rpasswd authentication type is to allow a
+server which servers passwords to remote systems, such as
+.Xr radiusd 8 ,
+to not require the every user on the remote system have an account
+on the server machine as well, but still allow a standard style
+password authentication system.
+.Sh SEE ALSO
+.Xr login.conf 5 ,
+.Xr login 8 ,
+.Xr login_rpasswd 8 ,
+.Xr login_rchpass 8 ,
+.Xr rpasswdadm 8

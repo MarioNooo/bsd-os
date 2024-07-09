@@ -1,0 +1,7 @@
+Makefile
+xkbparse.c
+xkbparse.h
+xkbcomp
+xkbcomp.0
+.depend
+xkbcomp._man

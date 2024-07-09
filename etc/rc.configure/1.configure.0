@@ -1,0 +1,15 @@
+#!/bin/sh
+#	BSDI 1.configure.0,v 1.1 1996/10/09 21:57:39 prb Exp
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+if ! grep -q "^hostname=..*" /etc/netstart > /dev/null 2>&1 ; then
+	trap "echo 'configuration interrupted.'; exit 1" 2
+	if ! /usr/libexec/configure_system ; then
+		exit 1
+	fi
+	trap : 2
+	echo
+	echo "Configuration Finished -- continuing with system startup..."
+	echo 
+fi
+exit 0

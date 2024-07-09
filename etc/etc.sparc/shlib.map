@@ -1,0 +1,69 @@
+#	BSDI shlib.map,v 2.13 2000/08/30 20:16:45 torek Exp
+
+#
+# The master table of static shared library addresses and dependencies.
+#
+# Rules:
+#	Addresses below 9fffffff are reserved to users.
+#	Addresses must be within [e0000000..efffffff] (sun4c limitation).
+#	Text and data origins must be multiples of 8K.
+#	00040000 is 256K; 00100000 is one megabyte.
+#
+# This file is processed by the shell (sh(1)); use the MAP directive
+# to describe a shared library, following the guidelines in mkshlib(8).
+# The shlib(8) command builds individual shared libraries.
+# The shlicc(1) command links programs to use shared libraries.
+#
+
+VER=${SHLIB_VER-4.2.0}
+UL=${SHLIB_UL-/usr/lib}
+SL=${SHLIB_SL-/shlib}
+XL=${SHLIB_XL-/usr/X11R6/lib} 
+# IL=${SHLIB_IL-/usr/contrib/interviews/lib/BSDI}    
+
+#    -lX       text     data      source archive   shared image          params
+MAP  -lc       e0000000 e0140000  $UL/libc.a       $SL/libc_s.$VER
+MAP  -lutil    e0200000 e0210000  $UL/libutil.a    $SL/libutil_s.$VER    -lc
+MAP  -lcompat  e0220000 e023c000  $UL/libcompat.a  $SL/libcompat_s.$VER  -lc
+MAP  -lkvm     e0240000 e0250000  $UL/libkvm.a     $SL/libkvm_s.$VER     -lc
+MAP  -lkvmv8   e0240000 e0250000  $UL/libkvmv8.a   $SL/libkvmv8_s.$VER   -lc
+MAP  -lkvmv9   e0240000 e0250000  $UL/libkvmv9.a   $SL/libkvmv9_s.$VER   -lc
+MAP  -lm       e0260000 e0290000  $UL/libm.a       $SL/libm_s.$VER       -lc
+
+# ncurses contains everything now; map all of these to it
+# current size: text 0002ecaa; data 0x3bd1 (unrounded)
+MAP  -lcurses  e02a0000 e02f0000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -lncurses e02a0000 e02f0000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermcap e02a0000 e02f0000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermlib e02a0000 e02f0000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+
+# X libraries
+MAP  -lX11     e0300000 e03f0000  $XL/libX11.a     $XL/libX11_s.$VER     -E -lc
+MAP  -lXext    e0400000 e0418000  $XL/libXext.a    $XL/libXext_s.$VER \
+	-E -lX11 -lc
+MAP  -lICE     e0420000 e043c000  $XL/libICE.a     $XL/libICE_s.$VER \
+	-E -lXext -lX11 -lc
+MAP  -lSM      e0440000 e0458000  $XL/libSM.a      $XL/libSM_s.$VER \
+	-E -lICE -lXext -lX11 -lc
+MAP  -lXt      e0460000 e04c0000  $XL/libXt.a      $XL/libXt_s.$VER \
+	-E -lSM -lICE -lXext -lX11 -lc
+MAP  -lXmu     e0530000 e054c000  $XL/libXmu.a     $XL/libXmu_s.$VER \
+	-E -lXt -lSM -lICE -lXext -lX11 -lc
+MAP  -lXaw     e04d0000 e0520000  $XL/libXaw.a     $XL/libXaw_s.$VER \
+	-I/usr/src/X11/xc/lib/Xt -I/usr/X11R6/include \
+	-E -lXpm -lXmu -lXt -lSM -lICE -lXext -lX11 -lc
+MAP  -lXpm     e0550000 e0568000  $XL/libXpm.a     $XL/libXpm_s.$VER \
+	-E -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lc
+
+# image processing libraries
+MAP  -ljpeg    e0600000 e0638000  $UL/libjpeg.a    $UL/libjpeg_s.$VER    -lc
+MAP  -ltiff    e0640000 e0678000  $UL/libtiff.a    $UL/libtiff_s.$VER \
+	-E -ljpeg -lm -lc
+
+# C++ related libraries
+MAP  -lgcc     e0800000 e080c000  $UL/libgcc.a     $UL/libgcc_s.$VER \
+	-X __main.o -X _ctors.o -E -lc
+MAP  -lstdc++  e0810000 e0848000  $UL/libstdc++.a  $UL/libstdc++_s.$VER \
+	-E -lgcc -lm -lc
+#    -lIV      e0f00000 e0fc0000  $IL/libIV.a      $IL/libIV_s.$VER \
+#	-L/usr/X11/lib -E -lXext -lX11 -lstdc++ -lgcc -lm -lc

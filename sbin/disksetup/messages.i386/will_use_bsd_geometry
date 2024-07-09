@@ -1,0 +1,5 @@
+Disksetup will use the BSD/OS geometry for the FDISK table, but you
+should verify this is correct for your BIOS and change the geometry
+if not.
+
+Press <ENTER> to continue:

@@ -1,0 +1,37 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI login_rpasswd.8,v 1.1 1996/08/26 15:14:06 prb Exp
+.Dd August 23, 1996
+.Dt LOGIN_RPASSWD 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_rpasswd
+.Nd remote password authentication
+.Sh SYNOPSIS
+.Nm login_rpasswd
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm
+utility implements a standard password authentication mechanism.
+Unlike
+.Xr login_passwd 8 ,
+the user to be authenticated need not have an account on the local
+machine.  This allows standard password authentication via a
+remote protocol, such as done by
+.Xr radiusd 8 ,
+without having to give the user an account on the server machine.
+The
+.Ar user
+argument is the users name to be authenticated.
+.Sh SEE ALSO
+.Xr rpasswd 1 ,
+.Xr login.conf 5 ,
+.Xr login 8 ,
+.Xr login_rchpass 8 ,
+.Xr rpasswdadm 8

@@ -1,0 +1,58 @@
+# RCSID:	$Id: clients,v 1.6 1997/06/11 18:21:55 web Exp $
+#
+#	This file contains a list of RADIUS clients which are allowed
+#	to make RADIUS authentication and RADIUS accounting requests
+#	of this server and their encryption keys or shared secrets.
+#
+#	The first field may be an IP address or a valid DNS hostname.
+#	The IP address or hostname optionally may be followed by a
+#	colon and a TCP/UDP port number.  This value overrides the -pp
+#	and -qq options of the Merit AAA server.  The accounting port
+#	number is assumed to be one greater than the authentication port.
+#
+#	The second field (separated by blanks or tabs) is the encryption
+#	key or shared secret.  Secrets may be up to 254 characters in length.
+#
+#	The third field is optional and is the type field.  This field
+#	may be used to specify the vendor and/or the type of the RADIUS
+#	client or requesting RADIUS server.  If omitted, the type and
+#	vendor name are unspecified.  The server honors vendor specific
+#	attributes for a given vendor to be sent to a client from that
+#	vendor (i.e., involving mapping and pruning) only if that vendor's
+#	name appears on the associated NAS entry.  Valid types are "NAS",
+#	"PROXY", "RAD_RFC", "ACCT_RFC", "DEBUG" and "APPEND", and for US
+#	Robotics products, "DAS", "FRGW" and "NEIGHBOR".  Different types
+#	may be logically combined ("ANDed") using the plus sign ("+")
+#	character.  See the examples at the end of this file.
+#
+#	The fourth field is optional and specifies the RADIUS version
+#	spoken over the connection between this server and the client
+#	on this line.  If this is omitted, it defaults to version one.
+#	Currently, the only valid versions are "V1" and "V2" keywords.
+#	Version one is described in the IETF RADIUS standard document,
+#	and version two is described in draft-calhoun-enh-radius-00.txt
+#	written by Pat Calhoun of US Robotics.
+#
+#	The fifth, and last, field is optional and specifies a prefix
+#	which may be used to select an authfile and/or users file, which
+#	is different than the "standard" authfile or users file, to be
+#	used for requests from the associated client.  This prefix is
+#	pre-pended to the configuration file name (normally, "users"
+#	and "authfile").
+#
+#	The "<name1>/<name2>" style entries may be used to specify the pair
+#	of servers for which an entry applies.  This allows the same clients
+#	file to be used by and distributed to different Merit AAA servers.
+#	Using this style for the first field precludes the use of the
+#	optional [:<tcp-udp-port>] modifier.
+#
+
+#Client Name       Key             [type]          [version] [prefix]
+#----------------  --------------- --------------- --------- --------
+10.1.2.3:256       test            type = nas      v2        pfx
+pm1                %^$%#*(&!(*&)+  type=nas                  pm1.
+pm2                :-):-(;^):-}!   type nas                  pm2.
+merit.edu/homeless hmoemreilte.ses
+homeless           testing         type proxy      v1
+xyz.merit.edu      moretesting     type=Ascend:NAS v1
+anyoldthing:1234   whoknows?       type=NAS+RAD_RFC+ACCT_RFC

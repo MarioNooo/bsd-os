@@ -1,0 +1,47 @@
+.\"     BSDI cytty.8,v 1.2 1998/01/20 21:47:15 bostic Exp
+.Dd April 11, 1997
+.Dt CYTTY 8
+.Os
+.Sh NAME
+.Nm cytty
+.Nd set special options for the Cyclades serial driver.
+.Sh SYNOPSIS
+.Nm cytty
+.Op Ar nfl | rfl
+.Ar device-name
+.Sh DESCRIPTION
+.Nm Cytty
+is a utility used to set special options for the
+Cyclades serial driver. It sends proprietary ioctls to the
+.Xr cy 4
+driver.
+.Pp
+The following options are available:
+.Bl -tag -width XXX
+.It Ar rfl 
+puts the port
+.Ar device-name
+in "fast" flow control mode. The
+driver
+keeps this configuration until a system reboot or until
+the
+.Ar nfl
+option is used.
+The Cyclades driver does RTS flow control when commanded so
+by the operating system and works with any application under
+BSDI as any other serial driver.
+Under certain conditions (system overloaded), the interrupt
+latency in your system can grow above reasonable values and
+reception data may be occasionally lost.
+.Pp
+The Cyclom-Y hardware has a special feature that allows it
+to do RTS flow control independent of software commands. If
+data loss in the reception occurs, you can try to activate
+this feature to resolve the problem. Unfortunately, due to
+a characteristic of the serial processor used on the board,
+"fast" RTS flow requires a special cable swapping RTS and
+DTR between the modem and the serial port.
+.It Ar nfl 
+puts the port back to "normal" flow control mode.
+.Sh SEE ALSO
+.Xr cy 4

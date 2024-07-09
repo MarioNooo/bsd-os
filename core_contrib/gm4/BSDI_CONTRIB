@@ -1,0 +1,44 @@
+Software Package:       
+	m4 -- GNU M4 
+
+Release/Version:
+	m4 version 1.4
+
+Retrieved from:
+	ftp://prep.ai.mit.edu/pub/gnu
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and to bug-gnu-m4@prep.ai.mit.edu
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to call Makefile for our configuration
+
+Index: src/stackovf.c
+===================================================================
+RCS file: /master/contrib/gm4/src/stackovf.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 stackovf.c
+*** src/stackovf.c	2000/04/14 19:49:02	1.1.1.1
+--- src/stackovf.c	2000/04/14 19:55:53
+***************
+*** 325,331 ****
+      stack_t ss;
+  
+      ss.ss_size = SIGSTKSZ;
+!     ss.ss_sp = xmalloc ((unsigned) ss.ss_size);
+      ss.ss_flags = 0;
+      if (sigaltstack (&ss, (stack_t *) 0) < 0)
+        error (1, errno, "sigaltstack");
+--- 325,331 ----
+      stack_t ss;
+  
+      ss.ss_size = SIGSTKSZ;
+!     ss.ss_base = xmalloc ((unsigned) ss.ss_size);
+      ss.ss_flags = 0;
+      if (sigaltstack (&ss, (stack_t *) 0) < 0)
+        error (1, errno, "sigaltstack");

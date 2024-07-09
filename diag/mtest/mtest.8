@@ -1,0 +1,35 @@
+.Dd Feb 4, 1997
+.Dt MTEST 8
+.Sh NAME
+.Nm mtest
+.Nd simple online memory tester
+.Sh SYNOPSIS
+.Nm mtest
+.Fl s Op size
+.Fl p Op passcount
+.Fl q
+.Sh DESCRIPTION
+The
+.Nm mtest
+utility allocates a chunk of memory (normal user limits apply) and then runs
+various simple memory tests against it. The actual physical locations being
+tested are not easily determined due to the nature of the virtual memory
+system.
+.Pp
+The options are as follows:
+.Bl -tag -width passcount
+.It Fl s Op size
+Amount of memory (in Mb, 2^20 bytes) to test. It is possible to ask for more
+memory to test than exists in which case this will end up giving the VM
+system something to do as well. The default is 1Mb.
+.It Fl p Op passcount
+This determines how many passes of the diagnostic are run, if set to 0
+the diagnostic repeats indefinitely. The default is 10 passes.
+.It Fl q
+Suppresses verbose status reports (errors are still reported normally).
+.El
+.Pp
+.Sh NOTES
+To allocate large amounts of memory it may be necessary to change the
+process memory limits (either via login class or by becoming root and
+using the shell limit command).

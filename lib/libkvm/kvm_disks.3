@@ -1,0 +1,101 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_disks.3,v 2.1 1997/05/25 15:08:59 jch Exp
+.\"
+.Dd May 6, 1997
+.Dt KVM_DISKS 3
+.Os
+.Sh NAME
+.Nm kvm_disks ,
+.Nm kvm_dknames
+.Nd disk drive statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <sys/diskstats.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_disks "kvm_t *kd" "struct diskstats *dkp" "int ndisks"
+.Ft char **
+.Fn kvm_dknames "kvm_t *kd" "int *ndisksp"
+.Sh DESCRIPTION
+The
+.Fn kvm_dknames
+function returns a vector of disk name strings.
+The number of elements in the vector is returned in the variable
+referenced by
+.Fa ndisksp .
+The returned vector and strings are only valid until the next call to
+.Fn kvm_dknames
+or
+.Xr kvm_close 3 .
+.Pp
+The
+.Fn kvm_disks
+function obtains the disk statistics from the kernel indicated by
+.Fa kd .
+The disk statistics are returned as a table of 
+.Va struct diskstats
+structures with a one-to-one correspondence with the disk names in
+the vector returned by
+.Fn kvm_dknames .
+Memory for these structures should be obtained via
+.Xr malloc 3
+and should be released via
+.Xr free 3 .
+It is recommended that 
+.Fa ndisks
+be specified at least one greater than the number of disks returned by
+.Fn kvm_dknames 
+in order to determine if the number of disks on the system has
+increased.
+.Sh RETURN VALUES
+The
+.Fn kvm_disks
+function returns the number of disks for which statistics have been
+provided.  
+If this value is different from the value returned by
+.Fn kvm_dknames ,
+then one or more disks have been added or removed.
+On failure, -1 is returned.
+.Pp
+The 
+.Fn kvm_dknames
+function returns a vector disk names.  On failure, NULL is returned.
+.Sh EXAMPLE
+.Bd -literal -compact
+struct diskstats *dkp;
+char **names;
+int count, n;
+
+do {
+	if ((names = kvm_dknames(kd, &count)) == NULL)
+		errx(1, "%s", kvm_geterr(kd));
+
+	if ((dkp = malloc((count + 1) * sizeof(*dkp))) == NULL)
+		errx(1, "out of memory");
+
+	n = kvm_disks(kd, dkp, count + 1);
+	if (n == -1)
+		errx(1, "%s", kvm_geterr(kd));
+while (n != count);
+.Ed
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3
+.Sh BUGS
+The
+.Fn kvm_dknames
+and
+.Fn kvm_disks
+routines currently only work on live kernels.

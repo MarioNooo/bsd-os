@@ -1,0 +1,16 @@
+# Makes .db files from raw files.  Note that we use "newaliases" rather than
+# "makemap" for aliases, because that's the canonically right command.
+
+default: access.db aliases.db mailertable.db virtusertable.db
+
+access.db: access
+	makemap hash access < access
+
+mailertable.db: mailertable
+	makemap hash mailertable < mailertable
+
+virtusertable.db: virtusertable
+	makemap hash virtusertable < virtusertable
+
+aliases.db: aliases
+	newaliases

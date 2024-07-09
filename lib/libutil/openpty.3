@@ -1,0 +1,75 @@
+.\"	BSDI openpty.3,v 2.1 1996/05/22 21:42:07 jch Exp
+.\"
+.Dd May 8, 1996
+.Dt OPENPTY 3
+.Os
+.Sh NAME
+.Nm openpty
+.Nd create a master/slave pseudo-terminal pair
+.Sh SYNOPSIS
+.Fd #include <termios.h>
+.Ft int
+.Fn openpty "int *amaster" "int *aslave" "char *name" "struct termios *termp" "struct winsize *winp"
+.Sh DESCRIPTION
+The
+.Fn openpty
+function opens a master/slave pseudo-terminal pair and returns their file
+descriptors in the locations specified by
+.Fa amaster
+and
+.Fa aslave ,
+respectively.
+.Pp
+The master side is configured by changing its ownership to that of the
+current process's user ID, and the group
+.Dq tty .
+Read, write and execute permissions for the owner are enabled,
+all other access is denied.
+All outstanding file descriptors open on the master side are
+invalidated using
+.Xr revoke 2 .
+.Pp
+If
+.Fa name
+is not
+.Dv NULL ,
+it should be a pointer to a character buffer MAXPATHLEN in size,
+into which the name of the slave device is copied.
+.Pp
+If the
+.Fa termp
+argument is not
+.Dv NULL ,
+it is used as an argument to the
+.Xr tcsetattr 3
+function to configure the slave side of the pseudo-terminal.
+.Pp
+If the
+.Fa winp
+argument is not
+.Dv NULL ,
+it and
+.Dv TIOCSWINSIZ
+are used as arguments to the
+.Xr ioctl 2
+function to configure the window size.
+.Sh RETURN VALUES
+Upon successful completion, a value of 0 is return.  Otherwise a value
+of -1 is return and 
+.Va errno
+is set to 
+indicate the error.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er ENOENT
+No pseudo-terminal pairs are available.
+.El
+.Sh SEE ALSO
+.Xr fork 2 ,
+.Xr getpid 2 ,
+.Xr revoke 2 ,
+.Xr wait 2 ,
+.Xr tcsetattr 3 ,
+.Xr pty 4 ,
+.Xr tty 4 ,
+.Xr termios 4

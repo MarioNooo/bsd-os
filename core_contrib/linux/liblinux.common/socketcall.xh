@@ -1,0 +1,129 @@
+/*	BSDI socketcall.xh,v 1.2 2000/04/10 14:52:36 donn Exp	*/
+
+/*
+ * Socketcall transforms.
+ */
+
+cookie int linux_socketcall_t {
+	SOCKOP_socket		1;
+	SOCKOP_bind		2;
+	SOCKOP_connect		3;
+	SOCKOP_listen		4;
+	SOCKOP_accept		5;
+	SOCKOP_getsockname	6;
+	SOCKOP_getpeername	7;
+	SOCKOP_socketpair	8;
+	SOCKOP_send		9;
+	SOCKOP_recv		10;
+	SOCKOP_sendto		11;
+	SOCKOP_recvfrom		12;
+	SOCKOP_shutdown		13;
+	SOCKOP_setsockopt	14;
+	SOCKOP_getsockopt	15;
+	SOCKOP_sendmsg		16;
+	SOCKOP_recvmsg		17;
+};
+
+%{
+/*
+ * Since the socketcall functions call the transformed socket functions,
+ * we don't need or want any parameter transformations,
+ * so we use untransformable types.
+ */
+struct linux_socket_parms {
+	int domain;
+	int type;
+	int protocol;
+};
+struct linux_bind_parms {
+	int fd;
+	const void *sa;
+	int length_sa;
+};
+struct linux_connect_parms {
+	int fd;
+	const void *sa;
+	int length_sa;
+};
+struct linux_listen_parms {
+	int fd;
+	int backlog;
+};
+struct linux_accept_parms {
+	int fd;
+	void *sa;
+	void *length_sa;
+};
+struct linux_getsockname_parms {
+	int fd;
+	void *sa;
+	void *length_sa;
+};
+struct linux_getpeername_parms {
+	int fd;
+	void *sa;
+	void *length_sa;
+};
+struct linux_socketpair_parms {
+	int d;
+	int type;
+	int protocol;
+	void *sv;
+};
+struct linux_send_parms {
+	int fd;
+	const void *msg;
+	size_t len;
+	int flags;
+};
+struct linux_recv_parms {
+	int fd;
+	void *msg;
+	size_t len;
+	int flags;
+};
+struct linux_sendto_parms {
+	int fd;
+	const void *msg;
+	size_t len;
+	int flags;
+	const void *to;
+	int length_to;
+};
+struct linux_recvfrom_parms {
+	int fd;
+	void *buf;
+	size_t len;
+	int flags;
+	void *from;
+	void *length_from;
+};
+struct linux_shutdown_parms {
+	int fd;
+	int how;
+};
+struct linux_setsockopt_parms {
+	int fd;
+	int level;
+	int optname;
+	const void *optval;
+	size_t length_optval;
+};
+struct linux_getsockopt_parms {
+	int fd;
+	int level;
+	int optname;
+	void *optval;
+	void *length_optval;
+};
+struct linux_sendmsg_parms {
+	int fd;
+	const void *msg;
+	int flags;
+};
+struct linux_recvmsg_parms {
+	int fd;
+	void *msg;
+	int flags;
+};
+%}

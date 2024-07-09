@@ -1,0 +1,131 @@
+.\"	@(#)local:usr/src/cmd/qpopper/poppassd.8 4.0 19 March 2001
+.\"	
+.\" @(#)poppassd.8,v 1.2 2003/08/08 04:14:10 polk Exp
+.\"
+.\" Copyright (c) 2001 QUALCOMM Incorporated. All rights reserved.
+.\" See License.txt file for terms and conditions for modification and
+.\" redistribution.
+.\"
+.TH POPAUTH 8
+.SH NAME
+poppassd \-\- password-changing daemon
+.SH SYNOPSIS
+.B poppassd
+[
+.B \-\?
+] [
+.B \-d
+] [
+.BI \-l " tls-usage"
+]
+.if n .ti +9n
+[
+.B \-p
+[
+.I passwd-path
+]
+] [
+.B \-R
+]
+.if n .ti +9n
+[
+.B \-s
+[
+.I smbpasswd-path
+]
+] [
+.B \-v
+]
+.if n .ti +9n
+[
+.BI \-y " log-facility"
+]
+
+.SH DESCRIPTION
+.I poppassd
+is a server that allows users to change their system or smb
+passwords using a network client (such as
+.I Eudora).
+Actually,
+.I poppassd
+is a proxy for the system's
+.I passwd
+and/or
+.I smbpasswd
+programs, and can be configured to run any one or two such
+programs.
+
+.PP
+.SH OPTIONS
+.TP
+.B \-\?
+Prints a summary of options and exits.
+.TP
+.B \-d
+Turns on debug tracing.  Trace output is logged using
+.I syslog;
+the default log facility is
+.I local2,
+but can be changed using the
+.I \-y option.
+.TP
+.B \-l " tls-usage"
+Sets TLS/SSL handling.  Must have compiled with OpenSSL or SSL Plus.
+
+.B 0
+is the default.  TLS/SSL is not supported.
+
+.B 1
+enables the STLS command.  This permits a
+client to attempt TLS/SSL negotiation after connecting.
+
+.B 2
+Causes Qpopper to attempt TLS negotiation when a client first connects.
+This is for alternate-port support.
+.TP
+.B \-p " [ " passwd-path " ]"
+Instructs
+.I poppassd
+to change the system password (which is the default) and optionally
+specifies the path to the executable to use.  The default is /usr/bin/passwd.
+.TP
+.B \-R
+Disables the reverse DNS lookup normally done on the client IP address.
+.TP
+.B \-s " [ " smbpasswd-path " ]"
+Instructs
+.I poppassd
+to change the smb password and optionally
+specifies the path to the executable to use.  The default is /usr/bin/smbpasswd.
+If this option is used, 
+.I poppassd
+by default does not also change the system password.  To change both, use this
+option and the
+.I \-p
+option.
+.TP
+.BI \-t " tracefile"
+Turns on debug tracing, and causes all trace and log output to be
+written to the file specified as
+.I tracefile.
+.TP
+.B \-v
+Prints the version and exits.
+.TP
+.BI \-y " log-facility"
+Specifies the log facility to use.  Values can be
+.I mail
+or
+.I local0
+through
+.I local7.
+
+
+.SH FILES
+.TP
+.B /usr/bin/passwd password-change program
+.TP
+.B /usr/bin/smbpasswd smb password-change program
+
+.SH SEE ALSO
+popper(8), popauth(8), inetd(8), inetd.conf(4)

@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+#
+
+
+#------
+#   Build the sed editing script.
+#------
+    cat >temp-sed-edit <<\EOF
+s/* Copyright (c) 2002 Qualcomm/* Copyright (c) 2003 QUALCOMM/g
+EOF
+
+
+#------
+#   Get list of all affected source files.
+#------
+FILE_LIST=`fgrep -li "Copyright (c) 2002 QUALCOMM" */*`
+
+p4 edit $FILE_LIST
+
+
+#------
+#   Loop through all source files, copying to *.preserve,
+#   and replacing the original with an edited version.
+#------
+for file in $FILE_LIST
+do
+    echo "editing $file..."
+
+    TEMP_NAME="${file}.preserve"
+    if test -f $TEMP_NAME
+    then
+        echo "  >>> file $TEMP_NAME exists! <<<"
+        exit 1
+    fi
+    mv $file $TEMP_NAME
+
+    sed -f temp-sed-edit $TEMP_NAME > $file
+done
+
+

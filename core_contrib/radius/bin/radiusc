@@ -1,0 +1,124 @@
+#!/bin/ksh
+
+RADHOME=/usr/contrib/lib/radiusd
+INETLINE="radius dgram udp wait radius /usr/libexec/radiusd radiusd -g syslog -d /etc/raddb"
+
+kickinetd() {
+	pid=$(ps -ax | grep "[0-9] inetd " | cut -c 1-5)
+	if [ x"$pid" = x ] ; then
+		echo "inetd is not running?!" >&2
+		exit 1
+	fi
+	echo kill -1 $pid
+	kill -1 $pid
+}
+
+case $1 in
+start)
+	if grep -q "^radius[ 	]" /etc/inetd.conf ; then
+		echo "radiusd already started." 1>&2
+		exit 1;
+	fi
+	if [ ! -f /etc/raddb/clients ] ; then
+		echo "radiusd not installed." 1>&2
+		echo "use \"radiusc install\" to install radiusd." 1>&2
+		exit 1
+	fi
+	if grep -q "^#radius[ 	]" /etc/inetd.conf ; then
+		echo "g/^#radius[ 	]/s/^#/
+w
+q" | ed - /etc/inetd.conf
+	else
+		echo $INETLINE >> /etc/inetd.conf
+	fi
+	kickinetd
+	;;
+stop)
+	if ! grep -q "^radius[ 	]" /etc/inetd.conf ; then
+		echo "radiusd not started." 1>&2
+		exit 1;
+	fi
+	echo "g/^radius[ 	]/s/^/#/
+w
+q" | ed - /etc/inetd.conf
+	kickinetd
+	;;
+kill)
+	if [ ! -f /etc/raddb/radiusd.pid ] ; then
+		echo "radiusd not running." 1>&2
+		exit 1
+	fi
+	RADPID=$(cut -f 1 -d ' ' < /etc/raddb/radiusd.pid)
+	X=
+	while ps -p $RADPID | grep -q radiusd ; do
+		kill $RADPID
+		if [ x$X = xxxxxxxxxxx ] ; then
+			echo "radiusd at pid $RADPID would not die" >&2
+			exit 1
+		fi
+		X=x$X
+		sleep 1
+	done
+	rm -f /etc/raddb/radiusd.pid
+	;;
+
+install)
+	if [ -f /etc/raddb/dictionary -o -f /etc/raddb/clients -o \
+	     -f /etc/raddb/users ] ; then
+		echo
+		echo "	A version of radiusd is already installed"
+		echo
+		echo "	To install the version shipped with BSD/OS please make"
+		echo "	sure the directory /etc/raddb does not contains any of"
+		echo "	the following files:"
+		echo
+		echo "	authfile clients conversion.pl dictionary users vendors xas.fsm"
+		echo
+		exit 1
+	fi
+	if ! grep -q "^radius:" /etc/passwd ; then
+		echo "The account ``radius\'\' must exist to install radiusd"
+		exit 1
+	fi
+	if ! grep -q "^radius:" /etc/group ; then
+		echo "The group ``radius\'\' must exist to install radiusd"
+		exit 1
+	fi
+	cd $RADHOME || exit 1
+
+        install -c -m 660 -o radius -g radius raddb/authfile /etc/raddb
+        install -c -m 660 -o radius -g radius raddb/clients /etc/raddb
+        install -c -m 755 -o radius -g radius raddb/conversion.pl /etc/raddb
+        install -c -m 644 -o radius -g radius raddb/dictionary /etc/raddb
+        install -c -m 660 -o radius -g radius raddb/users /etc/raddb
+        install -c -m 644 -o radius -g radius raddb/vendors /etc/raddb
+        install -c -m 644 -o radius -g radius raddb/xas.fsm /etc/raddb
+	echo "$(hostname) * type=merit:proxy v1" >> /etc/raddb/clients
+	echo "aatv.forkreply=BSD-AUTH" > /etc/raddb/engine.conf
+
+	echo
+	echo "All radiusd configuration files have been installed in /etc/raddb"
+	echo "At least the /etc/raddb/clients file must be configured"
+	echo
+	echo "For more information on radiusd please read the following:"
+	echo
+	echo "	http://www.merit.edu/aaa"
+	echo "	$RADHOME/TUTORIAL"
+	echo "	$RADHOME/INSTALL.basic.binary"
+	echo "	radiusd(8)"
+	echo "	clients(5)"
+	echo "	users(5)"
+	echo
+	echo "Use the command"
+	echo
+	echo "	radiusc start"
+	echo
+	echo "to start the radius server after the configuration files have"
+	echo "been tailored to the local site"
+	
+	;;
+*)
+	echo "Usage: radiusc start|stop|install|kill" >&2
+	exit 1
+	;;
+esac

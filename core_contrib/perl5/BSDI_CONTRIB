@@ -1,0 +1,244 @@
+Software Package:
+	perl
+
+Release/Version:
+	5.8
+
+Retrieved from:
+	http://www.perl.org
+
+Bug reports:
+	perl5 is maintained by both BSDI (but is not supported)
+	and the software contributor.  Please send any bug reports
+	to both support@BSDI.COM and perlbug@perl.com.  For general
+	questions try comp.lang.perl.misc.
+
+	The additional modules are maintained by their respective
+	owners, please see the source for each module for whom to
+	contact.
+
+Comments:
+	BSDI has included patches to support the POSIX-draft SAVED_ID's
+	as implemented in BSD/OS (see also setuid(2)).  If you import
+	a new version of perl you need to at least apply the mg.c
+	and pp_hot.c patches from below to make these work correctly.
+
+	The distribution was configured using the supplied hints/bsdos.sh
+	(which may or may not differ from the hints file in the current
+	perl distribution) with the following command:
+
+	    ./Configure -des -Dbsdos_distribution=defined
+
+	All changes except those wholly specific to the BSD/OS distribution
+	have been submitted back to the perl group for inclusion in future
+	releases of perl.
+
+	Set STRUCT_TM_HASZONE in POSIX/Makefile.PL
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+diff -r -c perl-5.8.0/hints/bsdos.sh D/hints/bsdos.sh
+*** perl-5.8.0/hints/bsdos.sh	Sat Jun  1 11:03:12 2002
+--- D/hints/bsdos.sh	Mon Jul 14 15:00:01 2003
+***************
+*** 46,61 ****
+  *)
+  	d_dosuid='define'
+  	d_portable='undef'
+! 	prefix='/usr/contrib'
+! 	perlpath='/usr/bin/perl5'
+! 	startperl='#!/usr/bin/perl5'
+! 	scriptdir='/usr/contrib/bin'
+  	privlib='/usr/libdata/perl5'
+! 	man1dir='/usr/contrib/man/man1'
+! 	man3dir='/usr/contrib/man/man3'
+! 	# phlib added by BSDI -- we share the *.ph include dir with perl4
+! 	phlib="/usr/libdata/perl5/site_perl/$(arch)-$osname/include"
+! 	phlibexp="/usr/libdata/perl5/site_perl/$(arch)-$osname/include"
+  	;;
+  esac
+  
+--- 46,59 ----
+  *)
+  	d_dosuid='define'
+  	d_portable='undef'
+! 	prefix='/usr'
+! 	perlpath='/usr/bin/perl'
+! 	startperl='#!/usr/bin/perl'
+! 	scriptdir='/usr/bin'
+  	privlib='/usr/libdata/perl5'
+! 	sitelib='/usr/local/lib/perl'
+! 	man1dir='/usr/share/core_contrib/man/man1'
+! 	man3dir='/usr/share/core_contrib/man/man3'
+  	;;
+  esac
+  
+***************
+*** 89,95 ****
+  	libswanted="Xpm Xaw Xmu Xt SM ICE Xext X11 $libswanted"
+  	libswanted="rpc curses termcap $libswanted"
+  	;;
+! 4.*)
+  	# ELF dynamic link libraries starting in 4.0
+          useshrplib='true'
+  	so='so'
+--- 87,93 ----
+  	libswanted="Xpm Xaw Xmu Xt SM ICE Xext X11 $libswanted"
+  	libswanted="rpc curses termcap $libswanted"
+  	;;
+! 4.*|5.*)
+  	# ELF dynamic link libraries starting in 4.0
+          useshrplib='true'
+  	so='so'
+***************
+*** 115,121 ****
+  case "$usethreads" in
+  $define|true|[yY]*)
+  	case "$osvers" in 
+! 	3.*|4.*)	ccflags="-D_REENTRANT $ccflags"	
+  	    ;;
+  	*)   cat <<EOM >&4
+  I did not know that BSD/OS $osvers supports POSIX threads.
+--- 113,119 ----
+  case "$usethreads" in
+  $define|true|[yY]*)
+  	case "$osvers" in 
+! 	3.*|4.*|5.*)	ccflags="-D_REENTRANT $ccflags"	
+  	    ;;
+  	*)   cat <<EOM >&4
+  I did not know that BSD/OS $osvers supports POSIX threads.
+diff -r -c perl-5.8.0/lib/syslog.pl D/lib/syslog.pl
+*** perl-5.8.0/lib/syslog.pl	Sat Jun  1 11:03:26 2002
+--- D/lib/syslog.pl	Mon Jul 14 15:02:44 2003
+***************
+*** 149,155 ****
+  }
+  
+  sub connect {
+!     $pat = 'S n C4 x8';
+  
+      $af_unix = &AF_UNIX;
+      $af_inet = &AF_INET;
+--- 149,155 ----
+  }
+  
+  sub connect {
+!     $pat = 'x C n C4 x8';
+  
+      $af_unix = &AF_UNIX;
+      $af_inet = &AF_INET;
+diff -r -c perl-5.8.0/mg.c D/mg.c
+*** perl-5.8.0/mg.c	Sat Jun 15 14:16:44 2002
+--- D/mg.c	Mon Jul 14 15:03:36 2003
+***************
+*** 2082,2097 ****
+--- 2082,2109 ----
+  #ifdef HAS_SETRESUID
+        (void)setresuid((Uid_t)PL_uid, (Uid_t)-1, (Uid_t)-1);
+  #else
++ #ifndef __bsdi__
+  	if (PL_uid == PL_euid)		/* special case $< = $> */
++ #else
++ 	if (PL_uid == PL_euid || PL_euid == 0)	/* special case $< = $> */
++ #endif
+  	    (void)PerlProc_setuid(PL_uid);
+  	else {
+  	    PL_uid = PerlProc_getuid();
++ #ifndef __bsdi__
+  	    Perl_croak(aTHX_ "setruid() not implemented");
++ #else
++ 	    Perl_croak(aTHX_ "failed setting real user id");
++ #endif
+  	}
+  #endif
+  #endif
+  #endif
+  	PL_uid = PerlProc_getuid();
++ #ifdef __bsdi__
++ 	/* POSIX defines setuid() to change euid as well */
++ 	PL_euid = PerlProc_geteuid();
++ #endif
+  	PL_tainting |= (PL_uid && (PL_euid != PL_uid || PL_egid != PL_gid));
+  	break;
+      case '>':
+***************
+*** 2113,2119 ****
+--- 2125,2135 ----
+  	    PerlProc_setuid(PL_euid);
+  	else {
+  	    PL_euid = PerlProc_geteuid();
++ #ifndef __bsdi__
+  	    Perl_croak(aTHX_ "seteuid() not implemented");
++ #else
++ 	    Perl_croak(aTHX_ "failed setting effective user id");
++ #endif
+  	}
+  #endif
+  #endif
+***************
+*** 2136,2151 ****
+--- 2152,2179 ----
+  #ifdef HAS_SETRESGID
+        (void)setresgid((Gid_t)PL_gid, (Gid_t)-1, (Gid_t) 1);
+  #else
++ #ifndef __bsdi__
+  	if (PL_gid == PL_egid)			/* special case $( = $) */
++ #else
++ 	if (PL_gid == PL_egid || PL_euid == 0)	/* special case $( = $) */
++ #endif
+  	    (void)PerlProc_setgid(PL_gid);
+  	else {
+  	    PL_gid = PerlProc_getgid();
++ #ifndef __bsdi__
+  	    Perl_croak(aTHX_ "setrgid() not implemented");
++ #else
++ 	    Perl_croak(aTHX_ "failed setting real group id");
++ #endif
+  	}
+  #endif
+  #endif
+  #endif
+  	PL_gid = PerlProc_getgid();
++ #ifdef __bsdi__
++ 	/* POSIX defines setgid() to change egid as well */
++ 	PL_egid = PerlProc_getegid();
++ #endif
+  	PL_tainting |= (PL_uid && (PL_euid != PL_uid || PL_egid != PL_gid));
+  	break;
+      case ')':
+diff -r -c perl-5.8.0/pp_hot.c D/pp_hot.c
+*** perl-5.8.0/pp_hot.c	Thu Jul 18 15:32:07 2002
+--- D/pp_hot.c	Mon Jul 14 15:04:09 2003
+***************
+*** 1106,1113 ****
+--- 1106,1118 ----
+  	    }
+  #    endif /* HAS_SETEUID */
+  	    if (PL_delaymagic & DM_UID) {
++ #ifndef __bsdi__
+  		if (PL_uid != PL_euid)
+  		    DIE(aTHX_ "No setreuid available");
++ #else
++ 		if (PL_uid != PL_euid && PL_euid != 0)
++ 		    DIE(aTHX_ "Failed setting real user id");
++ #endif
+  		(void)PerlProc_setuid(PL_uid);
+  	    }
+  #  endif /* HAS_SETREUID */
+***************
+*** 1135,1142 ****
+--- 1140,1152 ----
+  	    }
+  #    endif /* HAS_SETEGID */
+  	    if (PL_delaymagic & DM_GID) {
++ #ifndef __bsdi__
+  		if (PL_gid != PL_egid)
+  		    DIE(aTHX_ "No setregid available");
++ #else
++ 		if (PL_gid != PL_egid && PL_euid != 0)
++ 		    DIE(aTHX_ "Failed setting real group id");
++ #endif
+  		(void)PerlProc_setgid(PL_gid);
+  	    }
+  #  endif /* HAS_SETREGID */

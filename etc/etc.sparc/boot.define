@@ -1,0 +1,125 @@
+#	BSDI	boot.define,v 1.7 1999/05/26 13:16:03 torek Exp
+
+generic	narrowtargets	0
+	all		0x00ff
+	none		0x0000
+	target0		0x0001
+	target1		0x0002
+	target2		0x0004
+	target3		0x0008
+	target4		0x0010
+	target5		0x0020
+	target6		0x0040
+	target7		0x0080
+	t0		0x0001
+	t1		0x0002
+	t2		0x0004
+	t3		0x0008
+	t4		0x0010
+	t5		0x0020
+	t6		0x0040
+	t7		0x0080
+;
+
+generic widetargets	1
+	all		0xffff
+	include		generic	narrowtargets
+	target8		0x0100
+	target9		0x0200
+	target10	0x0400
+	target11	0x0800
+	target12	0x1000
+	target13	0x2000
+	target14	0x4000
+	target15	0x8000
+	t8		0x0100
+	t9		0x0200
+	t10		0x0400
+	t11		0x0800
+	t12		0x1000
+	t13		0x2000
+	t14		0x4000
+	t15		0x8000
+;
+
+generic	yesno		2
+	yes		1
+	Yes		1
+	YES		1
+	Y		1
+	y		1
+	no		0
+	No		0
+	NO		0
+	n		0
+	N		0
+	on		1
+	ON		1
+	On		1
+	off		0
+	Off		0
+	OFF		0
+;
+
+esp	reset_delay	1000
+;
+isp	reset_delay	1000
+;
+esp	single_lun	1001
+	include		generic widetargets
+;
+isp	single_lun	1001
+	include		generic widetargets
+;
+esp	skip_targets	1002
+	include		generic widetargets
+;
+isp	skip_targets	1002
+	include		generic widetargets
+;
+esp	id_message	1003
+	include		generic widetargets
+;
+esp	busted_v2sync	1004
+	include		generic widetargets
+;
+isp	busted_v2sync	1004
+	include		generic widetargets
+;
+esp	busted_enquiry	1005
+	include		generic widetargets
+;
+isp	busted_enquiry	1005
+	include		generic widetargets
+;
+
+esp	disconnect	1
+	include		generic widetargets
+;
+esp	sync		2
+	include		generic widetargets
+;
+esp	fast		3
+	include		generic widetargets
+;
+esp	tags		4
+	include		generic widetargets
+;
+esp	slow_cable	5
+	include		generic yesno
+;
+esp	wide		6
+	include		generic widetargets
+;
+isp	tags		1
+	include		generic widetargets
+
+isp	ultra		2
+	include		generic widetargets
+;
+sd	concurrency	1
+	raid		999
+;
+st	usehbaresid	1
+	include		generic	yesno
+;

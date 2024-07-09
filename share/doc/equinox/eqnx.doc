@@ -1,0 +1,434 @@
+
+
+
+
+
+
+
+
+                                  Equinox
+                               One Equinox Way
+                            Sunrise, Fl. 33351-6709
+                              (305) 746-9000
+
+
+                              Equinox P/N 650155
+                                 03/28/97
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               Release Notes
+                                    for
+
+                              Equinox SuperSerial
+
+                        SST-4I,  SST-8I,  SST-64I,    SST-128I,
+                        SST-4E,  SST-8E,  SST-64E,    SST-128E,
+                        SST-4P,  SST-8P,  SST-64P,    SST-128P,
+                        SSM-12I, SSM-24I, SSM-12E,    SSM-24E,
+                        SST-16I, SST-16P, SST-8I/RJ
+
+                              Host Controllers
+
+                              BSDI BSD/OS Driver
+                              Version: 3.32
+                              Equinox P/N 650155
+
+
+        Equinox, Equinox SuperSerial are trademarks of
+        Equinox.  BSD/OS are registered trademarks of
+        Berkeley Software Design, Incorporated.  All other brand and product
+	names are the trademarks of their respective holders.
+
+
+                   Copyright (c) Equinox Systems, Inc 1995
+                            All Rights Reserved
+
+
+
+
+
+
+	Information in this document is subject to change without notice
+        and does not represent a commitment on the part of Equinox.
+
+        Equinox provides this document "as is", without warranty of any
+	kind, either expressed or implied, including, but not limited to,
+        the particular purpose.  Equinox may make improvements and/or
+	changes in this manual or in the product(s) and/or the program(s)
+	described in this manual at any time.
+
+	This product could include technical inaccuracies or typographical
+	errors.  Changes are periodically made to the information herein;
+	these changes may be incorporated in new editions of the publication.
+
+	RESTRICTED RIGHTS:
+
+	For non-U. S. Government use:
+	These programs are supplied under a license.  They may be used,
+	disclosed, and/or copied only as permitted under such license
+	agreement.  Any copy must contain the above copyright notice and
+	this restricted rights notice.  Use, copying, and/or disclosure
+	of the programs is strictly prohibited unless otherwise provided
+	in the license agreement.
+
+	For U.S. Government use:
+	Use, duplication, or disclosure by the Government is subject to
+	restrictions as set forth in sub-paragraph (c)(1)(ii) of the
+	Rights in Technical Data and Computer Software clause of DFARS
+	52.227-7013.
+
+
+
+1.0  Introduction
+
+     1.1  Overview
+
+          Equinox provides support for BSD/OS applications
+          through a universal driver conforming to the BSD/OS Driver
+          specification. Copy the driver files and rebuild the kernel 
+          to install this driver. The user
+          should consult the Hardware Manual and Device Driver
+          Software Installation & Reference Manual (Unix PN 560084/B)
+          for SST SuperSerial Technology prior to installing the hardware.
+          The Equinox BSD/OS driver follows and supports the same
+          features as described in the Device Driver Software Installation &
+          Reference Manual (PN 560084/B for SVR3.2 & SCO UNIX & XENIX
+          Operating Systems) except as noted in this document.
+
+     1.2  Compatibility
+
+          The Equinox SuperSerial BSD/OS driver supports the Equinox
+          SuperSerial SST-4I, SST-8I, SST-64I, SST-128I, SST-4E,
+          SST-8E, SST-64E, SST-128E, SST-4P, SST-8P, SST-64P, SST-128P
+          SSM-12I, SSM-24I, SSM-12E, SSM-24E, SST-16I, SST-16P, and SST-8I/RJ
+          boards and therefore can be used on ISA, EISA, or PCI servers.
+          The Equinox based Micro Channel host boards are not supported.
+
+          The driver supports up to a total of 8 Equinox SuperSerial boards
+          of any type, for a total number of 1024 channels (ports). However,
+          a current BSD/OS limitation prevents more than 364 channels from
+          being open simultaneously, including any open consoles.
+
+
+     2.0  Installation
+
+          To install the Equinox SuperSerial BSD/OS driver, the following must 
+          be done: (Note: you must be root, superuser )
+
+          1)  Mount the diskette "mount -o ro /dev/fd0 /a"
+
+          2)  Install the software "installsw"
+
+          3)  Answer the installation questions
+
+     2.1  SST-4I, SST-8I, SST-64I, SST-128I, SSM-12I, SSM-24I, SST-16I,
+          SST-8I/RJ Installation
+
+       Equinox SuperSerial SST-4I, SST-8I, SST-64I, SST-128I, SSM-12I,
+       SSM-24I, SST-16I, or SST-8I/RJ boards may be installed in either 
+       ISA or EISA platforms.
+
+        For each Equinox SST ISA based board a configuration statement
+        will be added to your equivalent of the file /sys/i386/conf/LOCAL
+
+        eqnx0 at isa? port 0x220 iomem 0xd0000
+
+ Note: The number following eqnx, "0" increases with each defined board.
+       The port hex number "0x220" is defined by the dip switch on the board.
+       The hex address "0xd0000" is a 16k memory location to map the
+       board(s). The iomem address must be the same for all Equinox ISA
+       boards. The other numbers must be different for each board.
+
+       When the driver is loaded the memory location specified is checked to see
+       if it is unused. If it is the board(s) are mapped.
+       If the memory address for iomem is 0x00000, then an Equinox driver hole 
+       finder will run. The locations between 640K - 1Meg are examined and 
+       when an unused location is found the board(s) are mapped to this new 
+       address.  A console message will be displayed stating that the memory 
+       location specified has changed.
+
+             eqnx: Note Memory address (%x) changed to (%x)
+
+
+     2.2  SST-4E, SST-8E, SST-64E, SST-128E, SSM-12E, or SSM-24E Installation
+
+      Install the Equinox SuperSerial SST-4E, SST-8E, SST-64E, SST-128E, 
+      SSM-12E or SSM-24E boards only on an EISA platform.
+      Run the EISA configuration utility prior to loading the driver.
+      This defines the Equinox board type and memory
+      address. The Equinox ".cfg" files (found on a disk supplied
+      with the board) should be copied to the utility
+      disk which contains the EISA configuration software.
+      If the EISA configuration is not done or done incorrectly the
+      driver will display an error message for the board which was not
+      configured. The board can not be used and will be skipped if an
+      attempt is made to load it. Since all the configuration for the
+      EISA boards is in CMOS, the user need not supply any port
+      parameters.  Equinox SuperSerial EISA boards are loaded in slot
+      order, the lowest slot first.
+
+      For each Equinox SST EISA based board in page mode, a configuration 
+      statement will be added to your equivalent of the file 
+      /sys/i386/conf/LOCAL
+
+      eqnx0 at eisa?           iomem 0xd0000
+
+ Note: The number following eqnx, "0" increases with each defined board.
+       The hex address "0xd0000" is a 16k memory location to map the
+       board(s).
+
+      If the iomem address of 0x00000 is given, then the Equinox driver's hole 
+      finder will map the board, otherwise the address given will be used.
+
+      For each Equinox SST EISA based board in "flat mode", a configuration 
+      statement must be added to your equivalent of the file 
+      /sys/i386/conf/LOCAL
+
+      eqnx0 at eisa?
+
+Note: The number following eqnx, "0" increases with each defined board.
+
+     2.3  SST-4P, SST-8P, SST-64P, SST-128P, or SST-16P Installation
+
+      Install the Equinox SuperSerial SST-4P, SST-8P, SST-64P, SST-128P,
+      or SST-16P boards only on a PCI platform.
+
+ Note: BSD/OS 2.0 does not support PCI based boards. Use BSD/OS 2.1 and
+       higher for PCI support.
+      
+      For each Equinox SST PCI based board, a configuration statement will 
+      be added to your equivalent of the file /sys/i386/conf/LOCAL
+
+      eqnx0 at pci?
+
+Note: The number following eqnx, "0" increases with each defined board.
+
+3.0  General Information
+
+         Probe
+         -----
+
+     Each time the driver's probe routine is called it checks the supplied
+     configuration information against the board's information.
+     if a match is found the result is returned and later on the board will
+     be "ATTACHED". If no match was found the probe will result in an error.
+     Boards that have no associated probe configuration will be ignored.
+     Thus, if the configuration file has an ISA board at port 0x220 but
+     the board is strapped for 0x240, no match is found, and that board
+     will be unavailable.
+
+     All Equinox SST boards use the same major number "31".
+     Each board uses 2 unit numbers which are defined by the
+     eqnx# (specified in the configuration file). (#*2+1)
+
+     For example:
+                 eqnx0 at isa? port 0x220 iomem 0xd0000
+     will result in unit 1 and 2
+
+        0 crw-rw-rw-  1 root  wheel  31, 1, 0 Sep 18 09:29 /dev/tty1a1
+        0 crw-rw-rw-  1 root  wheel  31, 1, 1 Sep 18 13:24 /dev/tty1a2
+        0 crw-rw-rw-  1 root  wheel  31, 1, 2 Sep 18 09:29 /dev/tty1a3
+        0 crw-rw-rw-  1 root  wheel  31, 1, 3 Sep 18 09:29 /dev/tty1a4
+        0 crw-rw-rw-  1 root  wheel  31, 1, 4 Sep 18 09:29 /dev/tty1a5
+        0 crw-rw-rw-  1 root  wheel  31, 1, 5 Sep 18 09:29 /dev/tty1a6
+        0 crw-rw-rw-  1 root  wheel  31, 1, 6 Sep 18 09:29 /dev/tty1a7
+        0 crw-rw-rw-  1 root  wheel  31, 1, 7 Sep 18 09:29 /dev/tty1a8
+
+
+                 eqnx1 at isa? port 0x240 iomem 0xd0000
+     will result in unit 3  and 4
+
+        0 crw-------  1 root  tty    31, 3, 0 Sep 20 10:45 /dev/tty2a1
+        0 crwxrw-rw-  1 bart  tty    31, 3, 1 Sep 15 17:59 /dev/tty2a2
+        0 crw-rw-rw-  1 root  wheel  31, 3, 2 Sep 15 17:59 /dev/tty2a3
+        0 crw-rw-rw-  1 root  wheel  31, 3, 3 Sep 15 17:59 /dev/tty2a4
+        0 crw-rw-rw-  1 root  wheel  31, 3, 4 Sep 15 17:59 /dev/tty2a5
+        0 crw-------  1 root  tty    31, 3, 5 Sep 15 17:59 /dev/tty2a6
+        0 crw-rw-rw-  1 root  wheel  31, 3, 6 Sep 15 17:59 /dev/tty2a7
+        0 crw-rw-rw-  1 root  wheel  31, 3, 7 Sep 15 17:59 /dev/tty2a8
+
+     Individual devices "tty names" are defined by minor numbers
+     (see Equinox SST, Device Driver Software Installation & Reference Manual)
+
+
+     3.1    Baud Rates
+
+     In some environments only a limited number of baud rates are available.
+     The Equinox driver implements high baud rates in those environments
+     by mapping the high baud rates to low baud rates, making the low baud
+     rates unavailable for use. In BSD/OS baud rates are a pure number, 
+     so mapping high baud rates to low baud rates is not need. Terminal 
+     rates above 115,200, such as 230,400  need to be defined in /etc/gettytab 
+     if not already defined.
+
+     Top baud rate depends on the board type:
+       sst-8x  (230,400)
+       sst-4x  (460,800)
+       sst-16x (460,800)
+       sst-64x or sst-128x (depends on the port module type:
+                           pm-8(230,400), pm-16(115,200 )
+       ssm-12/24 (115,200)
+
+
+     3.2   Equinox support files
+
+     sstty and ssmkn can be found in "/usr/sbin"
+     The equinox directory where ssmkn "log" and "database" file
+     can be found in "/var/db/equinox"
+
+
+     3.3  Notes
+
+     1) If you experience problems with some applications which are
+        dependent on the line discipline, (such as tip), the port may
+        be in block mode "bypass mode". The mode can be changed by the
+        command "sstty +lo port-name","sstty -s port-name" will displayed
+        the mode:
+	  
+           Line Discipline                    Block Mode
+          -------------			    ---------
+	  rmode = 0    (read)               rmode = 2
+          wmode = 0    (write)              wmode = 2
+
+ 
+    2) Don't forget to set rts and cts flow control if hardware flow is needed
+       "stty rts_iflow cts_oflow"
+
+   3)  PPP / SLIP
+
+      Hardware flow control should be defined (rts_iflow cts_oflow).
+
+      If using software flow control (XON/XOFF) make sure the port
+      has the setting of "ixon" "ixoff" defined.
+
+    
+4.0  Not Supported Features
+
+     The following are not supported:
+       Equinox SST Micro Channel based hardware
+       Transparent Print
+       Alternate Session
+
+5.0  Messages
+
+  5.1 Sample Messages
+
+      The following  messages may occur during the installation and/or
+      operation of the  driver.
+
+  Equinox SuperSerial Technology Device Driver, BSDI Release 3.32
+  Copyright (c) 1996 Equinox Systems Inc. All Rights Reserved.
+  eqnx: Probe in bus(0) for iobase 0x240 maddr 0
+  eqnx: Testing board at I/O address 0x240, SSP(0), please wait.
+  eqnx1 at isa0 iobase 0x240 maddr 0xf0115000-0xf0118fff
+  eqnx: ATTACH of eqnx1 (SST-8I  ), Driver Enabled for SST board#(0), unit(1)
+
+  5.2 Additional Messages
+
+      The following  messages may occur during the installation and or
+      during the operation of the  driver.
+
+      eqnx: test_8bit port (%x) addr (%x)
+      eqnx: Testing board at I/O address 0x%x, SSP(%d), please wait.
+      eqnx: Testing board in Slot %d, SSP(%d), please wait.
+      eqnx: ISA holes at(%d) addr(%x) status (%x) MAPPED!
+      eqnx: Found a hole at %d
+      eqnx: ISA 8bit Address %x as 16 bit wide hole.
+      eqnx: Found (%d) SST boards
+      eqnx: Memory mapping PASSED for board %d addr(%x)
+      eqnx: Probe in bus(%x) for iobase 0x%x maddr %x
+      eqnx: Note Memory address (%x) changed to (%x)
+      eqnx: ATTACH of dev (%s) at %x\
+      eqnx: ATTACH of %s, Driver Enabled for SST board#(%d)
+
+
+  5.3 Error Messages
+
+      The following error messages may occur during the installation of the
+      driver.
+
+       eqnx: PRAM memory test failure %d for board with I/O address 0x%x.
+       eqnx: PRAM memory test failure %d for board in Slot %d.
+       eqnx: DRAM word memory test failure %d for board with I/O address 0x%x.
+       eqnx: DRAM word memory test failure %d for board in Slot %d.
+       eqnx: DRAM tags memory test failure %d for board with I/O address 0x%x.
+       eqnx: DRAM tags memory test failure %d for board in Slot %d.
+       Run EISA configuration utility for Equinox board in slot %d.
+       eqnx: Error EISA board in flat mode
+       eqnx:ISA: No 8/16 bit wide holes found.
+       eqnx: No Equinox SST EISA boards found
+       eqnx: No Equinox EISA board found in slot iobase 0x%x
+       eqnx: Invalid iobase 0x%x
+       eqnx: No Equinox board found at iobase 0x%x
+       eqnx: No Equinox boards found.
+       eqnx: Error, No iobase given, config ignored
+       eqnx: No SST device found for iobase %x
+       eqnx: ATTACH, fail to malloc memory for port structure
+       eqnx: ATTACH, fail to malloc memory for tty structure
+       EQNX: SSP %d not detected for board with I/O address%d.
+
+
+6.0  Known Problems/Issues
+
+1) software manual
+
+2) ssdiag
+   When using the topology feature, LMX modules remain highlighted
+   when selecting another module.
+
+7.0  Modifications
+
+     Version 3.33
+	1) Fixed a potential port hang that can result when OPOST and
+	   TAB3 are enabled.  
+        2) Incorporates updated versions of Modem Pool services that
+           configure the FIFOs on 16550 compatible modems. This provides
+           for more reliable operation.
+	3) Added support to detect a buffer overflow on SSP4 based boards.
+	   A port could hang if flow control were enabled and exactly
+           enough data arrived to fill the buffer.
+     Version 3.32
+	1) NOTE: 3.31 was released only to select Beta sites.  All 
+           modifications to 3.31 deemed sound are included in 3.32
+        2) Incorporates updated versions of Modem Pool services that
+           correctly configure some slower initializing Plug and Play
+           (PnP) modems.
+        3) Fixed an earlier regression that caused SIGINT to not be sent
+           upon receipt of a Break when BRKINT is configured.  Recognize
+           Breaks on Modem Pool Ports.
+        4) Correctly report parity and framing errors to the line discipline
+           when parity checking is enabled via termio.
+     Version 3.30
+        1) SST-16I, SST-16P, SST-8I/RJ, SST-4I now supported.
+        2) Changed SSP4 minor numbers from skipping to next 64
+           to being sequential.
+        3) Added setting and clearing of DTR and RTS output overload
+           control signals.
+        4) Added flush of modem pool I/O buffers when carrier drops.
+        5) Set hardware flow control on modem pool if CCTS_IFLOW or
+           CCTS_OFLOW are set.
+        6) Reset channel diagnostic command now clears I/O buffers
+           for non-modem pool channels.
+        7) Added a timer to prevent a close from sleeping forever if 
+           output was in progress and the LMX was removed.
+        8) Fixed problem of modem pool channel not responding by adding
+           a check for completion of modem pool service calls before
+           processing receive events.
+        9) Fixed a conflict with the modem pool control signals.
+       10) Stabilized ssdiag topology screens to reduce extraneous
+           characters by repainting screen more frequently.

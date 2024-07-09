@@ -1,0 +1,141 @@
+#	BSDI ppp.sys.sample,v 2.12 1999/08/09 16:15:13 chrisk Exp
+# Standard dialin and dialout entries.
+# These two should normally be left untouched.
+
+Dialin:\
+	:dialin:\
+	:link-init=/etc/netscripts/Dialin.login:\
+	:link-up=/etc/netscripts/Dialin.up:\
+	:link-down=/etc/netscripts/Dialin.down:
+
+Dialout:\
+	:dialout:\
+	:link-init=/etc/netscripts/Dialout.login:\
+	:link-up=/etc/netscripts/Dialout.up:\
+	:link-down=/etc/netscripts/Dialout.down:
+
+Demand:\
+	:dialout:\
+	:link-init=/etc/netscripts/Demand.login:\
+	:link-up=/etc/netscripts/Demand.up:\
+	:link-down=/etc/netscripts/Demand.down:
+
+# ppp_sync is the prototype of sync PPP connections.
+# it reflects the options used by the pppattach(8) program
+# To use it, add an entry similar to:
+#
+# site:device=ntwo0:tc=ppp_sync
+#
+# If the remote site does not provide the IP addresses, use:
+#
+# site:device=ntwo0:tc=ppp_sync:\
+#	:local-addr=x.x.x.x:\
+#	:remote-addr=y.y.y.y:
+
+ppp_sync:\
+	:dialout:\
+	:immediate:\
+	:direct:\
+	:-pfc:-acfc:-tcpc:
+
+# sample dialin connection
+#
+# IP addresses are assigned from the /etc/netscripts/addr-map file
+#
+# Pdialin:tc=Dialin:
+
+# sample demand dial connection.
+# This connection will dial out when an attempt is made to send a
+# packet over the interface.
+# The connection will be terminated after 10 minutes of idle time.
+#
+# The remote IP address must be set in the /etc/netscripts/addr-map
+# 
+# To place the call use one of these commands:
+#
+# $ ppp Pdemand		# Only place one call
+# $ ppp -d Pdemand	# Wait for a new packet after the connection is dropped
+
+Pdemand:\
+	:interface=0:\
+	:idle-timeout=600:\
+	:phone-number=REMOTEPHONENUMBER:\
+	:s0=\r:e0=ogin:f0=\r:\
+	:s1=YOURLOGIN\r:e1=word:\
+	:s2=YOURPASSWORD\r:\
+	:tc=Demand:
+
+# A sample immediate mode connection.  This connection will be established
+# as soon as possible and will not time out.
+#
+# The IP addresses are assumed to be assigned from the remote (server) side.
+#
+# To place the call use one of these commands:
+#
+# $ ppp Palways		# Only place one call
+# $ ppp -d Palways	# Wait for a new packet after the connection is dropped
+
+Palways:\
+	:immediate:\
+	:idle-timeout=0:\
+	:phone-number=REMOTEPHONENUMBER:\
+	:s0=\r:e0=ogin:f0=\r:\
+	:s1=YOURLOGIN\r:e1=word:\
+	:s2=YOURPASSWORD\r:\
+	:tc=Dialout:
+
+# A sample session using CHAP authentication
+#
+# Similar to Palways
+#
+# See chap_md5(8) for a description on how to set up CHAP secrets
+# See ppp.sys(5) for a description of :chap-secret=...:
+
+Pchap:\
+	:immediate:\
+	:idle-timeout=0:\
+	:phone-number=REMOTEPHONENUMBER:\
+	:chap-allow:\
+	:chap-name=YOURCHAPNAME:\
+	:tc=Dialout:
+
+# A sample session using PAP authentication
+#
+# Similar to Palways
+
+Ppap:\
+	:immediate:\
+	:idle-timeout=0:\
+	:phone-number=REMOTEPHONENUMBER:\
+	:pap-peerid=YOURPAPNAME:\
+	:pap-passwd=YOURPAPPASSWD:\
+	:tc=Dialout:
+
+# Uncomment the following entry to allow PAP and/or CHAP dialin
+# 
+# ppp_direct:\
+#	:dialin:\
+#	:pap:\
+#	:chap:\
+#	:auth-retries=3:
+#
+# Entries must exist for each client that is to connect by the name they
+# used with PAP or CHAP to authenticate.  This entry will be read up after
+# authentication has been completed.  Not all possible fields are used
+# (for instance, the authentication fields are no longer useful since
+# authentication has been completed).  Examples of fields which do have
+# meaning are:
+#
+# allow-addr-change	debug-all	debug-int	debug-packet
+# debug-phase		debug-state	echo-freq	ed-802.1
+# ed-local		ed-null		first-idle	first-up
+# ftel			idle-timeout	link-down	link-failed
+# link-init		link-options	link-up		local-addr
+# mrru			multilink	next-idle	next-up
+# packet-dump		primary-dns	primary-nbs	remote-addr
+# secondary-dns		secondary-nbs	sseq		trace
+# tcpc
+
+# Alternatively, the generic names chap_default and pap_default may be
+# used, though if these are defined, any account which can satisfy either
+# PAP or CHAP authentication will be allowed to log in.

@@ -1,0 +1,98 @@
+.\"	BSDI	ipfwrate.8,v 1.3 1999/10/13 03:46:39 polk Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd July 6, 1997
+.Dt IPFWRATE 8
+.Sh NAME
+.Nm ipfwrate
+.Nd set / retrieve BSD IP Rate filters
+.Sh SYNOPSIS
+.Nm ipfwrate
+.Op Fl i
+.Op Fl M Ar mlen
+.Op Fl p Ar promise
+.Op Fl q Ar quant
+.Op Fl Q Ar qlen
+.Op Ar index Op Ar limit
+.Sh DESCRIPTION
+The
+.Nm ipfwrate
+utility defines or retrieves statistics about the rate filters installed in
+the kernel.
+.Pp
+Rate filters are specified by small positive integers.  A classification
+filter is installed for the
+.Li rate
+filtering point
+(see
+.Xr ipfw 8 ) .
+This filter should return either 0, implying the packet should not be
+filtered, or the index value of the filter.  If no filter is defined
+for the index returned then the packet is not filtered.
+.Pp
+When
+.Ar limit
+is not specified then the
+.Fl M ,
+.Fl p ,
+.Fl Q ,
+and
+.Fl q
+flags are ignored.  If
+.Ar index
+is specified then statistics about that filter are displayed.  If
+.Ar index
+is not specified then statistics about all installed filters are displayed.
+.Pp
+If
+.Ar limit
+is specified then a new filter is defined or an existing filter is modified.
+The
+.Ar limit
+specifies the maximum number of bits per second that are allowed through
+the filter.
+Besides specifying the limit, the following parameters may also be
+specified:
+.Bl -tag -width indent
+.It Fl i
+When replacing a new filter, reset all statistics associated with a
+filter and dump any packets in the delay queue.
+.It Fl M Ar mlen
+When the filters promised rate (see below) is reached but not
+.Ar limit ,
+only allow packets to be passed to the output interface if it has
+fewer than
+.Ar mlen
+packets in its output queue.
+This value defaults to 4.
+.It Fl p Ar promise
+Specify the rate in bits per second that we promise this filter.
+The system makes no attempt to enforce that the sum of all the promised
+rates is less than or equal to the theoretical maximum.  If too much
+bandwidth is promised then the promise will not be kept.
+.It Fl q Ar quant
+As long as we have fewer than
+.Ar quant
+bits of outstanding data, allow the next packet to be sent.
+This defaults to 10 times the minimum value.  The minimum value is
+1 system clock cycle worth of data (
+.Ar limit / No clock-rate ) .
+.It Fl Q Ar qlen
+Queue up to
+.Ar qlen
+packets before dropping packets.  This defaults to 16.
+.El
+.Sh BUGS
+When the filtering parameters are changed, any packets on the deferred
+queue are dropped.
+.Sh SEE ALSO
+.Xr ipfw 8 ,
+.Xr ipfwasm 8 ,
+.Xr ipfwcisco 8 ,
+.Xr ipfwcmp 8 ,
+.Xr ipfwdump 8 ,
+.Xr ipfwlog 8

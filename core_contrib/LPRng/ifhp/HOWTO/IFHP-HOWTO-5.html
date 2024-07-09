@@ -1,0 +1,536 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Configuration File</TITLE>
+ <LINK HREF="IFHP-HOWTO-6.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-4.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc5" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-6.html">Next</A>
+<A HREF="IFHP-HOWTO-4.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc5">Contents</A>
+<HR>
+<H2><A NAME="s5">5. Configuration File</A></H2>
+
+<P>This section will cover the <CODE>ifhp.conf</CODE> file and the various options
+and configuration methods used to control the operation of the <CODE>ifhp</CODE>
+filter.
+<H2><A NAME="ss5.1">5.1 Configuration File Entries</A>
+</H2>
+
+<P>The <CODE>ifhp</CODE> filter uses a simple text based configuration file,
+usually <CODE>/usr/local/etc/ifhp.conf</CODE> or <CODE>/etc/ifhp.conf</CODE>
+to get a set of configuration values which control its operation.
+The following sample configuration file segment shows how information
+is specified.
+<BLOCKQUOTE><CODE>
+<PRE>
+# comment line - first non-blank character is a #
+#---- DEFAULTS ----
+# we first have the default section
+#   - a flag option whose value is 1
+on_flag
+#   - a flag option whose value is 0
+off_flag@
+#   - a flag option whose value is a string (single line)
+#     its value will be 'this is a string'
+strval = this is a string
+#   - a flag option whose value is multiple lines
+#     each additional line starts with whitespace
+#     value is 'this\nis1\na\nstring'
+longstrval = this
+ is\061
+ a
+ string
+#   - and a list that gets expanded -
+#     '[ this ] [ is a\nlist ]' -> [ this is a list ]
+longlist = [ this ] [ is a
+ list ]
+#    we can extend a string.
+#    strval will  now be 'this is a string added'
+strval += added
+#    and we can expand a list
+#     '[ this ] [ is a\nlist ] [ more ]' -> [ this is a list more ]
+longlist += [ more ]
+
+# a printer specific section
+# ---- PRINTER ----
+[ hp hp4* ]
+# this match model=hp, model=hp4, model=hp4x
+# override the default
+onflag@
+include /usr/local/etc/ifhp.conf.local
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The example shows the basic structure of the <CODE>ifhp.conf</CODE> file.
+Comments are lines whose first non-whitespace character is<CODE>#</CODE>.
+<H2><A NAME="ss5.2">5.2 Option Setting</A>
+</H2>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+Syntax             Equivalent To
+option             option=1
+option@            option=0
+option=val
+option=[ v v  ... ]
+option=val1        val1\nval2\n val3
+ val2 
+option=val1        val1
+option+=val2       val1 val2
+option+=val4       val1 val2 val4\nval5
+include+=val4       val1 val2 val4\nval5
+ val5
+include /pathname
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If an option's default value is the empty string (<CODE>''</CODE>).
+The <CODE>ifhp</CODE> program uses the Perl language convention that this
+value is equivalent to 0 when used in a numerical context or
+the empty string when used in a string context.
+<P>In general when a string is used in an integer context it is converted
+to a the appropriate numerical type using the standard Perl/C
+numerical representation and conversion methods.
+<P>The <CODE>flag</CODE> syntax sets the value of <CODE>flag</CODE> to the string <CODE>'1'</CODE>,
+that is, the string with a 1 value, and <CODE>flag@</CODE> sets it to <CODE>'0'</CODE>. 
+<P>The <CODE>option = value</CODE> syntax sets the option value to a string.
+The string can extend across multiple lines.
+A line starting with a space has its value appended to the
+previous option with a <CODE>\n</CODE> separator.
+<P>As shown in the example,
+the <CODE>+=</CODE> operator is used to append to a string value
+The <CODE>[ option option ...]</CODE> syntax is used to specify that the
+value is list.
+Lists are used to specify a list of options which can be flags or string
+values.
+Lists have the property of
+<EM>recursive evaluation</EM>
+which means that the individual list items will be further processed during
+printing.
+This is discussed later in detail.
+<P>The <CODE>include</CODE> facility is currently deprecated,
+and may not be implemented in future releases.
+It will cause the specified file to be read and processed at
+that point in the configuration file.
+<H2><A NAME="ss5.3">5.3 Option Use</A>
+</H2>
+
+<P>Options and their values are used to control printer operation.
+There are two types of options:
+those with a predefined or
+<EM>builtin</EM>
+meaning to the
+<CODE>ifhp</CODE>
+filter and those which
+have their values sent to the printer when appropriate.
+The builtin options are listed
+and their use is explained
+in later sections.
+<H2><A NAME="ss5.4">5.4 List Expansion</A>
+</H2>
+
+<P>The
+<CODE>ifhp</CODE>
+filter configures a printer by sending the values of options to the printer
+or performing built-in operations.
+An option can have a flag, string, or list value.
+<P>A LIST value has the form <CODE>[ v1 v2 ... ]</CODE>.
+When a list value is to be sent to the printer
+each of <CODE>v1</CODE>, <CODE>v2</CODE>, etc. is expanded in turn
+and the corresponding string value or builtin action is carried out.
+If the string value of a term is itself a list,
+the list will be expanded in turn.
+Recursive list evaluation will result in an error.
+The following is an example of list expansion:
+<BLOCKQUOTE><CODE>
+<PRE>
+t1=[ p1 p2 ]
+p1=this is
+p2=[ p3 p4 ]
+p3=a
+p4=test
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The option <CODE>t1</CODE> is expanded by expanding <CODE>p1</CODE> and then <CODE>p2</CODE>;
+The expansion of <CODE>p1</CODE> produces
+<CODE>"this is"</CODE>,
+and <CODE>p2</CODE> produces
+<CODE>[p3 p4]</CODE>.
+This list is then expanded to produce 
+<CODE>"test"</CODE>
+and
+<CODE>"living end"</CODE>.
+<P>Some LIST options are used in
+printer language specific contexts
+and their values are processed appropriately.
+For example,
+pjl_init=[...] specifies a set of
+initialization operations for PJL printers,
+and pcl_init=[...] is used to specify the initialization
+needed for PCL printing.
+The expansion of the LIST entries is done in the language
+specific context.
+For PJL this requires that the output be well formed PJL commands,
+and for PCL that all whitespace be removed.
+<P>The context dependent expansion is required because sometimes it
+is necessary to do operations both using PJL and PCL or PJL and PS
+combinations to ensure correct printer operation.
+During expansion the language name and an underscore
+is prefixed to the list entry name and this is used as the option name during expansion.
+If the prefixed name is not found then the unprefixed name will be used.
+For example,  suppose that we have:
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_init=[ initstr test ]
+pcl_init=[ initstr ]
+pjl_initstr=&commat;PJL ECHO YES
+pcl_initstr=\033(*0V
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When PJL initialization is being done and we want string values
+for the <CODE>pjl_init</CODE> LIST, we expand  <CODE>initstr</CODE> and <CODE>test</CODE>
+in the <CODE>pjl_</CODE> context.
+First a defined <CODE>pjl_initstr</CODE> value will be looked for and then
+a defined <CODE>initstr</CODE> value.
+Since there is a value of <CODE>pjl_initstr</CODE> it will be used.
+<P>Similarly we will check for <CODE>pjl_test</CODE> and <CODE>test</CODE> values.
+Since <CODE>pjl_test</CODE> does not have a defined value
+the <CODE>test</CODE> value <CODE>DONE</CODE> will be used.
+<P>When PJC initialization is being done and we want string values
+for the <CODE>pjc_init</CODE> LIST, then we expand  <CODE>initstr</CODE> and <CODE>test</CODE>
+in a similar way, resulting in <CODE>\033(*0V</CODE> and <CODE>DONE</CODE> values.
+<P>We can use the list entry
+<CODE>[ option=value ]</CODE>
+to temporarily specify the value of a variable
+which is then used during language specific expansion.
+For example,
+suppose that we have the following set of definitions:
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_init=[ initstr=testing ]
+pjl_initstr=@PJL INIT=\%s%lcub;initstr%rcub;XQ
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As discussed in the next section,
+the <CODE>\%s%lcub;initstr%rcub;</CODE> will cause the value for the <CODE>initstr</CODE> value to
+be substituted into the <CODE>pjl_initstr</CODE> string.
+How this is done is discussed in the section on
+<A HREF="#stringescape">String Escape Sequences</A>.
+<H2><A NAME="stringescape"></A> <A NAME="ss5.5">5.5 String Escape Sequences</A>
+</H2>
+
+<P>Strings values have a syntax similar to PERL or C.
+The <CODE>\</CODE> (escape) character indicates the start of an escape sequence string.
+This has the syntax:
+<DL>
+<DT><B>Standard Character Replacement</B><DD><P><CODE>\f</CODE>,
+<CODE>\r</CODE>,
+<CODE>\n</CODE>,
+and
+<CODE>\t</CODE>
+are replaced in turn by the Ascii character FF, CR, NL,
+and HT whose values are 014, 015, 012, and 011 respectively.
+<DT><B>Octal Character Replacement</B><DD><P><CODE>\nnn</CODE>
+where nnn are 3 octal digits is replaced by the corresponding character
+with the specified value.
+<DT><B>Option Value Replacement</B><DD><P><CODE>\%format{option}  OR  \%format[option]</CODE>
+<P>The value of the option will be determined and replaced by a formatted string.
+The option value is determined by the following algorithm.
+<OL>
+<LI>When expanding a list value, the
+<CODE>option=word</CODE>
+will push the
+<CODE>option=word</CODE>
+combination onto an evaluation stack,
+and then the <CODE>option</CODE> value is expanded in the
+current language context.</LI>
+<LI>When starting a search for
+<CODE>{option}</CODE>
+in a language context <CODE>lang_</CODE>,
+the stack of list values is searched in oldest to newest order for a match
+for <CODE>lang_option</CODE> and then for <CODE>option</CODE>.
+The first one found is used as the option value.</LI>
+<LI>After searching the evaluation stack for
+<CODE>{option}</CODE>
+and no match was found then the <CODE>-Z</CODE> command line option values
+are searched for a matching entry.</LI>
+<LI>If none is found, then the <CODE>-T</CODE> command line option values
+and next the printer configuration will then be searched for
+<CODE>lang_option</CODE> and then for <CODE>option</CODE>.
+If no match is found,  then the empty string will be the result
+if a string is wanted or the value 0 if a number is wanted.</LI>
+<LI>If the result of this lookup is a list
+then the list will be expanded in turn,
+and the concatenating values of the expansion will be used.</LI>
+<LI>When starting a search for
+<CODE>[option]</CODE>
+the 
+<CODE>-T</CODE> command line options will be first
+and next the printer configuration will then be searched for
+<CODE>lang_option</CODE> and then for <CODE>option</CODE>.
+If no match is found,  then the empty string will be the result
+if a string is wanted or the value 0 if a number is wanted.</LI>
+<LI>If the result of this lookup is a list
+If no match was found,
+then the search rules for 
+<CODE>{option}</CODE>
+will be used,
+and the list expansion will be done as described above.
+If no match was found a null (empty string) value will be used.</LI>
+</OL>
+<DT><B>Option Value Format</B><DD><P>
+<BLOCKQUOTE><CODE>
+<PRE>
+   %[-][0][length[.precision]][format]
+   %d{1}   =>  '1'       %s{1}   => '1'
+   %3d{1}  =>  '  1'     %3s{1}  => '  1'
+   %03d{1} =>  '0001'    %-3s{1} => '1  '
+   %4.2f{1} => '1.00'
+</PRE>
+</CODE></BLOCKQUOTE>
+
+The format specifies how the value is to appear,
+and is similar to the printf format usage.
+<P>Depending on the format type,
+a value will be converted and used appropriately.
+The empty string or null value (<CODE>''</CODE>) will be treated as a <CODE>'0'</CODE>
+value when used in an numeric context.
+<P>The default format is %d, ie, \%{val} would be \%d{val}.
+The numerical formats supported are: %d, %o, %x, %X, %e, %f, and %g;
+The %s format use the string value of the result.
+</DL>
+<H2><A NAME="ss5.6">5.6 Language Context and Value Expansion</A>
+</H2>
+
+<P>The <CODE>ifhp</CODE> filter sends initialization and configuration commands to the
+printer.
+Depending on the type of language of a print file (i.e. - PostScript or PCL),
+different command formats would need to be used to implement different options.
+For example,  to implement a <EM>landscape</EM> option for a PJL aware printer
+you would need to send the PJL command <CODE>@PJL SET ORIENTATION=LANDSCAPE</CODE>.
+For a PostScript printer you would need to send a very strange string
+which would depend on the actual printer mode.
+<P>Our language context also includes various checks for
+language specific dependencies.
+This section refers to material that is discussed in depth in later
+sections of this document,
+and on first reading may be a little confusing.
+However,
+if you are not aware of some of these restrictions then much of the information
+in the configuration files may be very confusing.
+<H3>PJL Language</H3>
+
+<P>A PJL command has the form
+<CODE>@PJL OPCODE ...</CODE>,
+and PJL commands must be sent as a block before any other commands.
+In order to assist with this,
+the <CODE>ifhp</CODE> filter provides the following assistance.
+When expanding a list value,
+each list entry is expected to form a well formatted PJL command.
+<OL>
+<LI>Before sending any PJL command to the printer,
+the PJL Universal Exit Command
+(<CODE>\033%-12345X</CODE>)
+string is sent to the printer.
+This is automatically done if <CODE>pjl</CODE> is enabled for the printer.</LI>
+<LI>The list item is expanded,
+and all value substitutions are done.
+Leading and trailing whitespace is removed,
+all characters are converted to uppercase,
+and a new line (<CODE>\n</CODE>) value is appended to the command.</LI>
+<LI>Because not all printers support all PJL commands,
+the <CODE>ifhp</CODE> filter performs uses the
+<CODE>pjl_only</CODE>
+and
+<CODE>pjl_except</CODE>
+configuration lists to ensure that the options are allowed by the printer.
+The OPCODE must appear in the
+<CODE>pjl_only</CODE>
+list and not in the
+<CODE>pjl_except</CODE>
+list.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_only = [ JOB SET STATUS ]
+pjl_except = [ STATUS ]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<P>The <CODE>pjl_only</CODE> indicates that the printer supports the PJL JOB, SET, and STATUS
+commands,  but the <CODE>pjl_except</CODE> list removes the STATUS from this list.
+This means that only the
+JOB and SET commands will be allowed.
+</LI>
+<LI>If the command is a <CODE>SET</CODE> command,
+then the PJL variable must appear in the <CODE>pjl_vars_set</CODE>  list
+and not in the <CODE>pjl_vars_except</CODE> list.
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_vars_set = [ PAPER SIZE ORIENTATION ]
+pjl_vars_except = [ PAPER ]
+
+@PJL SET SIZE=A4
+@PJL SET PAPER=LETTER
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<P>In the above example, the <CODE>SIZE=A4</CODE> command would be allowed
+and sent while the
+<CODE>PAPER=LETTER</CODE> command would be rejected and not sent.
+</LI>
+</OL>
+<H3>PCL Language</H3>
+
+<P>When sending PCL initialization strings to a printer,
+it is essential to send nothing that could cause a printable character to
+be sent before the actual file contents.
+Such output could cause the location and positioning of text to be altered
+in unexpected ways.
+To avoid this,
+the following steps are taken when expanding a list in a PCL language context.
+<OL>
+<LI>Before any PCL string is sent to the printer,
+the PCL End of Job
+(<CODE>\033E</CODE>) string is sent to the printer.</LI>
+<LI>All whitespace (blanks, tabs, etc) are removed from the string value.</LI>
+<LI>Next, all escaped values are substituted.
+At this point you can
+<EM>force</EM>
+printable strings containing whitespace into the output by using the
+<CODE>\nnn</CODE>
+escape mechanism.</LI>
+<LI>All list values are concatenated and then sent to the printer.</LI>
+</OL>
+<H3>PostScript Language</H3>
+
+<P>The PostScript language processing is very minimal,
+as there are few problems sending PostScript to a printer.
+<OL>
+<LI>Before sending any PostScript initialization strings,
+the PostScript End of Job indicator
+(<CODE>\004</CODE> or Control-D) is sent.</LI>
+<LI>Strings are then expanded and the escape sequences are substituted.</LI>
+<LI>Individual strings have a newline
+(<CODE>\n</CODE>) appended to them before being sent to the printer.</LI>
+</OL>
+<H2><A NAME="ss5.7">5.7 Printer Entries</A>
+</H2>
+
+<P>The <CODE>ifhp.conf</CODE> file is divided into printer entries by <CODE>[ pattern pattern ...]</CODE>
+lines.
+Each pattern is glob matched against the <CODE>model</CODE> option value,
+and if the match is successful then the options on the following lines
+until the next
+printer entry header
+are appended to the specific printer configuration entry.
+<P>By convention,
+each configuration file is assumed to start with the header
+<CODE>[ default ]</CODE>,
+and the initial set of lines are used to
+set default values for the various <CODE>ifhp</CODE> options.
+<P>The algorithm for scanning the configuration files first
+sets the <CODE>model</CODE> value to <CODE>default</CODE>,
+and extracts the default information.
+It then sets the <CODE>model</CODE> value to the user specified value,
+and rescans the configuration file information.
+<P>If users need to add or modify the <CODE>ifhp.conf</CODE> file,
+then they should add their entries to the end of the file,
+and override any default options by specific values in their new entry.
+To aid with system configuration and maintenance,
+the distributed <CODE>ifhp.conf</CODE> file has the following text at the end of the file:
+<BLOCKQUOTE><CODE>
+<PRE>
+##### This is the end of the standard ifhp.conf file.
+##### Add your local files after this
+##### If you want to override some entries, simply change the names to
+##### something different, i.e. hp4 hp4.old
+##### Here is a script to do this and then append your local file to the
+##### end of the ifhp.conf file:
+#####
+##### #!/bin/sh
+##### for i in $* ; do
+#####   perl -spi.bak -e 's/ $i / $i.orig /g' ifhp.conf
+##### done
+#####
+##### sed -n -e '1,/XXX END XXX/p' ifhp.conf >ifhp.conf.new
+##### sed '1,/XXX END XXX/d' ifhp.old >> ifhp.conf.new
+#####
+##### You can probably improve on this.
+#####
+#### XXX END XXX #####
+
+# user adds new default values here for all printer entries
+[ default ]
+# set default value
+pcl_option= \033test
+
+[ mypcl_printer ]
+# override default value
+pcl_option=
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="modelselection"></A> <A NAME="ss5.8">5.8 Printer Models Supported</A>
+</H2>
+
+<P>There are over 500 different printer models,
+types and configurations supported by IFHP.
+If your printer is not currently supported
+and you have documentation about the printer then send mail to the
+<A HREF="IFHP-HOWTO-1.html#maillist">LPRng Mailing List</A>
+and support will be added.
+<P>The <CODE>ifhp.conf</CODE> configuration file contains
+configuration entries for various models of printers.
+Each entry has a name usually corresponding to the model of printer
+or its basic capabilities.
+For example,
+the HP LaserJet 4 printer has the <CODE>model=hp4</CODE> configuration entry.
+The <B>default</B> printer configuration
+covers a wide range of network printers manufactured by Hewlett-Packard,
+Canon,  Epson, and others and
+is for a printer that has a bidirectional communications
+connection that allows it to report status information
+and the following capabilities:
+<OL>
+<LI> PJL support (<CODE>pjl</CODE>) compatible with HP 4 family of printers</LI>
+<LI> PostScript (PS) support (<CODE>ps</CODE>).</LI>
+<LI> PCL support (<CODE>pcl</CODE>).</LI>
+<LI> Text files printed as PCL (<CODE>text</CODE>, <CODE>default_language=pcl</CODE>).</LI>
+</OL>
+<P>There is also support for
+<A HREF="IFHP-HOWTO-3.html#psonly">PostScript only printers</A> (/tt/model=ps/),
+<A HREF="IFHP-HOWTO-3.html#phaser">Tektronics Phasers</A> (<CODE>model=tek</CODE>),
+<A HREF="IFHP-HOWTO-3.html#phaser">QMS</A> (<CODE>model=qmsXXX</CODE>).
+The best way to determine the printers currently supported are
+to examine the <CODE>ifhp.conf</CODE> file
+for the contents.
+The configuration file has the following entries:
+<BLOCKQUOTE><CODE>
+<PRE>
+apple           hp4v            hpdj1200c       hpdj750c
+hp4             hp5             hpdj1600c       hpdj750cplus
+hp4000          hp5l            hpdj200         hpdj755cm
+hp4500          hp5m            hpdj2000cp      hpiiisi
+hp4l            hp5mp           hpdj220         hpljpro
+hp4lc           hp5p            hpdj230         hppjxl300
+hp4m            hp5si           hpdj2500cp      lexmark4039
+hp4ml           hp5simopier     hpdj250c        lj3pclonly
+hp4mp           hp5simx         hpdj330         phaser
+hp4mplus        hp6l            hpdj350c        postscript
+hp4mv           hp6mp           hpdj430         ps
+hp4p            hp6p            hpdj450c        qms1725
+hp4pj           hp8100          hpdj455ca       qms2025
+hp4plus         hpcolorlj       hpdj600         qms2060
+hp4si           hpcolorlj5      hpdj650c        qms860
+hp4simx         hpcolorlj5m     hpdj700         tek
+</PRE>
+</CODE></BLOCKQUOTE>
+<HR>
+<A HREF="IFHP-HOWTO-6.html">Next</A>
+<A HREF="IFHP-HOWTO-4.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc5">Contents</A>
+</BODY>
+</HTML>

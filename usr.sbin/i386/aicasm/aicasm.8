@@ -1,0 +1,39 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI aicasm.8,v 1.3 1995/10/26 22:59:03 bostic Exp
+.Dd Oct 26, 1995
+.Dt AICASM 8
+.Os
+.Sh NAME
+.Nm aicasm
+.Nd assemble firmware for Adaptec 7770 and 7870 SCSI host adapters
+.Sh SYNOPSIS
+.Nm aicasm
+.Op Fl cdlt
+.Op Fl p Ar prefix
+.Ar input-file
+.Sh DESCRIPTION
+.Nm Aicasm
+is used to assemble firmware for the Adaptec 7770 and 7870 SCSI
+host bus adapters.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl c
+Generate code segment.
+.It Fl d
+Output defines.
+.It Fl l
+Output listing.
+.It Fl p Ar prefix
+This is used to prefix a character string on all symbols generated.
+.It Fl t
+Output tags.
+.El
+.Pp
+The
+.Nm aicasm
+utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr aic 4

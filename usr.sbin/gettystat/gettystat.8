@@ -1,0 +1,53 @@
+.\"	BSDI gettystat.8,v 1.4 1997/04/08 21:07:28 prb Exp
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd May 30, 1996
+.Dt GETTYSTAT 8
+.Sh NAME
+.Nm gettystat
+.Nd get status from gettyd
+.Sh SYNOPSIS
+.Nm gettystat
+.Op Fl ar
+.Op Ar line ...
+.Sh DESCRIPTION
+The
+.Nm
+program requests the status of the lines from
+.Nm gettyd
+and displays them on standard output.
+.Pp
+The available options are:
+.Bl -tag -width indent
+.It Fl a
+If the
+.Fl a
+option is given, lines not controlled by
+.Nm gettyd
+will also be reported.
+Normally all lines are reported on, unless
+.Ar line
+is specified, in which case only the lines listed will be reported.
+.It Fl r
+If the
+.Fl r
+option is specified, a reset command will be sent to
+.Xr gettyd 8
+instead of a status command.  The lines listed will have any current
+session terminated and a new session restarted.  This can be used
+if the condition script of a line has changed and it is desired to
+recondition the line.
+(See
+.Xr gettyd 8
+for other available reset commands.)
+The
+.Fl a
+option as no effect when the
+.Fl r
+option is also specified.
+.El
+.Sh SEE ALSO
+.Xr ttys.conf 5 ,
+.Xr gettyd 8

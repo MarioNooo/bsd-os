@@ -1,0 +1,5 @@
+#	BSDI printcap.local,v 1.2 2001/06/26 18:52:48 polk Exp
+#
+#	This file is included from /etc/printcap.  Make local changes
+#	to this file, not to /etc/printcap.
+#

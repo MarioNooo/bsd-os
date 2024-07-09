@@ -1,0 +1,103 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI chap_md5.8,v 1.6 1996/11/22 16:17:45 prb Exp
+.Dd March 26, 1996
+.Dt CHAP_MD5 8
+.Os BSD/OS
+.Sh NAME
+.Nm chap_md5
+.Nd preform MD5 CHAP authentication
+.Sh SYNOPSIS
+.Nm chap_md5
+.br
+.Nm chap_md5
+.Ar user
+.Ar id
+.br
+.Nm chap_md5
+.Ar user
+.Ar id
+.Fl v
+.Sh DESCRIPTION
+The
+.Nm chap_md5
+utility is expected to be called by the
+.Xr ppp 8
+command.
+See the
+.Li chap-script
+option in 
+.Xr ppp.sys 5
+for a description of the arguments to the
+.Nm chap_md5
+utility.
+.Sh SECRETS
+The shared secrets are stored in the file
+.Pa /etc/chap_md5_secrets ,
+which has lines one of the following formats:
+.sp
+.Li Ta name:format:secret:
+.br
+.Li Ta name:challenge:format:secret:
+.br
+.Li Ta name:response:format:secret:
+.sp
+.Bl -column XXXXXXX
+.It Li name Ta
+The user name.
+.It Li format Ta
+The format the secret is stored in, either
+.Li hex
+or
+.Li ascii
+should be used.
+.It Li challenge
+This string is literal.  This implies the following secret is
+only valid for verifying a challenge.
+.It Li response
+This string is literal.  This implies the following secret is
+only valid for generating a response to a challenge.
+The
+.Li challenge
+and
+.Li response
+keys allow for mutual authentication in which each direction
+uses a distinct secret.
+.It Li secret Ta
+The actual secret.  If the format is
+.Li hex
+then the secret is an even number of bytes from the set [0-9a-f].
+The secret is converted from hex to an actual byte string before use.
+If the format is
+.Li ascii
+then the secret is the actual secret.  Use
+.Dq \e\e
+to enter a
+.Dq \e
+and
+.Dq \e:
+to enter a
+.Dq \: .
+.Sh FILES
+.Pa /etc/chap_md5_secrets
+.Sh SEE ALSO
+.Xr ppp.sys 5 ,
+.Xr ppp 8
+.Sh LEGAL
+The
+.Nm chap_md5
+utility uses the RSA Data Security, Inc. MD5 Message-Digest Algorithm.
+The following legal notice is required by the md5 source code:
+.Bd -literal
+License to copy and use this software is granted provided that it
+is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+Algorithm" in all material mentioning or referencing this software
+or this function.
+
+License is also granted to make and use derivative works provided
+that such works are identified as "derived from the RSA Data
+Security, Inc. MD5 Message-Digest Algorithm" in all material
+mentioning or referencing the derived work.
+.Ed

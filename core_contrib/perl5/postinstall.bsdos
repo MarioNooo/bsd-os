@@ -1,0 +1,45 @@
+#	BSDI	$Id$
+
+# For the BSD/OS distribution we install perl5 using the standard
+# perl5 build process and then fix things up here.
+
+version=5.6.1
+
+# Read perl configuration data for install locations:
+#     $installbin $installscript $installsitearch
+if [ ! -f config.sh ]; then
+    echo "postinstall.bsdos: config.sh not found" 1>&2;
+    exit 1;
+fi
+. ./config.sh
+
+set -x
+
+# Retain links for /usr/{,contrib}/bin/{,suid}perl5, /usr/local/bin/perl
+ln -fs perl /usr/bin/perl5
+ln -fs suidperl /usr/bin/suidperl5
+ln -fs ../../bin/perl /usr/local/bin/perl
+
+# Now convert and install the system header files:
+(
+    inc=$installarchlib/include;
+    mkdir -p $inc;
+    cd /usr/include;
+    $installscript/h2ph -d $inc * sys/* machine/*;
+)
+
+# And install the man pages
+(
+    PAGER=/bin/cat; export PAGER;
+    # We used to just install the main page and expect people to use
+    # perldoc -- we'll try it the other way and see how it goes...
+    # $installscript/perldoc perl > /usr/share/core_contrib/man/cat1/perl.0;
+    # $installscript/perldoc perldoc > /usr/share/man/cat1/perldoc.0;
+    make install.man;
+    for i in /usr/share/core_contrib/man/man1/perl*.1; do
+	nroff -mandoc $i > /usr/share/core_contrib/man/cat1/$(basename $i .1).0;
+    done
+    for i in /usr/share/core_contrib/man/man3/*::*.3; do
+	nroff -mandoc $i > /usr/share/core_contrib/man/cat3/$(basename $i .3).0;
+    done
+)

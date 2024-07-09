@@ -1,0 +1,38 @@
+.\"     BSDI    fputws.3,v 2.2 1997/12/18 18:07:10 bostic Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd December 9, 1997
+.Dt FPUTWS 3
+.Os
+.Sh NAME
+.Nm fputws
+.Nd write wide-character string on a stream
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Fd #include <wchar.h>
+.Ft int
+.Fn fputws "wchar_t *ws, FILE *stream"
+.Sh DESCRIPTION
+The
+.Fn fputws
+function
+is similar to the
+.Xr fputs 3
+function, but rather than writing a string of byte sized characters,
+it writes multi-byte characters from the wide-character string
+.Ar ws
+using the
+.Xr fputrune 3
+function.
+.Sh RETURN VALUES
+The
+.Fn fgetws
+function
+returns the number of wide-characters written or -1 if it encounters
+an error while writing.
+.Sh SEE ALSO
+.Xr fputrune 3 ,
+.Xr fputs 3

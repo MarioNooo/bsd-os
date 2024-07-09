@@ -1,0 +1,345 @@
+#
+#	BSDI netstart.proto,v 2.41 2003/03/06 20:36:12 dab Exp
+#	@(#)netstart	5.9 (Berkeley) 3/30/91
+#
+
+# Convenience routine to check for existence of commands in our path
+# so we can avoid absolute paths in the script.
+is_executable () {
+	local IFS
+	local -
+
+	IFS=:
+	for path in ${PATH}; do
+		if [ -x ${path}/${1} ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+#############################################################################
+#
+# Configure additional Ethernet, FDDI or Token Ring interfaces
+# by adding interface definitions above.  The format of an
+# interface defintion is:
+#
+#	# XXN::
+#	ipaddr_XXN="WW.XX.YY.ZZ"
+#	netmask_XXN="MM.MM.MM.MM"
+#	linkarg_XXN="LINK ARGS"
+#	additional_XXN=
+# or
+#	ipaddr_XXN="WW.XX.YY.ZZ/prefix"
+#	linkarg_XXN="LINK ARGS"
+#	additional_XXN=
+#
+# Where XXN should be replaced by the interface name and unit number
+# (e.g. ef0, we1, ntwo1, ...).  Also add the interface name to the
+# defintion of the interfaces variable, the interface names in this
+# list are seperated by spaces.
+#
+# For example, to add the configuration of ef1 at address 10.1.2.3
+# with a netmask of 255.255.255.0 and a media type of bnc use:
+#
+#	# ef1::
+#	ipaddr_ef1="10.1.2.3"
+#	netmask_ef1="255.255.255.0"
+#	linkarg_ef1="media bnc"
+#	additional_ef1=
+# or
+#	# ef1::
+#	ipaddr_ef1="10.1.2.3/24"
+#	linkarg_ef1="media bnc"
+#	additional_ef1=
+#
+# If ef0 was already configured, after adding ef1 to the interfaces
+# variable defintion you would end up with:
+#
+#	interfaces="ef0 ef1"
+#
+#############################################################################
+#
+# IPV6 configuration
+#
+# When a kernel is configured with INET6, then when any interface
+# is brought up, the IPv6 link-local address is automatically
+# assigned to that interface by the kernel.
+#
+# There are 3 variables that may be used for IPv6 configuration:
+
+#	ip6addr_XXN="xxxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx/prefix"
+#
+#	rtadv_XXN=YES
+#
+# ip6addr_XXN specifies an IPv6 address to assign to the interface.
+#
+# If rtadv_XXN is set, the sysctl variable
+#	net.inet.ip6.accept_rtadv
+# will be set before issuing the ifconfig command.  Setting
+# it to YES will allow router advertisement messages to be
+# accepted, to NO will ignore them.
+#
+#   #############################################################
+#   # Note: net.inet.ip6.accept_rtadv is NOT a per-interface    #
+#   # variable, and setting it to YES for any interface will    #
+#   # cause it to be set, even if there are interfaces with NO. #
+#   #############################################################
+#
+# A default IPv6 router is specified via:
+#
+#	def6route="xxxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx"
+#
+#############################################################################
+#
+# ATM configuration
+#
+# The ATM configuration variables are:
+#
+# atm_adapters
+#	Specify a list of ATM adapters to configure.
+# atm_netif_XXN
+#	Defines the prefix and number of the network interfaces to
+#	define for ATM adapter XXN.  Prefixes must be unique for each ATM 
+#	adapter.
+# atm_sigmgr_XXN
+#	Defines the ATM signalling manager to attach to ATM adapter
+#	XXN.
+# atm_prefix_XXN
+#	Defines the NSAP prefix to use for ATM adapter XXN.  Not
+#	required if the ATM switch supports ILMI and you run ilmid.
+# atm_arpserver_XXN
+#	Specifies the NSAP address of the ATM ARP server for network
+#	interface XXN.
+# ilmid
+#	(YES or NO) Specifies whether ilmid will be started.
+# atmarpd
+#	(NO or a list of network interfaces) Specifies that ATM
+#	ARP service will be provided on the given network interfaces.
+#	Requires that scspd is configured and running.
+# 
+# A sample configuration is:
+#
+# interfaces="... atma0 atmb0 atmb1"
+#
+# ...
+# # ATM configuration
+# atm_adapters="hfa0 hfa1"
+# # Fore ATM adapter 0
+# atm_netif_hfa0="atma 1"
+# atm_sigmgr_hfa0="uni31"
+# atm_arpserver_atma0=0x47.0005.80.ffe100.0000.f21a.4a9d.0020481a4a9d.00
+# ipaddr_atma0="10.1.0.0"
+# netmask_atma0="255.255.0.0"
+#
+# # Fore ATM adapter 1
+# atm_netif_hfa1="atmb 2"
+# atm_sigmgr_hfa1="uni31"
+# atm_arpserver_atmb0=0x47.0005.80.ffe100.0000.f21a.4a9d.0020481a4a9d.00
+# ipaddr_atmb0="10.2.1.0"
+# ipaddr_atmb0="255.255.255.0"
+# atm_arpserver_atmb1=0x47.0005.80.ffe100.0000.f21a.4a9d.0020481a4a9d.00
+# ipaddr_atmb1="10.2.2.0"
+# ipaddr_atmb1="255.255.255.0"
+#
+# ilmid=YES
+# atmarpd="atma0 atmb1"
+#
+#############################################################################
+#
+# These flags specify whether or not to run the daemons (values YES or NO),
+# or the flags with which to run them if another value.
+#
+routedflags=NO
+timedflags=NO
+rwhod=-M16
+rstatd=NO
+randomdflags=YES
+
+# Do not start apmd by default
+# For normal operation (apmd controls suspend events) uncomment
+# the following line
+# apmdflags="-m user"
+apmdflags="${apmdflags:-NO}"
+
+# Start dhcpd by default if /etc/dhcpd.conf exists.  Put command line
+# flags for it here (-q keeps it from being verbose on startup).
+dhcpdflags=-q
+
+# Default to no network connections. See syslogd(8).
+syslogdflags=-l
+
+# Argument for the -u option of inetd.  See inetd(8).
+inetd_ignore=internal
+
+# Start sshd by default if a host key exists.  Add flags here if desired.
+sshdflags=
+
+# Run ATM ILMI protocol
+ilmid=NO
+# A list of network interfaces on which to provide ATM ARP service
+atmarpd=NO
+
+#############################################################################
+#
+# Configure hostname and NIS domain as defined in the header
+#
+is_executable hostname && hostname $hostname
+
+# Setting the YP/NIS nis_domain does not configure YP/NIS for your
+# system -- see irs.conf(5).
+if [ X$nis_domain != X ]; then
+    is_executable domainname && domainname $nis_domain
+fi
+
+#############################################################################
+# Run any sysctl commands configured in /etc/rc.local.  Some of them
+# need to be enabled before the routing daemon is started and
+# /etc/rc.local is run too late in the boot process.  Network related
+# sysctl commands will all eventually all be moved here.
+is_executable sysctl && is_executable grep &&
+	grep 'sysctl[	 ]-w[	 ]net\.' /etc/rc.local | sh
+
+#############################################################################
+# Configure ATM adapters
+for if in $atm_adapters; do
+	netif=`eval "echo \\\$atm_netif_$if"`
+	sigmgr=`eval "echo \\\$atm_sigmgr_$if"`
+	prefix=`eval "echo \\\$atm_prefix_$if"`
+	if [ X"$netif" != X ]; then
+		set -- $netif
+		is_executable atm && atm set netif $if $1 $2
+		if [ X$sigmgr != X ]; then
+			is_executable atm && atm attach $if $sigmgr
+		fi
+		if [ X$prefix != X ]; then
+			is_executable atm && atm set prefix $if $prefix
+		fi
+	fi
+done
+
+#############################################################################
+#
+# Configure interfaces defined in the header
+#
+for if in $interfaces; do
+    ipaddr=`eval "echo \\\$ipaddr_$if"`
+    if [ X$ipaddr != X ] && is_executable expr; then
+	ipprefix=`expr $ipaddr : '[^/]*/\(.*\)'`
+	ipaddr=`expr $ipaddr : '\([^/]*\).*'`
+	if [ X$ipaddr != X ] && is_executable ifconfig; then
+	    eval "ifconfig $if inet set $ipaddr\${ipprefix:+/}$ipprefix \
+		\${netmask_$if:+netmask} \$netmask_$if \
+		\$linkarg_$if \$additional_$if"
+	fi
+    fi
+    ip6addr=`eval "echo \\\$ip6addr_$if"`
+    if [ X$ip6addr != X ] && is_executable ifconfig; then
+	eval "ifconfig $if inet6 add $ip6addr \$linkarg_$if"
+    fi
+    rtadv=`eval "echo \\\$rtadv_$if"`
+    if [ X$rtadv = XYES ] && is_executable sysctl && is_executable rtsol; then
+	sysctl -w net.inet.ip6.accept_rtadv=1
+	rtsol $if
+    fi
+done
+unset ipaddr ipprefix ip6addr rtadv
+
+# set up multicast on primary interface
+if [ X$primary != X ] ; then
+    ipaddr=`eval "echo \\\$ipaddr_$primary"`
+    if [ X$ipaddr != X ] && is_executable expr && is_executable route; then
+	ipaddr=`expr $ipaddr : '\([^/]*\).*'`
+	route -q add -net 224.0.0.0/4 -interface $ipaddr
+    fi
+    unset ipaddr
+fi
+
+# Configure virtual hosts defined in /etc/virtualip
+# /etc/virtualip contains a list of IP addresses to configure.
+# We lookup the link address (if any) and arp for them if we
+# can; otherwise we just add them as an IP alias on the loopback.
+if [ -f /etc/virtualip ]; then
+    is_executable linkaddr && is_executable cat && is_executable sed &&
+	is_executable ifconfig && linkaddr $(cat /etc/virtualip | \
+	sed -e '/^#/d' -e 's/#.*//') 2>/dev/null | \
+	while read line; do
+	    set -- $line		# virtualip [linkaddr]
+	    ifconfig lo0 add $1
+	    if [ "$2" ] && is_executable arp; then arp -s $1 $2 pub; fi
+	done
+fi
+
+#############################################################################
+# Finish configuring ATM interfaces after IP addresses have been configured
+#
+if [ "X$atm_adapters" != "X" ] && is_executable atm && is_executable sed; then
+	for netif in `atm show netif 2>/dev/null | \
+	   sed -e 1d -e '2,$s/ .*//'`; do
+		arpserver=`eval "echo \\\$atm_arpserver_$netif"`
+		if [ X$arpserver != X ]; then
+			atm set arpserver $netif $arpserver
+		fi
+	done
+fi
+#############################################################################
+#
+# NOTE:
+#  Configure LAN (Ethernet, FDDI and Token Ring) interfaces with
+#  by specification of the configuration variables as
+#  described above.
+#
+#  If you have non-LAN interfaces (such as synchronous serial
+#  interfaces), you will have to add ifconfig lines for them manually.
+#  These ifconfig commands should placed before the ifconfig for lo0
+#  and the installation of a default route.
+#
+#  Add commands to configure non-LAN interfaces AFTER this line
+
+#  Add commands to configure non-LAN interfaces BEFORE this line
+#
+
+# configure localhost (loopback) interface
+is_executable ifconfig && ifconfig lo0 inet add 127.0.0.1
+
+# do not send packets to the "loopback" net off-machine
+is_executable route && route -q add -net 127 127.0.0.1 -reject
+
+# If IPv6 is configured, then install reject routes to protect
+# us from malicious packets.
+if is_executable route && route get -inet6 ::1 >/dev/null ; then
+    # Don't allow "internal" addresses to appear on the wire.
+    route -q add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+
+    # Reject packets to malicious IPv4 compatible prefix.
+    route -q add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
+    route -q add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
+    route -q add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+    route -q add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
+
+    # Reject packets to malicious 6to4 prefix.
+    route -q add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
+    route -q add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
+    route -q add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
+    route -q add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
+
+    route -q add -inet6 2002:0a00:: -prefixlen 24 ::1 -reject
+    route -q add -inet6 2002:ac10:: -prefixlen 28 ::1 -reject
+    route -q add -inet6 2002:c0a8:: -prefixlen 32 ::1 -reject
+fi
+
+
+# Configure a static default route as defined in the header
+if [ X$defroute != X ] && is_executable route; then
+	route -q add default $defroute
+fi
+if [ "X$def6route" != X ] && is_executable route; then
+	eval "route -q add -inet6 default $def6route"
+fi
+
+#
+# Configure addition interfaces as described above instead of adding
+# ifconfig commands here.
+#
+
+# BEGIN LOCAL ADDITIONS

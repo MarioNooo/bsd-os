@@ -1,0 +1,22 @@
+#!/bin/sh
+#	BSDI Demand.up,v 2.2 1997/01/16 18:12:54 prb Exp
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-debug)	shift; echo $(date): $0 $* ; set -x ;;
+        --)	shift; break ;;
+        -*|+*)	shift ;;
+        *)	break ;;
+        esac
+done
+
+SYSTEM=$1	# System
+INTERFACE=$2	# Interface
+LOCAL=$3	# Local address
+REMOTE=$4	# Remote address
+
+# There is no default action here.
+# Add things like ntpdate and fetching mail here.
+
+exit 0

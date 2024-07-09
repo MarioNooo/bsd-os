@@ -1,0 +1,7 @@
+#
+# Format is: <fieldname>:<tab><fieldvalue>
+#
+GROUP:	user
+HDIR:	/usr/home/
+SHELL:	/bin/csh
+

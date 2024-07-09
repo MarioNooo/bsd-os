@@ -1,0 +1,8 @@
+# Host: Intel 386 running BSD/OS
+
+XM_FILE= xm-bsdi.h
+NAT_FILE= nm-bsdi.h
+NAT_CLIBS= -lkvm
+
+# NOTE: Do not spread NATDEPFILES over several lines - it hurts BSD make.
+NATDEPFILES= bsdi-kcore.o bsdi-kernel.o corelow.o fork-child.o i386b-nat.o i386bsdi-kgdb.o i387-nat.o infptrace.o inftarg.o remote-kgdb-sl.o remote-kgdb.o

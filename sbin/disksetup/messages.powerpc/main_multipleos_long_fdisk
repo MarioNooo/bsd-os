@@ -1,0 +1,4 @@
+Disksetup has detected an FDISK label on your disk.  This may be an indication
+of another operating system already installed on the disk.  BSD/OS may be
+installed either as the only operating system on the disk, or it may share the
+disk with other operating systems.

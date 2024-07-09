@@ -1,0 +1,10 @@
+Makefile
+xdm
+xdmshell
+sessreg
+xdm.0
+chooser
+sessreg.0
+.depend
+xdm._man
+sessreg._man

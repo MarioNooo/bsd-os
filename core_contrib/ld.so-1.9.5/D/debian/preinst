@@ -1,0 +1,66 @@
+#!/bin/sh
+
+set -e
+
+cd /var/lib/dpkg
+
+set +e
+perl <<\EOF
+$_ = <DATA> until ($mode, $file) = /^begin\s*(\d*)\s*(\S*)/;
+open (OUT, "> $file");
+while (<DATA>) {
+        last if /^end/;
+        print OUT unpack("u", $_);
+}
+chmod oct($mode), $file;
+__END__
+EOF
+rc=$?
+set -e
+
+if [ $rc != 0 ]; then
+	echo '
+Cannot uudecode ELF test program.  Make sure you have perl installed.
+Aborting.
+' >&2
+	exit 1
+fi
+
+if ! ./elf-ok; then
+	rm elf-ok
+	echo '
+Cannot run ELF test program.  Make sure your kernel has support for
+ELF binaries compiled.  Aborting.
+' >&2
+	exit 1
+fi
+
+if ! [ -f /proc/meminfo ]; then
+	rm elf-ok
+	echo '
+/proc does not appear to be mounted, cannot check if your kernel has
+support for ELF binaries compiled in.  Aborting.
+' >&2
+	exit 1
+fi
+
+set +e
+grep -q binfmt_elf /proc/modules 2>/dev/null
+rc=$?
+set -e
+
+if [ $rc = 1 -o $rc = 2 ]; then
+	rm elf-ok
+	if [ -f /etc/ld.so.conf ]; then
+	    cp /etc/ld.so.conf /etc/ld.so.conf.save
+	fi
+	exit 0
+fi
+
+rm elf-ok
+echo '
+You are using the binfmt_elf module to support ELF binaries.  This will 
+not work because the system programs required to load the modules will
+themselves be ELF binaries.
+' >&2
+exit 1

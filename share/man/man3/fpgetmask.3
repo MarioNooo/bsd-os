@@ -1,0 +1,152 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"      BSDI fpgetmask.3,v 2.1 1995/12/05 20:40:39 donn Exp
+.\"
+.Dd October 25, 1995
+.Dt FPGETMASK 3
+.Os
+.Sh NAME
+.Nm fpgetmask ,
+.Nm fpgetround ,
+.Nm fpgetsticky ,
+.Nm fpsetmask ,
+.Nm fpsetround ,
+.Nm fpsetsticky
+.Nd manipulate IEEE floating point exceptions and modes
+.Sh SYNOPSIS
+.Fd #include <ieeefp.h>
+.Ft fp_except
+.Fn fpgetmask void
+.Ft fp_rnd
+.Fn fpgetround void
+.Ft fp_except
+.Fn fpgetsticky void
+.Ft fp_except
+.Fn fpsetmask fp_except
+.Ft fp_rnd
+.Fn fpsetround fp_rnd
+.Ft fp_except
+.Fn fpsetsticky fp_except
+.Sh DESCRIPTION
+These functions provide a means to manipulate
+IEEE 754 floating point exceptions and modes.
+The IEEE standard for floating point arithmetic
+describes a number of exceptions and rounding modes;
+check the standard for details.
+.Pp
+The IEEE 754 exceptions are handled using
+an integral type named
+.Fa fp_except ,
+which may have any of five named bits set:
+.Bl -tag -width FP_X_IMP\0
+.It Dv FP_X_IMP
+The result of a floating point operation was imprecise;
+the format could not represent the result exactly.
+Since many floating point numbers can't be represented
+exactly in the IEEE format (or sometimes any finite format),
+this exception is a frequent one.
+.It Dv FP_X_INV
+An invalid floating point operation occurred.
+There are a variety of ways to provoke this exception,
+some of them implementation-dependent.
+Typically the floating point registers were manipulated incorrectly,
+or arithmetic on special values was attempted incorrectly,
+such as multiplying infinity by zero.
+.It Dv FP_X_DZ
+A floating point operation divided by zero.
+.It Dv FP_X_OFL
+The result of a floating point operation couldn't be stored
+accurately because its magnitude was too great to be represented.
+.It Dv FP_X_UFL
+The result of a floating point operation couldn't be stored
+accurately because its magnitude was too small to be represented.
+.El
+.Pp
+Rounding modes are handled using an integral type named
+.Fa fp_rnd .
+When a floating point result can't be represented exactly
+because the format doesn't have enough (perhaps infinite) bits
+of precision,
+one of four things will be done to the result,
+depending on the rounding mode:
+.Bl -tag -width FP_X_IMP\0
+.It Dv FP_RM
+Round toward negative infinity.
+.It Dv FP_RN
+Round to nearest or even.
+.It Dv FP_RP
+Round toward positive infinity.
+.It Dv FP_RZ
+Truncate toward zero.
+.El
+.Pp
+By default, all IEEE exceptions are
+.Dq masked ;
+that is to say, special values such as
+.Fa Inf
+(infinity) or
+.Fa NaN
+(not a number) are produced.
+The only portable way in which a program can
+observe and manipulate exceptions and
+set rounding modes is with the following functions.
+.Pp
+The
+.Fn fpsetmask
+function is the only portable way to
+enable floating point exceptions.
+If you enable an exception with
+.Fn fpsetmask
+and a floating point operation causes that exception,
+your program will receive a
+.Dv SIGFPE
+signal
+.Pq see Xr sigaction 2 .
+Bits that are set enable exceptions, while cleared bits disable
+exceptions.
+The
+.Fn fpsetmask
+function returns the previous exception mask.
+The
+.Fn fpgetmask
+function returns a mask of the currently
+enabled floating point exceptions without altering them.
+.Pp
+The
+.Fn fpgetsticky
+function returns the mask of
+.Sq sticky
+floating point status bits.
+When an operation fails, regardless of whether an exception
+is enabled, the particular failure is marked in the sticky bit mask
+using the same bit as the corresponding exception.
+Thus you can find out how an
+.Fa Inf
+or a
+.Fa NaN
+was generated, or how an exception was generated.
+You must clear the sticky bits after every failed operation in
+order to get a reliable report for the next failure.
+The
+.Fn fpsetsticky
+function sets the
+.Sq sticky
+floating point status bits, and
+returns the previous floating point status bits.
+.Pp
+The
+.Fn fpgetround
+function returns the current rounding mode.
+The
+.Fn fpsetround
+function sets the rounding mode and returns the
+previous rounding mode.
+.Sh STANDARDS
+The IEEE functions were written to conform to the description
+in the System V Release 4 API.
+.Sh BUGS
+Although every modern architecture implements IEEE 754 arithmetic,
+not all of the old ones do.
+Thus these functions are technically machine-dependent.

@@ -1,0 +1,316 @@
+#	BSDI	boot.define,v 1.18 2003/08/28 20:47:49 giff Exp
+
+generic	narrowtargets	0
+	all		0x00ff
+	none		0x0000
+	target0		0x0001
+	target1		0x0002
+	target2		0x0004
+	target3		0x0008
+	target4		0x0010
+	target5		0x0020
+	target6		0x0040
+	target7		0x0080
+	t0		0x0001
+	t1		0x0002
+	t2		0x0004
+	t3		0x0008
+	t4		0x0010
+	t5		0x0020
+	t6		0x0040
+	t7		0x0080
+;
+
+generic widetargets	1
+	all		0xffff
+	include		generic	narrowtargets
+	target8		0x0100
+	target9		0x0200
+	target10	0x0400
+	target11	0x0800
+	target12	0x1000
+	target13	0x2000
+	target14	0x4000
+	target15	0x8000
+	t8		0x0100
+	t9		0x0200
+	t10		0x0400
+	t11		0x0800
+	t12		0x1000
+	t13		0x2000
+	t14		0x4000
+	t15		0x8000
+;
+
+generic	yesno		2
+	yes		1
+	Yes		1
+	YES		1
+	Y		1
+	y		1
+	no		0
+	No		0
+	NO		0
+	n		0
+	N		0
+	on		1
+	ON		1
+	On		1
+	off		0
+	Off		0
+	OFF		0
+;
+
+#
+#	flags in spi code which are associated by hba
+aha	reset_delay	1000
+;
+aic	reset_delay	1000
+;
+bfp	reset_delay	1000
+;
+bha	reset_delay	1000
+;
+compaqscsi	reset_delay	1000
+;
+eaha	reset_delay	1000
+;
+ncr	reset_delay	1000
+;
+sa	reset_delay	1000
+;
+
+aha	single_lun	1001
+	include		generic narrowtargets
+;
+aic	single_lun	1001
+	include		generic widetargets
+;
+bfp	single_lun	1001
+	include		generic widetargets
+;
+bha	single_lun	1001
+	include		generic widetargets
+;
+eaha	single_lun	1001
+	include		generic narrowtargets
+;
+ncr	single_lun	1001
+	include		generic widetargets
+;
+sa	single_lun	1001
+	include		generic narrowtargets
+;
+compaqscsi	single_lun	1001
+	include		generic narrowtargets
+;
+
+aic	skip_targets	1002
+	include		generic widetargets
+;
+bfp	skip_targets	1002
+	include		generic widetargets
+;
+compaqscsi	skip_targets	1002
+	include		generic widetargets
+;
+eaha	skip_targets	1002
+	include		generic narrowtargets
+;
+ncr	skip_targets	1002
+	include		generic widetargets
+;
+sa	skip_targets	1002
+	include		generic narrowtargets
+;
+aic	id_message	1003
+	include		generic widetargets
+;
+ncr	id_message	1003
+	include		generic widetargets
+;
+aic	busted_v2sync	1004
+	include		generic widetargets
+;
+ncr	busted_v2sync	1004
+	include		generic widetargets
+;
+aha	busted_enquiry	1005
+	include		generic narrowtargets
+;
+aic	busted_enquiry	1005
+	include		generic widetargets
+;
+bfp	busted_enquiry	1005
+	include		generic widetargets
+;
+bha	busted_enquiry	1005
+	include		generic widetargets
+;
+eaha	busted_enquiry	1005
+	include		generic narrowtargets
+;
+ncr	busted_enquiry	1005
+	include		generic widetargets
+;
+sa	busted_enquiry	1005
+	include		generic narrowtargets
+;
+compaqscsi	busted_enquiry	1005
+	include		generic narrowtargets
+;
+aic	probe_timeout	1006
+	include		generic widetargets
+;
+ncr	probe_timeout	1006
+	include		generic widetargets
+;
+
+aic	busted_v3sync	1007
+	include		generic widetargets
+;
+ncr	busted_v3sync	1007
+	include		generic widetargets
+;
+
+#	flags associated directly with aic driver
+aic	flags			0
+	anyadaptec		0x1
+;
+aic	initiator_id	1
+;
+aic	disconnect	3
+	include		generic widetargets
+;
+aic	sync		4
+	include		generic widetargets
+;
+aic	fast		5
+	include		generic widetargets
+;
+aic	ultra		6
+	include		generic widetargets
+;
+aic	wide		7
+	include		generic widetargets
+;
+aic	tags		8
+	include		generic widetargets
+;
+aic	termination	10
+	include		generic yesno
+	lvd_low		0x40
+	lvd_high	0x80
+	lvd		0xc0
+	se_low		0x10
+	hvd_low		0x10
+	se_high		0x20
+	hvd_high	0x20
+	se		0x30
+	hvd		0x30
+;
+
+aic	active_negation	11
+	include		generic yesno
+;
+aic	parity		12
+	include		generic widetargets
+;
+aic	broken_disconnect	13
+	include		generic widetargets
+;
+aic	bus_release_time	14
+;
+aic	ultra2		15
+	include		generic widetargets
+;
+aic	ultra160	16
+	include		generic widetargets
+;
+
+
+#	flags associated directly with ncr driver
+ncr	initiator_id	1
+;
+ncr	disconnect	3
+	include		generic widetargets
+;
+ncr	sync		4
+	include		generic widetargets
+;
+ncr	fast		5
+	include		generic widetargets
+;
+ncr	ultra		6
+	include		generic widetargets
+;
+ncr	wide		7
+	include		generic widetargets
+;
+ncr	tags		8
+	include		generic widetargets
+;
+ncr	pci_burst_size	9
+;
+ncr	parity		10
+	include		generic yesno
+;
+ncr	tolerant	11
+	include		generic yesno
+;
+ncr	selection_timeout	12
+;
+ncr	ultra2		13
+	include		generic widetargets
+;
+ncr	ultra160	14
+	include		generic widetargets
+;
+ncr	ledctl		15
+	include		generic yesno
+;
+
+sa	initiator_id	1
+;
+sa	parity		2
+	include		generic narrowtargets
+;
+sa	disconnect	3
+	include		generic narrowtargets
+;
+
+sd	concurrency	1
+	raid		999
+;
+st	usehbaresid	1
+	include		generic	yesno
+;
+wd	is_mapped	1
+	include		generic yesno
+;
+wd	use_dma		2
+	include		generic yesno
+;
+wd	use_lba		3
+	include		generic yesno
+;
+wd	use_wcache	4
+	include		generic yesno
+;
+wdpi	use_dma		2
+	include		generic yesno
+;
+bfp	tags		1
+	include		generic widetargets
+;
+bha	tags		20
+	include		generic widetargets
+;
+ntwo	shared_segment_size	1
+;
+compaqscsi	tags	1
+	include		generic widetargets
+;
+plug_and_play	skip_probe	1
+	include		generic yesno
+;

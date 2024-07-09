@@ -1,0 +1,655 @@
+.\" Copyright (c) 1996,1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ipfwasm.8,v 1.6 2002/12/20 16:36:11 prb Exp
+.Dd June 12, 1997
+.Dt IPFWASM 8
+.Sh NAME
+.Nm ipfwasm
+.Nd assemble a BSD IP Filter
+.Sh SYNOPSIS
+.Nm ipfwasm
+.Op Fl S
+.Op Fl f Ar filename
+.Op Fl o Ar output
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm ipfwasm
+utility assembles the BSD IP Filter assembly program stored in
+.Ar file .
+If
+.Ar file
+is specified as
+.Dq -
+then the program is read from standard input.
+In this case, a
+.Ar filename
+may be specified by the
+.Fl f
+option to be used when reporting errors.
+.Pp
+If
+.Ar output
+is specified by the
+.Fl o
+option, the resulting bpf machine code is written into the file named
+.Ar output .
+If not specified, the machine code is written to
+.Ar file Ns No .filter
+(after stripping any
+.Nm .ipfw
+suffix from
+.Ar file . )
+.Pp
+Before assembling the program, and if
+.Ar file
+is not specified as
+.Dq - ,
+.Nm ipfwasm
+preprocesses the program with
+.Xr cpp 1 .
+.Pp
+Line comments are introduces by the character sequence
+.Nm //
+and extend to the end of the line.  C style comments may also be used.
+A program is simply a series of instructions.  Instructions have
+the following form:
+.sp
+.ti +.5i
+.Op L Ns Ar num Ns No \:
+.Ar mnemonic
+.Ar operands
+.Op \;
+.sp
+Normally instructions are terminated by the end of the line, though
+multiple instructions may be placed on a single line by separating
+them by the
+.Nm ;
+character.
+Labels are always of the form
+.Nm L No Ar num .
+.Pp
+By default,
+.Nm ipfwasm
+will optimize the code to remove redundant loads, dead code,
+jumps to jumps, etc.  To disable optimization the
+.Fl S
+option may be used.
+.Pp
+The following instructions are available:
+.Bl -tag -width XXXXXXXXXXXXXXXXXXXXX
+.It ADD X
+Add the value in
+.Nm X
+to
+.Nm A .
+.It ADD # Ns Ar k
+Add the value
+.Ar k
+to
+.Nm A .
+.It AND X
+And the value in
+.Nm X
+to
+.Nm A .
+.It AND # Ns Ar k
+And the value
+.Ar k
+to
+.Nm A .
+.It CALL # Ns Ar k
+Call the filter in location
+.Ar k
+in the call list.  Set
+.Nm A
+to the return value of the filter.
+.It DIV X
+Divide the value in
+.Nm A
+by the value in
+.Nm X .
+.It DIV # Ns Ar k
+Divide the value in
+.Nm A
+by
+.Ar k .
+.It JEQ X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is equal to the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JEQ # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is equal to
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JGE X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is greater than or equal to the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JGE # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is greater than or equal to
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JGT X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is greater than the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JGT # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is greater than to
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JLE X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is less than or equal to the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JLE # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is less than or equal to
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JLT X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is less than to the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JLT # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is less than
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JMP Ar label
+Forward jump to 
+.Ar label .
+.It JNE X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is not equal to the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JNE # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+is not equal to
+.Ar k ,
+else jump to 
+.Ar flabel .
+.It JSET X Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+has any of the bits set that are also set in the value in
+.Nm X ,
+else jump to 
+.Ar flabel .
+.It JSET # Ns Ar k Ar tlabel flabel
+Forward jump to 
+.Ar tlabel
+if the value in
+.Nm A
+has any of the bits set that are also set in
+.Ar k ,
+else jump to 
+.Ar flabel .
+.\" .It LD IFN
+.\" Load
+.\" .Nm A
+.\" with the interface's index number on which the packet came in.
+.\" .It LD IFFLAGS[ Ns Ar reg Ns No ]
+.\" Load
+.\" .Nm A
+.\" with the interface flags associated with the interface referenced
+.\" by the index number stored in register
+.\" .Ar reg ,
+.\" which may be either
+.\" .Nm A
+.\" or
+.\" .Nm X .
+.\" .It LD IPSRCRT
+.\" Load
+.\" .Nm A
+.\" with the interface's index number of the interface on which we would route
+.\" packets back to the source IP address contained in the packet.
+.\" Return
+.\" .Nm 0
+.\" if no route exists and
+.\" .Nm -1
+.\" if the source address is
+.\" .Li INADDR_ANY .
+.It LD #LEN
+Load
+.Nm A
+with the length of the packet.
+.It Xo
+.No LD [ Ns Ar k No :
+.Ar width Ns No ]
+.Xc
+Load
+.Ar width
+bytes into
+.Nm A
+with the value located
+.Ar k
+bytes into the packet.
+If
+.Ar width
+is not specified then a width of 4 is assumed.
+The value of
+.Ar width
+must be 1, 2 or 4.
+.It LD # Ns Ar k
+Load
+.Nm A
+with the value of
+.Ar k .
+.It Xo
+.No LD "[X +" Ar k No :
+.Ar width Ns No ]
+.Xc
+Load
+.Ar width
+bytes into
+.Nm A
+with the value located
+.Nm X
++
+.Ar k
+bytes into the packet.
+If
+.Ar width
+is not specified then a width of 4 is assumed.
+The value of
+.Ar width
+must be 1, 2 or 4.
+.It LD M[ Ns Ar k Ns No ]
+Load
+.Nm A
+with the value stored in scratch memory word
+.Ar k .
+Each of the 16 scratch memory words is 32 bits.
+.It LD R[ Ns Ar k Ns No ]
+Load
+.Nm A
+with the value stored in the
+.Ar k Ns No th
+prom location.
+These locations are filled in by the kernel prior to calling the filter.
+Current possible values are:
+.Bl -tag -width ident -offset indent
+.It 0
+Auxiliary return status information (such as an ICMP code and type)
+.It 1
+Index number of source interface (input and forwarded packets only)
+.It 2
+Index number of destination interface (output and forwarded packets only)
+.It 3
+Index number of the return interface (input and forwarded packets only)
+.It 4
+The mbuf's m_flags value.
+.El
+.It LD TIME
+Load
+.Nm A
+with the current local time in seconds.
+.It LDB [ Ns Ar k Ns No ]
+Load
+.Nm A
+with value of the byte
+.Ar k
+bytes into the packet.
+.It "LDB [X +" Ar k Ns No ]
+Load
+.Nm A
+with value of the byte
+.Nm X
++
+.Ar k
+bytes into the packet.
+.It LDH [ Ns Ar k Ns No ]
+Load
+.Nm A
+with the value of the two bytes
+.Ar k
+bytes into the packet.
+.It "LDH [X +" Ar k Ns No ]
+Load
+.Nm A
+with the value of the two bytes
+.Nm X
++
+.Ar k
+bytes into the packet.
+.\" .It LDX IFN
+.\" Load
+.\" .Nm X
+.\" with the interface's index number on which the packet came in.
+.\" .It LDX IPSRCRT
+.\" Load
+.\" .Nm X
+.\" with the interface's index number of the interface on which we would route
+.\" packets back to the source IP address contained in the packet.
+.\" Return
+.\" .Nm 0
+.\" if no route exists and
+.\" .Nm -1
+.\" if the source address is
+.\" .Li INADDR_ANY .
+.It LDX #LEN
+Load
+.Nm X
+with the length of the packet.
+.It LDX # Ns Ar k
+Load
+.Nm X
+with the value of
+.Ar k .
+.It LDX M[ Ns Ar k Ns No ]
+Load
+.Nm X
+with the value stored in scratch memory word
+.Ar k .
+Each of the 16 scratch memory words is 32 bits.
+.It LDX R[ Ns Ar k Ns No ]
+Load
+.Nm X
+with the value stored in the
+.Ar k Ns No th
+prom location.
+.It LDX 4*([ Ns Ar k Ns ]&0xf)
+Load
+.Nm X
+with the low order nibble of the byte located
+.Ar k
+bytes into the packet, multiplied by 4.
+(In other words, load the ip header length of the packet).
+.It LDX TIME
+Load
+.Nm X
+with the current local time in seconds.
+.It LSH X
+Shift the value of
+.Nm A
+left by
+.Nm X
+bits.
+.It LSH # Ns Ar k
+Shift the value of
+.Nm A
+left by
+.Nm k
+bits.
+.It MOD X
+Replace A with the remainder of 
+.Nm A
+divided by
+.Nm X .
+.It MOD # Ns Ar k
+Replace A with the remainder of 
+.Nm A
+divided by
+.Ar k .
+.It MUL X
+Multiply 
+.Nm A
+by
+.Nm X .
+.It MUL # Ns Ar k
+Multiply 
+.Nm A
+by
+.Ar k .
+.It NEG
+Negate the value of
+.Ar A .
+.It OR X
+Or the bits in
+.Nm X
+into
+.Nm A .
+.It OR # Ns Ar k
+Or the bits of
+.Ar k
+into
+.Nm A .
+.It RET A
+Exit the filter with the value in
+.Nm A .
+.It RET # Ns Ar k
+Exit the filter with the value of
+.Ar k .
+.It RSH X
+Shift the value of
+.Nm A
+right by
+.Nm X
+bits.
+.It RSH # Ns Ar k
+Shift the value of
+.Nm A
+right by
+.Nm k
+bits.
+.It Xo
+.No ST [ Ns Ar k No :
+.Ar width Ns No ]
+.Xc
+Store the lower
+.Ar width
+bytes of the
+.Nm A
+register
+.Ar k
+bytes into the packet.
+.It Xo
+.No ST "[X +" Ar k No :
+.Ar width Ns No ]
+.Xc
+Store the lower
+.Ar width
+bytes of the
+.Nm A
+register
+.Nm X
++
+.Ar k
+bytes into the packet.
+.It ST # Ns Ar k
+Store the value of
+.Ar A
+into the scratch memory word
+.Ar k .
+.It Xo
+.No STX [ Ns Ar k No :
+.Ar width Ns No ]
+.Xc
+Store the lower
+.Ar width
+bytes of the
+.Nm X
+register
+.Ar k
+bytes into the packet.
+.It ST R[ Ns Ar k Ns No ]
+Store the value of
+.Nm A
+into the
+.Ar k Ns No th
+prom location.
+.It STX # Ns Ar k
+Store the value of
+.Ar X
+into the scratch memory word
+.Ar k .
+.It STX R[ Ns Ar k Ns No ]
+Store the value of
+.Nm X
+into the
+.Ar k Ns No th
+prom location.
+.It SUB X
+Subtract the value in
+.Nm X
+from
+.Nm A .
+.It SUB # Ns Ar k
+Subtract
+.Ar k
+from
+.Nm A .
+.It TAX
+Transfer the value of
+.Nm A
+into
+.Nm X .
+.It TXA
+Transfer the value of
+.Nm X
+into
+.Nm A .
+.El
+.Pp
+As a convenience to writing macros, any of the
+.Nm LD ,
+.Nm LDB ,
+and
+.Nm LDH
+instructions may be followed by an arithmetic operation and a constant numeric
+value or
+.Nm X .
+This will cause the generation of an additional bpf instruction.
+The available operations are:
+.Bl -tag -width indent
+.It &
+And the value in
+.Nm A
+with the operand.
+.It +
+Add the value in
+.Nm A
+with the operand.
+.It *
+Multiply the value in
+.Nm A
+with the operand.
+.It /
+Divide the value in
+.Nm A
+with the operand.
+.It -
+Subtract the value in
+.Nm A
+with the operand.
+.It |
+Or the value in
+.Nm A
+with the operand.
+.It <<
+Left shift the value in
+.Nm A
+by the operand.
+.It >>
+Right shift the value in
+.Nm A
+by the operand.
+.El
+.Pp
+Constant numeric values are always preceeded by
+.Nm # .
+If the numeric portion is enclosed in parentheses then multiple
+values may be combined using
+.Nm |
+and
+.Nm + .
+For example:
+.Nm #(0x80 | 0x7)
+is the same as
+.Nm #0x87 .
+.Pp
+There are several special forms of numeric values:
+.Bl -tag -width indent
+.It filter( Ns Ar name Ns No )
+Use the index number in the call chain of the filter having the tag
+.Ar name .
+For example:
+.Li filter(DNS-filter) .
+This is evaluated at the time the program is loaded into the kernel by
+.Xr ipfw 8 .
+.It host( Ns Ar name Ns No )
+Use the first IP address found which evaluates to the host called
+.Ar name .
+This is evaluated at the time of assembly.
+.It interface( Ns Ar name Ns No )
+Use the index number of the interface specified by
+.Ar name .
+For example:
+.Li interface(exp0) .
+This is evaluated at the time the program is loaded into the kernel by
+.Xr ipfw 8 .
+.It service( Ns Ar name/proto Ns No )
+Use the port number for the service
+.Ar name
+using the protocol
+.Ar proto .
+For example:
+.Li service(telnet/tcp) .
+This is evaluated at the time of assembly.
+.Sh SEE ALSO
+.Xr cpp 1 ,
+.Xr ipfw 8 ,
+.Xr ipfwcmp 8 ,
+.Xr ipfwdis 8

@@ -1,0 +1,7 @@
+# Host: PowerPC running BSD/OS
+
+XM_FILE= xm-bsdi.h
+NAT_FILE= nm-bsdi.h
+
+# NOTE: Do not spread NATDEPFILES over several lines - it hurts BSD make.
+NATDEPFILES= core-regset.c corelow.o fork-child.o gcore.c infptrace.o inftarg.o itp.o kcore.o kernel.o ppcbsdi-kgdb.c ppcbsdi-nat.c remote-itp.o remote-kgdb-sl.o remote-kgdb.o

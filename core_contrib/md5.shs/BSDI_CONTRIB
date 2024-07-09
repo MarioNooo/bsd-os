@@ -1,0 +1,22 @@
+Software Package:       
+	md5, shs, shs1
+
+Release/Version:
+	md5: version 3.1.2 95/11/23
+	shs: version 3.2.1 95/11/17
+	shs1: version 3.2.2 95/11/23
+	[ updated by chongo 96/09/01, however version numbers haven't changed ]
+
+Retrieved from:
+	chongo@prime.corp.sgi.com (Landon Curt Noll)
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and chongo@prime.corp.sgi.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+	Makefile configuration and new makefile to add BSDI targets.

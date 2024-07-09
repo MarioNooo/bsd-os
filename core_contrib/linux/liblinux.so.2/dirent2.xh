@@ -1,0 +1,21 @@
+/*	BSDI dirent2.xh,v 1.1 2000/02/12 18:00:31 donn Exp	*/
+
+/*
+ * Transformation for the kernel_dirent structure.
+ */
+
+%{
+#include <dirent.h>
+#define	kernel_dirent dirent
+%}
+
+struct kernel_dirent {
+	long d_fileno;
+	off_t linux_d_off;
+	unsigned short linux_d_reclen;
+	char d_name[256];
+
+	out(n, f, len) {
+		f->linux_d_reclen = len;
+	}
+};

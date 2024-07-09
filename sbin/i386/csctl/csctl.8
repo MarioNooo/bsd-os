@@ -1,0 +1,99 @@
+.\" WILDBOAR $Wildboar: csconfig.8,v 1.1 1996/10/02 05:53:19 shigeya Exp $
+.\"
+.\" Portions or all of this file are Copyright(c) 1994,1995,1996
+.\" Yoichi Shinoda, Yoshitaka Tokugawa, WIDE Project, Wildboar Project
+.\" and Foretune.  All rights reserved.
+.\"
+.\" This code has been contributed to Berkeley Software Design, Inc.
+.\" by the Wildboar Project and its contributors.
+.\"
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE WILDBOAR PROJECT AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" WILDBOAR PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd October 22, 1996
+.Dt CSCTL 8
+.Os
+.Sh NAME
+.Nm csctl
+.Nd PC Card control daemon
+.Sh SYNOPSIS
+.Nm csctl
+.Op Fl acdlqr
+.Op conf_file
+.Sh DESCRIPTION
+The
+.Nm csctl
+command is used to control the PC Card device driver. It installs card
+configuration parameters into kernel and also can act as a daemon that
+handles card events as they occur. The actions
+.Nm csctl
+takes when in daemon mode are also described in the card configuration
+file. See
+.Xr pccard.conf 5
+for details.
+.Pp
+
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+Append information from configuration file into kernel.
+.It Fl c
+Check the syntax of configuration file.
+.It Fl d
+Run as a daemon and handle PC card events.
+Note that if there are no event descriptions in the configuration file,
+.Nm csctl
+exits.
+.It Fl l
+Load information from the configuration file into kernel, overwriting
+the existing configuration. This is equivalent to using
+.Fl ra .
+.It Fl r
+Reset the kernel configuration to the state it had at boot time.
+.It Fl q
+Be quiet when the device is not configured.
+.El
+.Pp
+When no options are given,
+.Nm csctl
+displays current kernel PC card configuration.
+.Pp
+.Sh FILES
+By default,
+.Nm csctl
+reads configuration file
+.Pa /etc/pccard.conf .
+.Pp
+.Sh EXAMPLES
+Usually, csctl invoked from the run command file
+.Pa /etc/rc.hardware/1.cs.0 .
+For example:
+.Pp
+.Dl csctl -ld
+.Pp
+When
+.Nm csctl
+is running in daemon mode and receives a SIGHUP, it reloads the the
+configuration file. This is equivalent to using killing
+.Nm csctl
+and restarting it 
+.Fl ld .
+
+.Sh SEE ALSO
+.Xr pccard.conf 5
+.Sh AUTHOR
+Atsushi Onoe <onoe@sm.sony.co.jp>

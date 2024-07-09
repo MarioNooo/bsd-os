@@ -1,0 +1,8 @@
+#	BSDI Makefile.sparc,v 1.1 1998/09/09 05:18:30 torek Exp
+
+SRCS+=	elfinterp.c resolve.S sdiv.S udiv.S umul.S urem.S
+
+.SUFFIXES: .S
+
+.S.o:
+	${CC} ${CFLAGS} -c ${.IMPSRC}

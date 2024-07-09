@@ -1,0 +1,2 @@
+Disksetup will use the geometry determined from the CMOS for
+the FDISK table.

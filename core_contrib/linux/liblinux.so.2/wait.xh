@@ -1,0 +1,9 @@
+/*	BSDI wait.xh,v 1.1 2001/03/16 15:31:14 donn Exp	*/
+
+%{
+#include <sys/wait.h>
+%}
+
+flag int waitopt_t {
+	WNOSIGCHLD	0x80000000;	/* __WCLONE */
+};

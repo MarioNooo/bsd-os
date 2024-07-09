@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+#	BSDI	getioctlsizes,v 1.3 1995/08/02 23:49:27 polk Exp
+
+foreach $file ( ('/usr/include/sys/ioctl.h', '/usr/include/sys/ioctl_compat.h',
+'/usr/include/sys/ttycom.h') ) {
+
+	open (IOCTLS, $file) || die "$file open failed";
+
+	while (<IOCTLS>) {
+    		if (/^\s*#\s*define\s+\w+\s+_IO(R|W|WR)\('?\w+'?,\s*\w+,\s*([^)]+)/) {
+			$need{$2}++;
+    		} 
+	}
+}
+
+foreach $key ( sort keys %need ) {
+    print $key,"\n";
+} 

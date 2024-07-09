@@ -1,0 +1,152 @@
+KERBEROS IV Server Configuration
+================================
+
+  Edit /etc/kerberosIV/krb.conf to define the local realm 
+  and the administration server for the realm, for example:
+
+	MY.REALM
+	# Realm	 Hostname          Administrative database server?
+	MY.REALM kerb.mydomain.com admin server
+
+  The realm name must be all uppercase and must be the very first line
+  of the krb.conf file.  The above example assumes the kerberos server
+  is named kerb.mydomain.com.
+
+  /etc/kerberosIV/krb.realms defines the mappings from host/domain
+  names to realms, for example:
+
+	# Host			Default Kerberos Realm
+	client.mydomain.com	MY.REALM
+	# .Domain
+	.mydomain.com		MY.REALM
+
+  Run kdb_init(8) to initialize the master database on the server,
+  the argument should be the name of your realm:
+	# kdb_init MY.REALM
+
+  Run kstash(8) to store the master key:
+	# kstash
+
+  Start the kerberos server by hand this time with the command:
+  	# kerberos >> /var/log/kerberos.log &
+  It will be started automatically on future reboots.
+
+  Uncomment the lines for krbupdate and kpasswd in /etc/inetd.conf and
+  send inetd a SIGHUP.
+
+  The parts of a Kerberos name are ``principal.instance@realm''
+  Run ``kdb_edit -n'' and create an entry for principal ``kpasswd''
+  (use a random password for this name) and use the hostname of
+  your Kerberos server for the instance.  Then create Kerberos
+  names for each client with principal ``rcmd'' and the hostname
+  of each client machine as the instance; you can use random
+  passwords for each of these as well (that is, nobody needs to
+  know the actual password, that is handled below when you create
+  the srvtab file for each client).  For example:
+	# kdb_edit -n
+	...
+	Principal name: kpasswd
+	Instance: SERVER_HOSTNAME
+	...
+	New Password: 			[just hit return]
+	New Password: 			[just hit return]
+	Random password [y] ?
+	...				[take the defaults for everything else]
+	Principal name: rcmd
+	Instance: FOR_EACH_CLIENT_HOSTNAME
+	...
+
+Configuring srvtab files
+------------------------
+
+  Run ext_srvtab(8) for each of the client machines (and the server); copy
+  the srvtab.new files onto the appropriate machines; make sure the client
+  machines also have the correct krb.conf files and have the correct
+  services enabled in /etc/inetd.conf (klogin, eklogin, and kshell).
+  For example:
+	# extract srvtab for server
+	server# mkdir /etc/kerberosIV/srvtabs
+	server# chmod 700 /etc/kerberosIV/srvtabs
+	server# cd /etc/kerberosIV/srvtabs
+	server# ext_srvtab -n servername
+	server# mv servername-new-srvtab /etc/kerberosIV/srvtab
+
+	# extract srvtab for each client
+	server# cd /etc/kerberosIV/srvtabs
+	server# ext_srvtab -n hostname
+	...
+	client# mv hostname-new-srvtab /etc/kerberosIV/srvtab
+	client# vi /etc/inetd.conf
+	...
+	# HUP inetd when done editing inetd.conf [or reboot]
+
+Configuring register
+--------------------
+  Register should only be configured on trusted clients.  If you decide
+  not to run register on a given client then you must setup principals
+  for each user by hand, using ``kdb_edit -n'', with the login name of
+  the user as the principle and a null instance (just press return).
+  The password must be remembered and given to the user (this will be
+  their login password, which they can then change with ``passwd'').
+
+  On the server, run the following for each client host:
+	# cd /etc/kerberosIV/register_keys
+	# /usr/sbin/make_keypair CLIENT_HOSTNAME
+
+  You must then manually (and securely) install the resulting
+  .update.keyXXX.XXX.XXX.XXX file on the client machine in
+  /etc/kerberosIV/.update.keyXXX.XXX.XXX.XXX (where XXX are the
+  digits from the clients inet address).
+
+  Server key files:
+	/etc/kerberosIV/register_keys/.update.keyXXX.XXX.XXX.XXX
+  Client key file:
+	/etc/kerberosIV/.update.keyXXX.XXX.XXX.XXX
+
+  Make sure that the permissions are 600 and owner root on both the
+  client and the server.
+
+  This file just contains a random 8 byte pattern that must be
+  the same on the client and on the server.
+
+Final Notes
+-----------
+
+  Users can create Kerberos principles for themselves using
+  ``register'' on the client machine that have been set up to run it.
+
+  The kerberized passwd command will change the kerberos passwd,
+  users can use the -l flag to change the local password unless
+  the local password is set to `*' by the admin.  In that case,
+  users can only use and change the Kerberos password.
+
+  The kerberized su command uses the file .klogin in roots home
+  directory to control root access.  To configure a user with root
+  access via `su', create a root instance for the user with
+  ``kdb_edit -n'' and add them to ~root/.klogin.  The entries in
+  root's .klogin file should be of the form:
+
+	user.root@MY.REALM
+
+See Also
+--------
+
+kdestroy (1) - destroy Kerberos tickets
+kerberos (1) - introduction to the Kerberos system
+kinit (1) - Kerberos login utility
+klist (1) - list currently held Kerberos tickets
+ksrvtgt (1) - fetch and store Kerberos ticket-granting-ticket using a service key
+register (1) - register with Kerberos
+
+ext_srvtab (8) - extract service key files from Kerberos key distribution center database
+kdb_destroy (8) - destroy Kerberos key distribution center database
+kdb_edit (8) - Kerberos key distribution center database editing utility
+kdb_init (8) - Initialize Kerberos key distribution center database
+kdb_util (8) - Kerberos key distribution center database utility
+kpasswdd (8) - Kerberos password changing daemon
+kstash (8) - stash Kerberos key distribution center database master key
+make_keypair (8) - generate Kerberos host key pair
+registerd (8) - Kerberos registration daemon
+
+krb.conf (5) - Kerberos configuration file
+krb.realms (5) - host to Kerberos realm translation file

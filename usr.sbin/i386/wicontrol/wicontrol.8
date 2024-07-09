@@ -1,0 +1,162 @@
+.\" Copyright (c) 1997, 1998, 1999
+.\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Bill Paul.
+.\" 4. Neither the name of the author nor the names of any co-contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY Bill Paul AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL Bill Paul OR THE VOICES IN HIS HEAD
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Modified for BSD/OS by Geert Jan de Groot
+.\"
+.\"	Id: wicontrol.8,v 1.6 1999/05/22 16:12:47 wpaul Exp 
+.\"	BSDI wicontrol.8,v 1.5 2001/07/13 17:46:31 geertj Exp
+.\"
+.Dd April 21, 1999
+.Dt WICONTROL 8
+.Os BSD/OS
+.Sh NAME
+.Nm wicontrol
+.Nd configure WaveLAN/IEEE devices
+.Sh SYNOPSIS
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl o
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl c Ar 0|1
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl q Ar SSID
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl d Ar max data length
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl r Ar RTS threshold
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl P Ar 0|1
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl S Ar max_sleep_duration
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl C 
+.Nm wicontrol
+.Op Fl i Ar iface 
+.Fl Z
+.Sh DESCRIPTION
+The
+.Nm
+command controls the operation of WaveLAN/IEEE wireless networking
+devices via the
+.Xr wi 4
+driver. Most of the parameters that can be changed are device-specific, as 
+.Xr ifconfig 8
+can be used to set general and 802.11-specific parameters.
+The
+.Nm
+command can also be used to view the current settings of these paremeters
+and to dump out the values of the card's statistics counters.
+.Pp
+Configuration changes can only be performed by the super user.
+.Pp
+The
+.Ar iface
+argument given to
+.Nm
+should be the logical interface name associated with the WaveLAN/IEEE
+device (wi0, wi1, etc...).
+.Sh OPTIONS
+The options are as follows:
+.Bl -tag -width Fl
+.It (none)
+Display the current settings of the specified WaveLAN/IEEE interface.
+This retrives the current card settings from the driver and prints them
+out. 
+.It Fl o
+Display the statistics counters.
+.It Fl c Ar 0|1
+Allow the station to create a service set (IBSS). Permitted values
+are 0 (don't create IBSS) and 1 (enable creation of IBSS). The default
+is 0.
+.Pp
+Note: this option is provided for experimental purposes only: enabling
+the creation of an IBSS on a host system doesn't appear to actually work.
+.It Fl q Ar SSID
+Specify the name of an IBSS (SSID) to create on a given interface.
+The
+.Ar SSID
+can be any text string up to 30 characters long.
+.Pp
+Note: this option is provided for experimental purposes only: enabling
+the creation of an IBSS on a host system doesn't appear to actually work.
+.It Fl d Ar max_data_length
+Set the maximum receive and transmit frame size for a specified interface.
+The
+.Ar max data length
+can be any number from 350 to 2304. The default is 2304.
+.It Fl r Ar RTS threshold
+Set the RTS/CTS threshold for a given interface. This controls the
+number of bytes used for the RTS/CTS handhake boundary. The
+.Ar RTS threshold
+can be any value between 0 and 2047. The default is 2347.
+.It Fl P Ar 0|1
+Enable or disable power management on a given interface. Enabling
+power management uses an alternating sleep/wake protocol to help
+conserve power on mobile stations, at the cost of some increased
+receive latency. Power management is off by default. Note that power
+management requires the cooperation of an access point in order to
+function; it is not functional in ad-hoc mode. Also, power management
+is only implemented in Lucent WavePOINT firmware version 2.03 or
+later, and in WaveLAN PCMCIA adapter firmware 2.00 or later. Older
+revisions will silently ignore the power management setting. Legal
+values for this parameter are 0 (off) and 1 (on).
+.It Fl S Ar max_sleep_interval
+Specify the sleep interval to use when power management is enabled.
+The
+.Ar max sleep interval
+is specified in milliseconds. The default is 100.
+.It Fl C
+Print the signal strength cache.
+.It Fl Z
+Zero the signal strength cache.
+.El
+.Sh SEE ALSO
+.Xr wi 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in FreeBSD and was later modified for BSD/OS.
+.Fx 3.0 .
+.Sh AUTHOR
+The
+.Nm
+command was written by
+.An Bill Paul Aq wpaul@ctr.columbia.edu .
+BSD/OS modifications by Geert Jan de Groot.

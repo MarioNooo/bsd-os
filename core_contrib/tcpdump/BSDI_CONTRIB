@@ -1,0 +1,653 @@
+Software Package:       
+	libpcap/tcpdump
+
+Release/Version:
+	0.0.6/3.0.2
+
+Retrieved from:
+	ftp.ee.lbl.gov
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and libpcap@ee.lbl.gov/tcpdump@ee.lbl.gov as
+	appropriate.
+
+Comments:
+	See BSD_CONTRIB files in subdirectories for more info.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Change it so that failure to look up the local IP address of the
+interface is a warning, not a fatal error.  This happens when an
+interface is linked into a PIF, the PIF has the address, not the
+interface itself.
+
+Index: tcpdump/tcpdump.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump/tcpdump.c,v
+retrieving revision 1.2
+diff -c -r1.2 tcpdump.c
+*** tcpdump.c	1996/02/28 21:15:40	1.2
+--- tcpdump.c	1997/05/22 17:40:33
+***************
+*** 292,298 ****
+  		if (pd == NULL)
+  			error(errbuf);
+  		if (pcap_lookupnet(device, &localnet, &netmask, errbuf) < 0)
+! 			error(errbuf);
+  		/*
+  		 * Let user own process after socket has been opened.
+  		 */
+--- 292,298 ----
+  		if (pd == NULL)
+  			error(errbuf);
+  		if (pcap_lookupnet(device, &localnet, &netmask, errbuf) < 0)
+! 			warning(errbuf);
+  		/*
+  		 * Let user own process after socket has been opened.
+  		 */
+
+Modify config.guess to map sparc and sparc_v9 running BSD/OS as
+known types:
+
+Index: libpcap-0.4a6/config.guess
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/config.guess,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -c -2 -r1.1.1.1 -r1.2
+*** config.guess	1998/02/02 18:59:58	1.1.1.1
+--- config.guess	1998/09/24 01:54:40	1.2
+***************
+*** 379,382 ****
+--- 379,385 ----
+  	echo m68k-hp-openbsd${UNAME_RELEASE}
+  	exit 0 ;;
++     sparc*:BSD/OS:*:*)
++ 	echo sparc-unknown-bsdi${UNAME_RELEASE}
++ 	exit 0 ;;
+      i?86:BSD/386:*:* | *:BSD/OS:*:*)
+  	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
+Index: tcpdump-3.4a6/config.guess
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/config.guess,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -c -2 -r1.1.1.1 -r1.2
+*** config.guess	1998/02/02 19:04:19	1.1.1.1
+--- config.guess	1998/09/24 01:57:14	1.2
+***************
+*** 379,382 ****
+--- 379,385 ----
+  	echo m68k-hp-openbsd${UNAME_RELEASE}
+  	exit 0 ;;
++     sparc*:BSD/OS:*:*)
++ 	echo sparc-unknown-bsdi${UNAME_RELEASE}
++ 	exit 0 ;;
+      i?86:BSD/386:*:* | *:BSD/OS:*:*)
+  	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
+Index: libpcap-0.4a6/configure
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/configure,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 configure
+*** libpcap-0.4a6/configure	1998/02/02 18:59:58	1.1.1.1
+--- libpcap-0.4a6/configure	2000/01/14 18:05:11
+***************
+*** 889,895 ****
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6
+! 		    if test $ac_cv_lbl_gcc_vers -gt 1 ; then
+  			    V_CCOPT="-O2"
+  		    fi
+  	    fi
+--- 889,895 ----
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6
+! 		    if test ${ac_cv_lbl_gcc_vers:-0} -gt 1 ; then
+  			    V_CCOPT="-O2"
+  		    fi
+  	    fi
+Index: libpcap-0.4a6/makefile
+===================================================================
+RCS file: /master/contrib/tcpdump/libpcap-0.4a6/makefile,v
+retrieving revision 1.2
+diff -c -r1.2 makefile
+*** libpcap-0.4a6/makefile	1998/02/17 14:42:07	1.2
+--- libpcap-0.4a6/makefile	2000/01/14 18:05:11
+***************
+*** 7,13 ****
+  
+  Makefile:	bpf_filter.c
+  	rm -f net
+! 	@CFLAGS=${CFLAGS} SHLICC2=0 ./configure --with-gcc="${CC}"
+  	rm -f net
+  
+  bpf_filter.c:	bpf/net/bpf_filter.c
+--- 7,13 ----
+  
+  Makefile:	bpf_filter.c
+  	rm -f net
+! 	@CFLAGS=${CFLAGS} SHLICC2=0 ./configure -q --with-gcc="${CC}"
+  	rm -f net
+  
+  bpf_filter.c:	bpf/net/bpf_filter.c
+Index: tcpdump-3.4a6/configure
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/configure,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 configure
+*** tcpdump-3.4a6/configure	1998/02/02 19:04:19	1.1.1.1
+--- tcpdump-3.4a6/configure	2000/01/14 18:05:13
+***************
+*** 883,889 ****
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6
+! 		    if test $ac_cv_lbl_gcc_vers -gt 1 ; then
+  			    V_CCOPT="-O2"
+  		    fi
+  	    fi
+--- 883,889 ----
+  fi
+  
+  		    echo "$ac_t""$ac_cv_lbl_gcc_vers" 1>&6
+! 		    if test ${ac_cv_lbl_gcc_vers:-0} -gt 1 ; then
+  			    V_CCOPT="-O2"
+  		    fi
+  	    fi
+Index: tcpdump-3.4a6/makefile
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/makefile,v
+retrieving revision 1.5
+diff -c -r1.5 makefile
+*** tcpdump-3.4a6/makefile	1998/02/27 05:00:48	1.5
+--- tcpdump-3.4a6/makefile	2000/01/14 18:05:13
+***************
+*** 1,5 ****
+  OPTIONAL_DEFINES=	-DHAVE_TOKEN -DHAVE_C_HDLC -DSNAPLEN=76 -DINET6 -DIPSEC
+! MK=${MAKE} -f Makefile CC=${CC} CCOPT="${CFLAGS} ${OPTIONAL_DEFINES}" \
+  	 BINDEST=${BINDIR} MANDEST=${MANDIR}
+  MAN1=tcpdump.0
+  
+--- 1,5 ----
+  OPTIONAL_DEFINES=	-DHAVE_TOKEN -DHAVE_C_HDLC -DSNAPLEN=76 -DINET6 -DIPSEC
+! MK=${MAKE} -f Makefile CC=${LDCC} CCOPT="${CFLAGS} ${OPTIONAL_DEFINES}" \
+  	 BINDEST=${BINDIR} MANDEST=${MANDIR}
+  MAN1=tcpdump.0
+  
+***************
+*** 7,13 ****
+  	@${MK}
+  
+  Makefile:
+! 	@SHLICC2=0 CC="${LDCC}" ./configure --with-gcc="${GCC}"
+  
+  depend:	Makefile
+  	@if [ $${M_DEPEND-"0"} -eq 0 ]; then \
+--- 7,13 ----
+  	@${MK}
+  
+  Makefile:
+! 	@SHLICC2=0 ./configure -q --with-gcc="${GCC}"
+  
+  depend:	Makefile
+  	@if [ $${M_DEPEND-"0"} -eq 0 ]; then \
+Index: tcpdump-3.4a6/addrtoname.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/addrtoname.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -r1.2 -r1.3
+40c40
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+602c602
+< 	(void)sprintf(buf, "%u", i);
+---
+> 	(void)snprintf(buf, sizeof(buf), "%u", i);
+621c621
+< 	(void)sprintf(buf, "%u", i);
+---
+> 	(void)snprintf(buf, sizeof(buf), "%u", i);
+647c647
+< 			(void)sprintf(buf, "%d", port);
+---
+> 			(void)snprintf(buf, sizeof(buf), "%d", port);
+Index: tcpdump-3.4a6/print-arp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-arp.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -r1.2 -r1.3
+24c24
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+111c111
+< 				bp += sprintf(bp, "%02x:", ap[i]);
+---
+> 				bp += snprintf(bp, "%02x:", ap[i]);
+113c113
+< 			bp += sprintf(bp,
+---
+> 			bp += snprintf(bp, sizeof(buf),
+126c126
+< 				bp += sprintf(bp, "%02x:", sap[i]);
+---
+> 				bp += snprintf(bp, sizeof(buf), "%02x:", sap[i]);
+128c128
+< 			bp += sprintf(bp,
+---
+> 			bp += snprintf(bp, sizeof(buf),
+Index: tcpdump-3.4a6/print-atalk.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-atalk.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -r1.1.1.1 -r1.2
+26c26
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+491c491
+< 	char nambuf[256];
+---
+> 	char nambuf[MAXHOSTNAMELEN + 20];
+538c538
+< 			(void)sprintf(nambuf, "%s.%d", tp2->name, athost);
+---
+> 			(void)snprintf(nambuf, sizeof(nambuf), "%s.%d", tp2->name, athost);
+546c546
+< 		(void)sprintf(nambuf, "%d.%d.%d",
+---
+> 		(void)snprintf(nambuf, sizeof(nambuf), "%d.%d.%d",
+549c549
+< 		(void)sprintf(nambuf, "%d.%d", atnet >> 8, atnet & 0xff);
+---
+> 		(void)snprintf(nambuf, sizeof(nambuf), "%d.%d", atnet >> 8, atnet & 0xff);
+569c569
+< 		(void)sprintf(buf, "%d", skt);
+---
+> 		(void)snprintf(buf, sizeof(buf), "%d", skt);
+Index: tcpdump-3.4a6/print-icmp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-icmp.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -r1.2 -r1.3
+24c24
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+175c175
+< 	char buf[256];
+---
+> 	char buf[MAXHOSTNAMELEN + 100];
+194c194
+< 			(void)sprintf(buf, "%s protocol %d unreachable",
+---
+> 			(void)snprintf(buf, sizeof(buf), "%s protocol %d unreachable",
+208c208
+< 				(void)sprintf(buf,
+---
+> 				(void)snprintf(buf, sizeof(buf),
+215c215
+< 				(void)sprintf(buf,
+---
+> 				(void)snprintf(buf, sizeof(buf),
+222c222
+< 				(void)sprintf(buf,
+---
+> 				(void)snprintf(buf, sizeof(buf),
+237c237
+< 			    (void)sprintf(buf,
+---
+> 			    (void)snprintf(buf, sizeof(buf),
+241c241
+< 			    (void)sprintf(buf,
+---
+> 			    (void)snprintf(buf, sizeof(buf),
+250c250
+< 			(void)sprintf(buf, fmt,
+---
+> 			(void)snprintf(buf, sizeof(buf), fmt,
+260c260
+< 		(void)sprintf(buf, fmt,
+---
+> 		(void)snprintf(buf, sizeof(buf), fmt,
+280c280
+< 			(void)sprintf(cp, "%u", lifetime);
+---
+> 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u", lifetime);
+282c282
+< 			(void)sprintf(cp, "%u:%02u",
+---
+> 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u:%02u",
+285c285
+< 			(void)sprintf(cp, "%u:%02u:%02u",
+---
+> 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u:%02u:%02u",
+292c292
+< 		(void)sprintf(cp, " %d:", num);
+---
+> 		(void)snprintf(cp, sizeof(buf) - strlen(buf), " %d:", num);
+297c297
+< 			(void)sprintf(cp, " [size %d]", size);
+---
+> 			(void)snprintf(cp, sizeof(buf) - strlen(buf), " [size %d]", size);
+307c307
+< 				(void)sprintf(cp, " {%s %d}",
+---
+> 				(void)snprintf(cp, sizeof(buf) - strlen(buf), " {%s %d}",
+311c311
+< 				(void)sprintf(cp, "{%s ineligible}",
+---
+> 				(void)snprintf(cp, sizeof(buf) - strlen(buf), "{%s ineligible}",
+331c331
+< 			(void)sprintf(buf, "time exceeded-#%d", dp->icmp_code);
+---
+> 			(void)snprintf(buf, sizeof(buf), "time exceeded-#%d", dp->icmp_code);
+338c338
+< 			(void)sprintf(buf, "parameter problem - code %d",
+---
+> 			(void)snprintf(buf, sizeof(buf), "parameter problem - code %d",
+342c342
+< 			(void)sprintf(buf, "parameter problem - octet %d",
+---
+> 			(void)snprintf(buf, sizeof(buf), "parameter problem - octet %d",
+349c349
+< 		(void)sprintf(buf, "address mask is 0x%08x",
+---
+> 		(void)snprintf(buf, sizeof(buf), "address mask is 0x%08x",
+Index: tcpdump-3.4a6/print-icmpv6.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-icmpv6.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -r1.1 -r1.2
+180c180
+< 		sprintf(buf,"%x", na->data[i]);
+---
+> 		snprintf(buf, sizeof(buf), "%x", na->data[i]);
+365c365
+< 		(void)sprintf(buf, "type#%d", icmpv6->icmpv6_type);
+---
+> 		(void)snprintf(buf, sizeof(buf), "type#%d", icmpv6->icmpv6_type);
+Index: tcpdump-3.4a6/print-ipx.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-ipx.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -r1.2 -r1.3
+27c27
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp";
+94c94
+<     sprintf(line, "%x.%02x:%02x:%02x:%02x:%02x:%02x",
+---
+>     snprintf(line, sizeof(line), "%x.%02x:%02x:%02x:%02x:%02x:%02x",
+Index: tcpdump-3.4a6/print-snmp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-snmp.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -r1.1.1.1 -r1.2
+45c45
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+137c137
+< 	? ErrorStatus[e] : (sprintf(errbuf, "err=%u", e), errbuf))
+---
+> 	? ErrorStatus[e] : (snprintf(errbuf, sizeof(errbuf), "err=%u", e), errbuf))
+154c154
+< 	? GenericTrap[t] : (sprintf(buf, "gt=%d", t), buf))
+---
+> 	? GenericTrap[t] : (snprintf(buf, sizeof(buf), "gt=%d", t), buf))
+Index: tcpdump-3.4a6/print-sunrpc.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-sunrpc.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -r1.1.1.1 -r1.2
+24c24
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+128,130c128,133
+< 		(void) sprintf(buf, "#%u", prog);
+< 	else
+< 		strcpy(buf, rp->r_name);
+---
+> 		(void) snprintf(buf, sizeof(buf), "#%u", prog);
+> 	/* A stack smash is unlikely here, but bound the string conversion anyways -- billh */
+> 	else {
+> 		strncpy(buf, rp->r_name, sizeof(buf)-1);
+> 		buf[sizeof(buf)-1] = '\0';
+> 	}
+Index: tcpdump-3.4a6/util.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/util.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -r1.1.1.1 -r1.2
+24c24
+<     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+---
+>     "@(#) /master/core_contrib/tcpdump/BSDI_CONTRIB,v 1.6 2001/04/26 01:17:46 jch Exp (LBL)";
+157c157
+< 	(void)sprintf(buf, fmt, v);
+---
+> 	(void)snprintf(buf, sizeof(buf), fmt, v);
+
+
+
+Clean up some snprintf() calls to avoid potential buffer overflows.
+
+Index: print-arp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-arp.c,v
+retrieving revision 1.3
+diff -c -r1.3 print-arp.c
+*** print-arp.c	2000/11/22 11:05:04	1.3
+--- print-arp.c	2000/11/26 15:56:39
+***************
+*** 108,116 ****
+  	if (len != 0) {
+  		if (tl & ATMARP_TL_E164)
+  			for (i = 0; i < len; i++)
+! 				bp += snprintf(bp, "%02x:", ap[i]);
+  		else
+! 			bp += snprintf(bp, sizeof(buf),
+  			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
+  			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
+  			    ap[0], ap[1], ap[2], ap[3], ap[4],
+--- 108,117 ----
+  	if (len != 0) {
+  		if (tl & ATMARP_TL_E164)
+  			for (i = 0; i < len; i++)
+! 				bp += snprintf(bp, sizeof(buf) - (bp - buf),
+! 				    "%02x:", ap[i]);
+  		else
+! 			bp += snprintf(bp, sizeof(buf) - (bp - buf),
+  			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
+  			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
+  			    ap[0], ap[1], ap[2], ap[3], ap[4],
+***************
+*** 123,131 ****
+  		*bp++ = '/';
+  		if (stl & ATMARP_TL_E164)
+  			for (i = 0; i < len; i++)
+! 				bp += snprintf(bp, sizeof(buf), "%02x:", sap[i]);
+  		else
+! 			bp += snprintf(bp, sizeof(buf),
+  			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
+  			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
+  			    sap[0], sap[1], sap[2], sap[3], sap[4],
+--- 124,133 ----
+  		*bp++ = '/';
+  		if (stl & ATMARP_TL_E164)
+  			for (i = 0; i < len; i++)
+! 				bp += snprintf(bp, sizeof(buf) - (bp - buf),
+! 				    "%02x:", sap[i]);
+  		else
+! 			bp += snprintf(bp, sizeof(buf) - (bp - buf),
+  			    "0x%02x.%02x%02x.%02x.%02x%02x%02x.%02x%02x."
+  			    "%02x%02x.%02x%02x.%02x%02x%02x%02x%02x%02x.%02x",
+  			    sap[0], sap[1], sap[2], sap[3], sap[4],
+Index: print-icmp.c
+===================================================================
+RCS file: /master/contrib/tcpdump/tcpdump-3.4a6/print-icmp.c,v
+retrieving revision 1.3
+diff -c -r1.3 print-icmp.c
+*** print-icmp.c	2000/11/22 11:05:04	1.3
+--- print-icmp.c	2000/11/26 16:14:42
+***************
+*** 268,300 ****
+  		register const struct id_rdiscovery *idp;
+  		u_int lifetime, num, size;
+  
+! 		(void)strcpy(buf, "router advertisement");
+! 		cp = buf + strlen(buf);
+  
+  		ihp = (struct ih_rdiscovery *)&dp->icmp_void;
+  		TCHECK(*ihp);
+! 		(void)strcpy(cp, " lifetime ");
+! 		cp = buf + strlen(buf);
+  		lifetime = EXTRACT_16BITS(&ihp->ird_lifetime);
+  		if (lifetime < 60)
+! 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u", lifetime);
+  		else if (lifetime < 60 * 60)
+! 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u:%02u",
+! 			    lifetime / 60, lifetime % 60);
+  		else
+! 			(void)snprintf(cp, sizeof(buf) - strlen(buf), "%u:%02u:%02u",
+  			    lifetime / 3600,
+  			    (lifetime % 3600) / 60,
+  			    lifetime % 60);
+- 		cp = buf + strlen(buf);
+  
+  		num = ihp->ird_addrnum;
+! 		(void)snprintf(cp, sizeof(buf) - strlen(buf), " %d:", num);
+! 		cp = buf + strlen(buf);
+  
+  		size = ihp->ird_addrsiz;
+  		if (size != 2) {
+! 			(void)snprintf(cp, sizeof(buf) - strlen(buf), " [size %d]", size);
+  			break;
+  		}
+  		idp = (struct id_rdiscovery *)&dp->icmp_data;
+--- 268,302 ----
+  		register const struct id_rdiscovery *idp;
+  		u_int lifetime, num, size;
+  
+! 		cp = buf;
+! 		cp += snprintf(buf, sizeof(buf) - (cp - buf),
+! 		    "%s", "router advertisement");
+  
+  		ihp = (struct ih_rdiscovery *)&dp->icmp_void;
+  		TCHECK(*ihp);
+! 		cp += snprintf(buf, sizeof(buf) - (cp - buf),
+! 		    "%s", " lifetime ");
+  		lifetime = EXTRACT_16BITS(&ihp->ird_lifetime);
+  		if (lifetime < 60)
+! 			cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 			    "%u", lifetime);
+  		else if (lifetime < 60 * 60)
+! 			cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 			    "%u:%02u", lifetime / 60, lifetime % 60);
+  		else
+! 			cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 			    "%u:%02u:%02u",
+  			    lifetime / 3600,
+  			    (lifetime % 3600) / 60,
+  			    lifetime % 60);
+  
+  		num = ihp->ird_addrnum;
+! 		cp += snprintf(cp, sizeof(buf) - (cp - buf), " %d:", num);
+  
+  		size = ihp->ird_addrsiz;
+  		if (size != 2) {
+! 			cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 			    " [size %d]", size);
+  			break;
+  		}
+  		idp = (struct id_rdiscovery *)&dp->icmp_data;
+***************
+*** 304,316 ****
+  			TCHECK(*idp);
+  			pref = EXTRACT_32BITS(&idp->ird_pref);
+  			if (pref != 0x80000000)
+! 				(void)snprintf(cp, sizeof(buf) - strlen(buf), " {%s %d}",
+! 				    ipaddr_string(&idp->ird_addr),
+  				    pref);
+  			else
+! 				(void)snprintf(cp, sizeof(buf) - strlen(buf), "{%s ineligible}",
+  				    ipaddr_string(&idp->ird_addr));
+- 			cp = buf + strlen(buf);
+  		}
+  		}
+  		break;
+--- 306,318 ----
+  			TCHECK(*idp);
+  			pref = EXTRACT_32BITS(&idp->ird_pref);
+  			if (pref != 0x80000000)
+! 				cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 				    " {%s %d}", ipaddr_string(&idp->ird_addr),
+  				    pref);
+  			else
+! 				cp += snprintf(cp, sizeof(buf) - (cp - buf),
+! 				    "{%s ineligible}",
+  				    ipaddr_string(&idp->ird_addr));
+  		}
+  		}
+  		break;
+***************
+*** 328,346 ****
+  			break;
+  
+  		default:
+! 			(void)snprintf(buf, sizeof(buf), "time exceeded-#%d", dp->icmp_code);
+  			break;
+  		}
+  		break;
+  
+  	case ICMP_PARAMPROB:
+  		if (dp->icmp_code)
+! 			(void)snprintf(buf, sizeof(buf), "parameter problem - code %d",
+! 					dp->icmp_code);
+  		else {
+  			TCHECK(dp->icmp_pptr);
+! 			(void)snprintf(buf, sizeof(buf), "parameter problem - octet %d",
+! 					dp->icmp_pptr);
+  		}
+  		break;
+  
+--- 330,349 ----
+  			break;
+  
+  		default:
+! 			(void)snprintf(buf, sizeof(buf), "time exceeded-#%d",
+! 			    dp->icmp_code);
+  			break;
+  		}
+  		break;
+  
+  	case ICMP_PARAMPROB:
+  		if (dp->icmp_code)
+! 			(void)snprintf(buf, sizeof(buf),
+! 			    "parameter problem - code %d", dp->icmp_code);
+  		else {
+  			TCHECK(dp->icmp_pptr);
+! 			(void)snprintf(buf, sizeof(buf),
+! 			    "parameter problem - octet %d", dp->icmp_pptr);
+  		}
+  		break;
+  

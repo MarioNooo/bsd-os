@@ -1,0 +1,47 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_ncache.3,v 2.1 1997/05/25 15:09:01 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_NCACHE 3
+.Os
+.Sh NAME
+.Nm kvm_ncache
+.Nd kernel name cache statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/uio.h>
+.Fd #include <sys/namei.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_ncache "kvm_t *kd" "struct nchstats *np"
+.Sh DESCRIPTION
+The
+.Fn kvm_ncache
+function fills in the 
+.Va struct nchstats
+structure referenced by
+.Fa np
+with the name cache usage statistics from the kernel indicated by
+.Fa kd .
+.Sh RETURN VALUES
+The
+.Fn kvm_ncache
+routine returns zero on success and -1 on failure.  
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

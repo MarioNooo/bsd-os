@@ -1,0 +1,67 @@
+.\" BSDI sdiff.1,v 2.3 1996/04/26 00:22:32 bostic Exp
+.Dd April 25, 1996
+.Dt SDIFF 1
+.Os BSD 3
+.Sh NAME
+.Nm sdiff
+.Nd show differences between two text files, side-by-side
+.Sh SYNOPSIS
+.Nm sdiff
+.Op Fl aBbdHilstvW
+.Op Fl I Ar RE
+.Op Fl o Ar file
+.Op Fl w Ar columns
+.Ar file1
+.Ar file2
+.Sh DESCRIPTION
+The
+.Nm sdiff
+utility displays the differences between two files,
+in a side-by-side format.
+.Pp
+Using a single dash as a
+.Ar file
+argument causes
+.Nm sdiff
+to read standard input instead of a file.
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl a
+Treat all files as text.
+.It Fl B
+Ignore changes whose lines are all blank.
+.It Fl b
+Ignore differences in trailing whitespace.
+.It Fl d
+Try hard to find a minimal set of changes.
+.It Fl H
+Assume large files and many scattered small changes.
+.It Fl I
+Ignore changes whose lines all match the specified regular expression.
+.It Fl i
+Ignore differences in case.
+.It Fl l
+Output only the left column of common lines.
+.It Fl o
+Operate interactively, sending the output to the specified file.
+.It Fl s
+Do not output common lines.
+.It Fl t
+Expand tabs to spaces in output.
+.It Fl v
+Output version information.
+.It Fl W
+Ignore all differences in whitespace.
+.It Fl w
+Output at most the specified number of characters per line.
+The default is 130 characters per line.
+.El
+.Pp
+The
+.Nm sdiff
+utility exits 0 if no differences were found, 1 if some differences were
+found, and 2 if an error occurs.
+.Sh SEE ALSO
+.Xr cmp 1 ,
+.Xr diff 1

@@ -1,0 +1,17 @@
+MKterm.h.awk
+Makefile
+curses.h
+eti.h
+form.h
+hashsize.h
+menu.h
+mf_common.h
+ncurses_cfg.h
+nomacros.h
+panel.h
+parametrized.h
+term.h
+termcap.h
+unctrl.h
+curses.head
+ncurses_def.h

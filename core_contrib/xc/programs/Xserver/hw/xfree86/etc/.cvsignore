@@ -1,0 +1,8 @@
+Makefile
+scanpci
+.depend
+scanpci.0
+pcitweak
+pcitweak.0
+scanpci._man
+pcitweak._man

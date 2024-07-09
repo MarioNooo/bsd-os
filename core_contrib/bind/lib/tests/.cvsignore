@@ -1,0 +1,5 @@
+Makefile
+timestamp
+.libs
+t_api.lo
+libt_api.la

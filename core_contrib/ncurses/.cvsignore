@@ -1,0 +1,12 @@
+a.out
+Makefile
+config.cache
+config.log
+config.status
+headers.sh
+lib
+obj_p
+obj_s
+obj_lo
+objects
+shlib

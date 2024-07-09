@@ -1,0 +1,34 @@
+.\" Copyright 1992, 1994 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI dos2bsd.1,v 2.2 1995/08/03 14:29:09 bostic Exp
+.Dd January 13, 1994
+.Dt DOS2BSD 1
+.Os
+.Sh NAME
+.Nm dos2bsd
+.Nd convert a DOS file to a UNIX file
+.Sh SYNOPSIS
+.Nm dos2bsd
+.Op Ar input Op Ar output
+.Sh DESCRIPTION
+The
+.Nm dos2bsd
+utility converts a DOS text file into a UNIX text file.
+This is done by removing the ^M from the end of each line.
+.Pp
+By default,
+.Nm dos2bsd
+reads from standard input and writes to standard output.
+If one argument is specified,
+.Nm dos2bsd
+reads from that file and writes to standard output.
+If two arguments are specified,
+.Nm dos2bsd
+reads from the file specified by the first argument, and writes to the
+file specified by the second argument.
+.Pp
+The
+.Nm dos2bsd
+utility exits 0 on success, and >0 if an error occurs.

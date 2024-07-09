@@ -1,0 +1,6 @@
+Enter the partition type.  The type may either be symbolic (e.g.,
+BSD/OS or DOS) or a hexadecimal constant (e.g., 0x9f or 0x04).  You must
+provide a partition type other than 0 to continue on with editing the
+partition.
+
+[ESC]cancel [ENTER]apply [TAB]next [?]Help

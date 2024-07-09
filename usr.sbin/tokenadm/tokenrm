@@ -1,0 +1,16 @@
+#!/bin/sh
+#	BSDI tokenrm,v 1.2 1997/11/10 23:53:26 tks Exp
+PROG=$(basename $0 rm)adm
+echo 1>&2 "$(basename $0) deprecated, please use $PROG in the future"
+while [ X"$1" = X-v ] ; do
+	ARGS=" -v"
+	shift
+done
+if [ $# -lt 1 ] ; then
+	echo 1>&2 "usage: $(basename $0) [-v] user [...]" 
+fi
+for i ; do
+	ARGS=" -r $i"
+done
+echo 1>&2 "Executing: $PROG$ARGS"
+exec $PROG$ARGS

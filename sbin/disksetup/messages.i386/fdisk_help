@@ -1,0 +1,39 @@
+The FDISK screen is used to divide (partition) your hard disk for
+use by one or more operating systems.  To install BSD/OS, you must have a
+partition assigned to BSD/OS which has enough space to install its
+filesystems on this disk.  Please refer to the installation guide for
+help in determining how much disk space you will need to install BSD/OS.
+
+At this point you may either go on to the next phase, alter a partition
+displayed in the partition table, add a partition to the partition
+table, delete a partition from the partition table, or exit this phase
+without making any changes.
+
+You may use one of the following commands:
+
+A   Use 'A' to add a new partition.  For instance, you will need to have
+    at least one partition for BSD/OS.  If you want to run DOS (or some
+    other O/S) you will need a partition for it as well.
+
+D   Use 'D' to delete the definition of a partition.  You will need to
+    do this if your disk has old data on it that you no longer want.
+    Deleting a partition will cause you to lose all the data contained
+    in that partition.
+
+*   Use '*' to assign the active boot partition.  The standard master
+    boot record (MBR) will boot from the partition that is marked
+    active.  If you use the BOOTANY bootstrap, the 'active' partition
+    determines the default partition to boot from.
+
+E   Use 'E' to change any of the parameters of a partition.  Generally
+    you will only need to delete and add partitions.
+
+N   Use 'N' to record the changes you have made and go on to the next
+    phase of disksetup.  The changes will actually be applied when
+    you finish setting up your disk.  At that time you will have one
+    more chance to request that these changes (and all other changes
+    during this session of disksetup) to not be made.
+
+X   Discard all changes to the partition table and exit this phase of
+    the program.  No changes to the partition table will be written to
+    the disk.

@@ -1,0 +1,14 @@
+#!/bin/sh
+
+slipunit=$1; shift
+speed=$1; shift
+login=$1; shift
+localaddr=$1; shift
+remoteaddr=$1; shift
+netmask=$1; shift
+opt_args=$*;
+
+logger -s -t slip "Detached unit $slipunit from $login"
+route delete $remoteaddr $localaddr
+
+exit 0

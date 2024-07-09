@@ -1,0 +1,25 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI gettyconv.8,v 1.1 1996/09/30 17:46:33 prb Exp
+.Dd September 30, 1996
+.Dt GETTYCONV 8
+.Os
+.Sh NAME
+.Nm gettyconv
+.Nd convert gettytab entries to ttys.conf entries
+.Sh SYNOPSIS
+.Nm gettyconv
+.Ar Ar function
+.Sh DESCRIPTION
+The
+.Nm gettyconv
+utility attempts to convert entries from the
+.Pa /etc/gettytab
+file into a format that is usable by the
+.Pa /etc/ttys.conf
+file.
+.Sh SEE ALSO
+.Xr gettytab 5 ,
+.Xr ttys.conf 5

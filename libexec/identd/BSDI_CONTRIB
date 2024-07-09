@@ -1,0 +1,146 @@
+Software Package:
+	pidentd
+
+Release/Version:
+	pidentd-2.7.4
+
+Retrieved from:
+	ftp://ftp.lysator.liu.se/pub/ident/servers/
+
+Bug reports:
+	Please send any bug reports to <support@bsdi.com>
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added: BSDI_CONTRIB makefile identd.8
+
+Changed encrypted brackets to { } to reduce sendmail interaction:
+
+diff -rc pidentd-2.7.4/src/idecrypt.c pidentd-2.7.4-bsdi/src/idecrypt.c
+*** pidentd-2.7.4/src/idecrypt.c	Thu Nov  3 01:19:54 1994
+--- pidentd-2.7.4-bsdi/src/idecrypt.c	Wed Sep 10 18:06:16 1997
+***************
+*** 41,47 ****
+  	if (c == EOF)
+  	    return;
+  	
+! 	if (c != '[')
+  	{
+  	    putchar(c);
+  	    continue;
+--- 41,47 ----
+  	if (c == EOF)
+  	    return;
+  	
+! 	if (c != '{')
+  	{
+  	    putchar(c);
+  	    continue;
+***************
+*** 60,68 ****
+  	if (i == 32)
+  	    c = getc(f);
+  	
+! 	if (i < 32 || c != ']')
+  	{
+! 	    putchar('[');
+  	    fwrite(buf, 1, i, stdout);
+  	    goto Same;
+  	}
+--- 60,68 ----
+  	if (i == 32)
+  	    c = getc(f);
+  	
+! 	if (i < 32 || c != '}')
+  	{
+! 	    putchar('{');
+  	    fwrite(buf, 1, i, stdout);
+  	    goto Same;
+  	}
+***************
+*** 70,78 ****
+  	cleartext = decrypt_packet(buf);
+  	if (cleartext == NULL)
+  	{
+! 	    putchar('[');
+  	    fwrite(buf, 1, 32, stdout);
+! 	    putchar(']');
+  	}
+  	else
+  	{
+--- 70,78 ----
+  	cleartext = decrypt_packet(buf);
+  	if (cleartext == NULL)
+  	{
+! 	    putchar('{');
+  	    fwrite(buf, 1, 32, stdout);
+! 	    putchar('}');
+  	}
+  	else
+  	{
+diff -rc pidentd-2.7.4/src/parse.c pidentd-2.7.4-bsdi/src/parse.c
+*** pidentd-2.7.4/src/parse.c	Tue Jan 21 14:52:23 1997
+--- pidentd-2.7.4-bsdi/src/parse.c	Wed Sep 10 18:14:22 1997
+***************
+*** 619,625 ****
+  
+  #ifdef INCLUDE_CRYPT
+      if (crypto_flag && check_crypt(faddr))
+!       printf("%d , %d : USERID : OTHER%s%s : [%s]\r\n",
+  	     lport, fport,
+  	     charset_name ? " , " : "",
+  	     charset_name ? charset_name : "",
+--- 619,625 ----
+  
+  #ifdef INCLUDE_CRYPT
+      if (crypto_flag && check_crypt(faddr))
+!       printf("%d , %d : USERID : OTHER%s%s : {%s}\r\n",
+  	     lport, fport,
+  	     charset_name ? " , " : "",
+  	     charset_name ? charset_name : "",
+
+Add BSDI to the list of ANSI/POSIX signal() conformant systems:
+
+Index: src/identd.c
+===================================================================
+RCS file: /master/libexec/identd/src/identd.c,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -c -2 -r1.1 -r1.2
+*** identd.c	1997/09/16 21:17:38	1.1
+--- identd.c	1998/09/22 12:01:34	1.2
+***************
+*** 14,18 ****
+  #endif
+  
+! #if defined(IRIX) || defined(SVR4) || defined(NeXT) || (defined(sco) && sco >= 42) || defined(_AIX4) || defined(__FreeBSD__) || defined(ultrix)
+  #  define SIGRETURN_TYPE void
+  #  define SIGRETURN_TYPE_IS_VOID
+--- 14,18 ----
+  #endif
+  
+! #if defined(IRIX) || defined(SVR4) || defined(NeXT) || (defined(sco) && sco >= 42) || defined(_AIX4) || defined(__FreeBSD__) || defined(ultrix) || defined(__bsdi__)
+  #  define SIGRETURN_TYPE void
+  #  define SIGRETURN_TYPE_IS_VOID
+
+Index: src/config.c
+===================================================================
+RCS file: /master/libexec/identd/src/config.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 config.c
+*** src/config.c	1997/09/16 21:17:38	1.1.1.1
+--- src/config.c	1999/04/08 17:40:43
+***************
+*** 13,18 ****
+--- 13,20 ----
+  #include <stdio.h>
+  #include <errno.h>
+  #include <string.h>
++ #include <netinet/in.h>
++ #include <arpa/inet.h>
+  
+  #include "error.h"
+  #include "identd.h"

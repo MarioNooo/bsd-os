@@ -1,0 +1,32 @@
+Edit the number of sectors on the disk.  The number of sectors is
+typically the value of head x sectors per track x cylinders, though
+this is only approximate.  You may adjust the number of sectors by
+a relative amount by preceding the number with a + or -, or adjust
+it by a multiple by preceding the number with a * or /.
+
+ESC    Cancel all changes to the geometry.
+ENTER  Apply changes to the geometry.
+TAB    Go on to editing the type of the disk.
+
+[0-9] Use the number keys to enter the number of sectors of the disk.
+
++ or - Start entering a value which will be relative to the current
+       number of sectors displayed.
+* or / Start entering a multiple of the current number of sectors
+       displayed.
+
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.
+
+U      Undo the current changes to the number of sectors and
+       redisplay the value that was displayed upon entering this field.
+
+    The following modifier is always entered after a number has been
+    entered.
+
+=      Apply the current, possibly relative, number to the number of
+       sectors.

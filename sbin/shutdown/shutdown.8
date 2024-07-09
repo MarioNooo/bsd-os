@@ -1,0 +1,182 @@
+.\"	BSDI	shutdown.8,v 2.8 2002/02/11 23:05:37 dab Exp
+.\" Copyright (c) 1988, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
+.\"
+.Dd April 27, 1995
+.Dt SHUTDOWN 8
+.Os BSD 4
+.Sh NAME
+.Nm shutdown
+.Nd "close down the system at a given time"
+.Sh SYNOPSIS
+.Nm shutdown
+.Op Fl 
+.Op Fl chkrn
+.Ar +minutes | [[[yy]mm]dd]hhmm
+.Op Ar message ...
+.Sh DESCRIPTION
+.Nm Shutdown
+provides an automated shutdown procedure for super-users
+to nicely notify users when the system is shutting down,
+saving them from system administrators, hackers, and gurus, who
+would otherwise not bother with such niceties.
+.Pp
+The following options are available:
+.Bl -tag -width time
+.It Fl c
+Cancel any previously started shutdown.
+.It Fl h
+Cause
+.Nm shutdown
+to halt the system at the specified
+.Ar time ,
+using
+.Xr halt 8 .
+.It Fl k
+Kick everybody off.
+The
+.Fl k
+option
+does not actually halt the system, but leaves the
+system multi-user with logins disabled (for all but super-user).
+.It Fl n
+Prevent the normal
+.Xr sync 2
+before stopping.
+.It Fl p
+Similar to the
+.Fl h
+option, but also
+attempt to power down the machine
+after halting by passing the
+.Fl h
+option to
+.Xr halt 8 .
+.It Fl r 
+Cause
+.Nm shutdown
+to reboot the system at the specified
+.Ar time ,
+using
+.Xr reboot 8 .
+.It Ar time
+.Ar Time
+is the time at which
+.Nm shutdown
+will bring the system down and
+may be the word
+.Dq now
+(indicating an immediate shutdown) or may specify a future time.
+A future time may be specified in one of two formats:
+.Ar +number ,
+which specifies
+.Ar number
+minutes, and
+.Ar [[[yy]mm]dd]hhmm ,
+which specifies an absolute time where the year, month and day default
+to the current system time.
+.It Ar warning-message
+Any other arguments comprise the warning message that is broadcast
+to users currently logged into the system.
+.It Fl
+If
+.Ql Fl
+is supplied as an option, the warning message is read from the standard
+input.
+.El
+.Pp
+Periodically,
+starting ten hours before the specified time,
+and becoming more frequent as apocalypse approaches,
+warning messages are displayed for all logged in users.
+Five minutes before shutdown,
+or immediately if shutdown is in less than 5 minutes away,
+logins are disabled by creating
+.Pa /etc/nologin
+and copying the
+warning message there.
+If this file exists when a user attempts to log in,
+.Xr login 8
+displays its contents and refuses the attempt.
+If
+.Nm shutdown
+does not execute
+.Xr halt 8
+or
+.Xr reboot 8 ,
+and the
+.Fl k
+option was not specified,
+this file will be removed when
+.Nm shutdown
+exits.
+.Pp
+At shutdown time a message is written in the system log,
+containing the time of shutdown,
+who initiated the shutdown and the reason.
+Then, if none of the
+.Fl h ,
+.Fl k
+or
+.Fl r ,
+options were specified, a terminate (SIGTERM) signal is sent to the
+.Xr init 8
+process to return the system to single-user state.
+.Sh FILES
+.Bl -tag -width //var/run/shutdown.pid -compact
+.It Pa /etc/nologin
+tells login not to let anyone log in
+.It Pa /var/run/shutdown.pid
+the process ID of the currently running shutdown
+.El
+.Sh SEE ALSO
+.Xr wall 1 ,
+.Xr halt 8 ,
+.Xr login 8 ,
+.Xr reboot 8
+.Sh BACKWARD COMPATIBILITY
+The hours and minutes in the absolute time format may be separated by
+a colon (``:'') for backward compatibility.
+.Pp
+Historically, the
+.Fl f
+option to
+.Nm shutdown
+arranged for the file systems not to be checked on reboot.
+As filesystems are no longer checked unless necessary,
+this option has no effect.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.0 .

@@ -1,0 +1,30 @@
+.\"
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI arch.1,v 2.2 1995/07/28 20:04:37 bostic Exp
+.Dd August 3, 1992
+.Dt ARCH 1
+.Os
+.Sh NAME
+.Nm arch
+.Nd query architecture of current machine
+.Sh SYNOPSIS
+.Nm arch
+.Op Ar archname
+.Sh DESCRIPTION
+The
+.Nm arch
+utility with no arguments returns the hardware architecture of
+the current machine, e.g.
+.Dq i386 .
+.Pp
+When called with an argument, 
+.Nm arch
+compares the argument with the hardware architecture
+and exits with a status of 0 if they're the same,
+1 if different.
+.Sh "SEE ALSO"
+.Xr uname 1 ,
+.Xr sysctl 8

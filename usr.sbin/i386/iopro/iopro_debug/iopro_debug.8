@@ -1,0 +1,35 @@
+.\"
+.\"     iopro_debug.8,v 1.2 1995/07/28 10:42:20 rjd Exp
+.\"
+.Dd 5 Feb 94
+.Dt IOPRO_DEBUG 8
+.Os BSD/OS
+.Sh NAME
+.Nm iopro_debug
+.Nd Debug enabler for Chase Research IOPRO device driver
+.Sh SYNOPSIS
+.Nm iopro_debug level
+.Sh DESCRIPTION
+.Nm Iopro_debug
+can be used to enable the debugging console printfs in the IOPRO device driver
+if these have been compiled in by #defining AIM_DEBUG.
+.Pp
+Level consists of a series of binary encoded flags.
+Current values are:
+.Bd -ragged -offset indent -compact
+.Bl -column "Value	Selects  "
+.It Value	Selects
+.It -----	-------
+.It 1	Routine entry points/params
+.It 2	Interrupt code
+.It 4	Input code
+.It 8	Output code
+.It 16	Open/close code
+.It 256	All the other stuff
+.El
+.Ed
+.Sh DIAGNOSTICS
+Makes no complaint if debug is not compiled in. Messages just fail to appear
+on console.
+.Sh SEE ALSO
+.Xr iopro_dump 8

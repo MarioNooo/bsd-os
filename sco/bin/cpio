@@ -1,0 +1,21 @@
+#! /bin/sh
+#	BSDI cpio,v 2.1 1995/02/03 15:12:55 polk Exp
+
+# A version of cpio that's just barely sufficient to fool Lotus 1-2-3 install.
+
+PATH=/bin:/usr/bin
+
+OPT=
+
+case "$1" in
+-*i*) OPT="$OPT -r";;
+-*o*) OPT="$OPT -w -x cpio";;
+esac
+
+case "$1" in
+-*v*) OPT="$OPT -v";;
+esac
+
+shift
+
+exec /bin/pax $OPT "$@"

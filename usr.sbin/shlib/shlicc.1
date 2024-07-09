@@ -1,0 +1,265 @@
+.\" Copyright (c) 1994,1995,1996,1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI shlicc.1,v 2.7 1999/10/13 03:30:34 donn Exp
+.\"
+.Dd October 11, 1999
+.Dt SHLICC 1
+.Os BSD/OS
+.Sh NAME
+.Nm shlicc ,
+.Nm shlicc++
+.Nd "link programs for use with static shared libraries
+.Sh SYNOPSIS
+.Nm shlicc
+.Op Fl Bstatic
+.Op Fl map Ar shlib.map
+.Ar ...
+.Op Fl l Ns Ar archive
+.Ar ...
+.Sh DESCRIPTION
+The
+.Nm shlicc
+program works almost exactly the same way as
+.Xr cc 1
+(q.v.),
+but it arranges to link and load static shared libraries
+instead of archive libraries or dynamic shared libraries.
+Binaries that use shared libraries may be substantially smaller
+than binaries that link in normal archive libraries,
+since shared libraries are copied into memory
+only when a program runs,
+while normal libraries are (selectively) copied into a program
+when the program is built.
+Binaries that link with static shared libraries are also a bit
+smaller and faster than programs that link with dynamic shared libraries,
+although the static shared libraries are not as flexible (see
+.Em BUGS
+below).
+.Nm Shlicc
+invokes
+.Xr cc 1
+to compile all C and assembly programs;
+it only behaves differently from
+.Xr cc 1
+when asked to link a binary.
+The alias
+.Nm shlicc++
+compiles programs with
+.Xr g++ 1 .
+.Pp
+The
+.Nm shlicc
+program passes most option and file arguments
+on to the compiler and linker,
+but does recognize a few itself:
+.Bl -tag -width indent
+.It Fl Bstatic
+Force
+.Nm shlicc
+to behave exactly like
+.Xr cc 1 ;
+this is useful when
+.Nm shlicc
+is your standard C compiler interface
+and you need to compile a program
+without using shared libraries.
+.It Fl l Ns Ar archive
+Perform linking with the given library
+in the same style as
+.Xr cc 1 ,
+but use a shared library in place
+of a normal archive library
+if one is available.
+When linking,
+.Nm shlicc
+decides which shared libraries it can use
+based on the
+.Pa shlib.map
+file.
+When
+.Nm shlicc
+sees
+.Xr ld 1
+linker options like
+.Fl l Ns Ar archive ,
+it scans the
+.Pa shlib.map
+file to find the corresponding shared library for
+.Ar archive
+and substitutes an appropriate option,
+usually something like
+.Fl l Ns Ar archive Ns Li _s.* .
+From the list of
+.Fl l
+options,
+.Nm shlicc
+generates a table of shared library names and addresses
+that it then links into the new binary.
+.Nm Shlicc
+also links in a different C run-time startup file,
+.Pa shlicrt0.o ,
+which provides library table information to the bootstrap code
+when the new binary runs.
+.It Fl map Ar shlib.map
+Use an alternate
+.Ar shlib.map
+file
+.Pq see Xr mkshlib 8 .
+If the
+.Ar shlib.map
+argument does not contain a
+.Sq /
+character and is not found to be a readable file,
+.Nm shlicc
+will try prepending the string
+.Pa /etc/shlib.map.
+to it.
+This option overrides the
+.Ev SHLIB_MAP
+variable
+.Pq see below .
+.It Fl r
+In addition to passing this flag to the linker,
+.Nm shlicc
+will suspend its normal practices of building a shared library table
+and linking in the
+.Pa shlicrt0.o
+file.
+It will still link against the default list of libraries.
+.El
+.Pp
+Following the example of the compilers,
+.Nm shlicc
+will implicitly link against a default set of libraries.
+The
+.Nm shlicc
+interface implicitly links with the shared C library
+.Fl l Ns Ar c ,
+while the
+.Nm shlicc++
+interface also links with the shared libraries corresponding to
+.Fl l Ns Ar stdc++ ,
+.Fl l Ns Ar m
+and
+.Fl l Ns Ar gcc .
+.Pp
+The system's default makefile headers in
+.Pa /usr/share/mk
+(see
+.Xr make 1 )
+use
+.Nm shlicc
+to link programs.
+.Sh FILES
+.Bl -tag -width /usr/lib/shlicrt0.o\0 -compact
+.It Pa /etc/shlib.map
+default table of shared libraries
+.It Pa /usr/lib/shlicrt0.o
+provides library table parameters to bootstrap code
+.Sh ENVIRONMENT
+.Bl -tag -width /usr/lib/shlicrt0.o\0 -compact
+.It Ev SHLIB_MAP
+if set, gives an alternate
+.Ar shlib.map
+file
+.El
+.Sh "SEE ALSO
+.Xr cc 1 ,
+.Xr ld 1 ,
+.Xr mkshlib 8 ,
+.Xr shlib 8 ,
+.Xr shlist 8
+.Sh BUGS
+Dynamic shared libraries have many advantages over static shared libraries
+for ease of development and use, and for other features.
+The
+.Xr cc 1
+command links against dynamic shared libraries by default.
+.Pp
+Binaries that link to static shared libraries have an
+.Sq interpreter
+but no dynamic linking information;
+the interpreter is the shared C library,
+which contains the bootstrap.
+Some programs can be confused by ELF executable files
+that have an interpreter that is not the dynamic linker.
+.Pp
+If a shared library is missing or corrupted or unreadable,
+programs will print errors and dump core.
+The shared C library contains the library loader routine;
+if it's hosed, then basically nothing works.
+If the shared C library is deleted or mangled,
+you may need to boot from floppy to restore it.
+.Pp
+Turning on profiling turns off shared libraries.
+It didn't seem useful to save space in binaries and
+then waste it by producing profiled shared libraries
+that are hardly ever used.
+.Pp
+Paths to static shared libraries are fixed by the
+.Pa /etc/shlib.map
+file at compile time.
+There is no equivalent to
+.Ev LD_LIBRARY_PATH
+for static shared libraries.
+Some people consider this to be a feature.
+.Pp
+All instances of
+.Fl l Ns Ar name
+are checked for shared library equivalents,
+and are replaced if such equivalents are found.
+There is no way to override this feature,
+even with a library path specified using
+.Fl L .
+.Pp
+There is no support for the
+.Xr dlopen 3
+dynamic linking routines with static shared libraries.
+If your application requires
+.Ar -ldl ,
+you must use dynamic shared libraries.
+.Pp
+This implementation has no automatic versioning.
+Library version changes can be effected using the
+.Pa shlib.map
+file, however.
+.Pp
+Statically linked shared libraries are cheap and fast,
+but they have some serious limitations.
+In particular, if you write a substitute for
+a library routine and use the shared library,
+the calls to that routine from within the shared library
+will use the library version, not your version.
+This is particularly annoying with programs that
+provide their own 
+.Xr malloc 3
+and
+.Xr free 3
+routines; if you try to
+.Xr free
+memory that was generated from (say) the shared
+.Xr strdup 3 ,
+your program can dump core.
+The easy alternative in this case is
+to use dynamically linked shared libraries instead.
+Also, if library code compares a pointer to a library function
+that was passed to it from user code to
+the address of the library function,
+it will fail because the user code sees
+only the address of the jump table slot.
+(Yes, some standard library code actually does this!)
+.Pp
+The worst limitations of static shared libraries
+are the restrictions that are required
+in order to maintain compatibility
+from build to build.
+It's easy to break compatibility and not learn about it
+until programs start to fail.
+See the
+.Em BUGS
+section in the
+.Xr shlib 8
+manual page for more details.

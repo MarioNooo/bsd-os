@@ -1,0 +1,50 @@
+# default: off
+# description: The POP3 service allows remote users to access their mail \
+#              using an POP3 client such as Eudora, Outlook Express, mutt, \
+#              pine or fetchmail.
+
+#
+# Note: This file is an example setup for xinetd for qpopper.
+# Created by Daniel Senie.
+#
+# This example assumes the popper binary is in /usr/sbin and that the
+# config files are located in /etc. Adjust these to your needs.
+#
+
+#
+# First setup is for port 110. We instruct xinetd to allow a maximum of
+# 50 instances to be running, and a maximum of 10 per single source.
+# (Keep in mind a network behind a NAT router may appear as a single
+# source, so resist the urge to set per_source to 1).
+#
+service pop3
+{
+	flags			= REUSE NAMEINARGS
+	socket_type		= stream
+	wait			= no
+	user			= root
+	server			= /usr/sbin/popper
+	server_args		= popper -f /etc/qpopper110.cfg -s
+	instances		= 50
+	disable			= no
+	port			= 110
+	per_source		= 10
+}
+
+#
+# Second setup is for port 995. This is here primarily for Outlook
+# and Outlook Express, which seem unable to get STARTTLS properly
+# implemented.
+#
+service pop3s
+{
+	flags			= REUSE NAMEINARGS
+	socket_type		= stream
+	wait			= no
+	user			= root
+	server			= /usr/sbin/popper
+	server_args		= popper -f /etc/qpopper995.cfg -s
+	instances		= 50
+	disable			= no
+	per_source		= 10
+}

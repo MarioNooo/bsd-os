@@ -1,0 +1,73 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_vnodes.3,v 2.2 1997/05/30 15:42:22 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_VNODES 3
+.Os
+.Sh NAME
+.Nm kvm_vnodes
+.Nd return vnode table
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <sys/vnode.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.\" .Fa kvm_t *kd
+.br
+.Ft struct e_vnode *
+.Fn kvm_vnodes "kvm_t *kd" "int *avnodes"
+.Sh DESCRIPTION
+The
+.Fn kvm_vnodes
+returns the entire vnode table of the kernel indicated by
+.Fa kd .
+The returned data consists of an array whose size depends on the
+current number of such objects in the system.
+Each element of the array consists of a
+.Va struct e_vnode
+structure which contains:
+.Bd -literal
+struct e_vnode {
+	struct vnode *avnode;
+	struct vnode vnode;
+};
+.Ed
+.Pp
+The
+.Va avnode
+pointer contains the kernel address of this vnode structure the and
+.Va vnode
+structure contains the actual vnode.
+The 
+.Va struct vnode
+and
+.Va struct e_vnode
+structures are defined in 
+.Pa /usr/include/sys/vnode.h .
+Memory for these structures is obtained via
+.Xr malloc 3
+and may be released via
+.Xr free 3
+if desired.
+.Pp
+Note, the vnode table is not necessarily a consistent snapshot of the
+system.
+.Sh RETURN VALUES
+.Fn kvm_vnodes
+will return NULL on failure.
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

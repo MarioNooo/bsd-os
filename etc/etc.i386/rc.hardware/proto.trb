@@ -1,0 +1,27 @@
+#
+# Copyright (c) 1999 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.trb,v 1.1 1999/01/29 11:50:14 geertj Exp
+#
+
+IFS=.
+set $0
+IFS=
+
+while [ "$1" != "trb" ]
+do
+	shift
+	if  [ $# -lt 2 ]
+	then
+		echo 
+		echo "trb setup script named illegally"
+		exit
+	fi
+done
+shift
+unit=$1
+
+echo -n " trb$unit"
+/usr/sbin/trbsetup trb$unit

@@ -1,0 +1,183 @@
+.\" BSDI siconfig.8,v 2.3 1995/11/02 00:20:48 ewv Exp
+.\" from: Id: siconfig.8,v 1.3 1993/10/18 08:10:23 andy Exp
+.\" Copyright (c) 1993 Andy Rutter, Advanced Methods and Tools Ltd.
+.\" Copyright (c) 1993 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd August 4, 1995
+.Dt SICONFIG 8
+.Sh NAME
+.Nm siconfig
+.Nd Specialix SLXOS driver configuration and debugging
+.Sh SYNOPSIS
+.Nm siconfig
+.Ar device_name
+.Ar argument Op Cm Ar parameter ...
+.Sh DESCRIPTION
+The
+.Nm
+program manages the SLXOS driver.
+It requires a
+.Ar device_name
+argument to specify a particular adapter port and
+a further argument to select the particular operation.
+If no '/' character is found in
+.Ar device_name ,
+/dev/ is prepended.
+.Pp
+.Bl -tag -width 4n
+.It Cm boot Op Cm bootfile
+Initialize the SLXOS adapter and driver.
+The SLXOS driver is not fully initialized at kernel bootstrap time
+as firmware code must first be downloaded to the the adapter.
+A default set of firmware is contained within
+.Nm siconfig ;
+the optional
+.Ar bootfile
+specifies an alternative set of firmware.
+All adapters are booted simultaneously, and the
+.Ar device_name
+may be replaced by '-', e.g.:
+.D1 siconfig \- boot
+.\"
+.It Cm int_throttle Op Cm newvalue
+Display or set the aggregate interrupt throttle value.
+The maximum number of controller interrupts per second
+is determined by the formula:
+.D1 Ar "controller CPU clock / (8 * int_throttle )"
+The default value is 25000, which with a controller clock of 25Mhz gives
+a maximum interrupt rate of approximately 125 per second.
+.\"
+.It Cm rxint_throttle Op Cm newvalue
+Display or set the receiver interrupt throttle value.
+This is used to modify the aggregate rate for receiver generated interrupts.
+It is initially set to 4,
+which gives a maximum receiver interrupt rate of 25 per second.
+Reducing the value increases the maximum receiver interrupt rate and
+.Em vice versa
+(this is the initialization for a counter that decrements at each int_throttle
+tick, when it hits zero a receive interrupt is allowed and the counter
+is reset to rxint_throttle).
+.Pp
+To run at 57600 or 115200 the default is not fast enough, use 1 or 2 to
+allow the board to keep up with full speed input (flow control will still
+assert but the throughput with the default rxint_throttle maxes out
+around 50Kb).
+.\"
+.It Cm txlowat Op Cm newvalue
+Display or set the transmitter low water mark.
+The port transmit buffer
+must drain below this value before transmission is re-enabled.
+.\"
+.It Cm ixany Op Cm on|off
+Enable or disable the effect of
+.Xr termios 4
+use of IXANY.
+The controller automatically handles XON/XOFF in firmware if IXON or
+IXOFF (output and input flow control, respectively)
+are specified via
+.Xr termios 4 .
+This configuration parameter is used to enable/disable invocation
+of transmit XON by an received character.
+.\"
+.It Cm mstate
+Display the state of the port's hardware control lines: DTR, RTS, DCD and RI.
+.\"
+.It Cm modem Op Cm on|off
+Display or set the port's soft carrier state.
+If modem is set to
+.Ar on ,
+an open
+on the port will obey the normal
+``wait for DCD unless O_NONBLOCK set'' rules.
+If modem is set to
+.Ar off
+the port behaves as though DCD were continually asserted.
+.\"
+.It Cm cookmode Op Cm on|off
+Display or set the adapter buffering mode.
+Setting cookmode to
+.Ar on
+forces output to always go via the line discipline.
+Conversely, setting cookmode to
+.Ar off
+cause output to be written directly to the adapter, bypassing the line
+discipline code if OPOST is not set.
+The SLXOS firmware can handle the simple (line
+discipline 0) addition of CR after LF; thus, if only OPOST and ONLCR are
+set, the line discipline is also bypassed.
+Input is always routed via the line discipline.
+.\"
+.It Cm nport
+Display the number of ports attached to the adapter referenced by the
+specified
+.Ar device_name .
+.\"
+.It Cm hwflow
+.It Cm hwflow Cm rts
+.It Cm hwflow Cm cts
+.It Cm hwflow Cm rtscts
+.It Cm hwflow Cm none
+Display or set the adapter RTS/CTS flow control mode. Use of RTS and CTS
+to handle flow control can be set independently of of the state of
+CCTS_OFLOW and CRTS_IFLOW in
+.Xr termios 4 .
+The flags from termios and here are logically ored together to determine
+if H/W flow control should be used.
+Note: as the default terminal adapter is a DCE, RTS is used for output
+flow control and CTS for input flow control (reverse of DTE).
+.\"
+.It Cm ppp Op Cm on|off
+Display or set the PPP compatibility mode.
+PPP (and similar) upper level protocol code requires a
+positive acknowledgment of successful character transmission.
+In the case of PPP, this is done using the side effect of a call to
+.Pa xxstart()
+after the hardware has interrupted to indicate transmit buffer drain.
+However, the SLXOS firmware only generates a buffer drain interrupt after
+the transmit buffer has been filled (beyond a high water mark).
+The
+.Ar ppp
+option invokes a soft interrupt call to the line disciple start routine
+after a number ticks of the clock, as calculated from the baud rate and
+the number of characters just transmitted.
+This ensures that upper layers
+of protocol code receive their desired acknowledgment.
+.\"
+.It Cm xpon|xpoff Op Cm string
+Display or set the XPRINT preamble and postamble strings.
+These should be set to the character strings that enable and disable
+output to the terminal's printer port.
+Non-printable characters may be encoded in the same style as in
+.Xr unvis 1
+and
+.Xr termcap 5
+(approximately a superset of C syntax).
+The default strings are:
+.Pp
+.Bl -tag -compact -width 12n
+.It Cm xpon
+\&\\033d#
+.It Cm xpoff
+\&\\024
+.El
+.\"
+.It Cm xpcps Op Cm chars_per_sec
+Display or set the aggregate XPRINT transmission rate.
+.El
+.Sh FILES
+.Bl -tag -width /dev/si_control -compact
+.It Pa /dev/si_control
+driver control interface
+.It Pa /dev/tty[ab]*
+ports
+.It Pa /dev/tty[ab]*_xp
+XPRINT ports
+.El
+.Sh SEE ALSO
+.Xr si 4 ,
+.Sh DIAGNOSTICS
+Many and various.
+.Sh BUGS
+Watch this space.

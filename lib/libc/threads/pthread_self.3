@@ -1,0 +1,37 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_self.3,v 1.3 1996/12/12 03:03:47 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_EQUAL 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_self
+.Nd return the thread ID of the calling thread
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft pthread_t
+.Fn pthread_self "void" 
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Sh RETURN VALUES
+The 
+.Fn pthread_self
+function returns the pthread identifier of the calling thread.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_equal 3 
+.Sh STANDARDS
+The
+.Nm pthread_self
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_self
+function first appeared in BSD/OS 3.0.

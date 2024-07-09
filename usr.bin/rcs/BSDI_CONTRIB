@@ -1,0 +1,43 @@
+Software Package:       
+	rcs
+
+Release/Version:
+	5.7
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and rcs-bugs@cs.purdue.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Index: co/co.c
+===================================================================
+RCS file: /master/usr.bin/rcs/co/co.c,v
+retrieving revision 2.2
+diff -c -r2.2 co.c
+*** co.c	1995/12/06 18:09:44	2.2
+--- co.c	1998/01/26 18:11:53
+***************
+*** 429,435 ****
+  		)
+  			continue;
+  
+! 		if (0 <= expmode)
+  			Expand = expmode;
+  		if (0 < lockflag  &&  Expand == VAL_EXPAND) {
+  			rcserror("cannot combine -kv and -l");
+--- 429,435 ----
+  		)
+  			continue;
+  
+! 		if (0 <= expmode && Expand != BINARY_EXPAND)
+  			Expand = expmode;
+  		if (0 < lockflag  &&  Expand == VAL_EXPAND) {
+  			rcserror("cannot combine -kv and -l");

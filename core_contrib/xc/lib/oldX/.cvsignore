@@ -1,0 +1,4 @@
+Makefile
+unshared
+liboldX.so.6.0
+.depend

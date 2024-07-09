@@ -1,0 +1,57 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_kill.3,v 1.1 1996/06/06 14:07:50 mdickson Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_KILL 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_kill
+.Nd send signal to a process
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <signal.h>
+.Ft int
+.Fn pthread_kill "pthread_t thread" "int sig"
+.Sh DESCRIPTION
+The
+.Fn pthread_kill
+function sends the signal given by
+.Fa sig
+to the specified
+.Fa thread .
+.Fa Sig
+may be one of the signals specified in
+.Xr sigaction 2
+or it may be 0, in which case
+error checking is performed but no
+signal is actually sent. 
+This can be used to check the validity of
+.Fa thread .
+.Sh RETURN VALUES
+Upon successful completion, a value of 0 is returned.
+Otherwise, an error value is returned.
+.Sh ERRORS
+.Fn Pthread_kill
+will fail and no signal will be sent if:
+.Bl -tag -width [EINVAL]
+.It Bq Er EINVAL
+.Fa Sig
+is not a valid signal number.
+.It Bq Er ESRCH
+No thread can be found corresponding to that specified by
+.Fa thread .
+.El
+.Sh SEE ALSO
+.Xr kill 2 ,
+.Xr pthread_sigmask 3
+.Xr sigaction 2
+.Sh STANDARDS
+The
+.Fn pthread_kill
+function is expected to
+conform to 
+.St -p1003.1c .

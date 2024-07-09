@@ -1,0 +1,6 @@
+Makefile
+lex.c
+reconfig.c
+reconfig.h
+reconfig.0
+reconfig

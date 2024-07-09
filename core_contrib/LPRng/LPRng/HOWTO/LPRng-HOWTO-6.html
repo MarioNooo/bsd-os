@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Forwarding Jobs</TITLE>
+ <LINK HREF="LPRng-HOWTO-7.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-5.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc6" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-7.html">Next</A>
+<A HREF="LPRng-HOWTO-5.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc6">Contents</A>
+<HR>
+<H2><A NAME="s6">6. Forwarding Jobs</A></H2>
+
+<P>Our Tutorial Printcap configuration has the following format:
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+lp2:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp2
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Both of these queues cause jobs to be written to
+<CODE>/var/tmp/lp</CODE>
+and
+<CODE>/var/tmp/lp2</CODE>
+respectively.
+This can be tested by trying the following commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+cp /dev/null /var/tmp/lp
+cp /dev/null /var/tmp/lp2
+echo hi | lpr -Plp
+echo there | lpr -Plp2
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The contents of
+<CODE>/var/tmp/lp</CODE>
+and
+<CODE>/var/tmp/lp2</CODE>
+will now be <CODE>hi\n</CODE> and <CODE>there\n</CODE>
+respectively.
+<P>Modify the printcap so that it has the following contents,
+and then execute the indicated commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+
+new printcap contents
+
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=lp2@localhost
+lp2:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp2
+
+h4: {172} % checkpc -f
+h4: {173} % lpc reread
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lp=lp2@localhost</CODE>
+means <I>forward any jobs sent to this queue to the spool queue q2 on localhost </I>.
+To see if this is true,
+execute the following commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {181} % clearstatus
+h4: {182} % cp /dev/null /var/tmp/lp
+h4: {183} % cp /dev/null /var/tmp/lp2
+h4: {184} % echo hi | lpr
+h4: {185} % lpq -ll
+Printer: lp@h4 (dest lp2@localhost)
+ Queue: no printable jobs in queue
+ Status: done job 'papowell@h4+19114' transfer to lp2@localhost at 23:41:44.502
+ Status: subserver pid 19116 exit status 'JSUCC' at 23:41:44.524
+ Status: lp@h4.private: job 'papowell@h4+19114' printed at 23:41:44.525
+ Status: job 'papowell@h4+19114' removed at 23:41:44.536
+Printer: lp2@h4
+ Queue: 1 printable job
+ Server: pid 19117 active
+ Unspooler: pid 19118 active
+ Status: opening device '/var/tmp/lp' at 23:41:44.557
+ Status: printing job 'papowell@h4+19114' at 23:41:44.558
+ Status: no banner at 23:41:44.558
+ Status: printing data file 'dfA019114h4.private', size 3 at 23:41:44.558
+ Rank   Owner/ID                  Class Job Files                 Size Time
+active papowell@h4+19114            A 19114 (stdin)                  3 23:41:44
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you can see from the status,
+the print job was forwarded from <CODE>lp@h4</CODE> to the <CODE>lp2@h4</CODE> queue.
+What is a little surprising is that the <CODE>lpq</CODE> command displays status for
+<B>both</B> queues.
+This is because LPRng does recursive status lookups
+when you specify job forwarding with the <CODE>RFC1179</CODE> protocol
+This is done using the printcap entries
+<CODE>:lp=queue@host</CODE> or <CODE>:rp=queue:rm=host</CODE> format.
+See
+<A HREF="LPRng-HOWTO-17.html#remotesupport">Protocol Requests and Replies</A>
+and
+<A HREF="LPRng-HOWTO-8.html#destinations">Dynamic Routing</A>
+for more information on problems using recursive status lookup and
+how recursive status lookup can be modified.
+<H2><A NAME="defaultprinterwhenunknown"></A> <A NAME="defaultprinter"></A> <A NAME="defaulthost"></A> <A NAME="PRINTER"></A> <A NAME="printerenv"></A> <A NAME="ss6.1">6.1 Printer Name and Server IP Address</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>PRINTER, LPDEST, NGPRINTER</CODE><EM>&nbsp;&nbsp;Environment variables </EM></LI>
+<LI> <CODE>force_localhost</CODE><EM>&nbsp;&nbsp;force clients to send requests to localhost </EM></LI>
+<LI> <CODE>default_printer_when_unknown</CODE>&nbsp;&nbsp; <EM>used by LPD when printer name not in printcap </EM></LI>
+</UL>
+<P>When an LPRng client such as
+<CODE>lpr</CODE>,
+<CODE>lpq</CODE>,
+<CODE>lprm</CODE>,
+or
+<CODE>lprc</CODE>
+needs to communicate with a print server,
+the only information they normally need is:
+<OL>
+<LI>The spool queue or <I>remote printer</I>
+to be used in requests to the <CODE>lpd</CODE> print server.
+This is sometimes referred to as the <I>printer</I> or <I>print queue</I> name.</LI>
+<LI>The IP address or hostname of the <I>print server</I> or <I>remote server</I>.
+This is sometimes called the <I>remote host</I> or simply <I>server</I>.</LI>
+<LI>Options that control <EM>how</EM> jobs or commands are transferred to the server host.
+These options might include encryption and client side job filtering.
+We will discuss these capabilities later.</LI>
+</OL>
+<P>LPRng has several ways to specify the <I>printer queue</I> and <I>server</I> information.
+<H3>Command Line -Pprinter@host</H3>
+
+<P>The <CODE>-P printer@host</CODE> option specifies both the print queue and
+server.
+<BLOCKQUOTE><CODE>
+<PRE>
+lpr -Plaser@10.0.0.1
+lpq -Plp@myserver
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When used as a command line option,
+the printcap database will not be consulted for other options or information.
+This allows LPRng clients to function without a printcap database,
+and without a <CODE>lpd</CODE> print server running on their local host.
+However,
+options set in the <CODE>/etc/lpd.conf/</CODE> and the compile time defaults
+will still be used.
+<H3>Command Line -Pprinter</H3>
+
+<P>This form will cause the LPRng clients to look in the
+<CODE>/etc/printcap</CODE>
+for a printcap entry with the name or alias <CODE>printer</CODE>
+and use the information in that printcap entry.
+We will discuss the format of the printcap entry in a moment.
+Example:
+<BLOCKQUOTE><CODE>
+<PRE>
+lpr -Plp
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>PRINTER, LPDEST, and NGPRINTER Environment Variables</H3>
+
+<P>If no command line option is specified,
+the LPRng clients will check for the first defined
+<CODE>PRINTER</CODE>,
+<CODE>LPDEST</CODE>,
+or
+<CODE>NGPRINTER</CODE>
+environment variable value
+and will use the value as though specified as a
+<CODE>-P$PRINTER</CODE> command line option.
+<P>If the value has the form
+<CODE>printer@host</CODE> the print queue will be <CODE>printer</CODE> on server <CODE>host</CODE>
+and not consult the printcap database.
+If the value has the form <CODE>printer</CODE> then the printcap will be searched
+for a <CODE>printer</CODE> printcap entry.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+export PRINTER=laser@10.0.0.1; lpr
+export PRINTER=pr; lpr
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>Default Printer From Printcap</H3>
+
+<P>If you do not specify a printer on the command line or in the <CODE>PRINTER</CODE>
+environment variable,
+then LPRng will search the printcap and use the first valid printcap entry
+as the printer.
+<H3>Default Printer When No Printcap</H3>
+
+<P>If you do not have a <CODE>/etc/printcap</CODE> file,
+then LPRng will use the
+<CODE>default_printer</CODE>
+and
+<CODE>default_remote_host</CODE>
+<I>fallback</I>
+values set in the <CODE>/etc/lpd.conf</CODE> file or by the compile time defaults.
+<P>Using the fallback values is usually not a desirable event and may indicate
+that you have a misconfigured host, so the fallback values are usually set
+by administrators to <CODE>missingprinter@localhost</CODE> to provoke an annoying message for users.
+<H3>LPD Default Printer</H3>
+
+<P>For completeness,
+there is even a <CODE>default_printer_when_unknown</CODE> configuration
+entry for use by LPD when it is given a printer name not in its printcap
+database.
+By default,
+it will look up this name in the database and treat the job as though it was
+sent to this printer.
+<H2><A NAME="allowusersetting"></A> <A NAME="ss6.2">6.2 User Identification</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>allow_user_setting</CODE><EM>&nbsp;&nbsp;priviledged users </EM></LI>
+</UL>
+<P>When an client program sends a command to the <CODE>lpd</CODE> server,
+it sends the name of the user who is originating the request for service.
+This name is obtained by looking up the UID of the user
+running the client
+in the user information database and using this name;
+if the name is not found the UID value is used.
+<P>The <CODE>lpr -U name</CODE> (and for
+<CODE>lpq</CODE>, <CODE>lprm</CODE>, and <CODE>lpc</CODE>)
+option allows privileged users to
+cause the client software to use the <CODE>name</CODE> value as the originator
+rather than the UID information.
+This allows priviledged users to <CODE>impersonate</CODE> other users.
+This is most useful for programs such as Samba and PCNFS,
+which need to act as proxies for users.
+<P>By default, ROOT (UID 0) is the only user that can masquerade as another
+user.
+The <CODE>allow_user_setting=name,name...</CODE> configuration option can be used
+to specify a list of names or UIDs that can also perform masquerading.
+For example,
+if the Samba server was running as user <CODE>samba</CODE>, then
+<CODE>allow_user_setting=samba</CODE> would allow it to specify the name of print
+job originator as a remote user,
+and the remote user would not need a login account on the system.
+<H2><A NAME="forcelocalhost"></A> <A NAME="ss6.3">6.3 LPD Server Runnning on Localhost</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>force_localhost</CODE><EM>&nbsp;&nbsp;force clients to send requests to localhost </EM></LI>
+</UL>
+<P>Workstations for personal use or in extremely simple configurations
+will always run an <CODE>lpd</CODE> server on the <I>localhost</I>.
+This is the most common situation for the majority of new
+users,
+and the
+default LPRng installation sets the default value of the
+<CODE>force_localhost</CODE> configuration parameter to <B>TRUE</B> or to 1.
+The
+<CODE>lpr</CODE>
+<CODE>lpq</CODE>
+<CODE>lprm</CODE>
+and
+<CODE>lpc</CODE> will connect to <CODE>localhost</CODE> (usually IP address 127.0.0.1)
+unless explicitly overridden by the command line <CODE>-Pprinter@host</CODE> argument.
+<P>Larger sites or organizations which want to use a central print server
+to handle multiple printers or printer sharing
+may want the clients to connect directly to the server.
+This can be done either at compile time using the
+<CODE>./configure --disable-force_localhost</CODE>
+option and regenerating the software or by setting the
+<CODE>force_localhost</CODE> flag off in the <CODE>printcap</CODE> or <CODE>lpd.conf</CODE> file:
+<BLOCKQUOTE><CODE>
+<PRE>
+# Set force_localhost off, send to
+# server 10.0.0.1
+lp=lp@10.0.0.1:force_localhost@
+</PRE>
+</CODE></BLOCKQUOTE>
+<HR>
+<A HREF="LPRng-HOWTO-7.html">Next</A>
+<A HREF="LPRng-HOWTO-5.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc6">Contents</A>
+</BODY>
+</HTML>

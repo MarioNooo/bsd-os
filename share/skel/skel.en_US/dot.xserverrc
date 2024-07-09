@@ -1,0 +1,36 @@
+#! /bin/sh
+#
+#	BSDI	dot.xserverrc,v 2.5 2002/03/22 22:53:15 polk Exp
+#
+# .xserverrc - set up Xauth stuff from xinit
+#
+PATH=/usr/bin:/bin:/usr/X11/bin
+
+#
+# Get both long and short hostnames
+#
+##########################################
+
+HOST=`hostname -s`
+LHOST=`hostname`
+
+#
+# generate a seed for xauth
+#
+##########################################
+
+xauth_rand="$({ echo $$; date; ps axlw; } | /usr/bin/md5)"
+
+xauth add ${HOST}/unix:0 . $xauth_rand
+xauth add ${LHOST}/unix:0 . $xauth_rand
+xauth add ${LHOST}:0 . $xauth_rand
+xauth add ${HOST}:0 . $xauth_rand
+xauth add localhost:0 . $xauth_rand
+xauth add :0 . $xauth_rand
+
+#
+# start the Xserver
+#
+###########################################
+
+exec X -auth $HOME/.Xauthority

@@ -1,0 +1,21 @@
+Software Package:       
+	libtelnet
+
+Release/Version:
+	10/23/95
+
+Retrieved from:
+	ftp.cray.com:src/telnet
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and dab@borman.com.
+
+Comments:
+	NOTE -- the sources live here, but the Makefile
+	in /usr/lib/libtelnet really builds it.  It's part of the 
+	regular distribution, but source is only domestic.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

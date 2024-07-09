@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Example SLXOS startup script. Must be called from /etc/rc before
+# /etc/netstart is invoked if any lines are used for SLIP or PPP.
+
+PATH=$PATH:/sbin export PATH
+
+# initialised the adapter
+if siconfig - boot
+then
+
+	# set port 0 for local terminal use (default is <modem on>) and
+	# initialise XPRINT strings
+	siconfig /dev/ttya0 modem off
+	siconfig /dev/ttya0 xpon '\033PS'
+	siconfig /dev/ttya0 xpoff '\033PE'
+
+	# set port 4 for local PPP link
+	siconfig /dev/ttya4 modem off
+	siconfig /dev/ttya4 ppp on
+
+	# set port 5 for dial-in PPP
+	siconfig /dev/ttya5 ppp on
+
+else
+	echo "SLXOS driver not configured/loaded" 2>&1
+	exit 1
+fi

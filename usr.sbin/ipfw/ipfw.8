@@ -1,0 +1,239 @@
+.\"	BSDI	ipfw.8,v 1.6 2000/06/12 19:06:16 polk Exp
+.\"
+.\" Copyright (c) 1996,1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd September 20, 1996
+.Dt IPFW 8
+.Sh NAME
+.Nm ipfw
+.Nd set / retrieve BSD IP Filters
+.Sh SYNOPSIS
+.Nm ipfw
+.Op filter
+.Op Fl Ns Ar command Op Ar options
+.Op ...
+.Sh DESCRIPTION
+The
+.Nm ipfw
+utility allows the setting and retrieving of kernel based BSD IP Filters,
+as well as resolution of interface names into interface index numbers.
+The
+.Ar filter
+argument must be one of:
+.Bl -tag -width indent
+.It Nm pre-input
+A filter on all IP packets as they first enter IP processing
+.It Nm input
+A filter on IP packets destined for the local machine, after fragment
+re-assembly.
+.It Nm forward
+A filter on IP packets being forwarded through this machine.
+.It Nm pre-output
+A filter on all IP packets leaving this machine, prior to routing.
+.It Nm output
+A filter on IP packets generated locally by this machine.
+.It Nm call
+Not an actual filtering point, this chain should contain filters to
+be called from a BPF based filter.
+.It Nm rate
+Filters each packet just prior to call the interface's output routine.
+If the filter returns a non-zero value then that is the index number of
+a rate limiting filter that should be applied to this packet
+.El
+.Pp
+If no command is given, the chain of filters associated with
+.Ar filter
+are displayed.
+.Pp
+If no
+.Ar filter
+is given then there must either be no other arguments or the only argument must
+be
+.Fl list .
+In these cases, all the above filtering points are reported or listed.
+.Pp
+The following commands are available:
+.Bl -tag -width indent
+.It Fl display
+Displays the contents of a filter as it was provided to
+.Nm ipfw
+when installed.
+(See special note about NAT filters below.)
+If options are provided, they are to be a list of serial numbers.
+The serial number 0 implies the first filter.
+If no options are provided then all the filters in this chain are displayed.
+.It Fl dontsave
+Do not save a copy of this filter in
+.Pa /var/run/ipfw .
+This will prevent the 
+.Fl display
+command from working for this filter.
+.It Fl insert
+This command takes a filter number and a filter.  The filter is
+pushed onto the
+.Nm call
+list and assigned the specified filter number.  The filter number
+should be a small positive integer.  This number can be used with
+the
+.Nm call
+and
+.Nm chain
+commands when compiling filters with
+.Xr ipfwcmp 8 .
+This command is only valid when the
+.Ar filter
+is
+.Nm call .
+.It Fl list
+List the filters in the chain as well as the length of the filters.
+This is a much more resource consuming task than the default report
+which does not include lengths.
+.It Fl move
+This command takes two serial numbers.  The filter specified by the
+first serial number is moved just below the filter specified by the
+second serial number.
+.It Fl output
+This command takes exactly one option, which should be the name of a file
+into which to write the contents of the filter chain specified for
+.Ar filter .
+.\" .It Fl password
+.\" Place a password on
+.\" .Ar filter .
+.\" This command takes no options.
+.It Fl pop
+Remove the last filter pushed onto the filter chain.
+If options are provided, they are to be a list of serial numbers.
+The filters of the specified serial numbers will be removed, rather
+than the first filter.  The serial number 0 implies the first filter.
+.It Fl popall
+If an option is provided, it should be the serial number of a filter
+in the chain.  If not provided, the serial number defaults to 0, which
+implies the first filter in the chain.
+The specified filter in the chain, and all following filters, are removed.
+.No ( Ns Fl popall
+then simply clears the entire filter chain.)
+.It Fl priority
+This command takes exactly one option, which should be a priority (a signed
+32 bit value).  All filters, on this command line, that are inserted
+after the
+.Fl priority
+command will have this priority (unless changed by another
+.Fl priority command ) .
+The default priority of a filter is 0.
+When a new filter is pushed on, it is pushed on just before the top most
+filter with a priority less than or equal to this filters priority.
+.It Fl push
+The options are a list of file names containing filters to be pushed
+onto the front of the chain of filters for
+.Ar filter.
+The last filter specified is pushed on first.  This results in the
+first filer listed being at the top of the chain.
+This command requires at least one option.
+.It Fl replace
+The command is identical to
+.Fl push
+with the exception that filter which used to be at the top of the
+chain will be popped once the new filter(s) are installed.
+.It Fl replaceall
+The command is identical to
+.Fl push
+with the exception that all the old filters will be removed
+once the new filter(s) are installed.
+This command requires at least one option.
+.It Fl serialpush
+The command is identical to
+.Fl push
+but each filter requires a serial number following each file name.
+Use the
+.Fl serial
+command to retrieve a new serial number.
+.It Fl secure
+Mark
+.Ar filter
+as secure (immutable).
+This command takes no options.
+.It Fl serial
+Print out an available serial number to use with the
+.Fl serialpush
+command.
+.It Fl stats
+Display statistics for
+.Ar filter
+This command takes no options.
+.It Fl tag
+This command takes a single option which is the tag to be assigned to the
+next filter installed (on this command line).
+Each filter may have a 32 byte tag (shorter tags are automatically NUL padded).
+If a tag does not start with a NUL byte and another filter on the chain
+exists with the same tag, that filter is replaced by the new filter and
+its location is not modified.  The priority is not used to position the
+filter, though the new priority may alter how future filters are inserted.
+.El
+.Pp
+For the
+.Nm -push ,
+.Nm -replace ,
+and
+.Nm -replaceall
+commands, the
+.Ar options
+refer to files which should be descriptions of BSD IP Filters.
+Unless the file name ends with
+.Pa .ipfw ,
+the file is expected to be a compiled filter (see
+.Xr ipfwcmp 8
+and
+.Xr ipfwcisco 8 )
+otherwise
+.Nm ipfw
+will use the
+.Xr ipfwcmp 8
+utility to compile the filter.
+.\" .Pp
+.\" If the currently installed BSD IP Filter has a password set,
+.\" .Nm ipfw
+.\" will request the old password.  The old password must match the password
+.\" specified when the current BSD IP Filter was installed in order to
+.\" delete or replace that filter.
+.Sh NAT FILTERS
+.Pp
+When using the
+.Fl display
+command on a NAT filter both the configuration and any active NAT sessions
+are displayed.  The NAT configuration is computed from the current active
+configuration and does not include any
+.Nm prefill
+values (see
+.Xr ipfwnat 8 ) .
+.Nm timeout Ns No s
+and
+.Nm buckets
+are only display if the filter is using values other than the defaults.
+.Pp
+The active NAT sessions are displayed one per line.  The first two characters
+of each line indicate how the session was created.
+.Dq ->
+implies the session was created on an incoming packet that matched a service.
+.Dq <-
+implies the session was created by an outgoing packet that matched a map.
+.Pp
+The
+.Nm remote
+address and port are of the endpoint outside of the NAT environment.
+The
+.Nm external
+address and port are what the
+.Nm remote
+end sees.
+The
+.Nm internal
+address and port are for the endpoint within the NAT environment.
+.Sh SEE ALSO
+.Xr ipfwasm 8 ,
+.Xr ipfwcisco 8 ,
+.Xr ipfwcmp 8 ,
+.Xr ipfwdump 8 ,
+.Xr ipfwlog 8

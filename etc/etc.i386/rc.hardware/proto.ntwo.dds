@@ -1,0 +1,27 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.ntwo.dds,v 1.2 1996/11/13 17:32:22 pjd Exp
+#
+
+#
+# ntwo setup script to configure csu on 56k dds board
+unit=
+IFS=.
+for i in $0
+do
+    unit=$i
+done
+IFS=
+
+echo -n " ntwo$unit"
+ifconfig ntwo$unit down
+n2setup -u $unit <<EOF
+#
+# uncomment following to make driver silent about receive
+# errors such as parity and framing
+#
+#receive data errors = silent;		
+EOF

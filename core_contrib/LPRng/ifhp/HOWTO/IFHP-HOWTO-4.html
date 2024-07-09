@@ -1,0 +1,344 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Options and Arguments</TITLE>
+ <LINK HREF="IFHP-HOWTO-5.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-3.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc4" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-5.html">Next</A>
+<A HREF="IFHP-HOWTO-3.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc4">Contents</A>
+<HR>
+<H2><A NAME="model_from_option"></A> <A NAME="model"></A> <A NAME="options"></A> <A NAME="s4">4. Options and Arguments</A></H2>
+
+<P>The <CODE>ifhp</CODE> filter is designed to work with the LPRng print spooler
+and expects to be passed the standard set of filter options.
+These have the form:
+<BLOCKQUOTE><CODE>
+<PRE>
+/.../ifhp [-c] [-X option]* accountingfile
+Example:
+/.../ifhp -n root -h localhost -P printer -s statusfile acct
+# - X is any letter except T
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>All of the option letters except <CODE>T</CODE> are reserved by the <CODE>LPRng</CODE>
+program to pass information to the filter.
+For details about the options,  please consult the <CODE>LPRng</CODE> documentation.
+<H2><A NAME="ss4.1">4.1 Command Line Options</A>
+</H2>
+
+<P>The most important options that LPRng passes and that uses are:
+<DL>
+<DT><B>-s statusfile</B><DD><P>The file where <CODE>ifhp</CODE> status information is placed.
+<DT><B>-Z useroptions</B><DD><P>The <CODE>lpr -Z</CODE> options passed by the user, and are discussed in
+the 
+<A HREF="#options">options</A> section.
+<DT><B>-T options</B><DD><P>These are usually options specified in the printcap entry
+and are discussed in
+the 
+<A HREF="#options">options</A> section.
+<DT><B>accountingfile</B><DD><P>The file where accounting information is written.
+</DL>
+<P>
+<BLOCKQUOTE><CODE>
+Examples:
+ifhp "-Tmodel=ps,status@" "-Za4,landscape"
+</CODE></BLOCKQUOTE>
+<P>Since commas are used to separate options,
+whitespace is used to separate multiple values
+for a particular option.
+You will need to quote this on a command line. For example:
+<BLOCKQUOTE><CODE>
+ifhp "-Tfont=elite greek1 dingbat"
+</CODE></BLOCKQUOTE>
+<P>The <CODE>ifhp</CODE> program first checks to see if the
+<CODE>PRINTCAP</CODE> environment variable is defined.
+By convention, <CODE>LPRng</CODE> will place the printer printcap entry in this
+variable when it starts the <CODE>ifhp</CODE> filter.
+The printcap <CODE>:ifhp=options</CODE> value is extracted and used
+as the default <CODE>-T</CODE> options.
+After getting the options from the printcap,
+the <CODE>-Toptions</CODE> command line options are appended to the list of <CODE>-T</CODE>
+options.
+The single letter command line options are also made available to
+the <CODE>ifhp</CODE> programs as shown below:
+<BLOCKQUOTE><CODE>
+<PRE>
+PRINTCAP=lp:ifhp=model=this,status@:...
+
+ifhp -n root -h localhost -Tmodel=that,debug=1
+
+Concatenated -T options:  model=this,status@,n=root,h=localhost,model=that,debug=1
+Resulting    -T options:  status@,n=root,h=localhost,model=that,debug=1
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>-T</CODE> option list is scanned from left to right,
+and later option values override earlier ones.
+The <CODE>-T</CODE> option values have priority over values that are obtained
+from the configuration file and cannot be overridden.
+There are several options that have important effects on the operation
+of the <CODE>ifhp</CODE> filter.
+<H2><A NAME="debug"></A> <A NAME="trace"></A> <A NAME="config"></A> <A NAME="ss4.2">4.2 General Configuration Options - config, model, trace, debug</A>
+</H2>
+
+<P>These options are used to control the global operation
+of the <CODE>ifhp</CODE> filter,
+and are only available from the <CODE>-T</CODE> command line options.
+<DL>
+<DT><B>config=pathname</B><DD><P>The <CODE>config</CODE> option specifies the location of the <CODE>ifhp.conf</CODE> file.
+This overrides the default location.
+The pathname can be a file name, list of filenames separated by spaces,
+or a filter.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+ifhp '-Tconfig=/etc/ifhp.conf /usr/local/etc/ifhp.conf'
+ifhp '-Tconfig=|/usr/local/bin/getconfig'
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This will cause the <CODE>getconfig</CODE> program to be run and the configuration information
+read from the program's STDOUT.
+This facility is strongly deprecated and
+may not be supported in future releases.
+<P>
+<DT><B>model=MODEL</B><DD><P>The <CODE>model</CODE> option selects the portion of the ifhp configuration
+that will set values of configuration parameters.
+This is discussed in detail in the next section.
+<P>
+<DT><B>trace</B><DD><P>As <CODE>ifhp</CODE> processes the print job,  it produces tracing and error message
+information.
+By default this is written to the status file specified by the <CODE>-s</CODE>
+command line option.
+The <CODE>trace</CODE> option will cause this information to be written to
+<CODE>STDERR</CODE> (file descriptor 2).
+This is usually used in debugging.
+<P>
+<DT><B>debug=n</B><DD><P>This option sets the debugging level to <CODE>n</CODE>, where <CODE>n</CODE> is an integer number.
+Level 0 turns debugging off, level 1 produces a small amount of verbosity
+and increasing levels produce more verbose information.
+</DL>
+<H2><A NAME="summaryfile"></A> <A NAME="statusfile_min"></A> <A NAME="statusfile_max"></A> <A NAME="statusfile"></A> <A NAME="ss4.3">4.3 Status Messages - statusfile, statusfile_max, statusfile_min, summaryfile</A>
+</H2>
+
+<P>
+<DL>
+<DT><B>statusfile=pathname or -s pathname</B><DD><P>The status file pathname is set by the command line
+<CODE>-s pathname</CODE>
+or if it is not present then the
+<CODE>statusfile=pathname</CODE>
+configuration option.
+The file must exist and will not be created.
+<P>
+<DT><B>statusfile_max=n</B><DD><P>If the status file is larger than
+<CODE>statusfile_max</CODE> K bytes (default 8K),
+then it is truncated to
+<CODE>statusfile_min=min</CODE>
+K bytes.
+<P>
+<DT><B>statusfile_min=n</B><DD><P>The minimum size in Kbytes of the status file after truncation
+(default 1K).
+</DL>
+<H2><A NAME="status"></A> <A NAME="ss4.4">4.4 Printer Status Available - status</A>
+</H2>
+
+<P>The <CODE>status</CODE> option indicates that there is a bidirectional
+connection to the printer,
+and that status can be obtained from the connection.
+During initialization
+the <CODE>ifhp</CODE> filter will test the printer connection and determine if
+it supports reading.
+If it does not then <CODE>ifhp</CODE> will set <CODE>status@</CODE>.
+<H2><A NAME="ss4.5">4.5 Monitoring Options - sync, waitend, pagecount</A>
+</H2>
+
+<P>The <CODE>sync</CODE>, <CODE>waitend</CODE>, and <CODE>pagecount</CODE>
+options are ignored if no status is available from the printer.
+The <CODE>sync</CODE> option specifies the method to use to
+determine if the printer is ready and operational.
+The <CODE>waitend</CODE> option specifies the method used to determine
+when a print job is finished.
+The <CODE>pagecount</CODE> option specifies the method used to obtain pagecount
+or status information.
+<DL>
+<DT><B>sync@, waitend@, pagecount@ </B><DD><P>This form of the tag indicates that the particular facility is disabled.
+<P>
+<DT><B>sync=pjl</B><DD><P>PJL is used to determine if the printer is ready.
+This can be done by sending a <CODE>PJL JOB</CODE> or <CODE>PJL ECHO</CODE>
+command to the printer and waiting for return status.
+<P>
+<DT><B>sync=ps</B><DD><P>A small PostScript job which causes a status report to be returned
+is sent to the printer.
+<P>
+<DT><B>waitend=pjl, waitend=ps</B><DD><P>This is similar to the <CODE>sync</CODE> operation,
+but is done at the end of a job in order to determine if the
+printer is busy.
+<P>
+<DT><B>pagecount=pjl</B><DD><P>Many PJL capable printers support reporting total page usage by
+means of PJL.
+This option causes a PJL command to be sent requesting the
+total page usage by the printer.
+<P>
+<DT><B>pagecount=ps</B><DD><P>A small PostScript job which causes a status report to be returned
+is sent to the printer.
+</DL>
+<H2><A NAME="ss4.6">4.6 User -Z Option Support</A>
+</H2>
+
+<P>The <CODE>ifhp</CODE> filter provides a simple way for users to request
+a particular printer facility or option.
+The <CODE>lpr -Zkey=value</CODE> command causes the <CODE>lpd</CODE>
+print spooler to pass the <CODE>-Z</CODE> options on the <CODE>ifhp</CODE> command line.
+<P>The <CODE>ifhp</CODE> filter implements these options by first determining if they
+are allowed,
+and then using them to select a set of strings that are sent to the printer.
+Since some options are implement by sending PJL strings to the printer,
+some by PostScript,
+and some by PCL commands,
+the method of specifying and generating them is a bit involved.
+<P>The following facility is used to control the names and types of user
+options.
+<DL>
+<DT><B>pjl_user_opts=[ ... ]</B><DD><P>This tag specifies the list of user options that are implemented by
+sending PJL strings to the printer.
+This is available only if the printer is PJL capable.
+<DT><B>pcl_user_opts=[ ... ]</B><DD><P>This tag specifies the list of user options that are implemented by
+sending PCL strings to the printer.
+This is available only if the printer is PCL capable.
+<DT><B>ps_user_opts=[ ... ]</B><DD><P>This tag specifies the list of user options that are implemented by
+sending PostScript strings to the printer.
+This is available only if the printer is PostScript capable.
+</DL>
+<P>For each option,
+the actual string or set of strings is specified as follows.
+<DL>
+<DT><B>pjl_<I>key</I>= ...</B><DD><P>The value of the PJL user option <CODE>key</CODE>.
+This value can be one or more lines;
+the lines are checked for correct PJL format and sent to the printer
+before any language specific information.
+<DT><B>ps_<I>key</I>= ... </B><DD><P>The value of the PostScript user option <CODE>key</CODE>.
+This value can be one or more lines;
+leading and trailing whitespace is removed and the lines are
+placed before the first lines of a PostScript job file.
+<DT><B>pcl_<I>key</I>= ... </B><DD><P>The value of the PCL user option <CODE>key</CODE>.
+This value can be one or more lines;
+whitespace and new lines are removed and the
+characters are placed before the first characters of a PCL job file.
+</DL>
+<P>The following user options are predefined in the default
+<CODE>ifhp.conf</CODE> file and are recommended for use.
+<DL>
+<DT><B>a3, a4, a5 </B><DD><P>Use a3, a4, or a5 paper
+<DT><B>copies=N</B><DD><P>Print N copies of a page or job
+<DT><B>duplex</B><DD><P>Use duplex printing,  tumble on.
+Pages will come out so that the margins are at opposite ends
+of a page.
+<DT><B>duplexshort</B><DD><P>Use duplex printing,  tumble off.
+Pages will come out so that the margins are at the same
+ends of a page.
+<DT><B>envelope</B><DD><P>Select envelope media
+<DT><B>inlower</B><DD><P>Select media from lower input bin.
+<DT><B>inupper</B><DD><P>Select media from upper input bin.
+<DT><B>landscape</B><DD><P>Use Landscape orientation
+<DT><B>lduplex</B><DD><P>Alias for duplex
+<DT><B>ledger</B><DD><P>Select ledger size (11x15 inches) media
+<DT><B>legal</B><DD><P>Select legal size (8.5x15 inches) media
+<DT><B>letter</B><DD><P>Select letters size (8.5x11 inches) media
+<DT><B>manual</B><DD><P>Select media from manual feed
+<DT><B>mediaselect=N</B><DD><P>Select media number N
+<DT><B>outlower</B><DD><P>Put output in lower tray or bin
+<DT><B>outupper</B><DD><P>Put output in upper tray or bin
+<DT><B>oversize</B><DD><P>Select oversize media
+<DT><B>portrait</B><DD><P>Use Portrait orientation
+<DT><B>sduplex</B><DD><P>Alias for simplex.  Print on the single side of the media. 
+<DT><B>simplex</B><DD><P>Print on the single side of the media. 
+<DT><B>transparency</B><DD><P>Select transparency media
+</DL>
+<H2><A NAME="ss4.7">4.7 Adding User Options</A>
+</H2>
+
+<P>The following shows how to add a PJL option to an <CODE>ifhp.conf</CODE>
+file.
+By convention,
+the configuration is added to the end of the ifhp.conf file.
+<BLOCKQUOTE><CODE>
+<PRE>
+[ newprinter ]
+pjl_user_opts += [ screen ]
+pjl_screen = PJL SCREEN = ON
+
+ps_user_opts += [ fuzzy ]
+ps_fuzzy = &lt;&lt;/Fuzzy (\%s{fuzzy})&gt;&gt; setpagedevice
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In the first example we define the <CODE>screen</CODE> option.
+The <CODE>lpr -Zscreen</CODE> option will cause the PJL command
+<CODE>PJL SCREEN = ON</CODE> to be put into the output to the printer.
+<P>Similarly,
+the <CODE>lpr -Zfuzzy=5</CODE> option will cause the PostScript command
+<CODE> &lt;&lt;/Fuzzy (\%s{fuzzy})&gt;&gt; setpagedevice </CODE>
+to be sent to the printer.
+<P>
+<H2><A NAME="ss4.8">4.8 Initialization and Setup Control</A>
+</H2>
+
+<P>Several options are used during
+the processing steps discussed in
+<A HREF="IFHP-HOWTO-6.html#details">Filter Operation Details</A>
+to control what setup is done for the printer.
+<DL>
+<DT><B>pjl_init = [ ... ]</B><DD><P>If PJL is enabled on this printer,
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <CODE>pjl_user_opts</CODE> are processed.
+<P>
+<DT><B>ps_init = [ ... ]</B><DD><P>If PostScript is enabled on this printer and a PostScript file
+is being processed,
+then the
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <CODE>ps_user_opts</CODE> are processed.
+<P>
+<DT><B>pcl_init = [ ... ]</B><DD><P>If PCL is enabled on this printer and a PCL file
+is being processed,
+then the
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <CODE>pcl_user_opts</CODE> are processed.
+</DL>
+<P>These initialization options are very useful in order to set up
+information controlling the default format or options for a
+print job.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+pcl_init = [ normalpage ]
+pcl_normalpage=[ letter crlf linewrap
+  portrait clearmargins fixed pitch=10 courier ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When processing a PCL job, <CODE>normalpage</CODE> is expanded by searching first
+for <CODE>normalpage</CODE> and then for <CODE>pcl_normalpage</CODE>;
+this in turn results in the expansion of the list of values.
+For example,
+<CODE>pcl_crlf</CODE> is usually defined as <CODE>pcl_crlf=\033&amp;k2G</CODE>,
+which is the PCL command to translate a New Line (<CODE>\015</CODE>) character
+as a Carriage Return/New Line.
+The other entries have similar definitions that produce the
+desired effects.
+<P>
+<HR>
+<A HREF="IFHP-HOWTO-5.html">Next</A>
+<A HREF="IFHP-HOWTO-3.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc4">Contents</A>
+</BODY>
+</HTML>

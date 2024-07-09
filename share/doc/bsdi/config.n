@@ -1,0 +1,3978 @@
+.\" Copyright (c) 1994, 1995, 1996, 1998, 1999, 2000
+.\" Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI config.n,v 2.16 2002/06/19 21:44:20 seebs Exp
+.\"XXX
+.\"XXX Add trademarks and document them
+.\"XXX
+.\"
+.\"
+.\"
+.\"     Macro: bd
+.\"	Reflects the date when substantive changes were last made.	
+.\"
+.de bd
+NO LONGER SUPPORTED - USE PROGRAMMER'S GUIDE
+..
+.\"
+.\"	Macro: c
+.\"
+.de c
+.nr _F \\n(.f
+.ul 0
+.if t .ft CR
+.if n .ft I
+.if \\n(.$ \&\\$1\f\\n(_F\\$2
+.rr _F
+..
+.\"
+.\"	Macro: Xr
+.\"
+.de Xr
+\&\f(CR\&\\$1\fP\^(\\$2)\\$3
+..
+.\"
+.\"	Macro: DV
+.\"
+.de DV
+.ie '\\$2'' .ip "\f(CR\\$1\fP"
+.el \
+\{\
+.	ie n .ip "\f(CR\\$1\fP\u[\\$2]\d"
+.	el .ip "\f(CR\\$1\fP\u\s-5[\\$2]\s0\d"
+\}
+..
+.\"
+.\"	Macro: OP
+.\"
+.de OP
+.ie '\\$3'' .ip "\f(CR\\$1\fP\\$2"
+.el \
+\{\
+.	ie n .ip "\f(CR\\$1\fP\\$2\u[\\$3]\d"
+.	el .ip "\f(CR\\$1\fP\\$2\u\s-5[\\$3]\s0\d"
+\}
+..
+.\"
+.\"	Macro: OV
+.\"
+.de OV
+.ie '\\$4'' .ip "\f(CR\\$1=""\fP\fI\\$2\fP\f(CR""\fP\\$3"
+.el \
+\{\
+.	ie n .ip "\f(CR\\$1=""\fP\fI\\$2\fP\f(CR""\fP\\$3\u[\\$4]\d"
+.	el .ip "\f(CR\\$1=""\fP\fI\\$2\fP\f(CR""\fP\\$3\u\s-5[\\$4]\s0\d"
+\}
+..
+.\"	String: OS
+.\"
+.ds OS BSD/OS
+.\"
+.\"	String: sun4c symbol
+.\"
+.ds 4c sun4c
+.\"
+.\"	String: sun4m symbol
+.\"
+.ds 4m sun4m
+.\"
+.\"	String: sun4u symbol
+.\"
+.ds 4u sun4u
+.\"
+.\"	String: SPARC symbol
+.\"
+.ds SU SPARC
+.\"
+.\"	String: Intel symbol
+.\"
+.ds I3 x86
+.\"
+.\"	String: Dagger symbol
+.\"
+.ie n .ds DG (+)
+.el .ds DG \(dg
+.\"
+.\"	String: Double Dagger symbol
+.\"
+.ie n .ds DD (#)
+.el .ds DD \(dd
+.na
+.ll 6.5i
+.he 'Building Kernels on BSD/OS''%'
+.hx
+.(b C
+.sv 0.5i
+.sz 14
+.b "Building Kernels on \*(OS"
+.sz 12
+.sp 0.5i
+Donn Seeley
+Michael Karels
+Chris Torek
+Eric Varsanyi
+Berkeley Software Design, Inc.
+\*(bd
+.sp 0.5i
+.)b
+.\" Warning
+.sh 1 WARNING
+This document is not maintained, and may be inaccurate.  Refer to the
+.i "Programmer's Guide"
+for more information.
+.\"
+.\"	Introduction
+.\"
+.sh 1 Introduction
+.pp
+The kernel is more than just a file named
+.c /bsd .
+.pp
+The kernel is also a set of source files,
+much like a user program or library.
+Like user programs, it needs maintenance and bug fixes.
+It may need to be extended
+by adding a new device driver or
+a new filesystem.
+It is often useful
+to make the kernel smaller too.
+A smaller kernel uses fewer resources for itself
+and saves more for user processes.
+.pp
+However, the kernel is not built in the same
+way as ordinary user programs.
+This isn't to say that building kernels
+is particularly difficult,
+but it is somewhat more complicated.
+This document describes how kernels are built
+under
+.sm \*(OS .
+It assumes some familiarity with the
+.sm \*(OS
+programming environment, including
+the C programming language,
+the
+.Xr make 1
+utility for building programs,
+and the system architecture you are building a system for.
+.pp
+Anyone who can build an ordinary C program can build a kernel.
+Everyone who has source code for their system
+deserves to know how to take advantage of it.
+.uh Architectures
+.pp
+.sm \*(OS
+runs on several different architectures which are described in the
+following table.
+.in +1i
+.TS
+box;
+c|c.
+Architecture	Directory
+=
+Intel i386/i486/Pentium	i386
+_
+Sun SPARC\(rg (sun4c and sun4m)	sparc
+_
+Sun UltraSPARC\(rg (sun4u)	sparc_v9
+.TE
+.in -1i
+The value in the second column is frequently used in path and file
+names to indicate the architecture of the system you are building a
+kernel for.  This is denoted by \fIarch\fP in path and file names.
+.\"
+.\"	A Quick Start
+.\"
+.sh 1 "A Quick Start
+.pp
+If you already have experience building
+.sm BSD
+kernels,
+it will be very straightforward to learn how to build
+.sm \*(OS
+kernels.
+The technology has evolved over the course of time
+but much of it remains familiar.
+A configuration file is constructed that specifies
+the kernel options, drivers and configuration desired.
+The
+.Xr config 8
+program reads this config file and constructs header files,
+configuration-dependent files and a Makefile in a compile directory
+for the configuration.
+One or more kernels can then be compiled in this directory.
+.pp
+Here is the basic outline:
+.(b F
+.np
+Concoct a config file (call it
+.i LOCAL ,
+copying GENERIC is a good place to start)
+in
+.c "/sys/\fIarch\fP/conf"
+.np
+run
+.c "config
+.i LOCAL
+.np
+go to
+.i
+.c /sys/compile/LOCAL
+.r
+and run
+.c "make depend
+.np
+run
+.c "make bsd
+.np
+save your old kernel, copy the new one to
+.c /bsd ,
+and reboot
+.)b
+.pp
+Even experienced users have been known to make mistakes.
+Here are some things to look out for:
+.bu
+Directories are different than in earlier BSD systems.
+Config files are stored in
+.c /sys/\fIarch\fP/conf ;
+.c /sys/conf
+contains machine-independent configuration information.
+Compiling is performed in
+.i
+.c /sys/compile/ LOCAL,
+.r
+not
+.i
+.c /sys/ LOCAL.
+.r
+.bu
+The device switch is generated from a template in
+.c /sys/\fIarch\fP/conf/ioconf.c.\fIarch\fP .
+.bu
+Unlike many other architectures,
+386 devices generally do not use memory-mapped registers;
+the config file specifies
+.q "I/O ports
+instead.
+.bu
+The autoconfiguration code handles specification
+of interrupt service routines;
+it isn't necessary to list these in the config file.
+.bu
+The kernel
+.Xr adb 8
+and
+.Xr lint 1
+features are not available with
+.sm \*(OS .
+These have been replaced with kernel
+.Xr gdb 1
+and the
+.c WARN
+feature.
+.pp
+The
+.c SOURCE
+option
+.b must
+be specified in the configuration file if building from a source
+release. Failure to do this will result in the use of object code
+from the
+.c sys/\fIarch\fP/OBJ
+directory instead of compiling new objects from source. Leaving this
+option out is a common error and the results tend to be confusing.
+.pp
+More details of these and other features
+are offered in later sections.
+.\"
+.\"	The Road Map
+.\"
+.sh 1 "The Road Map
+.pp
+This section describes important files
+and directories in the kernel source tree.
+It assumes there is a symbolic link from
+.c /sys
+to
+.c /usr/src/sys
+or to wherever your current kernel source is located.
+.lp
+\*(OS is available in both source and binary versions.
+The build procedure and set of files is similar for both versions.
+On binary systems, some sources are still present to allow configurability.
+Both systems include object files for all modules for which sources
+are not included.
+.lp
+.(b L
+.c
+/sys/sys
+/sys/\fIarch\fP/include
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Header files.
+These are shared with user programs;
+.c /usr/include/sys
+and
+.c /usr/include/machine
+contain the same files.
+.lp
+.(b L
+.ta 2n
+.c
+/sys/kern
+/sys/\fIarch\fP/\fIarch\fP/locore.s
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Core kernel source files.
+These include code for initialization,
+scheduling, servicing of system calls,
+trap and interrupt handling,
+terminal interfaces,
+simple IPC,
+virtual filesystem interfaces,
+memory management and
+floating point support.
+The file
+.c locore.s
+contains most of the assembly language code in the kernel
+and acts to glue the C code to the hardware features
+like exception stack frames or MMU initialization.
+.lp
+.(b L
+.c
+/sys/vm
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Virtual memory source files.
+This directory contains code for page fault servicing,
+the pageout daemon and related memory management.
+.lp
+.(b L
+.c
+/sys/ufs/ffs
+/sys/ufs/ufs
+/sys/ufs/mfs
+/sys/nfs
+/sys/isofs/cd9660
+/sys/miscfs
+/sys/msdosfs
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Filesystem source files.
+.sm \*(OS
+currently supports the Berkeley Fast Filesystem (ufs/ffs),
+a memory-resident filesystem (mfs),
+a filesystem compatible with Sun's Network Filesystem (NFS),
+the ISO 9660 filesystem for CD-ROM with Rock Ridge extensions,
+and an MS-DOS-compatible filesystem.
+In addition, several filesystems are included for internal
+use with devices and FIFOs, as well as union mounts and other
+special-purpose filesystems.
+.lp
+.(b L
+.c
+/sys/net
+/sys/netccitt
+/sys/netinet
+/sys/netinet6
+/sys/netiso
+/sys/netns
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Networking source files.
+These include code for link layer support
+as well as higher level protocols such as the Internet suite (TCP/UDP),
+X.25, Xerox NS and the ISO/OSI suite.
+Other similarly named directories contain
+code for other protocol suites.
+Not every protocol suite is currently supported.
+.lp
+.(b L
+.c
+/sys/netkey
+/sys/netsec
+/sys/domestic/netsec
+/sys/domestic/\fIarch\fP/\fIarch\fP
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+IP authentication and encryption source files.
+Included is support for key management (netkey),
+authentication (netsec) and
+encryption (netkey, domestic/netkey, domestic/\fIarch\fP/\fIarch\fP).
+Due to export regulations, the encryption code is only
+available with domestic distributions.
+.lp
+.(b L
+.c
+/sys/stand
+/sys/\fIarch\fP/stand
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+Standalone source files.
+The bootstrap code resides here,
+including boot blocks and sources for
+.c /boot .
+.lp
+.(b L
+.c
+/sys/dev
+/sys/dev/ic
+/sys/dev/mii
+/sys/dev/pci
+/sys/dev/scsi
+.)b
+.ns
+.ip
+Sources for the architecture-independent device drivers.
+.lp
+.(b L
+.c
+/sys/\fIarch\fP/isa
+/sys/\fIarch\fP/eisa
+/sys/\fIarch\fP/pci
+/sys/\fIarch\fP/pcmcia
+/sys/\fIarch\fP/sbus
+/sys/\fIarch\fP/OBJ
+.)b
+.ns
+.ip
+Sources for architecture-dependent device drivers.
+Drivers for the PC-AT architecture, or
+.i ISA
+bus,
+reside in the
+.c isa
+directory.
+The
+.c eisa
+directory contains code specifically for EISA drivers.
+The
+.c pci
+directory contains code for PCI drivers. In some cases a driver
+may support multiple physical bus types, in this case the most
+popular bus (for the device type) should determine the home for
+the driver sources.
+A couple of drivers contain information considered trade secret
+by hardware manufacturers \(em
+these are supplied pre-compiled in the
+.c OBJ
+directory.
+Object modules for binary releases are also supplied in the
+.c OBJ
+directory.
+.lp
+.(b L
+.ta 2n
+.c
+/sys/conf
+	files
+/sys/\fIarch\fP/conf
+	files.\fIarch\fP
+	devices.\fIarch\fP
+	ioconf.c.\fIarch\fP
+	std.\fIarch\fP
+	Makefile.\fIarch\fP
+	GENERIC
+.)b
+.ns
+.ip
+Architecture-independent and architecture-dependent Configuration
+files.
+The
+.c files
+and
+.c files.\fIarch\fP
+files contain lists of kernel source files
+and instructions for the
+.Xr config 8
+program telling it what to do with each file.
+A later section describes these in more detail.
+You will need to edit one of these files if
+you add a new source file to the kernel.
+The
+.c ioconf.c.\fIarch\fP
+template file contains the device switch table.
+If you want to add a new driver,
+you may also need to edit this file.
+The
+.c std.\fIarch\fP
+is automatically included by
+.Xr config 8 ,
+and sets standard parameters and options such as executable file support.
+.c Makefile.\fIarch\fP
+is the template for the kernel makefile.
+The
+.Xr config 8
+program fills in the missing pieces of these template files
+and deposits the results in the appropriate compile directory.
+The GENERIC and DEMO configuration files
+and any local configuration files reside here.
+.lp
+.(b L
+.ta 2n
+.c
+/sys/compile/*
+	param.c
+	ioconf.c
+	assym.s
+	vers.c
+	swap*.c
+.)b
+.ns
+.\"
+.\"
+.\"
+.ip
+There are several interesting files in the compile directories.
+For each config file named
+.i LOCAL ,
+.Xr config 8
+creates a compile directory
+.i
+.c /sys/compile/ LOCAL.
+.r
+In that directory,
+.Xr config 8
+creates many other files.
+Some of these files are short header files
+which define the number of configured devices
+for some devices and pseudo-devices.
+The
+.Xr config 8
+program also creates a file named
+.c ioconf.c
+that contains a table of devices and parameters,
+reflecting all of the per-device information in the config file.
+This table drives the system's autoconfiguration at boot time.
+The
+.Xr config 8
+program also creates swap parameter files which correspond
+to named configurations in the config file.
+A kernel named
+.c bsd
+will have a corresponding swap configuration file named
+.c swapbsd.c .
+A file named
+.c param.c
+contains per-kernel variables.
+The
+.Xr config 8
+program does not alter this file after
+installing it the first time,
+upon creating the
+.i LOCAL
+directory, unless the master version in
+.c /sys/\fIarch\fP/conf
+is changed.
+Individual system parameters in this file
+can be customized to taste.
+A couple of other files of interest are
+.c assym.s ,
+which contains macro definitions for assembly files
+and is created by the
+.c genassym
+program, and
+.c vers.c ,
+which contains the definition of
+the kernel's version string and is generated by the script
+.c /sys/conf/newvers.sh .
+.pp
+You can build your own road map to the kernel source.
+The makefile in the
+.c /sys/kern
+directory can build a
+.c tags
+file for the entire kernel.
+This allows you to position the
+.Xr vi 1
+cursor on a symbol,
+hit a key and see the definition for the symbol.
+When dealing with a piece of software as large as the kernel,
+it's invaluable to be able to find definitions quickly.
+To build the tags file,
+just type
+.c "make tags
+in
+.c /sys/kern .
+This will produce some error messages for unsupported architectures and
+if not run as root, errors regarding setting file ownership; these errors
+can be safely ignored. Next, run
+.c "make links" ;
+this will put symbolic links in each kernel subdirectory pointing at
+the tags file. This will also attempt to put a link in
+.c /var/db/sys_tags ,
+which requires root access to be successful.
+.pp
+Once the tag file is built (it is called
+.c tags ),
+the
+.c -t
+flag to
+.Xr vi 1
+can be used to edit the source file containing the definition of a
+constant or function. The
+.i Ctl-] 
+key in
+.Xr vi 1
+moves to the definition of the symbol under the cursor. A stack is kept
+so that
+.i Ctl-T
+can be used to return to the source you started in.
+.\"
+.\"	Autoconfiguration
+.\"
+.sh 1 Autoconfiguration
+.pp
+It isn't necessary to understand autoconfiguration
+in order to customize your kernel although it helps.
+If all you need to do is add or delete a kernel option or
+an existing driver,
+you may want to skip to the next section.
+.pp
+When the kernel boots (is loaded into processor memory and executed),
+it carries out a series
+of initializations and then starts looking for
+hardware interfaces that are installed in the system.
+The process of identifying hardware interfaces is called
+.i autoconfiguration .
+Due to the nature of the problem,
+autoconfiguration is not completely automatic.
+It is driven by a
+.i "config file" ,
+which lays out clues for locating potential devices
+and provides directions for dealing with them.
+Even given its limitations,
+autoconfiguration is very useful.
+It permits one kernel to work on several machines
+with different collections of peripherals.
+It helps us to understand our hardware \(em
+sometimes we don't know exactly what is plugged into a given machine,
+or how each card was jumpered or switched or programmed.
+Autoconfiguration is also an excellent hardware diagnostic.
+When autoconfiguration reports an error,
+or fails to identify an interface,
+or even reports something completely unexpected,
+then it may serve to pinpoint incorrectly configured
+or failing hardware.
+Only when autoconfiguration completes
+will the kernel start reading and executing user programs.
+.pp
+Autoconfiguration attempts
+to discover various hardware parameters or resources.
+Depending on the device,
+autoconfiguration may be able to determine
+the specific range of
+.i "I/O ports
+it uses, what
+.i IRQ
+(interrupt request line) needs to be serviced for that device,
+what
+.i DRQ
+(DMA channel) needs to be set up in order to make
+direct transfers to processor memory, and
+which range of physical addresses is allocated to any
+.i "on-board shared memory" .
+Some devices are not attached directly to the processor's
+main I/O bus.
+For example, SCSI peripherals are attached to a
+.i "SCSI bus
+which in turn connects to the main I/O bus
+through a
+.i "host bus adapter" .
+Autoconfiguration can determine the SCSI
+.i target
+address and
+.i "logical unit number
+for each device on the SCSI bus.
+Similarly, an ESDI or IDE hard disk
+.i controller
+may be connected to one or more disk
+.i slaves .
+Each slave has its own
+.i "unit number" .
+Autoconfiguration will assign a device name
+and a logical device number to each device 
+as it is discovered.
+The device name denotes the software driver which
+will be used to access the hardware interface
+while the logical device number
+permits user code to distinguish between
+different devices of the same type.
+The logical device number need not bear any
+direct relationship to a hardware unit number;
+the mapping is set in the config file.
+.pp
+.\"XXX - Needs updating to be more generic and provide both
+.\"XXX - x86 and SPARC examples
+Autoconfiguration assembles devices into a logical hierarchy or
+.i tree .
+Each device has a pointer to its
+.i parent ,
+and a chain of parents can be followed
+all the way up to the
+.i root .
+On the x86 (386, 486, Pentium, Pentium II, Pentium III, ...) architecture,
+the root device is called
+.c isa0 ,
+and it describes the main processor I/O bus,
+which may be a standard 24-bit PC/AT bus,
+the so-called
+.q "Industry Standard Architecture
+or
+.i ISA
+bus,
+the
+.i extended
+ISA bus or
+.i EISA
+bus,
+.i Plug
+.i and
+.i Play
+devices on the ISA
+bus or
+.i PNP
+bus,
+the
+.i PCI
+bus,
+or the
+.i PCMCIA
+bus.
+(Since the above busses have so much in common,
+they are handled by the same root node.)
+A trick is used in the configuration file to make it appear as
+if devices on the bus types listed above have that bus type
+as their parent (such as
+.c "de0 at pci?" ).
+This makes it easier to write configuration files but all devices are
+still internally children of the
+.c isa0
+root node.
+In addition, a device may be listed as
+.c "at any?"
+in order to probe it on all ``automatic'' busses that require no configuration
+information in advance, currently PCI and EISA.
+This is useful with cloning entries (see below)
+for devices that have both PCI and EISA variants.
+.pp
+Each identified interface on the main I/O bus
+is described by a device structure which
+contains a pointer to the root device.
+In turn, peripherals attached to these interfaces
+are parented by the interfaces.
+Each driver defines a
+.c "struct cfdriver
+that contains information needed for autoconfiguration,
+including pointers to specific probe and attach routines.
+An internal array of
+.c "struct cfdata
+(constructed from a config file, see below)
+directs the autoconfiguration process;
+this table contains pointers to
+.c cfdriver
+structures, and other generic configuration information.
+.\"XXX - Need a footnote that describes depth-first
+The autoconfiguration code performs a depth-first search for devices.
+It iterates through the table checking each
+potential child of the current device.
+For each candidate,
+the autoconfiguration code calls the corresponding
+driver probe routine
+providing a pointer to the parent device,
+a pointer to the
+.c cfdata
+structure,
+and a pointer to bus-specific configuration information.
+On the x86 architecture,
+ISA bus-specific information is passed as a
+.c "struct isa_attach_args"
+that contains information about possible I/O port ranges,
+IRQ and DRQ values, shared memory ranges, and the physical
+bus type (PNP, PCI, EISA, ISA, or PCMCIA).
+Other busses provide other data;
+for example, the SCSI drivers define a
+.c "struct scsi_attach_args
+that passes target and logical unit information and
+provides a place to store SCSI sense and inquiry data
+during configuration.
+Some fields in the bus-specific information
+are wild cards \(em they may be used to match more than one hardware interface.
+Within the probe routine,
+the driver tests the device to see
+if it responds to commands,
+and may search for resources.
+The probe routine tests only selected I/O ports,
+to avoid writing potentially dangerous data
+to a random port,
+and to avoid wasting time on unlikely ports.
+Some devices have commands to report hardware-configured
+parameters such as IRQ, DRQ and shared memory addresses.
+Other devices can be forced to interrupt;
+the driver can provide a pointer to a routine
+that provokes the interrupt,
+and generic IRQ discovery code will
+catch the interrupt and record the IRQ.
+There is no generic code to
+discover DMA channels or shared memory.
+For SCSI peripherals,
+it is necessary to perform both
+target discovery and logical unit discovery.
+The principle of resource discovery can be
+extended to new adapters and busses
+without any change to the machine-independent
+autoconfiguration framework.
+.pp
+Candidate devices are checked in the order that
+that they appear in the kernel configuration file.
+If the probe routine returns a nonzero value,
+the autoconfiguration code allocates a device
+structure of the appropriate size, fills in the generic part
+using the configuration parameters and
+calls the attach routine with pointers
+to the parent device, the current device
+and the bus-specific parameters.
+The attach routine is responsible for
+initializing the card or peripheral,
+and for programming any parameters
+which need to be programmed.
+For interfaces which can be programmed for IRQ,
+there are generic ISA routines for allocating
+available IRQs.
+There are currently no generic routines
+for allocating shared memory regions.
+DMA channels are allocated as needed
+although an attach routine which needs one
+must configure it.
+I/O port and memory ranges are automatically checked for overlap.
+The attach routine is also responsible for
+registering the new device with the parent device,
+and for registering an interrupt service routine
+if it needs one.
+Finally, the attach routine is also responsible
+for requesting discovery of any slaves or peripherals.
+.pp
+Autoconfiguration finishes by locating
+the storage devices for root filesystem and swap partition.
+If no candidate for a root filesystem device was found
+then the kernel will either pause to request
+the name of a root device from the console
+(if it's a generic kernel),
+or print a message and stop (``panic'').
+The config file is responsible for
+listing root filesystem and swap partition candidates;
+that and other details are covered in the next section.
+.\"
+.\"	Config Files
+.\"
+.sh 1 "Config Files
+.pp
+The
+.Xr config 8
+program actually reads several files while setting up a compile directory.
+One of these files, the
+.i "config file" ,
+contains information about a specific kernel.
+The other files contain information relevant to all kernels.
+We will discuss config files in detail,
+then cover the supporting files.
+.\"
+.\"	Config File Syntax
+.\"
+.sh 2 "Config File Syntax
+.pp
+Config files normally reside in the directory
+.c /sys/\fIarch\fP/conf .
+The distribution contains a sample config file such as
+.c GENERIC
+which can be used as a model.
+If you take the time to read through
+the sample file you will notice a certain structure.
+The file contains comments which begin with a hash mark,
+.c # ,
+and continue to the end of the line.
+Empty lines are ignored.
+The file contains keywords which are lower case words like
+.c options
+or
+.c config .
+Many lines begin with a keyword.
+Lines which do not begin with a keyword are device specifications.
+The file contains numbers which may be decimal, hexadecimal or octal numbers
+as determined by their syntax which is identical to the ``C'' programming
+language number syntax.
+The file contains identifiers such as
+.c bsd
+or
+.c GATEWAY .
+Identifiers consist of alphanumeric characters (including underscores),
+but must begin with an alphabetic character.
+It is possible to make virtually arbitrary identifiers
+using double quotes; for example,
+.c \&"US.ctl"
+and
+.c \&"256*1024"
+are acceptable identifiers.
+The file contains filenames which are similar to identifiers
+but must contain at least one slash or period (``.'').
+The file contains white space which consists of spaces and tabs.
+A line that begins with white space is a continuation line
+and is treated as an extension of the preceding line.
+.pp
+The next level of structure is the
+.i "command line" .
+The remainder of this subsection defines keywords and describes the
+how they are used to form command lines:
+.\"
+.\"	include
+.\"
+.ip "\f(CRinclude\fP \fIfile\fP"
+This keyword reads in the contents of an ``include file''.
+The named file is effectively inserted in-place, just as in C.
+(Identifiers and filenames are both valid include file names.)
+.\"
+.\"	machine
+.\"
+.ip "\f(CRmachine\fP \fIid\fP
+.i Id
+is the generic machine identification tag;
+normally this line is taken from the include file
+.c \&"std.\fIarch\fP\" .
+.\"
+.\"	maxusers
+.\"
+.ip "\f(CRmaxusers\fP \fIusers\fP
+This keyword controls the size of certain limits and
+statically allocated tables inside the kernel.
+.i Users
+is a number which is meant to be a rough estimate
+of the number of simultaneous users of a system.
+Typically, a value of 4 to 10 is used for a
+.q single-user
+workstation running a window system and servers.
+A heavily used server might use a value of 64 or even 128,
+two values at which many kernel resources are boosted to higher values.
+A value of 0 (used in the generic kernel on the release)
+indicates that the values should be scaled according to the amount
+of memory found, which should be adequate for many systems.
+The value of
+.c maxusers
+has no relationship with any user limits or licensing limits;
+it simply a master control value for scaling internal kernel
+allocation limits.
+.\"
+.\"	timezone
+.\"
+.ip "\f(CRtimezone\fP \fIhours\fP"
+Normally \*(OS assumes that the system real time clock will be
+kept in UTC, otherwise known as GMT.
+However, systems that run other operating systems including DOS
+and Windows might wish to use local time instead.
+In that case, specifying a timezone offset from GMT
+causes the kernel to interpret the clock at the specified offset
+from GMT, with positive values for offsets to the West of GMT and
+negative values for the offsets to the East of GMT.
+.\"
+.\"	options
+.\"
+.ip "\f(CRoptions\fP \fIoption\fP\f(CR[,\fP\fI...\fP\f(CR]\fP
+This keyword is used as a general way of passing
+miscellaneous compile-time options.
+The comma-separated
+.i option
+operands are each prepended with a
+.c -D
+and passed to the compiler during builds.
+It is occasionally necessary to quote
+an operand because it contains special characters;
+for example,
+.c "options KBD=""US.ctl""
+quotes the operand to pass the period through.
+The system supports a number of specific options;
+these are described below.
+.\"
+.\"	makeoptions
+.\"
+.ip "\f(CRmakeoptions\fP \fIoption\fP\f(CR[,\fP\fI...\fP\f(CR]\fP
+This keyword is very similar to the
+.i option
+keyword except that the values it sets
+are inserted into the generated Makefile
+rather than passed directly to the compiler.
+Typically this is used to compile debugging kernels, with
+.c "makeoptions DEBUG=""-g""" .
+(This replaces the old \-g flag to
+.Xr config 8 .)
+.\"
+.\"	config 
+.\"
+.ip "\f(CRconfig \fP\fIbsd\fP\f(CR [root on \fP\fIxxNC\fP\f(CR] [\fP\fImodifiers ...\fP\f(CR]\fP
+This keyword tells
+.Xr config 8
+the name of the kernel to create.
+It can be any filename but is traditionally
+.c bsd .
+There may be more than one
+.c config
+command in the config file;
+each
+.c config
+command creates a specific kernel
+which may be requested explicitly at build time,
+.i e.g.
+.c "make fdbsd"
+for a floppy kernel.
+The first
+.c config
+command in the file describes the kernel which is created
+by default in a build.
+.\"
+.\"
+.\"
+.ip
+There are several modifiers to the
+.c config
+keyword whic	e several modifiers to the
+.c config
+keyword which may be appended after the kernel name.
+The command line may specify a default root filesystem for the kernel with
+.c "root on h may be appended after the kernel name.
+The command line may specify a default root filesystem for the kernel with
+.c "root on \fIxxNC\fP" ,
+where
+.i xx
+is a disk device name from the
+.c files.i386
+file,
+.i N
+is a logical device number and
+.i C
+is a partition letter in the range
+.i a
+through
+.i h .
+The partition may be omitted,
+in which case it defaults to
+.c a .
+The command line may specify potential paging
+(``swap'') partitions with
+.c "swap on \fIxxNC\fP" ;
+the meaning of the device specifier is similar to the
+.c root
+modifier except that the default partition is the
+.c b
+partition.
+If more than one device should be available for paging,
+multiple device specifications may be strung together with the keyword
+.c and .
+The modifier
+.c "dumps on \fIxxNC\fP
+provides a way to specify the paging device
+where kernel core dumps are saved at crash time.
+As with the
+.c swap
+modifier, the
+.c b
+partition is the default.
+Of the three
+.c config
+modifiers,
+only the
+.c root
+modifier is normally mandatory;
+the other two devices default to the
+.c b
+partition on the same device as the root.
+.\"
+.\"
+.\"
+.ip
+The
+.Xr Config 8
+program
+recognizes a special swap modifier
+.c "swap generic"
+that declares a so-called
+.i generic
+kernel which can prompt the user at boot time
+for a candidate root and swap device.
+If the
+.c config
+command line uses
+.c "swap generic" ,
+it should not specify any other root or swap modifiers.
+Generic kernels can boot from any supported disk device,
+but they must contain every supported disk driver
+and they must include the
+.c GENERIC
+option.
+Non-generic kernels will not prompt for a candidate root device
+but will switch to an alternate root if
+they are booted from a disk device
+with a configured driver.
+Generic kernels are more useful to distribution software
+than to system maintenance;
+see below for a treatment of their pitfalls.
+Most systems should use non-generic kernels.
+.\"
+.\"	nameN
+.\"
+.ip "\fP\fInameN\fP\f(CR at \fP\fIparentN\fP\f(CR [\fP\fIlocators ...\fP\f(CR]\fP\f(CR [flags N]\fP
+Command lines of this form
+deliver configuration information for specific devices.
+(Note that the keywords
+.c "controller" ,
+.c "device" ,
+.c "disk" ,
+.c "slave" ,
+and
+.c "tape"
+are no longer used.
+Their previous function is now handled directly in the ``files'' files.)
+The top-level device
+.c isa0
+has no parent, so is "at root"; this is mandatory.
+.\"
+.\"
+.\"
+.ip
+The
+.Xr config 8
+program uses the
+.i name
+of a device to generate the names of its driver configuration
+and device switch data structures.
+The logical device number
+.i N
+permits the kernel to distinguish between
+multiple instances of devices with the same name.
+For convenience, this number is normally the same
+as the number used when referring to a device through
+a device node in
+.c /dev .
+(It is
+.i not
+necessarily the same as the
+.i "minor device number" ,
+which may encode other information such as a partition number.
+You can normally compute
+the logical device number from the minor device number.)
+.ip
+Device descriptions also provide the names of
+.i parent
+devices, using the
+.c at
+keyword.
+For example, a device attached to the ISA bus
+would describe itself as being
+.c "at isa0" .
+If a device has more than one potential parent
+with the same type of parent,
+the device number of the parent may be
+.i wildcarded .
+In this case,
+the device number is given as
+.c ?
+and the device description may match
+any device with that type of parent.
+Some devices may have different types of parents. In this case the keyword
+.c any
+may be used to describe the parent and the autoconfiguration code will
+search all of this device's possible parents.
+The autoconfiguration code will normally choose
+the first appropriate parent found
+although individual drivers may control this if needed.
+In some cases, the device number
+.i N
+can be replaced by the character
+.c * ;
+the result is a ``cloning'' configuration entry
+that will be duplicated (with an increasing unit number)
+to match all the hardware that is physically present.
+(For technical reasons,
+cloning entries cannot provide specific locators
+and hence cannot be used for devices directly on the ISA bus.)
+.\"
+.\"
+.\"
+.ip
+The parent device is followed by any locators;
+these are specific to the parent type and are described below.
+The locators may be followed by a
+.c "flags \fIN\fP
+keyword, which passes an arbitrary 32-bit flags word to the driver.
+The driver can use this for any purpose it wants;
+you should check the manual page for the driver and the
+.c GENERIC
+config file for information about flags and specific drivers.
+Most drivers don't interpret the flag bits.
+.\"
+.\"
+.\"
+.\"XXX - The following few paragraphs are x86 specific and need to be
+.\"XXX - marked as such and have corresponding SPARC sections included.
+.ip
+There are up to six locators for ISA bus devices.
+Most devices require only only one or two locators to be specified;
+the others are either determined dynamically, selected from a free value,
+or are unused by that device.
+For those locators that must be specified, some locators must set to the
+same value as the hardware jumpers or programming.
+Others will be used to program the device to the specified value.
+The manual pages for each device driver in section 4 of the on-line manual
+indicate the proper usage,
+including a sample configuration line.
+.\"
+.\"
+.\"
+.ip
+The
+.c port
+locator gives the first port number
+in the block of I/O ports used by the given device.
+For example,
+.c "port 0x280
+says that the device responds to I/O ports
+starting at port
+.c 0x280
+and up.
+The number of I/O ports is normally defined by the driver,
+but can be specified explicitly with the
+.c nports
+locator.
+The ISA architecture defines several standard ports
+for standard devices;
+these port numbers are given as mnemonic defines.
+For example, a
+.c com
+device at the standard secondary location would
+be described with
+.c "port IO_COM2" .
+Some cards may be jumpered or programmed
+to respond at different port number bases.
+It is currently necessary to have a separate line
+in the config file for each port number base
+that you wish to support.
+For example, a Novell Ethernet card
+might be set for
+.c 0x320 ,
+.c 0x340
+or
+.c 0x360 ;
+three separate command lines for
+.c ne0
+would be used to represent these alternatives.
+Only one configuration for each device will be selected
+during autoconfiguration.
+.\"
+.\"
+.\"
+.ip
+EISA devices don't normally require
+.c port
+locators since the driver probe routines can call standard support code
+to scan for EISA product identifiers which identify specific EISA cards.
+If you do wish to specify a particular slot for an EISA device
+then you should give the starting port number for that slot;
+the slot number is coded as the high 4 bits of the 16-bit port number.
+A very few devices are strictly memory-mapped and
+require no I/O ports.
+Such devices do not require a
+.c port
+locator.
+.\"
+.\"
+.\"
+.ip
+The
+.c "irq \fIN\fP
+locator describes the ISA interrupt request line
+.i N
+used by the given device.
+Most ISA device drivers can either program this value
+or detect it by forcing an interrupt so the
+.c irq
+locator is often omitted.
+The
+.c "drq \fIN\fP
+locator describes a DMA channel
+.i N .
+EISA bus-master devices which use EISA-style DMA
+don't require an ISA bus DMA channel,
+but other ISA and EISA devices may.
+The
+.c "iomem \fIM\fP
+and
+.c "iosiz \fIN\fP
+locators describe the address
+.i M
+and size in bytes
+.i N ,
+respectively,
+of ISA memory on the device.
+The address is reckoned from the start of physical address space
+and normally falls within the so-called
+.q hole
+between addresses
+.c 0xa0000
+and
+.c 0x100000 .
+Some devices can program the address or even the size
+of a shared memory region.
+In these cases, the driver may use the
+.c iomem
+parameter to program the card at autoconfiguration time.
+.\"
+.\"
+.\"
+.ip
+PCI and PNP devices require few, if any, locators. Configuration of the PCI
+bus and its devices is normally handled by the BIOS.
+Plug and Play
+devices use a hardware-driven mechanism to convey the addresses at which
+they can be configured.
+However the
+.c flags
+field can be useful for passing driver specific information.
+.\"
+.\"
+.\"
+.ip
+Other locators are used for devices that
+aren't on the ISA bus.
+The
+.c "drive \fIN\fP
+locator is used to select a particular physical unit
+.i N
+on a controller with multiple units,
+such as a floppy controller or hard drive controller.
+The
+.c "target \fIN\fP
+locator gives the target number for SCSI targets.
+This particular locator may be wildcarded:
+.c "target ?
+matches any target.
+(The old
+.i targetbase
+keyword is no longer used.)
+Targets may also be cloned; a line like
+.c "tg* at scsi? target ?
+matches all SCSI targets not otherwise matched.
+The same holds for the SCSI unit devices
+.c sd
+and
+.c st .
+Adding the lines
+.c "sd* at tg? target ?
+and
+.c "st* at tg? target ?
+to the above target declaration
+ensures that all SCSI disk and tape devices physically present
+will be autoconfigured.
+.\"
+.\"	pseudo-device 
+.\"
+.ip "\f(CRpseudo-device \fP\fIname\fP\f(CR [\fP\fIcount\fP\f(CR]\fP
+A
+.c pseudo-device
+is a device with no real underlying hardware.
+It provides a software service with an interface
+which may resemble a device driver.
+The 
+.i count
+is the number of instances of the
+.c pseudo-device
+which should be created;
+if missing, it is assumed to be
+.c 1
+(although some drivers have different defaults).
+.\"
+.\"	Config File Specifics
+.\"
+.sh 2 "Config File Specifics
+.pp
+There are many compile-time options recognized in the kernel source;
+here are some of the more interesting ones.
+The major options have manual pages in section 4 of the manual.
+Options marked with a
+.ie n plus sign in parens
+.el dagger
+(\*(DG)
+cannot be disabled in binary systems;
+options marked with a
+.ie n pound sign in parens
+.el double dagger
+(\*(DD) cannot be enabled in binary systems.
+Items that do not apply to all architectures are marked with symbols
+as described in the following table:
+.in +1i
+.TS
+box;
+c|c.
+Architecture	Symbol
+=
+Intel i386/i486/Pentium	\*(I3
+_
+Sun SPARC (all variants)	\*(SU
+_
+Sun 4c only	\*(4c
+_
+Sun 4m only	\*(4m
+_
+Sun 4u (UltraSPARC) only	\*(4u
+.TE
+.in -1i
+Many of the tuning options can be set dynamically with the
+.Xr sysctl 8
+command; see its man page for more information. In general, it is
+preferable to use
+.Xr sysctl 8
+to set options whenever possible.
+.\"
+.\"	Options
+.\"
+.sh 3 Options
+.\"
+.\"	General system options
+.\"
+.sh 4 "General system options"
+.nr ii 20n
+.\"
+.\"	SOURCE
+.\"
+.OP SOURCE \*(DD
+Compile kernel modules from sources.
+This is the normal case when building a kernel using a source release.
+.\"
+.\"	KTRACE
+.\"
+.OP KTRACE \*(DG
+Include the
+.Xr ktrace 1
+system-call tracing facility.
+.\"
+.\"	COMPAT_BSDI11
+.\"
+.OP COMPAT_BSDI11
+Include support for \*(OS 1.1 binaries.
+.\"
+.\"	COMPAT_DEV
+.\"
+.OP COMPAT_DEV "" \*(SU
+Include support for compatibility with SunOS\(rg
+.c /dev .
+.\"
+.\"	COMPAT_TTYIOCTL
+.\"
+.OP COMPAT_TTYIOCTL
+Include the backward-compatible non-POSIX tty ioctls including the old
+.c stty
+interface.
+.\"
+.\"	COMPAT_SEMAPHORE
+.\"
+.OP COMPAT_SEMAPHORE "" \*(I3
+Include support for pre-3.0 semaphores.  This option is needed for \*(OS 2.1
+binaries which use the
+.c -lipc
+library.
+.\"
+.\"	COMPAT_SUNOS
+.\"
+.OP COMPAT_SUNOS "" \*(SU
+Includes support for compatibility with SunOS\(rg binaries.
+.\"
+.\"	COFF
+.\"
+.OP COFF "" \*(I3
+Include support for Common Object File Format (COFF) files. This option is
+needed by the SCO emulator. 
+Refer to
+.Xr ibsc2 5
+for more information.
+.\"
+.\"	INSECURE
+.\"
+.OP INSECURE
+Configure the system so that it does not automatically enter secure
+mode when multi-user; refer to
+.Xr init 8
+for more information.
+.\"
+.\"	Hardware-related options
+.\"
+.sh 4 "Hardware-related options"
+.\"
+.\"	ATAPICHG
+.\"
+.OP ATAPICHG "" \*(I3
+Add support for ATAPI CD changers.
+.\"
+.\"	CAPSLOCK_CONTROL
+.\"
+.OP CAPSLOCK_CONTROL "" \*(I3
+Map the caps-lock key as a control key.
+.\"
+.\"	FPE
+.\"
+.OP FPE "" \*(I3
+The floating point emulator.
+This is required on 386 machines without 387 coprocessors,
+and 486SX machines without 487 coprocessors.
+.\"
+.\"	KBD=NAME
+.\"
+.OV KBD NAME "" \*(I3
+Set the keyboard mapping to that specified by
+.i NAME .
+The default is
+.c US .
+The keyboard mapping files are in the directory
+.c /sys/i386/isa/kbd ;
+tables exist for the US, many European countries and Japan.
+The value specified here may be overridden in
+.c /etc/rc.configre/0.keyboard.0.
+.\"
+.\"	PARITY_ERR_PANIC
+.\"
+.OP PARITY_ERR_PANIC "" \*(I3
+``Panic'' the system if a memory parity error is detected by
+the system hardware. Also settable with
+.Xr sysctl 8 .
+.\"
+.\"	RCONSOLE
+.\"
+.OP RCONSOLE "" \*(SU
+Enables a fast raster console.  This is useful mainly on older
+machines with
+.c bwtwo
+displays, which are quite slow without it.  Due to a bug in the
+FORTH PROM, turning it on requires that the PROM be put in ``new''
+mode permanently, so it is off by default.
+.\"
+.\"	Network options
+.\"
+.sh 4 "Network options"
+.\"
+.\"	INET
+.\"
+.OP INET
+Add Internet (TCP/IP) networking protocol support;
+refer to
+.Xr inet 4
+for more information.
+.\"
+.\"	GATEWAY
+.\"
+.OP GATEWAY
+Permit this system to forward IP packets.
+Without this flag, a system with more than one
+network interface will not forward packets
+from one to the other.
+This option also enlarges some network limits.
+.\"
+.\"	IPFORWARDSRCRT=0
+.\"
+.OV IPFORWARDSRCRT 0
+Disable the forwarding of source-routed packets.
+A non-zero value enables forwarding.
+If this option is not set explicitly, the option defaults to off
+unless the GATEWAY option is defined and the GWSCREEN option is not.
+Systems acting as a firewall should not forward source-routed packets
+and most hosts should not do so either.
+.\"
+.\"	IPFW
+.\"
+.OP IPFW
+Include \*(OS IP Packet Filtering technology;
+refer to
+.Xr ipfw 8
+for more information.
+.\"
+.\"	IPFWNAT
+.\"
+.IP IPFWNAT
+Include \*(OS IP NAT (Network Address Translation) technology;
+refer to
+.Xr ipfwnat 8
+for more information.
+.\"
+.\"	IPRF
+.\"
+.OP IPRF
+Include \*(OS IP Rate Filtering technology;
+refer to
+.Xr ipfwrate 8
+for more information.
+.\"
+.\"	IPFWFLOW
+.\"
+.OP IPFWFLOW
+Include \*(OS IP Flow Monitoring technology;
+refer to
+.Xr ipfwflow 8
+for more information.
+.\"
+.\"	IPFWTHROTTLE
+.\"
+.OP IPFWTHROTTLE
+Include \*(OS IP Throttling technology;
+refer to
+.Xr ipfwthrottle 8
+for more information.
+.\"
+.\"	IPFWECHOCHK
+.\"
+.OP IPFWECHOCHK
+Include \*(OS ICMP Echo Checking technology;
+refer to
+.Xr ipfwechochk 8
+for more information.
+.\"
+.\"	IPSOURCECHECK
+.\"
+.OP IPSOURCECHECK
+Enable the checking of the source address of packets to be sent from this
+machine. Packets which fail this check are discarded.
+.\"
+.\"	NETCON
+.\"
+.OP NETCON
+Enable IPX services;
+see the release notes for more information.
+Requires the
+.c NS
+option as well
+(and
+.C TFS
+when building from sources).
+.\"
+.\"	NS
+.\"
+.OP NS
+In binary systems, or when the
+.c NETCON
+option is also enabled,
+add support for IPX networking (a derivative of Xerox NS).
+When building from source without the
+.c NETCON
+option, adds Xerox NS networking protocol support;
+refer to
+.Xr ns 4
+for more information.
+.\"
+.\"	NSIP
+.\"
+.OP NSIP
+Support for tunneling Xeros NS networking protocol packets
+encapsulated in IP protocol packets.
+.\"
+.\"	ISO
+.\"
+.OP ISO
+Add ISO/OSI networking protocol support;
+refer to
+.Xr iso 4
+for more information.
+This code is not maintained and is probably not functional.
+.\"
+.\"	PPP
+.\"
+.OP PPP
+Add Point-to-Point Protocol support;
+refer to
+.Xr ppp 4
+for more information.
+This is required if asynchronous PPP (appp) interfaces are configured
+or if PPP is to be used with synchronous serial interfaces.
+.\"
+.\"	CISCO_HDLC
+.\"
+.OP CISCO_HDLC
+Add CISCO SLARP protocol support for HDLC links;
+refer to
+.Xr cisco_hdlc 4
+for more information.
+.\"
+.\"	FR
+.\"
+.OP FR
+Include support for Frame Relay encapsulation for synchronous
+serial interfaces;
+refer to
+.Xr fr 4
+and
+.Xr frconfig 8
+for more information.
+.\"
+.\"	MULTICAST
+.\"
+.OP MULTICAST \*(DG
+Add support for IP multicasting.
+.\"
+.\"	MROUTING
+.\"
+.OP MROUTING
+Add support for IP multicast agents, forwarding multicast packets
+via local networks or tunnels; refer to
+.Xr mrouted 8
+for more information.
+.\"
+.\"	INET6
+.\"
+.OP INET6
+Add Internet Protocol (IP) version 6 support;
+refer to
+.Xr inet6 4
+for more information.
+The INET6 and IPSEC options are orthogonal, the following table
+describes their relationship.
+.in +1i
+.TS
+box;
+c|c|c|c|c.
+Options defined	IPv4	IPv6	IPsec4	IPsec6
+=
+none	yes	no	no	no
+_
+INET6	yes	yes	no	no
+_
+IPSEC	yes	no	yes	no
+_
+INET6 and IPSEC	yes	yes	yes	yes
+.TE
+.in -1i
+.\"
+.\"	IPSEC
+.\"
+.OP IPSEC
+Add IP security code.  This adds support for IP authentication,
+and requires the KEY option;
+refer to
+.Xr ipsec 4
+and
+.Xr ah 4
+for more information.
+.\"
+.\"	IPSEC_ESP
+.\"
+.OP IPSEC_ESP
+Add support for IP encryption;
+refer to
+.Xr esp 4
+for more information.
+This requires the IPSEC options and is only available on domestic
+distributions.
+.\"
+.\"	IPSEC_IPV6FWD
+.\"
+.OP IPSEC_IPV6FWD
+Add support for the IP security tunnel for IPv6.
+.\"
+.\"	IPSEC_DEBUG
+.\"
+.OP IPSEC_DEBUG \*(DG
+Turn on debugging code for IP security.
+.\"
+.\"	INET_SERVER
+.\"
+.OP INET_SERVER
+Add support for large network hash tables. This option is
+needed for busy WWW servers.
+.\"
+.\"	GWSCREEN
+.\"
+.OP GWSCREEN
+Include calls for the gateway screen daemon.
+This requires additional kernel files that are not included in \*(OS,
+but which are available via anonymous FTP along with the user-level
+screend program.
+The screen daemon code requires modifications to work with \*(OS.
+However, the native \f(CRIPFW\fP option provides a more capable,
+higher-performance filtering capability; 
+refer to
+.Xr ipfw 8
+for more information.
+.\"
+.\"	Filesystem options
+.\"
+.sh 4 "Filesystem options"
+.\"
+.\"	CD9660
+.\"
+.OP CD9660
+Add the ISO 9660 CD-ROM filesystem;
+refer to
+.Xr mount_cd9660 8
+for more information.
+.\"
+.\"	FFS
+.\"
+.OP FFS
+Add the standard local (UFS) filesystem;
+refer to
+.Xr fs 5 ,
+.Xr mount 8 ,
+.Xr newfs 8
+and
+.Xr tunefs 8
+for more information.
+.\"
+.\"	FIFO
+.\"
+.OP FIFO
+Add support for named pipes, also known as FIFOs;
+refer to
+.Xr mkfifo 1
+for more information.
+.\"
+.\"	MFS
+.\"
+.OP MFS
+Add the memory filesystem;
+refer to
+.Xr mount_mfs 8
+for more information.
+.\"
+.\"	MSDOSFS
+.\"
+.OP MSDOSFS
+Add the MS-DOS-compatible filesystem;
+refer to
+.Xr mount_msdos 8
+for more information.
+.\"
+.\"	NFS
+.\"
+.OP NFS
+Add the NFS remote filesystem support as both client and server;
+refer to
+.Xr nfsd 8 ,
+.Xr mount 8
+and
+.Xr mount_nfs 8
+for more information.
+.\"
+.\"	NULLFS
+.\"
+.OP NULLFS
+Add the Loopback filesystem;
+refer to
+.Xr mount_null 8
+for more information.
+.\"
+.\"	QUOTA
+.\"
+.OP QUOTA
+Add disk quotas;
+refer to
+.Xr quota 1 ,
+.Xr quotactl 2 ,
+.Xr edquota 8 ,
+.Xr quotacheck 8 ,
+.Xr quotaon 8
+and
+.Xr reqquota 8
+for more information.
+.\"
+.\"	ROMFS
+.\"
+.OP ROMFS
+Add support for ROM (Read Only Memory) filesytems.
+.\"
+.\"	TFS
+.\"
+.OP TFS \*(DG
+When building from source, add hooks for the TFS filesystem
+included with the
+.c NETCON
+option.
+.\"
+.\"	UNION
+.\"
+.OP UNION
+Add the UNION filesystem;
+refer to
+.Xr mount_union 8
+for more information.
+.\"
+.\"	Debugging options
+.\"
+.sh 4 "Debugging options"
+.pp
+For debugging it is nice to have a copy of the kernel built
+with a full symbol table. The
+command
+.c "makeoptions DEBUG=""-g""
+will build a file called bsd.gdb which contains a symbol table.
+.\"
+.\"	CNTLALTDEL
+.\"
+.OV CNTLALTDEL N "" \*(I3
+Controls the behavior of the system in response to the
+.c CNTL-ALT-DEL
+key sequence from the console and the reception of a 
+.c BREAK
+signal on a
+serial console.
+The following table summarizes the valid values for
+.in +1i
+.i N .
+.TS
+box;
+c|c|c.
+\fIN\fP	\f(CBCNTL-ALT-DEL\fP	\f(CBBREAK\fP
+=
+-1	Enabled	Disabled
+_
+0	Disabled	Disabled
+_
+1	Enabled	Enabled
+.TE
+.in -1i
+If not specified, the value of
+.i N
+defaults to
+.c 1 .
+.\"
+.\"	CNTLALTDELCORE
+.\"
+.OV CNTLALTDELCORE N "" \*(I3
+If the value of
+.i N
+is non-zero, the system will prompt to take a core dump after the
+reception of a
+.c CNTL-ALT-DEL
+key sequence from the console or the reception of a
+.c BREAK
+signal on a serial console.
+.\"
+.\"	COMCONSOLE=N
+.\"
+.OV COMCONSOLE N "" \*(I3
+Select the use of serial (com) port
+.i N
+as console rather than the standard PC keyboard and display.
+This does not need to be configured explicitly
+when using a bootstrap command to change the console device;
+the kernel will use the same device as the bootstrap;
+refer to
+.Xr boot 8
+for more information.
+.\"
+.\"	DEBUG
+.\"
+.OP DEBUG \*(DD
+Enable special debugging code
+in many kernel source files.
+.\"
+.\"	DIAGNOSTIC
+.\"
+.OP DIAGNOSTIC \*(DG
+Enable consistency checks in many kernel source files.
+.\"
+.\"	KGDB
+.\"
+.OP KGDB \*(DD
+Add remote kernel debugging support.
+.\"
+.\"	KGDBRATE=""
+.\"
+.OV KGDBRATE N \*(DD
+With the KGDB option, specifies the baudrate for the 
+remote debugging serial port.
+.\"
+.\"	KGDBDEV=""
+.\"
+.OV KGDBDEV N \*(DD
+With the KGDB option, specifies the terminal device for cross-system
+debugging by number; e.g. 0x800001 specifies /dev/tty01 (com1).
+.\"
+.\"	KGDBINIT=""
+.\"
+.OV KGDBINIT N \*(DD
+With the KGDB option, a non-zero value specifies that the kernel should
+wait for the remote debugging system to connect before continuing with
+system boot.
+.\"
+.\"	KGDB_DEBUG_PANIC=""
+.\"
+.OV KGDB_DEBUG_PANIC N \*(DD
+With the KGDB option, specify what action, if any, should be taken when
+the system ``panics''. A value of zero will cause a core dump. A value
+of 1 will cause the system to prompt to wait for kgdb or to take a core
+dump. A value of 2 will cause the system to wait for kgdb
+without prompting the user.
+.\"
+.\"	SMP_DEBUG
+.\"
+.OP SMP_DEBUG \*(DD
+If this option is present, additional SMP-related sanity checks are 
+added to the kernel.
+.\"
+.\"	KDEBUG
+.\"
+.OP KDEBUG \*(DD \*(I3
+Adds in-core kernel debugger support;
+refer to
+.Xr kdebug 4
+for more information.
+.\"
+.\"	KDEBUG_SERBASE
+.\"
+.OP KDEBUG_SERBASE \*(DD \*(I3
+If using a serial port for the in-core debugger, this sets the I/O
+port base address.
+The default is 0x3f8 (tty00).
+Can be bpatched as 'kdebug_serbase'.
+Refer to
+.Xr kdebug 4
+for more information.
+.\"
+.\"	KDEBUG_CONTYPE
+.\"
+.OP KDEBUG_CONTYPE \*(DD \*(I3
+Sets the display/input method used by the kernel debugger.
+The default (0) causes the debugger to run with the same type of I/O
+as the system console.
+Setting 1 forces serial mode, and setting 2 forces VGA mode
+Refer to
+.Xr kdebug 4
+for more information.
+.\"
+.\"	KTR
+.\"
+.OP KTR \*(DG \*(I3
+Enables wrap around kernel trace buffer support;
+Refer to
+.Xr ktr 4
+and
+.Xr tdump 8
+for more information.
+.\"
+.\"	KTR_SIZE
+.\"
+.OP KTR_SIZE "" \*(I3
+Sets the size (in bytes) of the kernel trace buffer.
+The default is 8192.
+.\"
+.\"	KTR_MASK
+.\"
+.OP KTR_MASK "" \*(I3
+Sets the run time mask of event classes to be traced.
+See \f(CRsys/ktr.h\fP
+for a list of the classes and their respective mask bits.
+Defaults to ~0 (all compiled in traces enabled).
+.\"
+.\"	KTR_COMPILE
+.\"
+.OP KTR_COMPILE "" \*(I3
+Sets the compile time mask of trace points to be compiled into the
+kernel.
+A trace event the is not compiled in to a kernel cannot be
+enabled with KTR_MASK.
+Defaults to ~(KTR_SPL|KTR_DEV).
+Cannot be changed in precompiled object files in the binary release.
+.\"
+.\"	KTR_OLDCPU
+.\"
+.OP KTR_OLDCPU \*(DD \*(I3
+Enables trace support for old (pre-Pentium) CPU's.
+If this option is not enabled, the kernel will shut off
+all tracing when booting on an older cpu.
+.\"
+.\"	Options for tuning internal and external limits
+.\"
+.sh 4 "Options for tuning internal and external limits"
+.pp
+These are for very experienced tinkerers.
+.\"
+.\"	SOMAXCONN=""
+.\"
+.OV SOMAXCONN N
+Set the queue limit for the number of incoming connections
+that may be queued for a listening socket.
+The actual limit imposed is as much as fifty percent higher
+due to pending connections that are not yet ready to accept.
+The default value is 64.
+Systems that act as wide-area network servers such as Web servers
+may wish to use higher values for this option.
+.\"
+.\"	DFLDSIZ=N
+.\"
+.OV DFLDSIZ N
+Set the default (current) process data size limit to
+.i N
+bytes, default 16 MB.
+This value is best set in
+.Xr login.conf 2 .
+.\"
+.\"	DFLSSIZ=N
+.\"
+.OV DFLSSIZ N
+Set the default (current) process stack size limit to
+.i N
+bytes, default 2 MB.
+This value is best set in
+.Xr login.conf 2 .
+.\"
+.\"	MAXDSIZ=N
+.\"
+.OV MAXDSIZ N
+Set the maximum process data size hard limit to
+.i N
+bytes, default 64 MB.
+This value is best set in
+.Xr login.conf 2 .
+.\"
+.\"	MAXSSIZ=N
+.\"
+.OV MAXSSIZ N
+Set the maximum process stack size hard limit to
+.i N
+bytes, default 64 MB.
+This value is best set in
+.Xr login.conf 2 .
+.\"
+.\"	BUFMEM=N
+.\"
+.OV BUFMEM N
+Set the maximum amount of memory devoted to the disk buffer cache to
+.i N
+bytes.
+If this option is omitted or zero,
+the system dynamically sizes the cache at 10% of physical memory.
+If necessary, the actual amount will be limited to fit in available
+kernel virtual memory.
+.\"
+.\"	KERNEL_VIRTUAL_MB=N
+.\"
+.OV KERNEL_VIRTUAL_MB N "" \*(I3
+Set the size of the kernel virtual address space to
+.i N
+megabytes, default 248 MB.  The value for
+.i N
+must be a power of two minus 8.  Increasing this value is necessary to
+run systems with more than 1G of physical memory.  It may also be
+necessary to increase this value on systems with modifications that
+require a large amount of kernel virtual memory.  The maximum physical
+memory that can be supported by a given value is specified in the
+following table.
+.in +1i
+.TS
+box;
+c|c s
+c|c|c
+n|n|n.
+Kernel Virtual Memory	Physical Memory
+	_	_
+(in MB)	(in GB)	(in MB)
+=
+248	1	1024
+_
+376	1.75	1792
+_
+504	2.5	2560
+_
+760	3.25	3328
+_
+1016	4	4096
+.TE
+.in -1i
+.\"
+.\"	KMEMSIZE=
+.\"
+.OV KMEMSIZE N
+Set the maximum amount of kernel virtual memory for dynamic allocation to
+.i N
+bytes.
+This memory arena is used for most dynamic kernel memory allocation,
+including in-memory process, file and networking structures.
+The default is currently 2 MB on most systems;
+if maxusers is 64 through 128, the default is 4 MB,
+and for more than 128 users, the default is 8 MB.
+The internal limit is increased to accommodate the buffer cache
+once that size is determined. On very busy network servers it may
+be necessary to run this as high as 16 MB.
+.\"
+.\"	KMAPENTRIES=N
+.\"
+.OV KMAPENTRIES N "" \*(I3
+This defined the number of entries that may exist in the kernel
+memory map. Normally this is automatically adjusted to work well with
+the given
+.c KMEMSIZE .
+On a very busy system kernel memory may become so fragmented that a
+.c "malloc: kmem_map too small" 
+panic occurs. If this occurs (and it is rare) bump
+.c KMAPENTRIES
+to a value larger than 500 per 2MB of 
+.c KMEMSIZE
+(the default).
+.\"
+.\"	NMBCLUSTERS=N
+.\"
+.OV NMBCLUSTERS N
+Set the maximum number of network
+.q "mbuf clusters"
+to
+.i N .
+The default is 256, which should be sufficient for nearly all systems.
+.\"
+.\"	SYSPTSIZE=N
+.\"
+.OV SYSPTSIZE N "" \*(I3
+Set the number of system page-table pages (or page directory entries).
+The default is set according to the amount of physical memory
+and thus the buffer cache, and places an overall limit on kernel virtual
+memory.
+Each page maps 4 MB of virtual memory; the limit is 62.
+It may be set to larger values for special requirements, such as devices
+that map large frame buffers.
+.\"
+.\"	Device names
+.\"
+.sh 3 "Device names"
+.pp
+Device names also drive configuration.
+Most of the specific device names are easy to infer from
+the names of driver source files, but here is a summary
+of available device names.
+.\"
+.\"	General devices for \*(I3 systems
+.\"
+.sh 4 "General devices for \*(I3 systems
+.\"
+.\"	bktr
+.\"
+.DV bktr
+Brooktree bt848 compatible TV tuner/video capture card.
+.\"
+.\"	bmd
+.\"
+.DV bmd
+Bus memory device.  This device maps the device memory on certain SDL
+high-speed networking card for use with kernel tracing.  It is used
+with the bmd command to the kernel debugger.
+.\"
+.\"	bms
+.\"
+.DV bms
+Microsoft bus mouse.
+.\"
+.\"	fvc
+.\"
+.DV fvc
+I/O Magic FOCUS PCMCIA Video Capture Card.
+.\"
+.\"	isa
+.\"
+.DV isa
+ISA (or EISA) bus.
+.\"
+.\"	iscc
+.\"
+.DV iscc
+IBM Smart Capture Card.
+.\"
+.\"	lms
+.\"
+.DV lms
+Logitech bus mouse.
+.\"
+.\"	lp
+.\"
+.DV lp
+Parallel line printer port.
+.\"
+.\"	npx
+.\"
+.DV npx
+Hardware floating point (387 or on-chip 486 FPU).
+.\"
+.\"	pccons
+.\"
+.DV pccons
+Console terminal emulator.
+.\"
+.\"	pcaux
+.\"
+.DV pcaux
+PS/2 mouse interface.
+.\"
+.\"	pcic
+.\"
+.DV pcic
+Intel i82365SL PC Card Interface Controller (PCIC) (laptops).
+.\"
+.\"	qcam
+.\"
+.DV qcam
+Connectix QuickCam monochrome camera on parallel port.
+.\"
+.\"	vga
+.\"
+.DV vga
+Console display.
+.\"
+.\"	General devices for \*(SU systems
+.\"
+.sh 4 "General devices for \*(SU systems
+.\"
+.\"	audio
+.\"
+.DV audio \*(4c
+Sun ISDN (``telephone quality'') audio on the \*(4c.
+.\"
+.\"	auxio
+.\"
+.DV auxio \*(4u
+Auxiliary registers necessary for the floppy drive on \*(4u systems.
+.\"
+.\"	auxreg
+.\"
+.DV auxreg \*(4c,\*(4m
+Auxiliary registers necessary for the floppy drive on \*(4c and \*(4m
+systems.
+.\"
+.\"	counter
+.\"
+.DV counter \*(4c,\*(4m
+Clock controller on all \*(4c and \*(4m systems.  All SPARC systems
+also have
+.c timer
+device.
+.\"
+.\"	cpu
+.\"
+.DV cpu
+A device driver used to identify the CPU on \*(SU systems.
+.\"
+.\"	eeprom
+.\"
+.DV eeprom
+Interface to the EEPROM on all SPARC machines.
+.\"
+.\"	iommu
+.\"
+.DV iommu \*(4m
+Used to adapt the Mbus to the Sbus.  Only used on the \*(4m.
+.\"
+.\"	mainbus
+.\"
+.DV mainbus \*(4c,\*(4m
+The ``top of root'' for the devices on \*(4c and \*(4m machines, not
+an actual device.
+.\"
+.\"	memreg
+.\"
+.DV memreg \*(4c
+Memory controller registers on \*(4c.
+.\"
+.\"	obio
+.\"
+.DV obio \*(4m
+Hold ``on board'' I/O devices.  Only necessary on the \*(4m.
+.\"
+.\"	power
+.\"
+.DV power \*(4m
+Power-off interface on \*(4m only.
+.\"
+.\"	sbus
+.\"
+.DV sbus
+Sbus controller on any SPARC machine that contains an Sbus.
+.\"
+.\"	timer
+.\"
+.DV timer
+Clock controller on all SPARC systems.  On \*(4c and \*(4m
+.c counter
+is also necessary.
+.\"
+.\"	Storage and SCSI devices
+.\"
+.sh 4 "Storage and SCSI devices"
+This section lists the mass storage controllers
+.\"
+.\"	aha
+.\"
+.DV aha \*(I3
+Adaptec AHA-1542B or 1542C host adapter, also BusLogic BT-542B or BT-445S.
+.\"
+.\"	aic
+.\"
+.DV aic \*(I3
+Adaptec AIC 7{7,8}70 SCSI host adapter.
+.\"
+.\"	amic
+.\"
+.DV amic \*(I3
+AMI RAID controller, basic interface;
+refer to
+.Xr amic 4
+for more information.
+.\"
+.\"	amir
+.\"
+.DV amir \*(I3
+AMI RAID controller, logical drives interface;
+Refer to
+.Xr amir 4
+for more information.
+.\"
+.\"	amis
+.\"
+.DV amis \*(I3
+AMI RAID controller, interface to raw SCSI devices.
+.\"
+.\"	bfp
+.\"
+.DV bfp \*(I3
+BusLogic Flashpoint family of SCSI host adapters.
+.\"
+.\"	bha
+.\"
+.DV bha \*(I3
+BusLogic 32 bit SCSI host adapters. Also known as Multi_Master
+SCSI Host Adapters.
+.\"
+.\"	compaqscsi
+.\"
+.DV compaqscsi \*(I3
+NCR SCSI driver for certain Compaq-specific configurations.
+.\"
+.\"	cr
+.\"
+.DV cr \*(I3
+Compaq Smart Two RAID logical drives.
+.\"
+.\"	crc
+.\"
+.DV crc \*(I3
+Compaq Smart Two RAID controller.
+.\"
+.\"	dc
+.\"
+.DV dc \*(I3
+DiskOnChip 2000 driver.  This is a memory based disk device.
+.\"
+.\"	dma
+.\"
+.DV dma \*(SU
+DMA chipset for
+.c esp
+SPARC SCSI controller.
+.\"
+.\"	dpt
+.\"
+.DV dpt \*(I3
+DPT SmartRAID SCSI host adapter.
+.\"
+.\"	dpti
+.\"
+.DV dpti \*(I3
+DPT I20 SmartRAID SCSI host adapter.
+.\"
+.\"	eaha
+.\"
+.DV eaha \*(I3
+Adaptec AHA-1742A EISA host adapter.
+Note that unlike other devices, this is found ``at eisa0''.
+.\"
+.\"	esp
+.\"
+.DV esp \*(SU
+Sun SPARC standard SCSI controller.
+.\"
+.\"	espdma
+.\"
+.DV espdma \*(SU
+Another variant of a DMS chipset for the
+.c esp
+SPARC SCSI controller.
+.\"
+.\"	fd
+.\"
+.DV fd
+Floppy disk drive.
+.\"
+.\"	fdc
+.\"
+.DV fdc \*(I3
+Floppy controller.
+.\"
+.\"	isp
+.\"
+.DV isp \*(SU
+Sun SPARC high performance SCSI controller.
+.\"
+.\"	mc
+.\"
+.DV mc \*(I3
+PCMCIA SRAM card.
+.\"
+.\"	mcd
+.\"
+.DV mcd \*(I3
+Mitsumi CD-ROM controller and drive.
+.\"
+.\"	ncr
+.\"
+.DV ncr \*(I3
+NCR 53C800 SCSI host adapter.
+.\"
+.\"	sa
+.\"
+.DV sa \*(I3
+Adaptec 1520 or compatible SCSI host adapter.
+.\"
+.\"	sd
+.\"
+.DV sd
+Generic SCSI disk drive.
+.\"
+.\"	sg
+.\"
+.DV sg
+Generic SCSI device.
+.\"
+.\"	sr
+.\"
+.DV sr
+Generic SCSI removable disk drive.
+.\"
+.\"	st
+.\"
+.DV st
+Generic SCSI tape drive.
+.\"
+.\"	tg
+.\"
+.DV tg
+Generic SCSI target; the device controller part of a SCSI peripheral.
+SCSI targets may control up to 8
+.q "logical units" ,
+although typically unit 0 is the only one used.
+.\"
+.\"	wd
+.\"
+.DV wd \*(I3
+ST506, ESDI or IDE (PC hard disk) drive.
+.\"
+.\"	wdc
+.\"
+.DV wdc \*(I3
+ST506, ESDI or IDE controller.
+.\"
+.\"	wdpi
+.\"
+.DV wdpi \*(I3
+ATAPI CDROM and tape.
+.\"
+.\"	wt
+.\"
+.DV wt \*(I3
+Wangtek 5150 or Maynard/Archive 2150L QIC-02 quarter-inch cartridge tape
+controller and drive. 
+Refer to
+.Xr wt 4
+for more information.
+.\"
+.\"	Local Area Network (LAN) devices
+.\"
+.sh 4 "Local Area Network (LAN) devices"
+.\"
+.\"	an
+.\"
+.DV an \*(I3
+Aironet PC4500/PC4800 802.11 wireless Ethernet.
+.\"
+.\"	ar
+.\"
+.DV ar \*(I3
+Aironet Wireless Communications radio network card;
+refer to
+.Xr ar 4
+for more information.
+.\"
+.\"	cce
+.\"
+.DV cce \*(I3
+ Fujitsu MB86960 based Ethernet adapter (PCMCIA).
+.\"
+.\"	cnw
+.\"
+.DV cnw \*(I3
+Netwave PCMCIA wireless Ethernet;
+Refer to
+.Xr cnw 4
+for more information.
+.\"
+.\"	de
+.\"
+.DV de \*(I3
+DEC DX21040/DC21041/DC21140 based Ethernet and fast Ethernet cards.
+.\"
+.\"	df
+.\"
+.DV df \*(I3
+DEC DX21143 based Ethernet and fast Ethernet cards.
+.\"
+.\"	di
+.\"
+.DV di \*(I3
+DEC EtherWorks III/DEPCA Ethernet adapter.
+.\"
+.\"	ef
+.\"
+.DV ef \*(I3
+3Com 3C509/3C579 (EtherLink III) Ethernet interface.
+.\"
+.\"	el
+.\"
+.DV el \*(I3
+3Com 3C507 (EtherLink 16) Ethernet interface.
+.\"
+.\"	eo
+.\"
+.DV eo \*(I3
+3Com 3C501 (EtherLink) Ethernet interface.
+.\"
+.\"	ep
+.\"
+.DV ep \*(I3
+3Com 3C505 (EtherLink Plus) Ethernet interface.
+.\"
+.\"	ex
+.\"
+.DV ex \*(I3
+Intel EtherExpress 16 Ethernet interface.
+.\"
+.\"	exp
+.\"
+.DV exp \*(I3
+Intel EtherExpress Pro100B interface.
+.\"
+.\"	fea
+.\"
+.DV fea \*(I3
+DEC EISA FDDI (DECFEA-XX) adapter.
+.\"
+.\"	fpa
+.\"
+.DV fpa \*(I3
+DEC PCI FDDI (DECFPA-XX) adapter.
+.\"
+.\"	hme
+.\"
+.DV hme \*(SU
+Sun high performance Ethernet supporting 10 Mbit/s and 100 Mbit/s.
+.\"
+.\"	hpp
+.\"
+.DV hpp \*(I3
+HP EtherTwist PC LAN Adapter/16 Plus Ethernet interface.
+.\"
+.\"	le
+.\"
+.DV le \*(SU
+Sun SPARC Lance Ethernet supporting 10 Mbit/s.
+.\"
+.\"	lebuffer
+.\"
+.DV lebuffer \*(SU
+Support chip for
+.c le
+device.
+.\"
+.\"	ledma
+.\"
+.DV ledma \*(SU
+DMA support chip for
+.c le
+device.
+.\"
+.\"	mz
+.\"
+.DV mz \*(I3
+MegaHertz PCMCIA Ethernet XJ10B[T2] (with/without XJack) adapter.
+.\"
+.\"	ne
+.\"
+.DV ne \*(I3
+Novell NE-1000 and NE-2000 Ethernet interfaces.
+.\"
+.\"	pcn
+.\"
+.DV pcn \*(I3
+AMD PCnet-PCI Ethernet.
+.\"
+.\"	pe
+.\"
+.DV pe \*(I3
+Xircom Pocket Ethernet 2 adapter (plugs into line printer port).
+.\"
+.\"	re
+.\"
+.DV re \*(I3
+Allied Telesis RE2000/AT-1700 series Ethernet interface.
+.\"
+.\"	red
+.\"
+.DV red \*(I3
+3COM Red 3C508 ISA Ethernet adaptors.
+.\"
+.\"	se
+.\"
+.DV se \*(I3
+SMC EtherPower II EPIC-based Ethernet adapters.
+.\"
+.\"	te
+.\"
+.DV te \*(I3
+SMC TokenCard Elite Token Ring adapter.
+.\"
+.\"	tn
+.\"
+.DV tn \*(I3
+TNIC-1500 Ethernet interface.
+.\"
+.\"	tr
+.\"
+.DV tr \*(I3
+IBM TRA 16/4 or 3Com Tokenlink III (Tropic chipset) Token Ring adapter.
+.\"
+.\"	trb
+.\"
+.DV trb \*(I3
+3Com 3c589 Token Ring adapter.
+.\"
+.\"	we
+.\"
+.DV we \*(I3
+Western Digital/SMC WD8003 and WD8013, SMC Ultra, SMC EtherEZ,
+and 3Com 3C503 (EtherLink II)
+Ethernet interfaces.
+.\"
+.\"	wi
+.\"
+.DV wi \*(I3
+Lucent WaveLAN 802.11 PCMCIA wireless Ethernet.
+.\"
+.\"	wl
+.\"
+.DV wl \*(I3
+NCR WaveLAN PCMCIA wireless Ethernet interface.
+.\"
+.\"	wx
+.\"
+.DV wx \*(I3
+Intel Gigabit Ethernet.
+.\"
+.\"	xir
+.\"
+.DV xir \*(I3
+Xircom Pocket Ethernet 3 adapter (plugs into line printer port).
+.\"
+.\"	Physical layer (PHY) drivers
+.\"
+.sh 4 "Physical layer (PHY) drivers"
+.pp
+Some LAN devices have support for a generic Physical Layer (PHY)
+driver.  These devices can work with different PHY driver chips that
+support the physical media (10baseT, 100baseT4, 100baseTX, ...).
+Following are the support PHY drivers, not all PHY drivers work with
+all LAN devices that support PHY drivers.
+.\"
+.\"	bcm50p
+.\"
+.DV bcm50p \*(I3
+Broadcomm BCM5000 PHYceiver for 10baseT and 100baseT4 Ethernet.
+.\"
+.\"	bcm52p
+.\"
+.DV bcm52p \*(I3
+Broadcomm BCM520x series of PHYceivers for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	ebphy
+.\"
+.DV ebphy \*(I3
+3Com PHYceiver on 3c905B ASIC for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	i555p
+.\"
+.DV i555p \*(I3
+Intel 82555 PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	ics90p
+.\"
+.DV ics90p \*(I3
+Integrated Circuit Systems 1890 PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	lxtphy
+.\"
+.DV lxtphy \*(I3
+Level One LXT970 PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	nsphy
+.\"
+.DV nsphy
+National Semiconducter DP83840 PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	qs12p
+.\"
+.DV qs12p \*(I3
+Quality Semiconductor PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	sq20p
+.\"
+.DV sq20p \*(I3
+Seeq 80220/80221 PHYceiver for 10baseT and 100baseTX Ethernet.
+.\"
+.\"	tn100a
+.\"
+.DV tn100a \*(I3
+Texas Instruments PHYceiver for 10baseT and 10base2 Ethernet.
+.\"
+.\"	Asynchronous serial port devices
+.\"
+.sh 4 "Asynchronous serial port devices"
+.pp
+Asynchronous serial port devices are used to interface to terminals
+and modems and can also run the SLIP and asynchronous PPP protocols.
+.\"
+.\"	aim
+.\"
+.DV aim \*(I3
+Chase Research IOPRO data driver.
+.\"
+.\"	bheat
+.\"
+.DV bheat \*(I3
+Blue Heat PCI multi-port serial card.
+.\"
+.\"	com
+.\"
+.DV com \*(I3
+PC communications (async serial) port.
+.\"
+.\"	cy
+.\"
+.DV cy \*(I3
+Cyclades Cyclom-Y multiport serial card.
+.\"
+.\"	digi
+.\"
+.DV digi \*(I3
+DigiBoard PC/Xe, PC/Xem and PC/Xi terminal multiplexor driver.
+.\"
+.\"	eqnx
+.\"
+.DV eqnx \*(I3
+Equinox SST multiport serial adapter.
+.\"
+.\"	ms
+.\"
+.DV ms \*(I3
+Maxpeed SS-4, SS-8 and SS-16 serial port cards.
+.\"
+.\"	rc
+.\"
+.DV rc \*(I3
+SDL Communications RISCom/8 async serial card.
+.\"
+.\"	rp
+.\"
+.DV rp \*(I3
+Comtrol Rocketport adapter.
+.\"
+.\"	si
+.\"
+.DV si \*(I3
+Specialix SLXOS terminal multiplexor.
+.\"
+.\"	stl
+.\"
+.DV stl \*(I3
+Stallion EasyIO, EasyConnection 8/32-ISA/PCI adapter.
+.\"
+.\"	stli
+.\"
+.DV stli \*(I3
+Stallion EasyConnection 8/32-EISA, 8/64-ISA, ONboard ISA/EISA, Brumby adapter.
+.\"
+.\"	zs
+.\"
+.DV zs \*(SU
+On-board serial port controllers on all SPARC machines.
+.\"
+.\"	Synchronous serial port devices
+.\"
+.sh 4 "Synchronous serial port devices"
+.pp
+Synchronous serial port devices are used to establish Wide Area
+Networking (WAN) connections between two \*(OS systems and between
+\*(OS systems and routers.
+At least one of the
+.c CISCO_HDLC ,
+.c FR ,
+and/or
+.c PPP
+options are required to enable the use of networking protocols over
+these devices.
+.\"
+.\"	lmc
+.\"
+.DV lmc \*(I3
+Lan Media WAN card.
+.\"
+.\"	ntwo
+.\"
+.DV ntwo \*(I3
+SDL RISCom/N2* high-speed synchronous serial cards.
+.\"
+.\"	rh
+.\"
+.DV rh \*(I3
+SDL Communications RISCom/H2 dual sync/async serial card.
+.\"
+.\"	rn
+.\"
+.DV rn \*(I3
+SDL Communications RISCom/N1 sync serial card.
+.\"
+.\"	wanic
+.\"
+.DV wanic500c \*(I3
+.sp -.5
+.DV wanic500i \*(I3
+SDL Communications WANNIC500 high-speed sync serial card.
+.\"
+.\"	Pseudo-device names
+.\"
+.sh 3 "Pseudo-device names"
+.pp
+The available pseudo-devices have a wide variety of functionality.
+Some of them imitate ordinary character devices
+while others look like network interfaces
+and some are unique.
+Here is a list:
+.\"
+.\"	appp
+.\"
+.DV appp
+Asynchronous Point-to-Point Protocol network interface.
+This pseudo-device may be attached to an async serial port device
+using an
+.Xr ioctl 2
+call;
+refer to
+.Xr ppp 8
+or
+.Xr pppattach 8
+for more information.
+It provides a PPP encapsulation for
+packets sent over the wire.
+The PPP option must also be included.
+.\"
+.\"	cpu
+.\"
+.DV cpu
+The CPU control driver, required for multiprocessor operation.
+.\"
+.\"	pif
+.\"
+.DV pif
+The Parallel Interface pseudo-device.  These are needed to support
+the PPP Multilink Protocol,  but can also be used to tie
+several non-PPP serial lines together into a bundle.
+Refer to
+.Xr ifconfig 8
+and
+.Xr pif 4
+for more information.
+.\"
+.\"	bpfilter
+.\"
+.DV bpfilter
+The Berkeley Packet Filter.
+Character devices
+.i
+.c /dev/bpf N
+.r
+are pseudo-devices which accept
+.Xr ioctl 2
+calls to monitor networks attached to selected interfaces;
+refer to
+.Xr bpf 4
+and
+.Xr tcpdump 8
+for more information.
+You can download an interpreted packet selection program
+into a filter device to make it pick only certain packets from the network.
+Each
+.c /dev/bpf\fIN\fP
+character device can handle a different network and program;
+the number of pseudo-devices defined in the config file
+determines the number of character devices that are supported.
+.\"
+.\"	rd
+.\"
+.DV rd
+The RAM disk pseudo-device. A
+.i count
+of the number of devices to be configured may be specified.
+This device is used during install.
+.\"
+.\"	loop
+.\"
+.DV loop
+The loopback network interface.
+The loopback network is a software convenience
+which routes packets only to the local host.
+It allows you to use the routing tables
+to trap outbound packets for the local host
+and prevent them from reaching a hardware interface.
+This pseudo-device must be configured if any networking protocols
+are configured.
+.\"
+.\"	oss
+.\"
+.DV oss \*(I3
+Open Sound System sound driver from 4Front Technologies.  No other
+sound configuation is required in the kernel, configuration of sound
+devices is performed when the sound subsystem is initialized.  
+Refer to
+.Xr oss 4
+for more information.
+.\"
+.\"	pty
+.\"
+.DV pty
+Pseudo-terminal character devices.
+These devices allow programs which are
+designed to interact with a real terminal
+to be run remotely over a network or
+in other environments where no real terminal is present;
+refer to
+.Xr pty 4
+for more information.
+The default number of
+.Xr pty 4
+devices is 256 if no
+.i count
+(or a count less than 256) is specified.
+The devices are not created until opened (actually, groups of 16
+are created when the first unit of the group is created).
+It is possible to configure the kernel for even more ptys devices
+if compiling from sources.
+An option can be used to define MAX_NPTY to a multiple of 16, 
+changing the upper limit on allocation.
+.\"
+.\"	sl
+.\"
+.DV sl
+Serial line IP network interface.
+This is similar to
+.c appp
+but provides a SLIP encapsulation;
+refer to
+.Xr slattach 8
+and
+.Xr startslip 8
+for more information.
+.\"
+.\"	gwscreen
+.\"
+.DV gwscreen
+Gateway screen pseudo-device. Requires
+.c "option GWSCREEN.
+.\"
+.\"	sp
+.\"
+.DV sp
+Splice disk pseudo-device. A
+.c count
+of the number of devices to be configured may be specified. These
+devices allow multiple disk partitions to be striped or concatenated
+together into a single
+.Xr sp 4
+disk unit;
+refer to
+.Xr sp 4
+for more information.
+.DV tun
+Network tunnel interface pseudo-device. A
+.c count
+of the number of devices to be configured may be specified. 
+Refer to
+.Xr tun 4
+for more information.
+.\"
+.\"	apm
+.\"
+.DV apm \*(I3
+Advanced Power Management pseudo-device;
+refer to
+.Xr apm 8
+for more information.
+.\"
+.\"	ss
+.\"
+.DV ss \*(I3
+PCMCIA socket services pseudo-device. A
+.c count
+of the number of slots to be configured may be specified.
+.\"
+.\"	cs
+.\"
+.DV cs \*(I3
+PCMCIA card services pseudo-device.
+.\"
+.\"	kbd
+.\"
+.DV kbd \*(SU
+Keyboard driver for SPARC systems.
+.\"
+.\"	vnd
+.\"
+.DV vnd
+Vnode disk pseudo-device. A
+.c count
+of the number of devices to be configured may be specified.
+Refer to
+.Xr vnd 4
+for more information.
+.\"
+.\"	vlan
+.\"
+.DV vlan
+802.1Q Virtual LAN pseudo-device.  A
+.c count of the number of devices to be configured may be specified.
+Refer to
+.Xr vlan 4
+for more information.
+.\"
+.\"	Output Files
+.\"
+.sh 2 "Output Files
+.pp 
+The
+.Xr config 8
+program populates the compile directory with a number of output files.
+As directed by
+.c needs-flag
+or
+.c needs-count ,
+config creates a set of short header files.
+The header file contains defines for
+the maximum number of potential device units, or (for
+.c needs-flag ,
+which is ``weaker'' than needs-count),
+defines to 0 (none configured)
+or 1 (some configured or the option selected).
+There is one define per option listed in the options-expression.
+The name of each define is the same as the name
+of the option with all lower case letters translated to upper case,
+and prepended with an
+.c N .
+For example,
+if the config file declares two
+.c fd
+disk units
+.c fd0
+and
+.c fd1 ,
+and one
+.c fd
+disk controller,
+.c fdc0 ,
+and the file
+.c i386/isa/fd.c
+is described by
+.c "fd | fdc needs-count" ,
+config will create an
+.c fd.h
+file that defines
+.c NFD
+to
+.c 2
+and
+.c NFDC
+to
+.c 1 .
+Header files can also be created for pseudo-devices;
+the contents are analogous to headers for real devices,
+but the count comes from the pseudo-device count
+on the config line.
+For example, if there are ten
+.c bpfilter
+pseudo-devices, the
+.c bpfilter.h
+file will define
+.c NBPFILTER
+to
+.c 10 .
+Dependence on counts, and even on flags,
+is generally undesirable, as it interferes with cloning entries
+and makes it more difficult to build binary-only systems.
+.pp
+The
+.Xr config 8
+program creates some kernel source files too.
+The
+.c ioconf.c
+has been discussed already.
+It defines three autoconfiguration tables:
+one for locators, used to initialize attach arguments
+or match ``found'' devices such as SCSI targets and units;
+one for parent vectors, used to identify candidate parent devices;
+and the
+.c cfdata
+array, which contains references to the other two arrays
+as well as to driver-specific data.
+The
+.c cfdata
+array drives autoconfiguration at boot time.
+It also defines the
+.c devsw
+table (formerly
+.c bdevsw
+and
+.c cdevsw ;
+the table is now combined, with a compatibility hook
+to build the old tables)
+as directed by the
+.c %DECLSW
+and
+.c %DEVSW
+keywords.
+This table contains pointers to each actual
+.c devsw
+structure, or NULL if the device is not configured;
+the
+.c devsw
+structures themselves are defined in the various drivers,
+as those files are the only ones
+that need to know which driver entry points
+are to be used for various system functions.
+(Formerly this information was split between the driver
+and the file
+.c \fIarch\fP/\fIarch\fP/conf.c .)
+The
+.Xr config 8
+program creates a swap configuration file for each
+.c config
+command line in the config file,
+named after the kernel name.
+For example, a kernel named
+.c bsd
+will have a corresponding
+.c swapbsd.c
+swap configuration file.
+The swap configuration file defines major and minor device numbers for
+the default root device
+.c rootdev ,
+the kernel core dump device
+.c dumpdev ,
+and the swap device list
+.c swdevt .
+Generic configurations use a special pre-defined
+.c swapgeneric.c
+that contains a special
+.c setconf()
+routine to select default devices.
+.\"(XXX with the disks list, we no longer need to do things this way XXX)
+.\"
+.\"	Config Options
+.\"
+.sh 1 "Config Options
+.pp
+Not all configuration control is done through the config file.
+The
+.Xr config 8
+program also understands command line options
+that specify compilation features
+which may change from build to build.
+The
+.c -p
+flag to
+.Xr config 8
+causes the build to generate a profiling kernel.
+This option is effectively the same as
+.c "makeoptions PROF=""-pg""" ,
+except that the kernel is compiled in a separate directory.
+If the regular kernel is in
+.c ../../compile/PICKLE ,
+the profiling kernel will go in
+.c ../../compile/PICKLE.prof .
+The
+.Xr kgmon 8
+program will enable or disable collection of profiling data
+in a running kernel, or dump it to a
+.c gmon.out
+file;
+the command
+.c "gprof /bsd gmon.out
+will display the data.
+The profiling display looks exactly like a profiling display
+for a user program; 
+refer to
+.Xr gprof 4
+for more information.
+Note that profiling is not currently done
+with an independent clock, so the results can be biased.
+Also note that it is often necessary to break cycles
+in memory allocation and to ignore idle cycles;
+a good set of options to start with is:
+.(l
+.c "gprof -E badsw -E idle bsd gmon.out
+.)l
+Also refer to the
+.c -M
+option to
+.Xr gprof 1 .
+.\"
+.pp
+The
+.c -g
+option is no longer supported.
+The same effect can be obtained by putting
+.c "makeoptions DEBUG=""-g""
+in the config file.
+This builds kernels with full symbolic debugging information.
+The source code debugger
+.Xr gdb 1
+can use this information to
+print symbolic information from a kernel core dump,
+print or modify structures in a running local kernel,
+or install breakpoints in a running remote kernel.
+(Note that it is usually desirable to recompile from scratch after running
+``make clean''
+when using this flag.
+Other options described below are also often needed.)
+.pp
+Using
+.c "makeoptions DEBUG=""-g""
+will compile all C and assembly source files with
+.c -g
+and create two kernel images.
+If the normal kernel image name is
+.c bsd ,
+the alternate image will be named
+.c bsd.gdb .
+The
+.c bsd
+file is suitable for installation on the root as the bootable image;
+the (typically much larger)
+.c bsd.gdb
+file should remain in the build directory,
+in the context of the source files.
+A complete description of kernel
+.Xr gdb 1
+is beyond the scope
+of this document, but it's easy to give some short examples.
+To examine a running kernel, you should go to the build directory
+and execute
+.c "gdb -k bsd.gdb /dev/mem" .
+You can also perform remote breakpoint debugging
+with the following steps.
+First, run a null-modem serial port cable
+between the host with the kernel sources and
+the host that you want to debug.
+Let's assume that the cable connects to
+.c /dev/tty01
+on each machine.
+Build a config file
+.i LOCAL
+with
+.c "makeoptions DEBUG=""-g""
+and
+.c "options KGDB, KGDBDEV=""0x800001""" ,
+where
+.c 0x800001
+is the device number (major and minor) of
+.c /dev/tty01
+(the port on the
+.i remote
+end).
+Run
+.c "config \fILOCAL\fP
+and build the kernel.
+Once the bootable image is installed and running on the remote machine,
+go to the build directory for
+.i LOCAL
+on the local machine and run
+.c "gdb -k bsd.gdb" .
+You can then execute the
+.Xr gdb 1
+command
+.c "target remote /dev/tty01"
+to attach to the
+.i local
+end of the connection.
+The remote kernel should sense the connection request and stop,
+passing control to the local
+.Xr gdb 1
+through a
+.i stub
+routine in the remote kernel.
+You can now set breakpoints, examine data structures and so on.
+.pp
+Note that it is not necessary to
+.Xr config 8
+a kernel with
+.c DEBUG=-g
+to debug it, but
+.Xr gdb 1
+is much more useful with the extended debugging symbols.
+One trick worth mentioning here which works
+on the bootable image on the root
+is using
+.Xr gdb 1 's
+.c -w
+flag to patch initialized variables.
+Run
+.c "gdb -w -k /bsd"
+and use
+.c "set variable
+commands to manipulate the data.
+Without the symbolic information,
+.Xr gdb 1
+thinks that everything is an
+.c int ,
+so it is often necessary to use casts through pointers
+(for example,
+.c "set var *(char *)\fIv\fP = \fIvalue\fP
+sets a byte
+.i v
+to the given
+.i value ).
+.pp
+.\"
+.\"	Compiling Kernels
+.\"
+.sh 1 "Compiling Kernels
+.pp
+So now we know what goes into a build directory;
+what can we do with it?
+.pp
+A good command to start with is
+.c "make clean" .
+This has the same effect that it does with
+makefiles for utilities \(em
+it removes object files, binaries and error files.
+If a particular build directory will go unused for a while,
+.c "make clean
+will save a considerable amount of filesystem space at the cost of some CPU
+time spent rebuilding the kernel the next time you need it.
+A
+.c "make clean
+is also a handy way to make sure that
+your next build contains a consistent set of object files.
+If options change in the config file,
+the dependency list is often not sufficient to
+make sure that all the appropriate sources are recompiled; a
+.c "make clean
+is usually necessary to force the new options to take effect.
+.pp
+Typically the first build command run after a
+.Xr config 8
+is
+.c "make depend" ;
+after all,
+.Xr config 8
+itself patiently reminds you to do it.
+A
+.c "make depend
+will preprocess the C source files and
+look for headers that each file includes.
+It generates a
+.c \&.depend
+file that lists each object file along with
+all the files that it depends on.
+If any of the dependencies for an object file change,
+the object file must be rebuilt.
+It normally isn't necessary to re-run
+.Xr config 8
+and
+.c "make depend
+if a source file or header file changes,
+since the list of dependencies from an earlier
+.c "make depend
+is sufficient to guide re-compiling
+as long as no source files start including new headers
+(or stop including old ones).
+.pp
+The basic build command is
+.c make
+.i kernel ,
+where
+.i kernel
+is listed on a
+.c config
+line in the config file;
+typically it is called
+.c bsd .
+A straight
+.c make
+will build the first kernel configuration listed in the config file,
+while
+.c "make all
+will build all the configurations.
+A couple of
+.Xr make 1
+variables in the standard makefile template
+can be tweaked to add special features during a build.
+You can set the
+.c WARN
+variable to add extra compiler warnings;
+for example,
+.c "make WARN='-W -Wall' bsd"
+will make
+.Xr cc 1
+produce extensive warnings about potential coding problems.
+Most of the extended warnings are uninteresting
+but occasionally they will reveal a bug or two in a module.
+Another useful
+.Xr make 1
+variable is
+.c CC ;
+if you have an alternate C compiler,
+for example
+.c /u/donn/bin/cc ,
+you can arrange for it to compile C sources with
+.c "make CC=/u/donn/bin/cc bsd" .
+The assembler, preprocessor and linker may also be switched
+by altering the appropriate
+.Xr make 1
+variables.
+.pp
+It's worth taking a moment to describe some files
+which are built in an odd way.
+The file
+.c assym.s
+contains assembly language definitions for a number of C preprocessor
+defines which are inconvenient to import directly into assembly code.
+A program named
+.i genassym
+is responsible for creating
+.c assym.s ;
+.i genassym
+is a little C program which includes some interesting headers
+and prints out assembly directives for interesting C preprocessor symbols.
+Over the course of time, a number of kernel headers have
+been converted to support direct inclusion by assembly code, using
+.c "#ifndef LOCORE
+to hide C-specific definitions,
+but the process is far from complete.
+Sometimes the C definition simply isn't appropriate
+in assembly code anyway, for example when it contains a cast.
+The file
+.c vers.c
+contains the kernel's version strings.
+A shell script,
+.c /sys/conf/newvers.sh ,
+reads the
+.c version
+file in the build directory,
+initializing its contents to
+.c 0
+if it doesn't already exist,
+then formats the version information, writes it to
+.c vers.c ,
+and finally adds one to the number in
+.c version .
+Thus each kernel built in the same build directory
+will get a unique version number which is printed
+in the banner at boot time and
+is available through the
+.Xr sysctl 3
+call.
+The file
+.c param.c
+in the build directory is copied from
+.c /sys/conf/param.c
+when you do your first build.
+It contains initializations for a number of interesting patchable parameters.
+On some systems, it can be profitable to tune these parameters by hand.
+You can customize the
+.c param.c
+file in each build directory
+to suit the corresponding kernel.
+Note that any change to the master
+.c /sys/conf/param.c
+file will cause the versions in the build directories
+to be re-installed, so it's best not to touch the master version.
+.pp
+Some files in the kernel source tree are
+compiled into binaries other than the kernel.
+This document describes kernels,
+but it's useful to mention this supporting code in passing.
+The
+.i standalone
+code, contained in
+.c /sys/stand
+and
+.c /sys/\fIarch\fP/stand ,
+handles the 4-stage bootstrap process.
+The first stage consists of a boot sector, loaded by the ROM BIOS;
+the boot sector loads the second stage bootstrap
+from consecutive disk sectors.
+The second stage bootstrap is sophisticated
+enough to read a
+.sm BSD
+filesystem and load
+the third stage bootstrap,
+.c /boot ;
+the second stage bootstrap is a compact version of
+.c /boot
+which contains barely enough code
+to read the full
+.c /boot
+from the root filesystem of the given disk.
+The
+.c /boot
+program contains drivers for several peripherals
+and is actually a miniature operating system that
+runs without virtual memory management
+and can interact with a user at the keyboard.
+Its principal responsibility is to load the fourth stage,
+the operating system kernel image, by default named
+.c /bsd .
+.pp
+The machine-dependent directory contains
+boot sector source files written in assembly,
+using names ending, by convention, in
+.c boot.s ;
+for example, the floppy boot sector source is called
+.c fdboot.s .
+It also contains drivers for important peripherals,
+such as potential root disks and the console;
+these drivers are written in C and are modeled
+after the full drivers in the regular kernel source directories.
+The directory also holds sources for the assembly start-up glue
+and main boot routines.
+The machine-independent directory contains code
+which doesn't depend on the architecture,
+such as routines to read
+.sm BSD
+filesystems,
+format output to the console and provide analogues
+to certain
+.sm BSD
+system calls.
+It also contains a few sample programs such as
+.Xr ls 1
+and
+.Xr cat 1 ,
+which can read
+.sm BSD
+files and directories
+in the absence of the full operating system.
+The binaries are built in the machine-dependent directory with
+.Xr make 1 .
+.\"
+.\"	Common Problems
+.\"
+.sh 1 "Common Problems
+.pp
+Now that you know everything there is to know about building
+kernels, what could possibly go wrong?
+As you probably expected, lots of things.
+Here are some of the more common difficulties.
+.\"
+.\"	Generic Kernels
+.\"
+.sh 2 "Generic Kernels
+.pp
+The most attractive sample configuration to use
+as a template when making your own custom configuration is
+.c GENERIC .
+Unfortunately
+.c GENERIC ,
+in spite of its name,
+has a very specific use: its purpose
+is to boot on a root device other than the one
+from which it was loaded.
+The
+.c GENERIC
+kernel is used for distributions since it makes it easy
+to boot on a non-floppy root from a floppy.
+The
+.c GENERIC
+config file contains a
+.c "config bsd swap generic
+command line which arranges to build a special
+.q generic
+swap configuration file named
+.c swapgeneric.c .
+Note that the use of
+.c "swap generic
+.i requires
+the use of
+.c "options GENERIC" .
+Including one without the other will cause the kernel to
+.i "fail to build" .
+.pp
+If you need a customized kernel, copy 
+.c GENERIC
+to another name like
+.c LOCAL
+and edit it instead.
+You will probably want to strip out lots of features from 
+.c LOCAL
+including
+.c "config bsd swap generic
+and
+.c "options GENERIC
+as well as unneeded drivers, etc \(em
+this creates smaller kernels which use fewer resources,
+making more resources available to user programs.
+.\"
+.\"	Out of Space
+.\"
+.sh 2 "Out of Space
+.pp
+Kernel builds, especially builds for
+.c -g
+kernels,
+can consume egregious quantities of disk space.
+A standard kernel build will take a few megabytes,
+and a
+.c -g
+build can take 12 megabytes or more.
+It's not unusual to run out of filesystem space
+when building kernels,
+especially if you maintain several custom kernels.
+Judicious use of
+.c "make clean
+can help a lot.
+Other strategies are to customize more drastically
+so that your kernels and hence your build directories are smaller,
+or to build only a subset of source files with
+.c -g ,
+at the cost of not seeing source-level debugging information
+for certain parts of the kernel.
+The default kernel makefile contains a
+.c "make links
+hack which links object files from the
+.c GENERIC
+build directory into the current build directory.
+This can be very useful if your kernels don't
+differ significantly in terms of options,
+but do contain different subsets of the pool of drivers.
+Finally, it is occasionally useful to move the kernel source and build tree
+to its own filesystem.
+Note that obvious trick of moving the
+.c /sys/compile
+directory to another filesystem and replacing it with a symlink
+won't work, because the build can use the
+.c ..
+directory to access relative pathnames.
+.pp
+Builds can also consume large amounts of virtual memory.
+If a compile fails with a report of
+.i "virtual memory exhausted" ,
+try unlimiting the data space resource limit
+(for example, with the C-shell
+.i limit
+command)
+and compiling again.
+If the problem still occurs, it's possible
+that your paging and swap areas are filled up or are too small;
+the compiler and linker are notorious memory hogs.
+A
+.c "ps -vax
+will give you a list of memory users ordered by size;
+the important field is
+.c VSZ ,
+which tells you how much virtual memory is in use by a process.
+Note that this figure doesn't tell you how much virtual memory
+is being shared between different copies of the same program,
+and you have to subtract the text size in the
+.c TSIZ
+column to eliminate virtual memory
+which isn't backed by the paging area,
+but it does give you a good idea of
+what is using up your paging areas.
+Some major abusers of the paging space are editors like
+.Xr emacs 1 ,
+and the
+.Xr mfs 8
+virtual memory filesystem;
+killing the big programs (or unmounting
+.Xr mfs 8 )
+will often solve the problem.
+If all else fails, you can try building in single user mode.
+Sometimes you will find yourself in the unfortunate position
+of not having sufficiently large paging areas.
+If this occurs, the only current solutions are to
+allocate bigger partitions for swap and paging
+on the current disks,
+or add more disk.
+.pp
+Finally, a third way to run out of space
+is to build kernels which can't be loaded by the bootstrap.
+The boot program will complain if the text and initialized data
+pages of the kernel are larger than the relocation for which it is
+configured, currently about 2 MB.
+.\"
+.\"	Dependency Problems
+.\"
+.sh 2 "Dependency Problems
+.pp
+Dependency problems tend to come in two flavors.
+If you forget to run
+.c "make depend
+after running
+.Xr config 8 ,
+or after changing a source file to add or delete
+.c #include
+directives,
+.Xr make 1
+won't be always able to figure out
+which files need to be recompiled.
+Secondly, the dependency information is good but not complete.
+If you change a major option (say, removing
+.c INET ),
+the dependency information may be insufficient
+to identify all the files that need to be recompiled.
+In these situations, the best thing to do is to run
+.c "make clean"
+and start over.
+The bugs that result from dependency problems can be very mysterious.
+For example, if the layout of a structure changes and
+the build fails to recompile every file that
+includes the header that declares the structure,
+a structure member may lie at one offset in one module
+and at another offset in a different module.
+When in doubt about a subtle-looking bug, run
+.c "make clean" .
+.\"
+.\"	Autoconfiguration Glitches
+.\"
+.sh 2 "Autoconfiguration Glitches
+.pp
+The
+.Xr config 8
+program does little static checking of config files
+for conflicts between options or device specifications.
+These problems will only turn up during a build or
+(much more likely) during autoconfiguration.
+Some apparent conflicts are actually fine,
+for example if only one of two devices
+occupying the same ISA port numbers is ever present.
+The autoconfiguration code will normally complain
+about port or IRQ overlap at boot time.
+Currently there is no checking for DRQ overlaps;
+well-disciplined devices could in theory share a DMA channel,
+although the drivers are not normally coded to handle this.
+.pp
+If you are having trouble getting a device to configure,
+or configuration of a particular device leads to problems,
+the special boot command
+.c "-autodebug
+.i N ,
+where
+.i N
+is a debug level,
+can be a big help.
+Refer to the
+.Xr boot 8
+manual page for more details about boot flags and
+.c -autodebug .
+.pp
+Occasionally a boot will fail with the message
+.c "panic: cannot mount root" .
+This normally means that the root filesystem device failed to configure.
+This problem is often a consequence of booting
+a kernel customized for one system on a different system
+with different peripherals.
+.pp
+Autoconfiguration of SCSI devices can sometimes lead to confusion as well.
+The kernel assigns logical device numbers to SCSI devices
+more or less in the order that it finds them.
+This device number has nothing directly to do with the SCSI target number,
+nor with the SCSI unit number
+(which, due to quirks in the history of the SCSI standards,
+is almost always 0 anyway).
+If a SCSI device fails to configure because
+it wasn't powered up or has hardware problems,
+its logical device number may instead be allocated
+to a different SCSI device.
+This can lead to disaster if one of the mounted filesystems in the
+.c /etc/fstab
+file appears on a different logical disk from the one you expected.
+Note that logical disk and tape numbers
+are allocated separately.
+If you have a device which often fails to configure
+or which is often turned off at boot time,
+it is useful to give it a high target number so
+that the ordering of the more important logical device numbers
+doesn't get scrambled.
+Alternatively, you can ``wire down''
+the correspondence between particular SCSI disks,
+their units, and their targets, e.g.:
+.(b
+.c
+.ta 8n 16n 24n
+aha0	at isa0 port 0x330 drq 5
+tg0	at aha0 target 0
+sd0	at tg0 unit 0
+tg1	at aha0 target 3
+sd1	at tg1 unit 0
+tg*	at scsi? target ?
+sd*	at tg? unit ?
+st*	at tg? unit ?
+.r
+.)b
+Here sd0 and sd1 can only be found
+as unit 0 of targets 0 and 3 respectively.
+All other SCSI disks will be assigned unit numbers
+as they are discovered,
+but they will never take the place of
+.c sd0
+and
+.c sd1 .
+Instead, they will begin at
+.c sd2
+and count upwards.
+(Since this particular configuration proceeds in target order,
+a disk present at target 1, unit 0 will become sd2
+.i before
+sd1 is found at target 3, unit 0.
+This may be somewhat confusing, but is normal.)

@@ -1,0 +1,74 @@
+.\"	BSDI sigwait.2,v 2.2 1999/11/16 01:37:43 donn Exp
+.Dd November 15, 1999
+.Dt SIGWAIT 2
+.Os
+.Sh NAME
+.Nm sigwait
+.Nd wait for a signal
+.Sh SYNOPSIS
+.Fd #include <signal.h>
+.Ft int
+.Fn sigwait "const sigset_t *set" "int *sig"
+.Sh DESCRIPTION
+.Fn Sigwait
+checks for a pending signal in 
+.Fa set ,
+clears it from the set of pending signals and returns the signal number
+in the location referenced by
+.Fa sig .
+If more than one of the signals contained in
+.Fa set
+is pending then
+.Fn sigwait
+selects only one and acts upon it.
+If no signal contained in
+.Fa set
+is pending, then
+.Fn sigwait
+waits for a signal to arrive.
+All of the signals contained in
+.Fa set
+should be blocked or unpredictable results may occur.
+.Pp
+If more than one thread is using
+.Fn sigwait
+to wait for the same signal then only one thread will return from
+.Fn sigwait
+with the signal number.
+.Sh RETURN VALUES
+The
+.Fn sigwait
+function returns 0 if successful and the signal number is stored in the
+location referenced by
+.Fa sig .
+.Sh ERRORS
+The
+.Fn sigwait
+function may return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa set
+argument contains an invalid or unsupported signal number.
+.It Bq Er EFAULT
+.Fa Sig
+points to memory that is not a valid part of the process address space.
+.El
+.Sh SEE ALSO
+.Xr sigprocmask 2
+.Sh BUGS
+When using threads it is not possible to use
+.Fn sigwait
+to wait for
+.Bf -symbolic
+SIGALRM.
+.Ef
+.Pp
+The
+.Fn sigwait
+call is from POSIX.1c.
+The analogous POSIX.1-1996 calls are
+.Fn sigtimedwait
+and
+.Fn sigwaitinfo ,
+but these are not yet supported.

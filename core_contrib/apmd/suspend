@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+#	BSDI suspend,v 1.1 2000/07/08 02:28:55 prb Exp
+#
+# Shutdown PC Card devices and suspend the machine 2 seconds later
+
+csconfig -a down
+sleep 2			# time to let things settle things down
+apm suspend

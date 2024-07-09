@@ -1,0 +1,8 @@
+# Makefile.ov,v 1.1.1.1 2003/08/14 15:53:24 polk Exp
+
+TOP = ..
+include $(TOP)/config.mk/template
+
+SUBDIRS=util scripts
+
+expand SubdirTarget

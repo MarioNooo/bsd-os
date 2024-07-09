@@ -1,0 +1,31 @@
+!
+! .Xresources -- specifies your personal preferences for X applications
+!
+! Load into the server with the command:
+!     xrdb -DHOME=$HOME -I$HOME -load $HOME/.Xresources
+!
+! Resource Search Order:
+!       RESOURCE_MANAGER (X server)
+!       SCREEN_RESOURCES (X server)
+!       $XUSERFILESEARCHPATH || $XAPPLRESDIR || $XFILESEARCHPATH
+!       $XENVIRONMENT || $HOME/.Xdefaults-hostname
+!       Command line [-xrm resource_string]
+!
+#include ".Xincludes/Config"
+#include ".Xincludes/Fonts"
+#include ".Xincludes/Colors"
+
+*foreground:             FOREGROUND_TEXT
+*background:             BACKGROUND_TEXT
+
+!
+! Application resources
+!
+#include ".Xincludes/Netscape"
+#include ".Xincludes/xterm"
+
+!
+! Place your application specific configuration files in
+! $HOME/.Xincludes and then include them here, for example:
+!
+!     #include ".Xincludes/Twm"

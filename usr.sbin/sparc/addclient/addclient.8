@@ -1,0 +1,194 @@
+.\" Copyright (c) 1997 Berkeley Software Design Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI addclient.8,v 1.5 2000/07/28 19:54:38 torek Exp
+.Dd April 30, 1997
+.Dt ADDCLIENT 8
+.Os "BSD/OS 4.2"
+.Sh NAME
+.Nm addclient
+.Nd add a SPARC network (diskless) boot client
+.Sh SYNOPSIS
+.Nm addclient
+.Ar type client ...
+.Sh DESCRIPTION
+.Pp
+The
+.Nm addclient
+program creates,
+in the current working directory,
+the symbolic link or links
+needed to boot a diskless
+.Tn SPARC
+client from an NFS server.
+It should generally be run in the
+.Pa /tftpboot
+directory
+(which may need to be created first).
+It does
+.Em not
+set up bootp, rarp and tftp; these must still be done manually.
+.Pp
+The
+.Ar client
+arguments can be either IP addresses (as dotted quads)
+or host names.
+If they are host names,
+.Nm
+uses
+.Xr nslookup 8
+to convert the names to IP addresses.
+.Pp
+The
+.Nm
+program needs to know the CPU architecture
+of the client machine that will be booting,
+as this sometimes affects the file name that its PROM requests,
+as well as the actual boot loader required.
+Suppose the IP address of the client were 127.0.0.1, for instance.
+If this client is a sun4m-based machine,
+it will always ask to boot from the file "7F000001.SUN4M".
+Unfortunately, if it is a sun4c-based machine,
+it might ask for the file "7F000001" (with no suffix);
+if it is a sun4u-based machine, it will
+.Em still
+ask for "7F000001".
+The sun4c and sun4m both use the
+older privileged architectures and the
+.Pa netboot
+boot-loader program.
+A sun4u machine, however, must use the
+.Tn SPARC-V9
+boot loader
+.Pq Pa netboot.v9 .
+Thus, the link (or links) that
+.Nm
+needs to create depend on the CPU architecture.
+The three supported architectures are
+.Li sun4c ,
+.Li sun4m ,
+and
+.Li sun4u .
+.Pp
+The
+.Nm
+program will run the
+.Xr ls 1
+program to display the links as it creates them.
+.Sh "ADDITIONAL CONFIGURATION INFORMATION"
+The
+.Xr tftpd 8
+daemon must be enabled in
+.Pa /etc/inetd.conf
+(see
+.Xr inetd 8 ).
+Uncomment its entry, and make sure the directory
+containing client boot data (normally
+.Pa /tftpboot )
+appears in the arguments for tftpd.
+The
+.Xr dhcpd 8
+daemon must also be configured and running.
+It will start automatically on server reboots
+as long as the configuration file
+.Pa /etc/dhcpd.conf
+exists.
+You will then need one
+.Dq host
+entry per client in
+.Pa /etc/dhcpd.conf
+(see
+.Xr dhcpd.conf 5 ).
+For example, a configuration that boots host
+.Dq zonk.dom.ain
+on your local network of 10.2.3.128/26,
+where zonk's Ethernet address is
+.Li 08:00:20:1f:cb:e0 ,
+might look like this:
+.Bd -literal -offset indent
+option domain-name "dom.ain";
+deny unknown-clients;
+subnet 10.2.3.128 netmask 255.255.255.192 {
+}
+host zonk {
+  allow bootp;
+  hardware ethernet 08:00:20:1f:cb:e0;
+  fixed-address zonk.dom.ain;
+  option root-path "/export/zonk/root";
+}
+.Ed
+.Pp
+The
+.Dq host
+clause is the most critical portion.
+It must specify bootp,
+list the Ethernet and IP addresses,
+and give the name of the root file system.
+The
+.Li root-path
+option should normally end in "/root".
+The client builds a swap file name by replacing the string
+.Dq root
+with
+.Dq swap
+in this path name;
+in the above example,
+.Em zonk
+would mount
+.Pa /export/host/root
+as its root file system and swap on
+.Pa /export/host/swap .
+.Pp
+The reverse ARP daemon
+.Xr rarpd 8
+will be started automatically on server reboots as long as both the
+.Pa /tftpboot
+directory and
+.Pa /etc/ethers
+file exist.
+You will need to place the client machine's Ethernet address in
+.Pa /etc/ethers
+as well as
+.Pa /etc/bootptab .
+Note that these use slightly different formats; the
+.Pa /etc/ethers
+line for host
+.Em zonk
+above would be:
+.Bd -literal -offset indent
+08:00:20:1f:cb:e0       zonk.dom.ain
+.Ed
+.Pp
+The
+.Pa /tftpboot
+directory (or whichever directory you choose for booting diskless clients)
+must contain copies of (or links to) the
+.Dq netboot
+binaries for the target systems.
+The Ultrasparc uses
+.Dq Pa netboot.v9
+while older machines use plain
+.Dq Pa netboot .
+You must install these copies (or links) by hand.
+.Sh FILES
+.Bl -tag -width /stand/netboot.v9 -compact
+.It Pa /etc/dhcpd.conf
+bootp configuration data
+.It Pa /etc/ethers
+Ethernet-to-IP address translations for rarpd
+.It Pa /tftpboot
+links for files for SPARC PROMs to load
+.It Pa /stand/netboot
+bootp/NFS boot loader for v7 and v8 SPARCs
+.It Pa /stand/netboot.v9
+bootp/NFS boot loader for v9 SPARCs
+.El
+.\" Sh DIAGNOSTICS
+.Sh "SEE ALSO"
+.Xr dhcpd 8 ,
+.Xr dhcpd.conf 5 ,
+.Xr inetd 8 ,
+.Xr rarpd 8 ,
+.Xr tftpd 8

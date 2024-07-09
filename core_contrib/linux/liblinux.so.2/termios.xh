@@ -1,0 +1,89 @@
+/*	BSDI termios.xh,v 1.1 2000/04/10 16:51:15 donn Exp	*/
+
+include "../liblinux.common/termios.xh"
+
+/*
+ * The glibc termios structures differ from the libc5 termios structures,
+ * so we define them separately for each emulation.
+ */
+
+struct termios {
+	iflag_t c_iflag;
+	oflag_t c_oflag;
+	cflag_t c_cflag;
+	lflag_t c_lflag;
+	unsigned char linux_c_line;
+	unsigned char c_cc_VINTR;
+	unsigned char c_cc_VQUIT;
+	unsigned char c_cc_VERASE;
+	unsigned char c_cc_VKILL;
+	unsigned char c_cc_VEOF;
+	unsigned char c_cc_VTIME;
+	unsigned char c_cc_VMIN;
+	unsigned char linux_c_cc_VSWTC;
+	unsigned char c_cc_VSTART;
+	unsigned char c_cc_VSTOP;
+	unsigned char c_cc_VSUSP;
+	unsigned char c_cc_VEOL;
+	unsigned char c_cc_VREPRINT;
+	unsigned char c_cc_VDISCARD;
+	unsigned char c_cc_VWERASE;
+	unsigned char c_cc_VLNEXT;
+	unsigned char c_cc_VEOL2;
+	unsigned char c_cc_VDSUSP;		/* XXX stolen for BSD value */
+	unsigned char c_cc_VSTATUS;		/* XXX stolen for BSD value */
+	unsigned char linux_c_cc_spare[13];
+	unsigned int linux_c_ispeed;		/* apparently ignored */
+	unsigned int linux_c_ospeed;		/* apparently ignored */
+
+	in(f, n, len) {
+		n->c_cc_spare2 = f->linux_c_line;		/* XXX */
+		n->c_ispeed = baud_t_in(f->c_cflag & LINUX_CBAUD);
+		n->c_ospeed = n->c_ispeed;
+	}
+
+	out(n, f, len) {
+		f->linux_c_line = n->c_cc_spare2;		/* XXX */
+		f->c_cflag |= baud_t_out(n->c_ospeed);
+		f->linux_c_cc_VSWTC = _POSIX_VDISABLE;
+	}
+};
+
+struct kernel_termios {
+	iflag_t c_iflag;
+	oflag_t c_oflag;
+	cflag_t c_cflag;
+	lflag_t c_lflag;
+	unsigned char linux_c_line;
+	unsigned char c_cc_VINTR;
+	unsigned char c_cc_VQUIT;
+	unsigned char c_cc_VERASE;
+	unsigned char c_cc_VKILL;
+	unsigned char c_cc_VEOF;
+	unsigned char c_cc_VTIME;
+	unsigned char c_cc_VMIN;
+	unsigned char linux_c_cc_VSWTC;
+	unsigned char c_cc_VSTART;
+	unsigned char c_cc_VSTOP;
+	unsigned char c_cc_VSUSP;
+	unsigned char c_cc_VEOL;
+	unsigned char c_cc_VREPRINT;
+	unsigned char c_cc_VDISCARD;
+	unsigned char c_cc_VWERASE;
+	unsigned char c_cc_VLNEXT;
+	unsigned char c_cc_VEOL2;
+	unsigned char c_cc_VDSUSP;		/* XXX stolen for BSD value */
+	unsigned char c_cc_VSTATUS;		/* XXX stolen for BSD value */
+
+	in(f, n, len) {
+		n->c_cc_spare2 = f->linux_c_line;		/* XXX */
+		n->c_ispeed = baud_t_in(f->c_cflag & LINUX_CBAUD);
+		n->c_ospeed = n->c_ispeed;
+	}
+
+	out(n, f, len) {
+		f->linux_c_line = n->c_cc_spare2;		/* XXX */
+		f->c_cflag |= baud_t_out(n->c_ospeed);
+		f->linux_c_cc_VSWTC = _POSIX_VDISABLE;
+	}
+};

@@ -1,0 +1,5 @@
+#! /bin/sh
+#	BSDI unpack,v 2.1 1995/02/03 15:13:08 polk Exp
+# In true GNU kitchen sink fashion, gzip will 'unpack' packed files.
+
+exec /usr/contrib/bin/gunzip "$@"

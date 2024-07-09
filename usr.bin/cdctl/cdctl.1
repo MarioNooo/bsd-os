@@ -1,0 +1,92 @@
+.\" 	BSDI cdctl.1,v 2.9 1998/07/08 23:03:44 polk Exp
+.Dd September 17, 1996
+.Dt CDCTL 1
+.Os
+.Sh NAME
+.Nm cdctl
+.Nd control a cdrom drive
+.Sh SYNOPSIS
+.Nm cdctl
+.Op Fl NPShjlptvw
+.Op Fl V Ar volume
+.Op Fl e Ar track
+.Op Fl f Ar device
+.Op Fl s Ar track
+.Sh DESCRIPTION
+The
+.Nm cdctl
+utility plays a cdrom
+from beginning to end.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl N
+Skip to the next track if the cdrom is playing.
+.It Fl P
+Go to the previous track if the cdrom is playing.
+.It Fl S
+Stop playing.
+.It Fl V
+Set the audio volume (0-100).
+.It Fl e
+Specify an ending track number.
+.It Fl f
+Specify the cdrom device name.
+For a SCSI drive, use the C partition of the raw device, for example,
+.Pa /dev/rsr0c .
+.It Fl h
+Print a hash code that represents the table of contents.
+.It Fl j
+Eject the CD from the drive.
+.It Fl l
+Load the CD.
+.It Fl p
+Print a status message once per second while the cdrom is playing.
+.It Fl s
+Specify a starting track number.
+.It Fl t
+Print the table of contents.
+This is a listing of track numbers and durations,
+where durations are
+specified as minutes, seconds and frames.
+(A frame is 1/75'th of a second.)
+.It Fl v
+If the
+.Fl v
+option is specified, the hexadecimal value of the track control information
+is displayed as part of the
+.Fl t
+option display.
+.It Fl w
+Wait until the play operation is complete before exiting.
+.El
+.Pp
+The
+.Fl j
+and
+.Fl l
+options may not be supported by some devices.
+.Pp
+The
+.Nm cdctl
+utility exits 0 on success, and >0 if an error occurs.
+.Sh ENVIRONMENT
+The
+.Nm CDROM
+environment variable is used if
+.Fl f Ar devicename
+isn't given. In the event it isn't set the default pathname
+.Pa /dev/rsr0c
+is used. The device must be readable by the invoking user.
+.Sh BUGS
+Not all drives implement volume control, and in those that do the
+sensitivity of the control varies greatly.
+.Pp
+The user running
+.Nm cdctl
+must have read access to the given physical device (to perform the
+low level operations required to operate the player).  Anyone with
+read access to the physical device may issue commands that could
+affect all partitions on that device (a user may eject the media
+for example). This isn't usually a problem on a CDROM but may cause
+trouble with other removable media.

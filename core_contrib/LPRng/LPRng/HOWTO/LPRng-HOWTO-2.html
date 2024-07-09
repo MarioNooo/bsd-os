@@ -1,0 +1,1226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Installation</TITLE>
+ <LINK HREF="LPRng-HOWTO-3.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-1.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-3.html">Next</A>
+<A HREF="LPRng-HOWTO-1.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc2">Contents</A>
+<HR>
+<H2><A NAME="installation"></A> <A NAME="installingprograms"></A> <A NAME="s2">2. Installation</A></H2>
+
+<P>The basic components of the LPRng system are the executables
+and the database files.
+This section deals with generating and installing the executable
+files.
+<H2><A NAME="ss2.1">2.1 Getting Source Code and Support Programs</A>
+</H2>
+
+<P>
+<OL>
+<LI>Obtain the latest or stable version of the LPRng source code from a
+<A HREF="LPRng-HOWTO-1.html#secftp">LPRng FTP Site</A>.</LI>
+<LI>Obtain the latest or stable version of the <CODE>ifhp</CODE> filter source code from a
+<A HREF="LPRng-HOWTO-1.html#secftp">LPRng FTP Site</A>.
+This filter is used to support
+PostScript,
+PCL,
+and text printers.</LI>
+<LI>Obtain the following GNU programs from one of the many
+<A HREF="http://www.gnu.org">GNU Software Mirror Sites</A>
+and install them.
+See the directions in the GNU Zip distribution for details.
+<DL>
+<DT><B>gzip/gunzip file compression utility</B><DD><P>Used to decompress many files in the LPRng and other distributions.
+<P>
+<DT><B>GNU tar file archive utility</B><DD><P>This is version of tar supports native Gzip compression and decompression
+and is used to generate the LPRng distribution.
+<P>
+<DT><B>GNU make</B><DD><P>LPRng assumes that GNU make (<CODE>gmake</CODE>) will be used during
+the configuration and installation process.
+<P>
+<DT><B>GNU gcc Compiler</B><DD><P>If you do not have an ANSI C compiler,
+then please use the GCC compiler.
+</DL>
+</LI>
+<LI>LPRng requires and ANSI C compiler.
+If you do not have one on your system
+then please obtain and use the <CODE>gcc</CODE> compiler.</LI>
+<LI>Solaris Sparc and X86 Binaries for GCC and Make  can be obtained from
+<A HREF="http://sunfreeware.com/">http://sunfreeware.com/</A>.</LI>
+<LI>While the following are not essential,
+they are useful to have.
+<DL>
+<DT><B>file(1) utility</B><DD><P>The Open Source utility by Ian F. Darwin
+can be obtained from
+<A HREF="ftp://ftp.astron.com/pub/file">ftp://ftp.astron.com/pub/file</A>.
+This is a greatly improved version of the original UNIX file utility and
+may be used by the <CODE>ifhp</CODE> filter to do file recognition.
+<DT><B>GhostScript</B><DD><P>
+<A NAME="ghostscript"></A> 
+GhostScript
+can be obtained from
+<A HREF="http://www.cs.wisc.edu/~ghost/">http://www.cs.wisc.edu/~ghost/</A>
+or
+<A HREF="http://www.ghostscript.com">http://www.ghostscript.com</A>.
+GhostScript is a PostScript interpreter that allows you to translate
+PostScript to various printer compatible formats such as PCL,
+as well as displaying the code on a terminal.
+You might also want to get the PDF extensions that allows GhostScript to
+read and print PDF files.
+<DT><B>gv (GhostView)</B><DD><P>
+<A NAME="gv"></A> 
+Of course you will want to get the <CODE>gv</CODE> program that
+uses GhostScript to display PostScript on an X terminal.
+It can be obtained from
+<A HREF="http://wwwthep.physik.uni-mainz.de/~plass/gv/">http://wwwthep.physik.uni-mainz.de/~plass/gv/</A></DL>
+</LI>
+</OL>
+<H2><A NAME="ss2.2">2.2 Set PATH and Check Utilities</A>
+</H2>
+
+<P>If make sure that you have
+<CODE>/usr/local/bin</CODE>
+in your path if you have installed
+the GNU tools in the (standard) <CODE>/usr/local/bin</CODE>
+directory.
+This should be one of the first entries in the shell search PATH.
+<P>If you are compiling on a Solaris system
+make sure that you have
+<CODE>/usr/ccs/bin</CODE>
+in your search path as well.
+The <CODE>/usr/local/bin</CODE> entry must be before <CODE>/usr/ccs/bin</CODE>.
+<P>After doing this,
+check to see that the GNU <CODE>make</CODE> utility
+and not the default OS make is being used by default.
+Use <CODE>make -v</CODE> to determine what version you have,
+and if you have GNU <CODE>make</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+% make -v
+GNU Make version 3.75, by Richard Stallman and Roland McGrath.
+Copyright (C) 1988, 89, 90, 91, 92, 93, 94, 95, 96
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="user"></A> <A NAME="group"></A> <A NAME="ss2.3">2.3 Setting Up Daemon User</A>
+</H2>
+
+<P>By default,
+the <CODE>lpd</CODE> server is started at system initialization time
+and runs as ROOT (uid 0).
+In order to provide a higher level of security,
+LPRng will perform file operations as the non-privileged user
+<CODE>daemon</CODE> and group <CODE>daemon</CODE>.
+<P>Use the appropriate system administration tools to
+create a user and group <CODE>daemon</CODE>.
+Most UNIX systems already have such a user.
+User <CODE>daemon</CODE> must <B>not</B> have login capability.
+<H2><A NAME="ss2.4">2.4 Configuration</A>
+</H2>
+
+<P>The LPRng package consists of:
+<UL>
+<LI> <EM><CODE>lpd</CODE></EM> - the LPD print <B>server</B> program</LI>
+<LI><EM><CODE>lpr</CODE></EM>,
+<EM><CODE>lpq</CODE></EM>,
+<EM><CODE>lprm</CODE></EM>,
+<EM><CODE>lpc</CODE></EM> -
+and
+<EM><CODE>lpstat</CODE></EM>,
+<B>client</B> programs for printing,
+status queries, job removal, server configuration,
+and System V <CODE>lpstat</CODE> emulation respectively.</LI>
+<LI><EM><CODE>printcap</CODE></EM> print queue database file
+which is used by all the server and client programs</LI>
+<LI><EM><CODE>lpd.conf</CODE></EM> LPRng configuration options
+which is used by all the server and client programs</LI>
+<LI><EM><CODE>lpd.perms</CODE></EM> permission information
+which is used by the <CODE>lpd</CODE> server to control user actions.</LI>
+</UL>
+<P>LPRng uses the <CODE>configure</CODE> facility
+for configuration and installation.
+Configure generates a set of Makefiles which are used
+by the <CODE>make</CODE> program to compile and install software.
+The following Makefile variables and values are set by <CODE>configure</CODE>
+to specify the location of the LPRng software:
+<BLOCKQUOTE><CODE>
+<PRE>
+Directories:
+  Variable        Value               Default
+  ${prefix}                           (/usr/local)
+  ${exec_prefix}  ${prefix}           (/usr/local)
+  ${bindir}       ${exec_prefix}/bin  (/usr/local/bin)
+  ${sbindir}      ${exec_prefix}/sbin (/usr/local/sbin)
+  ${libexecdir}   ${exec_prefix}/libexec (/usr/local/libexec)
+  ${sysconfdir}   ${prefix}/etc       (/usr/local/etc)
+  ${mandir}       ${prefix}/man       (/usr/local/man)
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>These are used for the following files:
+<BLOCKQUOTE><CODE>
+<PRE>
+Variable                 Files
+${bindir}               lpr, lprm, lpq, lpstat
+${sbindir}              lpc, checkpc, lpd
+${libexecdir}/filters   lpf, pclbanner, psbanner, lpbanner
+${sysconfdir}           lpd.conf, lpd.perms, printcap
+${mandir}/man[1-9]  man pages
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You can set explicit values for the
+<CODE>prefix</CODE>
+<CODE>bindir</CODE>
+<CODE>sbindir</CODE>
+<CODE>libexecdir</CODE>
+and
+<CODE>mandir</CODE> variables using the <CODE>--name=PATH</CODE>
+option.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+Variable              Value           Files
+${bindir}             /usr/bin        /usr/bin/{lpr,lprm,lpq,lpstat}
+${sbindir}            /usr/sbin       /usr/sbin/{lpc,checkpc,lpd}
+${libexecdir}/filters /usr/libexec/filters   \
+              /usr/libexec/filters{lpf, pclbanner, psbanner, lpbanner}
+${sysconfdir}         /etc            /etc/{lpd.conf,lpd.perms,printcap}
+${mandir}/man[1-9]  /usr/share/man/man[1-9]/{man pages}
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In addition to these general purpose options
+<CODE>configure</CODE> has the following options to control
+various system requirements.
+<DL>
+<DT><B><CODE>--disable-setuid</CODE></B><DD><P>Install the executables without setuid ROOT permissions.
+Non-setuid clients and programs are inherently more secure than SETUID programs,
+and system administrators would be well advised to install them without
+SETUID root permissions.
+Please see 
+<A HREF="#setuid">Security Considerations</A>
+for more details about this option.
+<DT><B><CODE>--disable-strip</CODE></B><DD><P>Do not strip the executables before installing.
+For debugging and diagnostic purposes.
+<DT><B><CODE>--enable-priv_ports.</CODE></B><DD><P>Require connections to the <CODE>lpd</CODE> server
+to come from a privileged port (range 1-1023).
+By default
+LPRng will allow connections from any port.
+Please see 
+<A HREF="#setuid">Security Considerations</A>
+for more details about this option.
+<DT><B><CODE> --disable-force_localhost.  </CODE></B><DD><P>The default LPRng configuration assumes that all printing will be done
+via a <CODE>lpd</CODE> print spooler running on the local host system.
+However,
+many larger sites prefer that all users do their printing via a
+few central servers,
+and do not run
+<CODE>lpd</CODE> servers on user systems.
+The
+<CODE>--disable-force_localhost</CODE>
+configuration sets the default value of the <CODE>force_localhost</CODE>
+value to <CODE>false</CODE>,
+by default allowing the LPRng clients to connect directly to <CODE>lpd</CODE> servers
+on remote hosts.
+<DT><B><CODE>--disable-require_configfiles</CODE></B><DD><P>By default, the
+<CODE>lpr</CODE>,
+<CODE>lpq</CODE>,
+<CODE>lpc</CODE>, ...
+clients require the <CODE>lpd.conf</CODE> and <CODE>printcap</CODE> files
+to be present on the localhost.
+The
+<CODE>--disable-require_configfiles</CODE>
+option removes this requirement.
+<DT><B><CODE> --disable-kerberos</CODE></B><DD><P>Do not include support for Kerberos 5 authenticated transfers.
+<DT><B><CODE> --with-lpddir=DIR.  </CODE></B><DD><P>lpd executable directory (default ${sbindir}).
+For historical configuration compatibility.
+<DT><B><CODE> --with-filterdir=DIR.  </CODE></B><DD><P>Filter directory (default ${libexecdir}/filters).
+For historical configuration compatibility.
+<DT><B><CODE> --with-lpd_conf_path=PATH.  </CODE></B><DD><P>Path of <CODE>lpd.conf</CODE> file.
+For historical configuration compatibility.
+<DT><B><CODE> --with-lpd_perms_path=PATH </CODE></B><DD><P>Path of <CODE>lpd.perms</CODE> file.
+For historical configuration compatibility.
+<DT><B><CODE> --with-printcap_path=PATH </CODE></B><DD><P>Path of <CODE>printcap</CODE> file.
+For historical configuration compatibility.
+</DL>
+<P>It is recommended that you use one of the following
+configurations:
+<OL>
+<LI>If you already have a print spooling system installed and
+want to install LPRng for testing purposes or as an alternative
+to the existing system, use:
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure
+
+ use all configure's defaults,
+   /usr/local/{bin,sbin,libexec/filters,man}
+ requires a server to run on the local host
+ everything installed setuid ROOT
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>If you want to replace your existing print spooling system
+and run an LPD server on your local host, use:
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --prefix=/usr --sysconfdir=/etc \
+  --mandir=/usr/share/man
+
+   executables and files in
+     /usr/{bin,sbin,libexec/filters}
+     /usr/share/man/man[0-9]
+   requires a server to run on the local host
+   everything installed setuid ROOT
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>If you want to replace your existing print spooling system
+and have all jobs sent to a remote host which runs a server
+(lightweight operation), use:
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --prefix=/usr --sysconfdir=/etc \
+   --mandir=/usr/share/man --disable-force_localhost
+
+   executables and files in
+     /usr/{bin,sbin,libexec/filters}
+     /usr/share/man/man[0-9]
+   clients will connect to a remote server
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+</OL>
+<H2><A NAME="ss2.5">2.5 Compilation and Install</A>
+</H2>
+
+<P>Once you have decided on the configuration you want,
+you can now compile and install the software as follows:
+<BLOCKQUOTE><CODE>
+<PRE>
+gunzip -c LPRng-&lt;version>.tgz | tar xvf -
+ OR with GNU tar
+tar -zxvf LPRng-&lt;version>.tgz
+cd LPRng-&lt;version>
+
+./configure  [ .... configuration options ]
+gmake clean all
+su   # you must do the following commands as root
+gmake install
+
+# if  you have not installed LPRng before,
+# install default lpd.perms and lpd.conf file in /etc
+if [ ! -f /etc/lpd.perms ]; then
+    make default;
+fi;
+# update permissions,  create files needed for LPRng, check
+# /etc/printcap file for problems.  Do as root:
+checkpc -f
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss2.6">2.6 IFHP Compilation and Install</A>
+</H2>
+
+<P>If you are planning on using the <CODE>ifhp</CODE> filter,
+then now would be a good time to
+download it and install it as well.
+Configure will install executables and files
+in the following locations,
+depending on the variable values
+<BLOCKQUOTE><CODE>
+<PRE>
+Variable                 Files
+${libexecdir}/filters   ifhp,textps
+${sysconfdir}           ifhp.conf
+${mandir}/man[1-9]  man pages
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Use the same directory location options
+for <CODE>configure</CODE>
+as you did for the LPRng install.
+<BLOCKQUOTE><CODE>
+<PRE>
+gunzip -c ifhp-&lt;version>.tgz | tar xvf -
+ OR with GNU tar
+tar -zxvf ifhp-&lt;version>.tgz
+cd ifhp-&lt;version>
+
+./configure  [ .... configuration options ]
+gmake clean all
+su   # you must do the following commands as root
+gmake install
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="ss2.7">2.7 Installation Problems</A>
+</H2>
+
+<P>The <CODE>configure</CODE>
+script will determine the type of system and establish a set of defaults
+for compilation and installation.
+It is most unlikely that you will encounter problems with
+configure.
+If you do,
+please send your problems to the LPRng mailing list at
+<A HREF="mailto:lprng-request@lprng.com?subject=subscribe">lprng@lprng.com</A>.
+You will need to subscribe to the list first before you can post it.
+<P>If you have problems compiling the package, you can try these things:
+<OL>
+<LI>Compiler complains about missing files or has a large number of
+errors.
+Use <CODE>gcc</CODE> instead of your vendor's C compiler.
+<BLOCKQUOTE><CODE>
+<PRE>
+CC=gcc ./configure
+   OR
+configure --with-cc=gcc
+</PRE>
+</CODE></BLOCKQUOTE>
+
+</LI>
+<LI>Missing libraries or include files.<BR>
+Usually this is caused when include files are in
+<CODE>/usr/local/include</CODE>
+and libraries are in
+<CODE>/usr/local/include</CODE>
+and these paths are not searched or used by the compiler.
+This can be fixed by setting the
+<CODE>CPPFLAGS</CODE> and <CODE>LDFLAGS</CODE> environment variables,
+or using the
+<CODE>--with-cppopts=</CODE>
+and
+<CODE>--with-ldopts=</CODE>
+configure options.
+<BLOCKQUOTE><CODE>
+<PRE>
+CPPFLAGS="-I/usr/local/include -I/usr/include/kerberosIV" \
+  LDFLAGS="-L/usr/local/lib -L/usr/lib/kerberosIV" \
+  ./configure
+   OR
+configure --with-cppopts="-I/usr/local/include -I/usr/include/kerberosIV" \
+  --with-ldopts="-L/usr/local/lib -L/usr/lib/kerberosIV"
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+</OL>
+<P>The <CODE>configure</CODE> and <CODE>make</CODE> steps must be run on
+the target host,
+especially if the target host has a different version of the operating system.
+This is extremely important for SunOS or Solaris,
+where
+there tend to be changes in the system's include files between
+versions
+as well as support libraries.
+<P>Read the notes for your OS in section
+<A HREF="LPRng-HOWTO-3.html#sysdep">System-dependent notes</A>
+for specific installation help (if any).
+<P>
+<H2><A NAME="requireconfig"></A> <A NAME="ss2.8">2.8 Printcap, lpd.conf, and lpd.perms files</A>
+</H2>
+
+<P>The <CODE>printcap</CODE> file contains the definitions of print queues
+and other information used by LPRng,
+and is located in the directory specified by the
+configuration <CODE>${sysconfdir}</CODE> value.
+If your system does not have an existing <CODE>printcap</CODE> file,
+then the following is suitable for initial testing and configuration:
+<BLOCKQUOTE><CODE>
+<PRE>
+# test printcap file
+lp:cm=Test Printcap Entry:
+ :lp=/dev/null
+ :sd=/usr/spool/lpd/lp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpd.conf</CODE>
+is located in the <CODE>${sysconfdir}</CODE> directory
+and provides configuration settings for both the LPRng client and server
+programs.
+During installation the
+<CODE>lpd.conf.template</CODE> file
+is installed in the
+<CODE>${sysconfdir}/lpd.conf.template</CODE>
+and if there is not an existing <CODE>lpd.conf</CODE> file
+is copied to
+<CODE>${sysconfdir}/lpd.conf</CODE>
+as well.
+<P>The <CODE>lpd.perms</CODE>
+is located in the <CODE>${sysconfdir}</CODE> directory
+and is used by the <CODE>lpd</CODE> program to determine user permissions
+for printing activities.
+During installation the
+<CODE>lpd.perms.template</CODE> file
+is installed in the
+<CODE>${sysconfdir}/lpd.perms.template</CODE>
+and if there is not an existing <CODE>lpd.perms</CODE> file
+is copied to
+<CODE>${sysconfdir}/lpd.perms</CODE>
+as well.
+<P>The client programs
+<CODE>lpr</CODE>,
+<CODE>lpq</CODE>,
+etc. will check for a <CODE>lpd.conf</CODE> and <CODE>printcap</CODE>
+file.
+You can relax this requirement by setting
+using the configuration option <CODE>--disable-require_configfile</CODE>.
+If these files are not going to be used,
+then simply create empty files to satisfy the program requirements.
+<H2><A NAME="ss2.9">2.9 Checking System Installation with Checkpc</A>
+</H2>
+
+<P>The
+<CODE>checkpc</CODE>
+program is used to make sure that
+the spool directories and files used by LPRng have the correct permissions
+and are in place.
+By default,
+<CODE>checkpc</CODE> will check permissions and report if there are any problems.
+You should run this as <CODE>root</CODE>.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+% astart > su
+#>cd LPRng/src
+#>./checkpc
+Warning - No configuration file '/usr/local/etc/lpd.conf'
+Warning - No lpd only printcap file found in '/usr/local/lpd_printcap'
+Warning -  ** cannot open '/var/run/lpd.printer' - 'Permission denied'
+Warning -  bad directory - /var/spool/lpd/lp
+Warning -   Printer_DYN 'lp' spool dir '/var/spool/lpd/lp' needs fixing
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In the above example,
+<CODE>checkpc</CODE> has discovered that the <CODE>lpd.conf</CODE>
+file is missing.
+This is a serious problem and indicates that the
+software was incorrectly installed.
+<P>The <I>lpd only printcap</I>
+message is usually of concern to administrators who wish to use some of
+LPRng's more exotic configuration options.
+It is possible to have separate printcap databases for client and server programs.
+This is useful when printcap files get extremely large and cuts down
+substantially on system management problems.
+<P>The permission denied message for <CODE>/var/run/lpd.printer</CODE> is serious,
+as the <CODE>lpd</CODE> server uses this as a lock file.
+<P>The <I>bad directory</I> message about the spool directory is usually caused by
+wrong permissions or a missing directory.
+<P>The <CODE>checkpc -f</CODE> (fix) option causes <CODE>checkpc</CODE> to take action to rectify errors.
+The <CODE>checkpc -f -V</CODE> (verbose) option causes the fixup activity to be displayed a well:
+<BLOCKQUOTE><CODE>
+<PRE>
+% astart > su
+h4# checkpc -f -V
+LPRng version LPRng-3.6.14
+Checking for configuration files '/usr/local/etc/lpd.conf'
+  found '/usr/local/etc/lpd.conf', mod 0100644
+Checking for printcap files '/usr/local/etc/printcap'
+  found '/usr/local/etc/printcap', mod 0100644
+Checking for lpd only printcap files '/usr/local/etc/lpd_printcap'
+ DaemonUID 1, DaemonGID 1
+Using Config file '/usr/local/etc/lpd.conf'
+LPD lockfile '/var/run/lpd.printer'
+ Checking directory: '/var/run'
+   directory '/var'
+   directory '/var/run'
+  checking '/var/run/lpd.printer' file
+
+Printcap Information
+lp
+ :force_localhost
+ :lp=/var/tmp/lp
+ :sd=/var/spool/%P
+Checking printcap info
+Checking printer 'lp'
+ Checking directory: '/var/spool/lp'
+   directory '/var'
+   directory '/var/spool'
+   directory '/var/spool/lp'
+  file 'control.lp', zero length file unchanged in 1 hours
+  file 'status.lp', zero length file unchanged in 1 hours
+  file 'status', zero length file unchanged in 1 hours
+  file 'log', zero length file unchanged in 1 hours
+  file 'acct', zero length file unchanged in 1 hours
+  checking 'control.lp' file
+  checking 'status.lp' file
+  checking 'status' file
+  cleaning 'status' file, 0K bytes: no truncation
+  checking 'log' file
+  cleaning 'log' file, 0K bytes: no truncation
+  checking 'acct' file
+  cleaning 'acct' file, 0K bytes: no truncation
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you can see, <CODE>checkpc</CODE> can not only print detailed information about your
+printing system,  but it also fixes up the various problems.
+<H2><A NAME="ss2.10">2.10 Removing Existing Print Spooler Software and Updating Startup Scripts</A>
+</H2>
+
+<P>Before running LPRng, you should shut down and remove the existing print
+spooler and associated client programs.
+Unfortunately,
+this process is fairly system dependent,
+and requires a small amount of system expertise.
+In addition to these general directions,
+you should see the
+<A HREF="LPRng-HOWTO-3.html#sysdep">System specific notes</A> for your system.
+<P>While it appears that this should be done <B>before</B>
+you install the LPRng print software,
+in practice it turns out to be easier to do
+<B>after</B>
+you have installed it.
+<P>On most systems you need only remove or rename executable files,
+and should not remove and configuration or data files.
+<H3>SunOS and BSD Derived Systems</H3>
+
+<P>This section provides instructions for  systems that use the
+<CODE>lpd</CODE> print services,
+such as SunOS,
+BSD derived systems,
+and Linux based systems.
+These systems use an <CODE>lpd</CODE> print server,
+as does LPRng.
+By convention,
+most of the executable programs are in the
+<CODE>/usr/bin</CODE>,
+<CODE>/usr/sbin</CODE>,
+<CODE>/usr/libexec</CODE>,
+and
+<CODE>/usr/ucb</CODE>.
+<P>At initialization time these systems run
+a <CODE>rc</CODE> startup script that starts the <CODE>lpd</CODE>
+print server.
+Unfortunately,
+this startup script can a single line in a file
+or be a small shell script.
+You should first locate the startup script as follows.
+<OL>
+<LI>Execute the following commands to see if there is a
+startup command in a file in a file in the <CODE>/etc</CODE>
+directory.
+The commands a typical result on a system are shown.
+<BLOCKQUOTE><CODE>
+<PRE>
+# cd /etc
+# find . -type f -exec grep -l lpd {} \; -print
+./rc.local
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>Examine each of the files and check to see they code to
+start the <CODE>lpd</CODE> print spooler.
+If they do, then simply comment out the line and
+one which contains the path to the LPRng print spooler.
+<BLOCKQUOTE><CODE>
+<PRE>
+# /etc/rc.local
+if [ -f /etc/printcap  -a -f /usr/libexec/lpd ] ; then
+  /usr/libexec/lpd ;
+fi
+
+--- change this to
+if [ -f /etc/printcap  -a -f /usr/local/sbin/lpd ] ; then
+  /usr/local/sbin/lpd ;
+fi
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>If you have an existing <CODE>printcap</CODE> file,
+then you should either copy this to the location used by LPRng
+or make a symbolic link to it.</LI>
+</OL>
+<P>Next we kill the currently running <CODE>lpd</CODE> process.
+<BLOCKQUOTE><CODE>
+<PRE>
+# most BSD Systems
+ps -auxw |grep lpd
+# Kill it twice
+kill (pid of lpd server)
+#  This should report an error - if not then lpd did not terminate
+kill (pid of lpd server)
+#
+
+Example:
+astart % ps -axuw |grep lpd
+papowell 23932  0.0  0.3  224  184  p3  S+  10:40AM  0:00.01 grep lpd
+daemon  17763  0.0  0.2  448  120  ??  IWs  29Mar99  0:01.35 (lpd)
+astart % kill 135
+astart % kill 135
+135: No such process
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next,
+you should remove or rename the existing print system executables.
+The following example shows how to use the
+<CODE>find</CODE> utility to track down candidates.
+<BLOCKQUOTE><CODE>
+<PRE>
+astart# find /usr -type f -name lp\*  -print >/tmp/candidates
+astart# find /sbin -type f -name lp\*  -print >>/tmp/candidates
+astart# cat /tmp/candidates
+/usr/bin/lpunlock
+/usr/bin/lpqall.faces
+/usr/bin/lpq             &lt;---- old
+/usr/bin/lpr             &lt;---- old
+/usr/bin/lprm            &lt;---- old
+/usr/bin/lptest
+/usr/doc/samba-1.9.18p10/examples/printer-accounting/lp-acct
+/usr/man/man1/lpq.1
+/usr/man/man1/lpr.1
+/usr/man/man1/lprm.1
+/usr/man/man1/lptest.1
+/usr/man/man4/lp.4
+/usr/man/man8/lpc.8
+/usr/man/man8/lpd.8
+/usr/sbin/lpc            &lt;--- old
+/usr/sbin/lpd            &lt;--- old
+/usr/sbin/lpf            &lt;--- old
+/usr/local/bin/lpc    &lt;-- LPRng
+/usr/local/bin/lpq    &lt;-- LPRng
+/usr/local/bin/lpr    &lt;-- LPRng
+/usr/local/bin/lprm   &lt;-- LPRng
+/usr/local/sbin/lpd   &lt;-- LPRng
+astart # mv /usr/bin/lpq  /usr/bin/lpq.old
+astart # mv /usr/bin/lpr  /usr/bin/lpr.old
+astart # mv /usr/bin/lprm /usr/bin/lprm.old
+astart # mv /usr/sbin/lpc /usr/sbin/lpc.old
+astart # mv /usr/sbin/lpd /usr/sbin/lpd.old
+astart # mv /usr/sbin/lpf /usr/sbin/lpf.old
+...
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>After all this,
+you should now run <CODE>checkpc -f</CODE>
+(as root) to make sure that the LPRng configuration is present and
+correctly set up,
+and then start <CODE>lpd</CODE> by hand.
+You should try to use <CODE>lpq</CODE> to see if the spool queues are present
+and set up correctly and the system is functional.
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# checkpc -f
+# lpd
+# lpq
+Printer: lw4@h2  'Hp : Laserwriter'
+ Queue: no printable jobs in queue
+ Status: job 'root@h2+884' removed at 11:27:25.864
+ Filter_status: done at 11:27:25.766
+# lpr /etc/motd
+# lpq
+Printer: lw4@h2  'Hp : Laserwriter'
+ Queue: no printable jobs in queue
+ Status: job 'root@h2+888' removed at 11:27:25.864
+ Filter_status: done at 11:33:17.020
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Finally,
+you should reboot your machine and make sure that the <CODE>lpd</CODE>
+print server starts correctly.
+<H3><A NAME="solarisinstall"></A> Solaris, HP, AIX, and SysVR4 Derived Systems</H3>
+
+<P>The original SysVR4 and other related systems did not have
+any support for RFC1179 network printing (Berkeley LPD).
+Support for this was added by various manufacture specific methods.
+Unfortunately,
+there are a wide range of different installation types.
+<P>The <CODE>lpsched</CODE> process (<CODE>/usr/lib/lp/lpsched/</CODE>)
+process performs many of the functions of the LPRng and BSD
+<CODE>lpd</CODE>
+server.
+On Solaris systems,
+it also stats the
+<CODE>lpNet</CODE>
+server that provides network print services.
+Unfortunately,
+no <I>simple</I> and reliable method of shutting down a running <CODE>lpsched</CODE>
+process
+and the associated network services has been found.
+However,
+it turns out to be very simple to <EM>prevent</EM> the services from
+being started.
+<P>First,
+you will need to locate the <CODE>/etc/rc</CODE> startup files
+that start system services.
+During system startup,
+a set of shell scripts stored in the <CODE>/etc/rc.d</CODE>
+directories are executed.
+The individual startupfile files are usually links to a
+common one in the <CODE>/etc/init.d</CODE> directory.
+You first need to find the files containing the startup commands.
+This is done as shown below:
+<BLOCKQUOTE><CODE>
+<PRE>
+SUN # cd /
+SUN # find . -type f -exec grep -l lpsched {} \; -print >/tmp/files
+SUN # cat /tmp/files
+/etc/rc0.d/K20lp
+/etc/rc2.d/K20lp
+/etc/rc2.d/S80lp
+/etc/init.d/lp
+># ls -l ` cat /tmp/files `
+lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc0.d/K20lp -> ../../init.d/lp
+lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc2.d/K20lp -> ../../init.d/lp
+lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc2.d/S80lp -> ../../init.d/lp
+-rwxr--r-- 5 root sys 460 Sep 1 1998 /etc/rcS.d/K39lp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Here is the contents of the typical script file,  with the
+indicated modifications that should be made for testing
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/sbin/sh
+case "$1" in
+'start')
+    [ -f /usr/lib/lpsched ] &amp;&amp; /usr/lib/lpsched ;;
+'stop' )
+    [ -f /usr/lib/lpshut ] &amp;&amp; /usr/lib/lpshut ;;
+*)
+    echo "Usage: $0 { start | stop }"
+    exit 1
+esac
+exit 0
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You should stop the <CODE>lpsched</CODE> server by using the following:
+<BLOCKQUOTE><CODE>
+<PRE>
+sh /etc/rd.c/init.d/lp stop
+&lt;verb>
+&lt;tscreen>
+&lt;p>
+We next modify the startup by replacing the start and stop entries
+as show below.
+We will modify these later to start the LPRng &lt;tt/lpd/ server.
+&lt;tscreen>
+&lt;verb>
+#!/sbin/sh
+case "$1" in
+'start')
+    # [ -f /usr/lib/lpsched ] &amp;&amp; /usr/lib/lpsched ;;
+    #[ -f /usr/sbin/lpd ] &amp;&amp; /usr/sbin/lpd ;;
+'stop' )
+    # [ -f /usr/lib/lpshut ] &amp;&amp; /usr/lib/lpshut ;;
+    #kill -2 `cat /var/run/lpd*` >/dev/null 2>1;
+*)
+    echo "Usage: $0 { start | stop }"
+    exit 1
+esac
+exit 0
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next,
+as for the BSD installation,
+we will find all of the printing related commands and rename them.
+You can either rename them one by one,
+or use the script method shown below.
+The minimum of the indicated files should be renamed.
+<BLOCKQUOTE><CODE>
+<PRE>
+SUN # find /usr -type f -name lp\* -print >/etc/printingfiles
+SUN # cat /tmp/printingfiles
+/usr/bin/lp          &lt;---
+/usr/bin/lpstat      &lt;---
+/usr/lib/lp/bin/lp.cat
+/usr/lib/lp/bin/lp.set
+/usr/lib/lp/bin/lp.tell
+/usr/lib/lp/lpNet    &lt;---
+/usr/lib/lp/lpsched  &lt;---
+/usr/lib/lp/lpdata   &lt;---
+/usr/sbin/lpadmin    &lt;---
+/usr/sbin/lpfilter   &lt;---
+/usr/sbin/lpforms    &lt;---
+/usr/sbin/lpmove     &lt;---
+/usr/sbin/lpshut     &lt;---
+/usr/sbin/lpsystem   &lt;---
+/usr/sbin/lpusers    &lt;---
+/usr/ucb/lpc         &lt;---
+/usr/ucb/lpq         &lt;---
+/usr/ucb/lpr         &lt;---
+/usr/ucb/lprm        &lt;---
+/usr/ucb/lptest
+SUN # for i in ` cat /tmp/printingfiles ` ; do
+>  mv $i $i.old
+>  done
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next, you find if there is a <I>cron</I> job scheduled
+by the file
+<CODE>/var/spool/cron/crontabs/lp</CODE>
+to periodically update and roll over error logs.
+If there is, you should
+(after having saved the file)
+remove it.
+<BLOCKQUOTE><CODE>
+<PRE>
+cp /var/spool/cron/crontabs/lp /etc/cron.crontabs.lp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Check the <CODE>/etc/inetd.conf</CODE> file for a line like:
+<BLOCKQUOTE><CODE>
+<PRE>
+printer stream tcp nowait root /usr/lib/print/in.lpd in.lpd
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Comment out this line.
+This line is not present on all systems.
+<P>Now we must <EM>reboot</EM>  the machine.  You can use
+<CODE>reboot</CODE> if you are in a rush,
+and <CODE>shutdown</CODE> if you are not.
+<BLOCKQUOTE><CODE>
+<PRE>
+SUN # reboot
+or
+SUN # shutdown -y "Whooga! Whooga! Dive! Dive! System going down."
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When the system reboots,
+check to make sure that the
+<CODE>lpd</CODE> server is not listening on port 515.
+<BLOCKQUOTE><CODE>
+<PRE>
+SUN # telnet localhost 515
+Trying 127.0.0.1...
+telnet: Unable to connect to remote host: Connection refused
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you do get a connection established
+then you must use <CODE>nlsadmin</CODE> to force the
+<I>tcpip listener</I> to release the port, as illustrated below.
+<BLOCKQUOTE><CODE>
+<PRE>
+SUN # nlsadmin -v tcp
+lpd  \x00020203000000000000000000000000  ENABLED  \
+  NORPC  root  NOMODULES  /var/spool/lp/fifos/listenBSD  #
+0  \x00020ACE000000000000000000000000  ENABLED    \
+  NORPC  root  NOMODULES  /usr/lib/saf/nlps_server  #
+lp  NOADDR  ENABLED  NORPC  root  NOMODULES \
+  /var/spool/lp/fifos/listenS5  #
+SUN # nlsadmin -r lpd tcp
+SUN # nlsadmin -r lp tcp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You might also want to run
+<CODE>pmadm -l</CODE> and if you see anything other than zsmon stuff (e.g. lp
+stuff is there), then use <CODE>pmadm -r </CODE>to remove it.
+See the man page for details.
+<P>Once you disable the listener,
+reboot the system and try to connect to port 515.
+If you can still do this then there is some other unknown problem
+beyond these instructions and you should consult Sun Microsystems.
+<P>Finally we enable the <CODE>lpd</CODE> server.
+Edit the startup script as shown below:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/sbin/sh
+case "$1" in
+'start')
+    # [ -f /usr/lib/lpsched ] &amp;&amp; /usr/lib/lpsched ;;
+    [ -f /usr/sbin/lpd ] &amp;&amp; /usr/sbin/lpd ;;
+'stop' )
+    # [ -f /usr/lib/lpshut ] &amp;&amp; /usr/lib/lpshut ;;
+    kill -2 `cat /var/run/lpd*` >/dev/null 2>1;
+*)
+    echo "Usage: $0 { start | stop }"
+    exit 1
+esac
+exit 0
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now try starting and stopping the server:
+<BLOCKQUOTE><CODE>
+<PRE>
+# sh -x /etc/rc.d/init.d/lp start
+# lpq
+# lpq
+Printer: lw4@h2  'Hp : Laserwriter'
+ Queue: no printable jobs in queue
+ Status: job 'root@h2+884' removed at 11:27:25.864
+ Filter_status: done at 11:27:25.766
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss2.11">2.11 Post Installation System Testing</A>
+</H2>
+
+<P>The following are a series of tests you might need to do
+if LPRng is installed correctly,
+but printing does not work.
+<P>These tests run <CODE>lpd</CODE> executable in the
+<CODE>foreground</CODE> and <CODE>test</CODE> mode,
+and are used to make sure that our system configuration is
+correct.
+It is best to do this with two screens or windows,
+as you will want to observe the output.
+<P>First,
+you need to kill the running <CODE>lpd</CODE> process.
+The method is left as an exercise for the system administrator.
+Next,
+you run <CODE>lpd</CODE> in forground mode:
+<BLOCKQUOTE><CODE>
+<PRE>
+# > /usr/local/bin/lpd -F
+Fatal error - Another print spooler is using TCP printer port
+# > /usr/local/bin/lpd -F -D1
+...
+1999-04-05-10:02:37.755 astart10 [28903] lpd  Read_file_and_split: \
+  cannot open file '/etc/lpd.perms' - No such file or directory
+1999-04-05-10:02:37.758 astart10 [28903] lpd  Read_file_and_split: \
+  cannot open file '/usr/etc/lpd.perms' - No such file or directory
+1999-04-05-10:02:37.759 astart10 [28903] lpd  Build_printcap_info: \
+  list->count 0, raw->count 3
+1999-04-05-10:02:37.777 astart10 [28903] lpd  lpd: listening socket fd -6
+Fatal error - Another print spooler is using TCP printer port
+1999-04-05-10:02:37.782 astart10 [28903] lpd  Get_max_fd: getrlimit returns 64
+1999-04-05-10:02:37.783 astart10 [28903] lpd  Get_max_fd: returning 64
+1999-04-05-10:02:37.786 astart10 [28903] lpd  cleanup: done, doing killpg \
+   then exit(0)
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you get the above error message,
+then you have either not killed off other the running <CODE>lpd</CODE> server
+or you are not starting the <CODE>lpd</CODE> server as ROOT.
+This is the most common error during setup.
+Correct the problem and then restart the server if necessary.
+You should see the output indicated below:
+<BLOCKQUOTE><CODE>
+<PRE>
+# > /usr/local/bin/lpd -F -D1
+1999-04-05-14:35:14.023 astart27 [2667] Waiting  lpd: LOOP START
+1999-04-05-14:35:14.024 astart27 [2667] Waiting  Get_max_servers: getrlimit returns 256
+1999-04-05-14:35:14.024 astart27 [2667] Waiting  Get_max_servers: returning 128
+1999-04-05-14:35:14.025 astart27 [2667] Waiting  lpd: max_servers 128, active 0
+1999-04-05-14:35:14.025 astart27 [2667] Waiting  lpd: starting select timeout 'yes', 600 sec
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now from another window do the following commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+# > lpq -Plp@localhost
+Printer: lp@astart
+ Queue: no printable jobs in queue
+# > lpq
+Printer: lp@astart
+ Queue: no printable jobs in queue
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>At this point your LPRng software has been installed and tested.
+You still need to set up
+<I>Startup Scripts</I>
+to automatically start it at boot time,
+and
+<CODE>/etc/printcap</CODE>
+entries for your printers.
+<H2><A NAME="lpsimulation"></A> <A NAME="ss2.12">2.12 Replacing UNIX SystemV lp, lpstat Printing Services</A>
+</H2>
+
+<P>Many UNIX utilities in the Solaris and HP UNIX environment use the
+UNIX System V <CODE>lp</CODE> and <CODE>lpstat</CODE>
+programs.
+It is almost impossible to modify the programs themselves,
+as many are <EM>vintage</EM> software that is unsupported or which would
+be too costly to update.
+<P>In order to support these applications,
+LPRng provides simulation for the
+<CODE>lp</CODE>,
+<CODE>lpstat</CODE>,
+and
+<CODE>clean</CODE>
+commands.
+<P>The LPRng <CODE>lpstat</CODE> command is a modified version of the
+<CODE>lpq</CODE> command,
+and accepts the <CODE>lpstat</CODE> command line options and tries to return
+status in an <CODE>lpstat</CODE> format.
+<P>If the <CODE>lpr</CODE> program is invoked with the name <CODE>lp</CODE>,
+it will simulate the <CODE>lp</CODE> options.
+Finally, if the <CODE>lprm</CODE> program is invoked with the name <CODE>cancel</CODE>,
+it will simulate the <CODE>lp</CODE> options.
+This can be done by using symbolic links or copying the programs.
+<P>Note that many of the <CODE>vintage</CODE> applications have fully qualified
+paths to the <CODE>lp</CODE> and <CODE>lpstat</CODE> executables,
+so it will be necessary to copy them to the
+execution directory or make symbolic links from the
+directories to the programs.  In the example below
+the executables are assumed to be installed in the
+<CODE>/usr/local/bin</CODE> directory:
+<BLOCKQUOTE><CODE>
+<PRE>
+# original - /usr/bin/lp
+# original - /usr/bin/lpstat
+cd /usr/local/bin
+cp lpr /usr/bin/lp
+cp lpstat /usr/bin/lpstat
+cp lprm /usr/bin/cancel
+
+OR
+
+cd /usr/bin
+ln -s /usr/local/bin/lpr lp
+cp /usr/local/bin/lpstat .
+ln -s /usr/local/bin/lprm cancel
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>See the man pages for lp, lpstat, and cancel in the LPRng/man directory.
+Not all the functions of the original
+programs are supported and
+these man pages should be installed to replace the original
+lp, etc, man pages.
+<H2><A NAME="samba"></A> <A NAME="smb"></A> <A NAME="ss2.13">2.13 SAMBA and LPRng</A>
+</H2>
+
+<P>The SMB network protocol
+is used by many Microsoft Operatings Systems
+to implement file and printer sharing.
+SAMBA is a UNIX package that implements the SMB protocol and provides
+a simple and easy way to import and export file systems and printer
+facilities.
+The web site for SAMBA is
+<A HREF="http://www.samba.org">http://www.samba.org</A>.
+The SAMBA code is extremely easy to install
+and the <CODE>SWAT</CODE> (Samba Web Administration Tool)
+makes configuruation almost trivial.
+<P>The
+See the SAMBA
+<CODE>doc/text/Printing.txt</CODE> and related documentation for details on
+printing.
+In the
+<CODE>samba.conf</CODE> file <CODE>[global]</CODE> section
+or in the SWAT page for printing configuration
+you need to specify the that you want to have
+Samba handle printing,
+the
+<CODE>print</CODE>, <CODE>lpq</CODE>, and <CODE>lprm</CODE> commands to be used when a user
+prints a job,
+asks for status,
+or removes a job,
+and a temporary directory to hold print jobs when they are submitted.
+<BLOCKQUOTE><CODE>
+<PRE>
+[printers]
+    path = /usr/spool/lpd/samba
+    #  ---  do not use the Samba default path = /tmp
+    guest ok = no
+    print ok = yes
+    printing = lprng
+    load printers = yes
+    printcap name = /etc/printcap
+    print command = /usr/local/bin/lpr  -P%p -r %s
+    lpq command   = /usr/local/bin/lpq  -P%p
+    lprm command  = /usr/local/bin/lprm -P%p %j
+    lppause command = lpc hold %p %j
+    lpresume command = lpc release %p %j
+    queuepause command = lpc -P%p stop
+    queueresume command = lpc -P%p start
+    #
+    # alternative to allow userid to be specified as well
+    #
+    # You will have to add the samba UID to the 'allow_user_setting'
+    #   option in the /etc/lpd.conf file.
+    # WARNING: the %U is the name the user requests.  If you have
+    # 'guest' printer use,  then you should be aware that this
+    # will allow anybody to impersonate a another user,  and they will
+    # be able to execute the various LPRng commands as that user.
+    #
+    #   print command = /usr/local/bin/lpr -U%U -P%p -r %s
+    #   lprm command  = /usr/local/bin/lprm -P%p -U%U %j
+    #   lppause command = lpc -U%U hold %p %j
+    #   lpresume command = lpc -U%U release %p %j
+    #   queuepause command = lpc -U%U -P%p stop
+    #   queueresume command = lpc -U%U -P%p start
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Please use the following guidelines in your setup.
+<OL>
+<LI>You should specify the print method as <CODE>printing = lprng</CODE>.
+In newer versions of Samba this will allow Samba to use the
+LPRng <CODE>printcap</CODE> file.</LI>
+<LI>You must put all of the printers which Samba has access to
+in the <CODE>printcap</CODE> file.
+In later versions of Samba you can use the following printcap entry
+to specify the printers.
+In fact, this can be the <B>only</B>
+entry in the printcap file if you are using lightweight print clients.
+<BLOCKQUOTE><CODE>
+<PRE>
+all:all=pr1,pr2,pr3,...
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>The <CODE>lpr -U%U</CODE> option shown in the example above is part of
+LPRng's support for Samba.
+This causes the <CODE>lpr</CODE> and other clients to use the user name specified
+with the <CODE>-U</CODE> option
+as the originator of the command,
+instead of the userid that Samba is operating with.
+This makes jobs appear to be spooled by the user
+and commands appear to originate with the user.
+See the 
+<A HREF="LPRng-HOWTO-6.html#allowusersetting">allow_user_setting</A>
+configuration option for details.</LI>
+<LI>When printing a file,
+Samba first puts the file in the directory specified by the
+<CODE>path</CODE> option.
+This should NOT be the <CODE>tmp</CODE> directory,
+but should be in a file system able to handle extremely large print files.
+For example,
+if your LPRng spool queue directory is <CODE>/var/spool/lpd</CODE>,
+then a good location would be <CODE>/var/spool/lpd/samba</CODE>.</LI>
+</OL>
+<H2><A NAME="setuid"></A> <A NAME="ss2.14">2.14 Security Concerns</A>
+</H2>
+
+<P>While the LPRng software has been written with security as the primary goal
+there is always the problem with undetected errors in the LPRng
+software that
+when exploited
+could cause severe system problems.
+The most serious concern is that of gaining ROOT (UID 0) permissions.
+<P>One way to avoid this is to run
+<I>client</I>
+programs without root permission.
+This operation is possible for LPRng
+in contrast to other print spooling software.
+<P>A serious concern when LPRng runs as a nonprivileged
+user (daemon) is the fact that the RFC protocol specifies
+that connections are made to port 515
+and
+<CODE>lpd</CODE>
+requires root permissions to open and bind to port 515.
+One option is to have the <CODE>lpd</CODE> server drop root permissions
+soon after binding to this port and before accepting any user
+commands.
+However,
+in order to fully compatible with RFC1179,
+<CODE>lpd</CODE> must originate connections from a <I>reserved</I>
+port in the range 721-731,
+although in practice port 1-1023 seems to be acceptable.
+<P>If inter-operability with non-LPRng print spoolers is not desired,
+then it is <I>trivial</I>
+to configure LPRng using the <CODE>lpd.conf</CODE>
+file or by modifying the compile time
+<CODE>lpd_port</CODE>
+value in the file or the <CODE>LPRng/src/vars.c</CODE>
+so that all the software will run
+as client programs.
+For example,
+in the <CODE>/etc/lpd.conf</CODE> file,
+you only need to change the indicated lines:
+<BLOCKQUOTE><CODE>
+<PRE>
+# Purpose: lpd port
+#   default lpd_port=printer
+lpd_port=2000
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now all the LPRng software will use port 2000 to transfer jobs and
+commands.
+You can also use this facility to establish a
+<I>private</I> set of print spoolers which can be used for testing.
+<HR>
+<A HREF="LPRng-HOWTO-3.html">Next</A>
+<A HREF="LPRng-HOWTO-1.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc2">Contents</A>
+</BODY>
+</HTML>

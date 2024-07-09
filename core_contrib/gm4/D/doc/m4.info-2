@@ -1,0 +1,1683 @@
+This is Info file m4.info, produced by Makeinfo version 1.68 from the
+input file m4.texinfo.
+
+INFO-DIR-SECTION Text Processing Tools
+START-INFO-DIR-ENTRY
+* m4: (m4).			A powerful macro processor.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU `m4' utility.
+
+   Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1998, 1999, 2000
+Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Foundation.
+
+
+File: m4.info,  Node: Dumpdef,  Next: Trace,  Prev: Debugging,  Up: Debugging
+
+Displaying macro definitions
+============================
+
+   If you want to see what a name expands into, you can use the builtin
+`dumpdef':
+
+     dumpdef(...)
+
+which accepts any number of arguments.  If called without any arguments,
+it displays the definitions of all known names, otherwise it displays
+the definitions of the names given.  The output is printed directly on
+the standard error output.
+
+   The expansion of `dumpdef' is void.
+
+     define(`foo', `Hello world.')
+     =>
+     dumpdef(`foo')
+     error-->foo:	`Hello world.'
+     =>
+     dumpdef(`define')
+     error-->define:	<define>
+     =>
+
+   The last example shows how builtin macros definitions are displayed.
+
+   *Note Debug Levels::, for information on controlling the details of
+the display.
+
+
+File: m4.info,  Node: Trace,  Next: Debug Levels,  Prev: Dumpdef,  Up: Debugging
+
+Tracing macro calls
+===================
+
+   It is possible to trace macro calls and expansions through the
+builtins `traceon' and `traceoff':
+
+     traceon(...)
+     traceoff(...)
+
+When called without any arguments, `traceon' and `traceoff' will turn
+tracing on and off, respectively,  for all defined macros.  When called
+with arguments, only the named macros are affected.
+
+   The expansion of `traceon' and `traceoff' is void.
+
+   Whenever a traced macro is called and the arguments have been
+collected, the call is displayed.  If the expansion of the macro call
+is not void, the expansion can be displayed after the call.  The output
+is printed directly on the standard error output.
+
+     define(`foo', `Hello World.')
+     =>
+     define(`echo', `$@')
+     =>
+     traceon(`foo', `echo')
+     =>
+     foo
+     error-->m4trace: -1- foo -> `Hello World.'
+     =>Hello World.
+     echo(gnus, and gnats)
+     error-->m4trace: -1- echo(`gnus', `and gnats') -> ``gnus',`and gnats''
+     =>gnus,and gnats
+
+   The number between dashes is the depth of the expansion.  It is one
+most of the time, signifying an expansion at the outermost level, but it
+increases when macro arguments contain unquoted macro calls.
+
+   *Note Debug Levels::, for information on controlling the details of
+the display.
+
+
+File: m4.info,  Node: Debug Levels,  Next: Debug Output,  Prev: Trace,  Up: Debugging
+
+Controlling debugging output
+============================
+
+   The `-d' option to `m4' controls the amount of details presented,
+when using the macros described in the preceding sections.
+
+   The FLAGS following the option can be one or more of the following:
+
+`t'
+     Trace all macro calls made in this invocation of `m4'.
+
+`a'
+     Show the actual arguments in each macro call.  This applies to all
+     macro calls if the `t' flag is used, otherwise only the macros
+     covered by calls of `traceon'.
+
+`e'
+     Show the expansion of each macro call, if it is not void.  This
+     applies to all macro calls if the `t' flag is used, otherwise only
+     the macros covered by calls of `traceon'.
+
+`q'
+     Quote actual arguments and macro expansions in the display with the
+     current quotes.
+
+`c'
+     Show several trace lines for each macro call.  A line is shown
+     when the macro is seen, but before the arguments are collected; a
+     second line when the arguments have been collected and a third
+     line after the call has completed.
+
+`x'
+     Add a unique `macro call id' to each line of the trace output.
+     This is useful in connection with the `c' flag above.
+
+`f'
+     Show the name of the current input file in each trace output line.
+
+`l'
+     Show the the current input line number in each trace output line.
+
+`p'
+     Print a message when a named file is found through the path search
+     mecanism (*note Search Path::.), giving the actual file name used.
+
+`i'
+     Print a message each time the current input file is changed,
+     giving file name and input line number.
+
+`V'
+     A shorthand for all of the above flags.
+
+   If no flags are specified with the `-d' option, the default is
+`aeq'. The examples in the previous two sections assumed the default
+flags.
+
+   There is a builtin macro `debugmode', which allows on-the-fly
+control of the debugging output format:
+
+     debugmode(opt FLAGS)
+
+The argument FLAGS should be a subset of the letters listed above.  As
+special cases, if the argument starts with a `+', the flags are added
+to the current debug flags, and if it starts with a `-', they are
+removed.  If no argument is present, the debugging flags are set to
+zero (as if no `-d' was given), and with an empty argument the flags
+are reset to the default.
+
+
+File: m4.info,  Node: Debug Output,  Prev: Debug Levels,  Up: Debugging
+
+Saving debugging output
+=======================
+
+   Debug and tracing output can be redirected to files using either the
+`-o' option to `m4', or with the builtin macro `debugfile':
+
+     debugfile(opt FILENAME)
+
+will send all further debug and trace output to FILENAME.  If FILENAME
+is empty, debug and trace output are discarded and if `debugfile' is
+called without any arguments, debug and trace output are sent to the
+standard error output.
+
+
+File: m4.info,  Node: Input Control,  Next: File Inclusion,  Prev: Debugging,  Up: Top
+
+Input control
+*************
+
+   This chapter describes various builtin macros for controlling the
+input to `m4'.
+
+* Menu:
+
+* Dnl::                         Deleting whitespace in input
+* Changequote::                 Changing the quote characters
+* Changecom::                   Changing the comment delimiters
+* Changesyntax::                Changing the lexical structure of the input
+* Changeword::                  Changing the lexical structure of words
+* M4wrap::                      Saving input until end of input
+
+
+File: m4.info,  Node: Dnl,  Next: Changequote,  Prev: Input Control,  Up: Input Control
+
+Deleting whitespace in input
+============================
+
+   The builtin `dnl' reads and discards all characters, up to and
+including the first newline:
+
+     dnl
+
+and it is often used in connection with `define', to remove the newline
+that follow the call to `define'.  Thus
+
+     define(`foo', `Macro `foo'.')dnl A very simple macro, indeed.
+     foo
+     =>Macro foo.
+
+   The input up to and including the next newline is discarded, as
+opposed to the way comments are treated (*note Comments::.).
+
+   Usually, `dnl' is immediately followed by an end of line or some
+other whitespace.  GNU `m4' will produce a warning diagnostic if `dnl'
+is followed by an open parenthesis.  In this case, `dnl' will collect
+and process all arguments, looking for a matching close parenthesis.
+All predictable side effects resulting from this collection will take
+place.  `dnl' will return no output.  The input following the matching
+close parenthesis up to and including the next newline, on whatever
+line containing it, will still be discarded.
+
+
+File: m4.info,  Node: Changequote,  Next: Changecom,  Prev: Dnl,  Up: Input Control
+
+Changing the quote characters
+=============================
+
+   The default quote delimiters can be changed with the builtin
+`changequote':
+
+     changequote(opt START, opt END)
+
+where START is the new start-quote delimiter and END is the new
+end-quote delimiter.  If any of the arguments are missing, the default
+quotes (``' and `'') are used instead of the void arguments.
+
+   The expansion of `changequote' is void.
+
+     changequote([, ])
+     =>
+     define([foo], [Macro [foo].])
+     =>
+     foo
+     =>Macro foo.
+
+   If no single character is appropriate, START and END can be of any
+length.
+
+     changequote([[, ]])
+     =>
+     define([[foo]], [[Macro [[[foo]]].]])
+     =>
+     foo
+     =>Macro [foo].
+
+   Changing the quotes to the empty strings will effectively disable the
+quoting mechanism, leaving no way to quote text.
+
+     define(`foo', `Macro `FOO'.')
+     =>
+     changequote(, )
+     =>
+     foo
+     =>Macro `FOO'.
+     `foo'
+     =>`Macro `FOO'.'
+
+   There is no way in `m4' to quote a string containing an unmatched
+left quote, except using `changequote' to change the current quotes.
+
+   If the quotes should be changed from, say, `[' to `[[', temporary
+quote characters have to be defined.  To achieve this, two calls of
+`changequote' must be made, one for the temporary quotes and one for
+the new quotes.
+
+   Neither quote string should start with a letter or `_' (underscore),
+as they will be confused with names in the input.  Doing so disables
+the quoting mechanism.
+
+
+File: m4.info,  Node: Changecom,  Next: Changesyntax,  Prev: Changequote,  Up: Input Control
+
+Changing comment delimiters
+===========================
+
+   The default comment delimiters can be changed with the builtin macro
+`changecom':
+
+     changecom(opt START, opt END)
+
+where START is the new start-comment delimiter and END is the new
+end-comment delimiter.  If any of the arguments are void, the default
+comment delimiters (`#' and newline) are used instead of the void
+arguments.  The comment delimiters can be of any length.
+
+   The expansion of `changecom' is void.
+
+     define(`comment', `COMMENT')
+     =>
+     # A normal comment
+     =># A normal comment
+     changecom(`/*', `*/')
+     =>
+     # Not a comment anymore
+     =># Not a COMMENT anymore
+     But: /* this is a comment now */ while this is not a comment
+     =>But: /* this is a comment now */ while this is not a COMMENT
+
+   Note how comments are copied to the output, much as if they were
+quoted strings.  If you want the text inside a comment expanded, quote
+the start comment delimiter.
+
+   Calling `changecom' without any arguments disables the commenting
+mechanism completely.
+
+     define(`comment', `COMMENT')
+     =>
+     changecom
+     =>
+     # Not a comment anymore
+     =># Not a COMMENT anymore
+
+
+File: m4.info,  Node: Changesyntax,  Next: Changeword,  Prev: Changecom,  Up: Input Control
+
+Changing the lexical structure of the input
+===========================================
+
+     The macro `changesyntax' and all associated functionality is
+     experimental (*note Experiments::.).  The functionality might
+     change in the future.  Please direct your comments about it the
+     same way you would do for bugs.
+
+   The input to `m4' is read character per character, and these
+characters are grouped together to form input tokens (such as macro
+names, strings, comments, etc.).
+
+   Each token is parsed according to certain rules.  For example, a
+macro name starts with a letter or `_' and consists of the longest
+possible string of letters, `_' and digits.  But who is to decide what
+characters are letters, digits, quotes, white space?  Earlier the
+operating system decided, now you do.
+
+   Input characters belong to different categories:
+
+"Letters"
+     Characters that start a macro name.  The default is the letters as
+     defined by the operating system and the character `_'.
+
+"Digits"
+     Characters that, together with the letters, form the remainder of a
+     macro name.  The default is the ten digits `0'...`9'.
+
+"White space"
+     Characters that should be trimmed from the beginning of each
+     argument to a macro call.  The default is `SPC', `TAB', `newline'
+     and possibly others as defined by the operating system.
+
+"Open parenthesis"
+     Characters that open the argument list of a macro call.  Default
+     is `('.
+
+"Close parenthesis"
+     Characters that close the argument list of a macro call.  Default
+     is `)'.
+
+"Argument separator"
+     Characters that separate the arguments of a macro call.  Default
+     is `,'.
+
+"Other"
+     Characters that have no special syntactical meaning to `m4'.
+     Default is all characters expect those in the categories above.
+
+"Active"
+     Characters that themselves, alone, form macro names.  No default.
+
+"Escape"
+     Characters that must precede macro names for them to be
+     recognised.  No default.
+
+Each character can, besides the basic syntax category, have some syntax
+attributes.  These are:
+
+"Left quote"
+     The characters that start a quoted string.  Default is ``'.  Basic
+     syntax category is `Other'.
+
+"Right quote"
+     The characters that end a quoted string.  Default is `''.  Basic
+     syntax category is `Other'.
+
+"Begin comment"
+     The characters that begin a comment.  Default is `#'.  Basic syntax
+     category is `Other'.
+
+"End comment"
+     The characters that end a comment.  Default is `newline'.  Basic
+     syntax category is `White space'.
+
+The builtin macro `changesyntax' is used to change the way `m4' parses
+the input stream into tokens.
+
+     changesyntax(SYNTAX-SPEC, ...)
+
+The SYNTAX-SPEC is a string, whose first characters determines the
+syntax category of the other characters.   Character ranges are expanded
+as for *Note Translit::.  If there are no other characters, *all*
+characters are given the syntax code.
+
+   The characters for the syntax categories are:
+
+`W'
+     Letters
+
+`D'
+     Digits
+
+`S'
+     White space
+
+`('
+     Open parenthesis
+
+`)'
+     Close parenthesis
+
+`,'
+     Argument separator
+
+`O'
+     Other
+
+`@'
+     Escape
+
+`A'
+     Active
+
+`L'
+     Left quote
+
+`R'
+     Right quote
+
+`B'
+     Begin comment
+
+`E'
+     End comment
+
+`'
+With `changesyntax' we can modify the meaning of a word.
+
+     define(`test.1', `TEST ONE')
+     =>
+     __file__
+     =>in
+     changesyntax(`O_', `W.')
+     =>
+     __file__
+     =>__file__
+     test.1
+     =>TEST ONE
+
+Another possibility is to change the syntax of a macro call.
+
+     define(`test', `$#')
+     =>
+     test(a, b, c)
+     =>3
+     changesyntax(`(<', `,|', `)>', `O(,)')
+     =>
+     test(a, b, c)
+     =>0(a, b, c)
+     test<a|b|c>
+     =>3
+
+Leading spaces are always removed from macro arguments in `m4', but by
+changing the syntax categories we can avoid it.
+
+     define(`test', `$1$2$3')
+     =>
+     test(a, b, c)
+     =>abc
+     changesyntax(`O         ')
+     =>
+     test(a, b, c)
+     =>a b c
+
+It is not yet possible to redefine the `$' used to indicate macro
+arguments in user defined macros.
+
+   Macro calls can be given a TeX or Texinfo like syntax using an
+escape.  If one or more characters are defined as escapes macro names
+are only recognised if preceded by an escape character.
+
+   If the escape is not followed by what is normally a word (a letter
+optionally followed by letters and/or numerals), that single character
+is returned as a macro name.
+
+   As always, words without a macro definition cause no error message.
+They and the escape character are simply output.
+
+     define(`foo', `bar')
+     =>
+     changesyntax(`@@')
+     =>
+     foo
+     =>foo
+     @foo
+     =>bar
+     @changesyntax(`@\', `O@')
+     =>
+     foo
+     =>foo
+     @foo
+     =>@foo
+     \foo
+     =>bar
+     define(`#', `No comment')
+     =>define(#, No comment)
+     \define(`#', `No comment')
+     =>
+     \# \foo # Comment \foo
+     =>No comment bar # Comment \foo
+
+   Active characters are known from TeX.  In `m4' an active character
+is always seen as a one-letter word, and so, if it has a macro
+definition, the macro will be called.
+
+     define(`@', `TEST')
+     =>
+     @
+     =>@
+     changesyntax(`A@')
+     =>
+     @
+     =>TEST
+
+   There is obviously an overlap with `changecom' and `changequote'.
+Comment delimiters and quotes can now be defined in two different ways.
+To avoid incompatibilites, if the quotes are set with `changequote',
+all characters marked in the syntax table as quotes will be unmarked,
+leaving only one set of defined quotes as before.  Since the quotes are
+syntax attributes rather than syntax categories, the old quotes simply
+revert to their old category.  If the quotes are set with
+`changesyntax', other characters marked as quotes are left untouched,
+resulting in at least two sets of quotes.  This applies to comment
+delimiters as well, *mutatis mutandis*.
+
+     define(`test', `TEST')
+     =>
+     changesyntax(`L<', `R>')
+     =>
+     <test>
+     =>test
+     `test>
+     =>test
+     changequote(<[>, `]')
+     =>
+     <test>
+     =><TEST>
+     [test]
+     =>test
+
+If categories, that form single character tokens, contain several
+characters, all are treated as equal.  Any open parenthesis will match
+any close parenthesis, etc.
+
+     changesyntax(`({<', `)}>', `,;:', `O(,)')
+     =>
+     eval{2**4-1; 2 : 8>
+     =>00001111
+
+This is not so for long quotes, which cannot be matched by single
+character quote and vice versa.  The same goes for comment delimiters.
+
+     define(`test', `==$1==')
+     =>
+     changequote(`<<', `>>')
+     =>
+     changesyntax(<<L[>>, <<R]>>)
+     =>
+     test(<<testing]>>)
+     =>==testing]==
+     test([testing>>])
+     =>==testing>>==
+     test([<<testing>>])
+     =>==testing==
+
+Note how it is possible to have both long and short quotes, if
+`changequote' is used before `changesyntax'.
+
+   The syntax table is initialiased to be backwards compatible, so if
+you never call `changesyntax', nothing will have changed.
+
+   Debugging output continue to use `(', `,' and `)' to show macro
+calls.
+
+   The builtin macros `changesyntax' is recognized only when given
+arguments.
+
+
+File: m4.info,  Node: Changeword,  Next: M4wrap,  Prev: Changesyntax,  Up: Input Control
+
+Changing the lexical structure of words
+=======================================
+
+     The macro `changeword' and all associated functionality is
+     experimental (*note Experiments::.).  It is only available if the
+     `--enable-changeword' option was given to `configure', at GNU `m4'
+     installation time.  The functionality might change or even go away
+     in the future.  *Do not rely on it*.  Please direct your comments
+     about it the same way you would do for bugs.
+
+   A file being processed by `m4' is split into quoted strings, words
+(potential macro names) and simple tokens (any other single character).
+Initially a word is defined by the following regular expression:
+
+     [_a-zA-Z][_a-zA-Z0-9]*
+
+   Using `changeword', you can change this regular expression.  Relaxing
+`m4''s lexical rules might be useful (for example) if you wanted to
+apply translations to a file of numbers:
+
+     changeword(`[_a-zA-Z0-9]+')
+     define(1, 0)
+     1
+     =>
+     0
+     =>0
+
+   The syntax for regular expressions is the same as in GNU Emacs.
+*Note Syntax of Regular Expressions: (emacs)Regexps.
+
+   Tightening the lexical rules is less useful, because it will
+generally make some of the builtins unavailable.  You could use it to
+prevent accidental call of builtins, for example:
+
+     define(`_indir', defn(`indir'))
+     changeword(`_[_a-zA-Z0-9]*')
+     esyscmd(foo)
+     _indir(`esyscmd', `ls')
+
+   Because `m4' constructs its words a character at a time, there is a
+restriction on the regular expressions that may be passed to
+`changeword'.  This is that if your regular expression accepts `foo',
+it must also accept `f' and `fo'.
+
+   `changeword' has another function.  If the regular expression
+supplied contains any subexpressions in parentheses, then text outside
+the first of these is discarded before symbol lookup.  So:
+
+     changecom(`/*', `*/')
+     changeword(`#\([_a-zA-Z0-9]*\)')
+     #esyscmd(ls)
+
+   `m4' now requires a `#' mark at the beginning of every macro
+invocation, so one can use `m4' to preprocess shell scripts without
+getting `shift' commands swallowed, and plain text without losing
+various common words.
+
+   `m4''s macro substitution is based on text, while TeX's is based on
+tokens.  `changeword' can throw this difference into relief.  For
+example, here is the same idea represented in TeX and `m4'.  First, the
+TeX version:
+
+     \def\a{\message{Hello}}
+     \catcode`\@=0
+     \catcode`\\=12
+     =>@a
+     =>@bye
+
+Then, the `m4' version:
+
+     define(a, `errprint(`Hello')')
+     changeword(`@\([_a-zA-Z0-9]*\)')
+     =>@a
+
+   In the TeX example, the first line defines a macro `a' to print the
+message `Hello'.  The second line defines <@> to be usable instead of
+<\> as an escape character.  The third line defines <\> to be a normal
+printing character, not an escape.  The fourth line invokes the macro
+`a'.  So, when TeX is run on this file, it displays the message `Hello'.
+
+   When the `m4' example is passed through `m4', it outputs
+`errprint(Hello)'.  The reason for this is that TeX does lexical
+analysis of macro definition when the macro is *defined*.  `m4' just
+stores the text, postponing the lexical analysis until the macro is
+*used*.
+
+   You should note that using `changeword' will slow `m4' down by a
+factor of about seven.
+
+
+File: m4.info,  Node: M4wrap,  Prev: Changeword,  Up: Input Control
+
+Saving input
+============
+
+   It is possible to `save' some text until the end of the normal input
+has been seen.  Text can be saved, to be read again by `m4' when the
+normal input has been exhausted.  This feature is normally used to
+initiate cleanup actions before normal exit, e.g., deleting temporary
+files.
+
+   To save input text, use the builtin `m4wrap':
+
+     m4wrap(STRING, ...)
+
+which stores STRING and the rest of the arguments in a safe place, to
+be reread when end of input is reached.
+
+     define(`cleanup', `This is the `cleanup' actions.
+     ')
+     =>
+     m4wrap(`cleanup')
+     =>
+     This is the first and last normal input line.
+     =>This is the first and last normal input line.
+     ^D
+     =>This is the cleanup actions.
+
+   The saved input is only reread when the end of normal input is seen,
+and not if `m4exit' is used to exit `m4'.
+
+   It is safe to call `m4wrap' from saved text, but then the order in
+which the saved text is reread is undefined.  If `m4wrap' is not used
+recursively, the saved pieces of text are reread in the opposite order
+in which they were saved (LIFO--last in, first out).
+
+
+File: m4.info,  Node: File Inclusion,  Next: Diversions,  Prev: Input Control,  Up: Top
+
+File inclusion
+**************
+
+   `m4' allows you to include named files at any point in the input.
+
+* Menu:
+
+* Include::                     Including named files
+* Search Path::                 Searching for include files
+
+
+File: m4.info,  Node: Include,  Next: Search Path,  Prev: File Inclusion,  Up: File Inclusion
+
+Including named files
+=====================
+
+   There are two builtin macros in `m4' for including files:
+
+     include(FILENAME)
+     sinclude(FILENAME)
+
+both of which cause the file named FILENAME to be read by `m4'.  When
+the end of the file is reached, input is resumed from the previous
+input file.
+
+   The expansion of `include' and `sinclude' is therefore the contents
+of FILENAME.
+
+   It is an error for an `include'd file not to exist.  If you do not
+want error messages about non-existent files, `sinclude' can be used to
+include a file, if it exists, expanding to nothing if it does not.
+
+     include(`no-such-file')
+     =>
+     error-->m4: in: 1: Cannot open no-such-file: No such file or directory
+     sinclude(`no-such-file')
+     =>
+
+   Assume in the following that the file `incl.m4' contains the lines:
+     Include file start
+     foo
+     Include file end
+
+Normally file inclusion is used to insert the contents of a file into
+the input stream.  The contents of the file will be read by `m4' and
+macro calls in the file will be expanded:
+
+     define(`foo', `FOO')
+     =>
+     include(`incl.m4')
+     =>Include file start
+     =>FOO
+     =>Include file end
+     =>
+
+   The fact that `include' and `sinclude' expand to the contents of the
+file can be used to define macros that operate on entire files.  Here
+is an example, which defines `bar' to expand to the contents of
+`incl.m4':
+
+     define(`bar', include(`incl.m4'))
+     =>
+     This is `bar':  >>>bar<<<
+     =>This is bar:  >>>Include file start
+     =>foo
+     =>Include file end
+     =><<<
+
+   This use of `include' is not trivial, though, as files can contain
+quotes, commas and parentheses, which can interfere with the way the
+`m4' parser works.
+
+   In GNU `m4', an alternative method of reading files is using *Note
+Undivert:: on a named file.
+
+   The builtin macros `include' and `sinclude' are recognized only when
+given arguments.
+
+
+File: m4.info,  Node: Search Path,  Prev: Include,  Up: File Inclusion
+
+Searching for include files
+===========================
+
+   GNU `m4' allows included files to be found in other directories than
+the current working directory.
+
+   If a file is not found in the current working directory, and the file
+name is not absolute, the file will be looked for in a specified search
+path.  First, the directories specified with the `-I' option will be
+searched, in the order found on the command line.  Second, if the
+`M4PATH' environment variable is set, it is expected to contain a
+colon-separated list of directories, which will be searched in order.
+
+   If the automatic search for include-files causes trouble, the `p'
+debug flag (*note Debug Levels::.) can help isolate the problem.
+
+
+File: m4.info,  Node: Diversions,  Next: Text handling,  Prev: File Inclusion,  Up: Top
+
+Diverting and undiverting output
+********************************
+
+   Diversions are a way of temporarily saving output.  The output of
+`m4' can at any time be diverted to a temporary file, and be reinserted
+into the output stream, "undiverted", again at a later time.
+
+   Numbered diversions are counted from 0 upwards, diversion number 0
+being the normal output stream.  The number of simultaneous diversions
+is limited mainly by the memory used to describe them, because GNU `m4'
+tries to keep diversions in memory.  However, there is a limit to the
+overall memory usable by all diversions taken altogether (512K,
+currently).  When this maximum is about to be exceeded, a temporary
+file is opened to receive the contents of the biggest diversion still
+in memory, freeing this memory for other diversions.  So, it is
+theoretically possible that the number of diversions be limited by the
+number of available file descriptors.
+
+* Menu:
+
+* Divert::                      Diverting output
+* Undivert::                    Undiverting output
+* Divnum::                      Diversion numbers
+* Cleardiv::                    Discarding diverted text
+
+
+File: m4.info,  Node: Divert,  Next: Undivert,  Prev: Diversions,  Up: Diversions
+
+Diverting output
+================
+
+   Output is diverted using `divert':
+
+     divert(opt NUMBER)
+
+where NUMBER is the diversion to be used.  If NUMBER is left out, it is
+assumed to be zero.
+
+   The expansion of `divert' is void.
+
+   When all the `m4' input will have been processed, all existing
+diversions are automatically undiverted, in numerical order.
+
+     divert(1)
+     This text is diverted.
+     divert
+     =>
+     This text is not diverted.
+     =>This text is not diverted.
+     ^D
+     =>
+     =>This text is diverted.
+
+   Several calls of `divert' with the same argument do not overwrite
+the previous diverted text, but append to it.
+
+   If output is diverted to a non-existent diversion, it is simply
+discarded.  This can be used to suppress unwanted output.  A common
+example of unwanted output is the trailing newlines after macro
+definitions.  Here is how to avoid them.
+
+     divert(-1)
+     define(`foo', `Macro `foo'.')
+     define(`bar', `Macro `bar'.')
+     divert
+     =>
+
+   This is a common programming idiom in `m4'.
+
+
+File: m4.info,  Node: Undivert,  Next: Divnum,  Prev: Divert,  Up: Diversions
+
+Undiverting output
+==================
+
+   Diverted text can be undiverted explicitly using the builtin
+`undivert':
+
+     undivert(opt NUMBER, ...)
+
+which reinserts the diverted output given by the arguments into the
+current output stream, in the order given.  If no arguments are
+supplied, all diversions are undiverted, in numerical order.
+
+   The expansion of `undivert' is void.
+
+     divert(1)
+     This text is diverted.
+     divert
+     =>
+     This text is not diverted.
+     =>This text is not diverted.
+     undivert(1)
+     =>
+     =>This text is diverted.
+     =>
+
+   Notice the last two blank lines.  One of them comes from the newline
+following `undivert', the other from the newline that followed the
+`divert'!  A diversion often starts with a blank line like this.
+
+   When diverted text is undiverted, it is *not* reread by `m4', but
+rather copied directly to the current output, and it is therefore not
+an error to undivert into a diversion.
+
+   When a diversion has been undiverted, the diverted text is discarded,
+and it is not possible to bring back diverted text more than once.
+
+     divert(1)
+     This text is diverted first.
+     divert(0)undivert(1)dnl
+     =>
+     =>This text is diverted first.
+     undivert(1)
+     =>
+     divert(1)
+     This text is also diverted but not appended.
+     divert(0)undivert(1)dnl
+     =>
+     =>This text is also diverted but not appended.
+
+   Attempts to undivert the current diversion are silently ignored.
+
+   GNU `m4' allows named files to be undiverted.  Given a non-numeric
+argument, the contents of the file named will be copied, uninterpreted,
+to the current output.  This complements the builtin `include' (*note
+Include::.).  To illustrate the difference, assume the file `foo'
+contains the word `bar':
+
+     define(`bar', `BAR')
+     =>
+     undivert(`foo')
+     =>bar
+     =>
+     include(`foo')
+     =>BAR
+     =>
+
+
+File: m4.info,  Node: Divnum,  Next: Cleardiv,  Prev: Undivert,  Up: Diversions
+
+Diversion numbers
+=================
+
+   The builtin `divnum':
+
+     divnum
+
+expands to the number of the current diversion.
+
+     Initial divnum
+     =>Initial 0
+     divert(1)
+     Diversion one: divnum
+     divert(2)
+     Diversion two: divnum
+     divert
+     =>
+     ^D
+     =>
+     =>Diversion one: 1
+     =>
+     =>Diversion two: 2
+
+   The last call of `divert' without argument is necessary, since the
+undiverted text would otherwise be diverted itself.
+
+
+File: m4.info,  Node: Cleardiv,  Prev: Divnum,  Up: Diversions
+
+Discarding diverted text
+========================
+
+   Often it is not known, when output is diverted, whether the diverted
+text is actually needed.  Since all non-empty diversion are brought back
+on the main output stream when the end of input is seen, a method of
+discarding a diversion is needed.  If all diversions should be
+discarded, the easiest is to end the input to `m4' with `divert(-1)'
+followed by an explicit `undivert':
+
+     divert(1)
+     Diversion one: divnum
+     divert(2)
+     Diversion two: divnum
+     divert(-1)
+     undivert
+     ^D
+
+No output is produced at all.
+
+   Clearing selected diversions can be done with the following macro:
+
+     define(`cleardivert',
+     `pushdef(`_num', divnum)divert(-1)undivert($@)divert(_num)popdef(`_num')')
+     =>
+
+   It is called just like `undivert', but the effect is to clear the
+diversions, given by the arguments.  (This macro has a nasty bug!  You
+should try to see if you can find it and correct it.   *Note Answers::.)
+
+
+File: m4.info,  Node: Text handling,  Next: Arithmetic,  Prev: Diversions,  Up: Top
+
+Macros for text handling
+************************
+
+   There are a number of builtins in `m4' for manipulating text in
+various ways, extracting substrings, searching, substituting, and so on.
+
+* Menu:
+
+* Len::                         Calculating length of strings
+* Index::                       Searching for substrings
+* Regexp::                      Searching for regular expressions
+* Substr::                      Extracting substrings
+* Translit::                    Translating characters
+* Patsubst::                    Substituting text by regular expression
+* Format::                      Formatting strings (printf-like)
+
+
+File: m4.info,  Node: Len,  Next: Index,  Prev: Text handling,  Up: Text handling
+
+Calculating length of strings
+=============================
+
+   The length of a string can be calculated by `len':
+
+     len(STRING)
+
+which expands to the length of STRING, as a decimal number.
+
+     len()
+     =>0
+     len(`abcdef')
+     =>6
+
+   The builtin macro `len' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Index,  Next: Regexp,  Prev: Len,  Up: Text handling
+
+Searching for substrings
+========================
+
+   Searching for substrings is done with `index':
+
+     index(STRING, SUBSTRING)
+
+which expands to the index of the first occurrence of SUBSTRING in
+STRING.  The first character in STRING has index 0.  If SUBSTRING does
+not occur in STRING, `index' expands to `-1'.
+
+     index(`gnus, gnats, and armadillos', `nat')
+     =>7
+     index(`gnus, gnats, and armadillos', `dag')
+     =>-1
+
+   The builtin macro `index' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Regexp,  Next: Substr,  Prev: Index,  Up: Text handling
+
+Searching for regular expressions
+=================================
+
+   Searching for regular expressions is done with the builtin `regexp':
+
+     regexp(STRING, REGEXP, opt REPLACEMENT)
+
+which searches for REGEXP in STRING.  The syntax for regular
+expressions is the same as in GNU Emacs.  *Note Syntax of Regular
+Expressions: (emacs)Regexps.
+
+   If REPLACEMENT is omitted, `regexp' expands to the index of the
+first match of REGEXP in STRING.  If REGEXP does not match anywhere in
+STRING, it expands to -1.
+
+     regexp(`GNUs not Unix', `\<[a-z]\w+')
+     =>5
+     regexp(`GNUs not Unix', `\<Q\w*')
+     =>-1
+
+   If REPLACEMENT is supplied, `regexp' changes the expansion to this
+argument, with `\N' substituted by the text matched by the Nth
+parenthesized sub-expression of REGEXP, `\&' being the text the entire
+regular expression matched.
+
+     regexp(`GNUs not Unix', `\w\(\w+\)$', `*** \& *** \1 ***')
+     =>*** Unix *** nix ***
+
+   The builtin macro `regexp' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Substr,  Next: Translit,  Prev: Regexp,  Up: Text handling
+
+Extracting substrings
+=====================
+
+   Substrings are extracted with `substr':
+
+     substr(STRING, FROM, opt LENGTH)
+
+which expands to the substring of STRING, which starts at index FROM,
+and extends for LENGTH characters, or to the end of STRING, if LENGTH
+is omitted.  The starting index of a string is always 0.
+
+     substr(`gnus, gnats, and armadillos', 6)
+     =>gnats, and armadillos
+     substr(`gnus, gnats, and armadillos', 6, 5)
+     =>gnats
+
+   The builtin macro `substr' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Translit,  Next: Patsubst,  Prev: Substr,  Up: Text handling
+
+Translating characters
+======================
+
+   Character translation is done with `translit':
+
+     translit(STRING, CHARS, REPLACEMENT)
+
+which expands to STRING, with each character that occurs in CHARS
+translated into the character from REPLACEMENT with the same index.
+
+   If REPLACEMENT is shorter than CHARS, the excess characters are
+deleted from the expansion.  If REPLACEMENT is omitted, all characters
+in STRING, that are present in CHARS are deleted from the expansion.
+
+   Both CHARS and REPLACEMENT can contain character-ranges, e.g., `a-z'
+(meaning all lowercase letters) or `0-9' (meaning all digits).  To
+include a dash `-' in CHARS or REPLACEMENT, place it first or last.
+
+   It is not an error for the last character in the range to be `larger'
+than the first.  In that case, the range runs backwards, i.e., `9-0'
+means the string `9876543210'.
+
+     translit(`GNUs not Unix', `A-Z')
+     =>s not nix
+     translit(`GNUs not Unix', `a-z', `A-Z')
+     =>GNUS NOT UNIX
+     translit(`GNUs not Unix', `A-Z', `z-a')
+     =>tmfs not fnix
+
+   The first example deletes all uppercase letters, the second converts
+lowercase to uppercase, and the third `mirrors' all uppercase letters,
+while converting them to lowercase.  The two first cases are by far the
+most common.
+
+   The builtin macro `translit' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Patsubst,  Next: Format,  Prev: Translit,  Up: Text handling
+
+Substituting text by regular expression
+=======================================
+
+   Global substitution in a string is done by `patsubst':
+
+     patsubst(STRING, REGEXP, opt REPLACEMENT)
+
+which searches STRING for matches of REGEXP, and substitutes
+REPLACEMENT for each match.  The syntax for regular expressions is the
+same as in GNU Emacs.
+
+   The parts of STRING that are not covered by any match of REGEXP are
+copied to the expansion.  Whenever a match is found, the search
+proceeds from the end of the match, so a character from STRING will
+never be substituted twice.  If REGEXP matches a string of zero length,
+the start position for the search is incremented, to avoid infinite
+loops.
+
+   When a replacement is to be made, REPLACEMENT is inserted into the
+expansion, with `\N' substituted by the text matched by the Nth
+parenthesized sub-expression of REGEXP, `\&' being the text the entire
+regular expression matched.
+
+   The REPLACEMENT argument can be omitted, in which case the text
+matched by REGEXP is deleted.
+
+     patsubst(`GNUs not Unix', `^', `OBS: ')
+     =>OBS: GNUs not Unix
+     patsubst(`GNUs not Unix', `\<', `OBS: ')
+     =>OBS: GNUs OBS: not OBS: Unix
+     patsubst(`GNUs not Unix', `\w*', `(\&)')
+     =>(GNUs)() (not)() (Unix)
+     patsubst(`GNUs not Unix', `\w+', `(\&)')
+     =>(GNUs) (not) (Unix)
+     patsubst(`GNUs not Unix', `[A-Z][a-z]+')
+     =>GN not
+
+   Here is a slightly more realistic example, which capitalizes
+individual word or whole sentences, by substituting calls of the macros
+`upcase' and `downcase' into the strings.
+
+     define(`upcase', `translit(`$*', `a-z', `A-Z')')dnl
+     define(`downcase', `translit(`$*', `A-Z', `a-z')')dnl
+     define(`capitalize1',
+          `regexp(`$1', `^\(\w\)\(\w*\)', `upcase(`\1')`'downcase(`\2')')')dnl
+     define(`capitalize',
+          `patsubst(`$1', `\w+', `capitalize1(`\&')')')dnl
+     capitalize(`GNUs not Unix')
+     =>Gnus Not Unix
+
+   The builtin macro `patsubst' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Format,  Prev: Patsubst,  Up: Text handling
+
+Formatted output
+================
+
+   Formatted output can be made with `format':
+
+     format(FORMAT-STRING, ...)
+
+which works much like the C function `printf'.  The first argument is a
+format string, which can contain `%' specifications, and the expansion
+of `format' is the formatted string.
+
+   Its use is best described by a few examples:
+
+     define(`foo', `The brown fox jumped over the lazy dog')
+     =>
+     format(`The string "%s" is %d characters long', foo, len(foo))
+     =>The string "The brown fox jumped over the lazy dog" is 38 characters long
+
+   Using the `forloop' macro defined in *Note Loops::, this example
+shows how `format' can be used to produce tabular output.
+
+     forloop(`i', 1, 10, `format(`%6d squared is %10d
+     ', i, eval(i**2))')
+     =>     1 squared is	    1
+     =>     2 squared is	    4
+     =>     3 squared is	    9
+     =>     4 squared is	   16
+     =>     5 squared is	   25
+     =>     6 squared is	   36
+     =>     7 squared is	   49
+     =>     8 squared is	   64
+     =>     9 squared is	   81
+     =>    10 squared is	  100
+
+   The builtin `format' is modeled after the ANSI C `printf' function,
+and supports the normal `%' specifiers: `c', `s', `d', `o', `x', `X',
+`u', `e', `E' and `f'; it supports field widths and precisions, and the
+modifiers `+', `-', ` ', `0', `#', `h' and `l'.  For more details on
+the functioning of `printf', see the C Library Manual.
+
+   The builtin macros `format' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Arithmetic,  Next: UNIX commands,  Prev: Text handling,  Up: Top
+
+Macros for doing arithmetic
+***************************
+
+   Integer arithmetic is included in `m4', with a C-like syntax.  As
+convenient shorthands, there are builtins for simple increment and
+decrement operations.
+
+* Menu:
+
+* Incr::                        Decrement and increment operators
+* Eval::                        Evaluating integer or rational expressions
+* Mpeval::
+
+
+File: m4.info,  Node: Incr,  Next: Eval,  Prev: Arithmetic,  Up: Arithmetic
+
+Decrement and increment operators
+=================================
+
+   Increment and decrement of integers are supported using the builtins
+`incr' and `decr':
+
+     incr(NUMBER)
+     decr(NUMBER)
+
+which expand to the numerical value of NUMBER, incremented, or
+decremented, respectively, by one.
+
+     incr(4)
+     =>5
+     decr(7)
+     =>6
+
+   The builtin macros `incr' and `decr' are recognized only when given
+arguments.
+
+
+File: m4.info,  Node: Eval,  Next: Mpeval,  Prev: Incr,  Up: Arithmetic
+
+Evaluating integer or rational expressions
+==========================================
+
+   Integer expressions are evaluated with `eval':
+
+     eval(EXPRESSION, opt RADIX, opt WIDTH)
+
+which expands to the value of EXPRESSION.
+
+   Expressions can contain the following operators, listed in order of
+decreasing precedence.
+
+`-'
+     Unary minus
+
+`**'
+     Exponentiation
+
+`*  /  %  :'
+     Multiplication, division, modulo and ratio
+
+`+  -'
+     Addition and subtraction
+
+`<<  >>'
+     Shift left or right
+
+`==  !=  >  >=  <  <='
+     Relational operators
+
+`!'
+     Logical negation
+
+`~'
+     Bitwise negation
+
+`&'
+     Bitwise and
+
+`^'
+     Bitwise exclusive-or
+
+`|'
+     Bitwise or
+
+`&&'
+     Logical and
+
+`||'
+     Logical or
+
+   All operators, except exponentiation, are left associative.
+
+   Note that many `m4' implementations use `^' as an alternate operator
+for the exponentiation, while many others use `^' for the bitwise
+exclusive-or.  GNU `m4' changed its behavior: it used to exponentiate
+for `^', it now computes the bitwise exclusive-or.
+
+   Numbers without special prefix are given decimal.  A simple `0'
+prefix introduces an octal number.  `0x' introduces an hexadecimal
+number.  `0b' introduces a binary number.  `0r' introduces a number
+expressed in any radix between 1 and 36: the prefix should be
+immediately followed by the decimal expression of the radix, a colon,
+then the digits making the number.  For any radix, the digits are `0',
+`1', `2', ....  Beyond `9', the digits are `a', `b' ... up to `z'.
+Lower and upper case letters can be used interchangeably in numbers
+prefixes and as number digits.
+
+   Calculations are done in at lease 32 bit, but `m4' will use wider
+integers if available.
+
+   Parentheses may be used to group subexpressions whenever needed.
+For the relational operators, a true relation returns `1', and a false
+relation return `0'.
+
+   Here are a few examples of use of `eval'.
+
+     eval(-3 * 5)
+     =>-15
+     eval(index(`Hello world', `llo') >= 0)
+     =>1
+     define(`square', `eval(($1)**2)')
+     =>
+     square(9)
+     =>81
+     square(square(5)+1)
+     =>676
+     define(`foo', `666')
+     =>
+     eval(`foo'/6)
+     error-->m4: in: 7: Bad expression in eval: foo/6
+     =>
+     eval(foo/6)
+     =>111
+
+   As the second to last example shows, `eval' does not handle macro
+names, even if they expand to a valid expression (or part of a valid
+expression).  Therefore all macros must be expanded before they are
+passed to `eval'.
+
+   If RADIX is specified, it specifies the radix to be used in the
+expansion.  The default radix is 10.  The result of `eval' is always
+taken to be signed.  The WIDTH argument specifies a minimum output
+width.  The result is zero-padded to extend the expansion to the
+requested width.
+
+     eval(666, 10)
+     =>666
+     eval(666, 11)
+     =>556
+     eval(666, 6)
+     =>3030
+     eval(666, 6, 10)
+     =>0000003030
+     eval(-666, 6, 10)
+     =>-000003030
+
+   Take note that RADIX cannot be larger than 36.
+
+   The builtin macro `eval' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Mpeval,  Prev: Eval,  Up: Arithmetic
+
+Multiple precision arithmetic
+=============================
+
+   When `m4' is compiled with a multiple precision arithmetic library
+(*note Experiments::.), a builtin `mpeval' is defined.
+
+   It is almost identical to `eval', except the calculations are done
+with infinite precision.  Numbers may be of any length.
+
+   The `:' operator rationally divides two numbers and canonicalizes
+the result.  The `/' operator always returns the quotient of the
+division.  To convert a rational value to integral, divide (`/') by 1.
+Some operators such as `%', `<<', `>>', `~', `&', `|' and `^' operate
+only on integers and will truncate any rational remainder.  `**'
+assumes that the exponent is integral.
+
+
+File: m4.info,  Node: UNIX commands,  Next: Miscellaneous,  Prev: Arithmetic,  Up: Top
+
+Running UNIX commands
+*********************
+
+   There are a few builtin macros in `m4' that allow you to run UNIX
+commands from within `m4'.
+
+* Menu:
+
+* Syscmd::                      Executing simple commands
+* Esyscmd::                     Reading the output of commands
+* Sysval::                      Exit codes
+* Maketemp::                    Making names for temporary files
+
+
+File: m4.info,  Node: Syscmd,  Next: Esyscmd,  Prev: UNIX commands,  Up: UNIX commands
+
+Executing simple commands
+=========================
+
+   Any shell command can be executed, using `syscmd':
+
+     syscmd(SHELL-COMMAND)
+
+which executes SHELL-COMMAND as a shell command.
+
+   The expansion of `syscmd' is void, *not* the output from
+SHELL-COMMAND!  Output or error messages from SHELL-COMMAND are not
+read by `m4'.  *Note Esyscmd::, if you need to process the command
+output.
+
+   Prior to executing the command, `m4' flushes its output buffers.
+The default standard input, output and error of SHELL-COMMAND are the
+same as those of `m4'.
+
+   The builtin macro `syscmd' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Esyscmd,  Next: Sysval,  Prev: Syscmd,  Up: UNIX commands
+
+Reading the output of commands
+==============================
+
+   If you want `m4' to read the output of a UNIX command, use `esyscmd':
+
+     esyscmd(SHELL-COMMAND)
+
+which expands to the standard output of the shell command SHELL-COMMAND.
+
+   Prior to executing the command, `m4' flushes its output buffers.
+The default standard input and error output of SHELL-COMMAND are the
+same as those of `m4'.  The error output of SHELL-COMMAND is not a part
+of the expansion: it will appear along with the error output of `m4'.
+
+   Assume you are positioned into the `checks' directory of GNU `m4'
+distribution, then:
+
+     define(`vice', `esyscmd(grep Vice ../Makefile)')
+     =>
+     vice
+     =>#  Ty Coon, President of Vice
+     =>
+
+   Note how the expansion of `esyscmd' has a trailing newline.
+
+   The builtin macro `esyscmd' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Sysval,  Next: Maketemp,  Prev: Esyscmd,  Up: UNIX commands
+
+Exit codes
+==========
+
+   To see whether a shell command succeeded, use `sysval':
+
+     sysval
+
+which expands to the exit status of the last shell command run with
+`syscmd' or `esyscmd'.
+
+     syscmd(`false')
+     =>
+     ifelse(sysval, 0, zero, nonzero)
+     =>nonzero
+     syscmd(`true')
+     =>
+     sysval
+     =>0
+
+
+File: m4.info,  Node: Maketemp,  Prev: Sysval,  Up: UNIX commands
+
+Making names for temporary files
+================================
+
+   Commands specified to `syscmd' or `esyscmd' might need a temporary
+file, for output or for some other purpose.  There is a builtin macro,
+`maketemp', for making temporary file names:
+
+     maketemp(TEMPLATE)
+
+which expands to a name of a non-existent file, made from the string
+TEMPLATE, which should end with the string `XXXXXX'.  The six `X''s are
+then replaced, usually with something that includes the process id of
+the `m4' process, in order to make the file name unique.
+
+     maketemp(`/tmp/fooXXXXXX')
+     =>/tmp/fooa07346
+     maketemp(`/tmp/fooXXXXXX')
+     =>/tmp/fooa07346
+
+   As seen in the example, several calls of `maketemp' might expand to
+the same string, since the selection criteria is whether the file exists
+or not.  If a file has not been created before the next call, the two
+macro calls might expand to the same name.
+
+   The builtin macro `maketemp' is recognized only when given arguments.
+
+
+File: m4.info,  Node: Miscellaneous,  Next: Frozen files,  Prev: UNIX commands,  Up: Top
+
+Miscellaneous builtin macros
+****************************
+
+   This chapter describes various builtins, that do not really belong in
+any of the previous chapters.
+
+* Menu:
+
+* Errprint::                    Printing error messages
+* M4exit::                      Exiting from m4
+* Syncoutput::                  Turning on and off sync lines
+
+
+File: m4.info,  Node: Errprint,  Next: M4exit,  Prev: Miscellaneous,  Up: Miscellaneous
+
+Printing error messages
+=======================
+
+   You can print error messages using `errprint':
+
+     errprint(MESSAGE, ...)
+
+which simply prints MESSAGE and the rest of the arguments on the
+standard error output.
+
+   The expansion of `errprint' is void.
+
+     errprint(`Illegal arguments to forloop
+     ')
+     error-->Illegal arguments to forloop
+     =>
+
+   A trailing newline is *not* printed automatically, so it must be
+supplied as part of the argument, as in the example.  (BSD flavored
+`m4''s do append a trailing newline on each `errprint' call).
+
+   To make it possible to specify the location of the error, two
+utility builtins exist:
+
+     __file__
+     __line__
+
+which expands to the quoted name of the current input file, and the
+current input line number in that file.
+
+     errprint(`m4:'__file__:__line__: `Input error
+     ')
+     error-->m4:in:1: Input error
+     =>
+
+
+File: m4.info,  Node: M4exit,  Next: Syncoutput,  Prev: Errprint,  Up: Miscellaneous
+
+Exiting from `m4'
+=================
+
+   If you need to exit from `m4' before the entire input has been read,
+you can use `m4exit':
+
+     m4exit(opt CODE)
+
+which causes `m4' to exit, with exit code CODE.  If CODE is left out,
+the exit code is zero.
+
+     define(`fatal_error', `errprint(`m4: '__file__: __line__`: fatal error: $*
+     ')m4exit(1)')
+     =>
+     fatal_error(`This is a BAD one, buster')
+     error-->m4: in: 3: fatal error: This is a BAD one, buster
+
+   After this macro call, `m4' will exit with exit code 1.  This macro
+is only intended for error exits, since the normal exit procedures are
+not followed, e.g., diverted text is not undiverted, and saved text
+(*note M4wrap::.) is not reread.
+

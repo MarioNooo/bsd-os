@@ -1,0 +1,6 @@
+There does not appear to be a root filesystem (BSD partition a)
+on this disk.  Without a root filesystem this disk will not be
+bootable to BSD.  You may edit the BSD partition table if you wish
+to still add a partition for the root system, or press CTRL-C if you
+wish to exit disksetup.
+

@@ -1,0 +1,61 @@
+Software Package:       
+	gawk
+
+Release/Version:
+	3.0.4
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu:pub/gnu/gawk
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and arnold@gnu.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Add #undef proc to io.c before include of <sys/param.h> -- safe for now
+but check when updating to a new version.
+
+6/16/98:  Install-info is a bit stupid -- if a direntry line gives
+the filename with the .info suffix, install-info won't realize that
+an existing entry name matches the new entry and it will balk at
+replacing it.  I also took the opportunity to pad columns with
+tabs, since it is more consistent and looks better.
+
+Index: gawk.info
+===================================================================
+RCS file: /master/usr.bin/awk/doc/gawk.info,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -r1.1 -r1.2
+6c6
+< * Gawk: (gawk.info).           A Text Scanning and Processing Language.
+---
+> * Gawk: (gawk).			A Text Scanning and Processing Language.
+Index: configure
+===================================================================
+RCS file: /master/usr.bin/awk/configure,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 configure
+*** configure	1998/02/18 01:08:09	1.1.1.1
+--- configure	1999/10/11 21:46:08
+***************
+*** 2270,2276 ****
+  if (uname) > /dev/null 2>&1
+  then
+  	case `uname` in
+! 	*VMS*)	cat >> confdefs.h <<\EOF
+  #define GETPGRP_VOID 1
+  EOF
+   ;;
+--- 2270,2276 ----
+  if (uname) > /dev/null 2>&1
+  then
+  	case `uname` in
+! 	*VMS*|BSD/OS)	cat >> confdefs.h <<\EOF
+  #define GETPGRP_VOID 1
+  EOF
+   ;;

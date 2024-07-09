@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README.ntwo,v 1.1 1995/08/17 14:57:00 cp Exp
+ */
+
+Hardware setup files for the SDL Communications RISCom N2 controller
+are named as follows "x.ntwo.y". The leading x is a numeric used
+to choose when in the hardware initialization sequence the N2
+controller will be set up.  As there are no known reasons to run
+n2setup early or late in the sequence of setting up hardware it is
+suggested that it be run in the middle. Assigning the configuration
+file the first digit as a "5" will accomplish this. The trailing
+digit is the unit number of the N2 port which is to be configured.
+It should be remembered that there are two N2 units per board and
+they are zero based. To configure the second N2 port on the first
+board the proper file name would be "5.ntwo.1".
+
+There are four N2 prototype files. These files may require further
+editing to select options that are not the most generic. These
+are further explained in the n2setup(8) man page.
+
+
+The file "proto.ntwo.X21" is used to setup a port to talk to an
+X.21 modem. To use this on the first N2 port copy "proto.ntwo.X21"
+to "5.ntwo.0".
+
+The file "proto.ntwo.dds" is used to setup the 56k csu on a dds
+board.  Since the dds port is the second port on the board the
+tailing digit (unit number) must always be odd. To use this on the
+dds port on the first board copy "proto.ntwo.dds" to "5.ntwo.1"
+
+The file "proto.ntwo.ami" is used to setup the T1 csu on a csu
+board for ami line coding.  Since the csu port is the second port
+on the board the tailing digi (unit number) must always be odd. To
+use this to configure the csu port on the second board copy
+"proto.ntwo.csu" to "5.ntwo.3"
+
+The file "proto.ntwo.b8zs" is used to setup the T1 csu on a csu
+board for b8zs line coding.  Since the csu port is the second port
+on the board the tailing digi (unit number) must always be odd. To
+use this to configure the csu port on the third board copy
+"proto.ntwo.b8zs" to "5.ntwo.5"

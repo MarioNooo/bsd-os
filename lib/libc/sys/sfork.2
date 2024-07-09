@@ -1,0 +1,217 @@
+.\"	BSDI sfork.2,v 1.2 2000/09/19 20:05:01 donn Exp
+.Dd September 14, 2000
+.Dt SFORK 2
+.Sh NAME
+.Nm sfork
+.Nd "create a child process that shares resources with a parent process
+.Sh SYNOPSIS
+.Fd #include <sys/sfork.h>
+.Fd #include <signal.h>
+.Ft int
+.Fn sfork "int flags" "void *stack" "int sig"
+.Sh DESCRIPTION
+The
+.Fn sfork
+system call creates a
+.Dq child
+process that
+copies or shares most of its state from the current
+.Dq parent
+process.
+The amount of sharing is controlled by the
+.Fa flags
+parameter as follows:
+.Bl -tag -width SF_DESCRIP\0
+.It Dv SF_MEM
+Share virtual memory.
+Any change to any memory object in the parent or child
+will be visible to the other process.
+This sharing includes the standard data, heap and stack segments as
+well as memory mappings created using
+.Xr mmap 2 .
+.It Dv SF_CRED
+Share process credentials.
+User ID
+.Pq Xr setuid 2 ,
+group ID membership
+.Pq Xr setgroups 2 ,
+and set-UID information
+.Pq Xr seteuid 2
+are shared between parent and child.
+For example, a successful
+.Xr setuid 2
+in the child that changes the child's user ID
+will also change the parent's user ID.
+.It Dv SF_DESCRIP
+Share file descriptor information.
+Parent and child share their file descriptor table
+.Pq Xr open 2 ,
+current directory
+.Pq Xr chdir 2 ,
+root directory
+.Pq Xr chroot 2 ,
+file creation mask
+.Pq Xr umask 2
+and file descriptor flags
+.Pq Xr fcntl 2 .
+Note that file status flags, as opposed to file descriptor flags,
+are always shared for descriptors that are open when
+.Fn sfork
+is called, as are file status features like file offsets
+.Pq Xr lseek 2 .
+.It Dv SF_RLIM
+Share resource limits
+.Pq Xr setrlimit 2 .
+.It Dv SF_SIG
+Share most (but not all) signal state.
+The shared signal information includes
+all of the state controlled by
+.Xr sigaction 2 :
+.Bl -bullet -compact
+.It
+set of ignored signals
+.It
+set of caught signals
+.It
+signal actions
+.It
+set of signals to take on an alternate stack
+.It
+set of signals that interrupt system calls
+.El
+.Pp
+Note that the following
+signal information is never shared:
+.Bl -bullet -compact
+.It
+set of blocked signals
+.Pq Xr sigprocmask 2
+.It
+set of pending signals
+.Pq Xr sigpending 2
+.It
+location of alternate signal stack
+.Pq Xr sigaltstack 2
+.It
+signal sent to parent on exit
+.El
+.El
+.Pp
+The convenience flag
+.Dv SF_SHARE_ALL
+selects all sharable features.
+Note that process state that is not shared is
+either copied from the parent to the child or
+is set uniquely in the child.
+.Pp
+The
+.Fa flags
+parameter also may specify the
+.Dv SF_WAITCHILD
+flag, which forces the parent process to wait
+until the child process has either called
+.Xr execve 2
+or exited.
+If the child is likely to call
+.Xr execve 2
+and the parent is likely to call
+.Xr wait 2
+to wait for it,
+then using
+.Dv SF_WAITCHILD
+to serialize their actions can
+avoid problems with synchronization (see below).
+.Pp
+The
+.Fa stack
+parameter may specify an alternate stack location
+for the child process.
+The memory for this stack segment should be allocated before calling
+.Fn sfork .
+If the child process should run on its parent's stack,
+then you may specify the
+.Fa stack
+parameter as
+.Dv NULL .
+You should always use
+.Dv SF_WAITCHILD
+if the parent and child both expect to use the same stack.
+(See the
+.Xr vfork 2
+manual page for information about
+the difficulties with sharing stacks.)
+.Pp
+The
+.Fa sig
+parameter provides the number of
+the signal that the child will automatically send to its parent
+when it exits
+.Pq Xr sigaction 2 .
+You may specify
+.Li 0
+to indicate that no signal should be sent.
+Processes conventionally send
+.Dv SIGCHLD
+to their parent process on exit.
+Processes that become children of the
+.Xr init 8
+process are silently modified to send
+.Dv SIGCHLD
+on exit.
+.Pp
+On success, the
+.Fn sfork
+function returns
+.Li 0
+in the child process and
+returns the value of the child's process ID in the parent process.
+On failure,
+the
+.Fn sfork
+function returns
+.Li -1
+and sets the global variable
+.Va errno
+to indicate the error.
+.Pp
+Calling the
+.Xr fork 2
+function is identical to calling:
+.Bd -literal -offset indent
+sfork(0, NULL, SIGCHLD)
+.Ed
+.Pp
+Calling the
+.Xr vfork 2
+function is identical to calling:
+.Bd -literal -offset indent
+sfork(SF_MEM|SF_WAITCHILD, NULL, SIGCHLD)
+.Ed
+.Sh ERRORS
+The
+.Fn sfork
+function will fail and no child process will be created if:
+.Bl -tag -width [EAGAIN]
+.It Bq Er EAGAIN
+The system-imposed limit on the total
+number of processes under execution would be exceeded.
+This limit is configuration-dependent.
+.It Bq Er EAGAIN
+The system-imposed RLIMIT_NPROC resource limit
+on the total number of
+processes under execution by the invoking user would be exceeded.  See
+.Xr setrlimit 2 .
+.It Bq Er ENOMEM
+There is insufficient swap space for the new process.
+.El
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr wait 2 .
+.Sh BUGS
+This interface is tentative and may change in future releases.
+.Pp
+There is no machine-independent way to set up a stack
+for the child process.
+In particular, the stack may grow in different directions
+on different architectures,
+or it may require different alignments.

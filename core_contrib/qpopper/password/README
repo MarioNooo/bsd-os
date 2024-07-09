@@ -1,0 +1,75 @@
+
+This program has been hacked and slashed about a bit from the version
+originally on ftp.qualcomm.com
+
+It's optimised and tested for Linux (slackware 3.3, 2.0.30) 
+along with Samba 1.9.19p2 compiled up with Encrypted lanman passwords.
+
+The general idea is that when a user sets hir password, if this program is
+called with the -s switch, it will run smbpasswd as root and synch up the
+LANMAN password, should the main password be sucessfully changed. 
+
+This reduces admin headaches at the expense of a slight drop in overall
+system security. I feel it's tolerable in light of other precautions I
+take to prevent non-local dialup connects to the server. (HINT: 
+hosts.allow)  My users are able to access their web pages as a WFW (aka
+CIFS or SMB) remote drive in order to facilitate easy updates. We spend an
+inordinate amount of time handholding and it's hoped that by allowing the
+mount, this will be reduced slightly.
+
+NOTE: This runs passwd as a non-root user and has been modified to
+recognise error messages saying that the new password is too
+simple/similar, etc, so theoretically it shouldn't allow a luser to set
+too dangerous a password. 
+
+Max password length is set to 11 characters, mainly because I found that
+xtacacsd 4.1.1 daemon I run only allows that many from the terminal
+servers and I haven't had a chance to attack it yet. This is a compile
+time option and should probably stay that way.
+
+The program checks and blocks any attempt to change password for userIDs
+under 1000. Again, this is a compile time option and is probably best that
+way.
+
+Although the Makfile installs this as /usr/sbin/poppassd, I renamed it to
+in.epassd. The Official RFC 1700 designation for this service is EPASS and
+I wanted it to conform to the naming conventions used for other services
+in the Slackware Linux distribution. 
+
+You will need to add the following lines to other config files:
+
+/etc/services
+epass           106/tcp         poppassd
+
+/etc/inetd
+epass   stream tcp nowait root /usr/sbin/tcpd in.epassd -p -s
+
+/etc/hosts.allow
+in.epassd : 127.0.0.1 .yourdomain ww.xx.yy.zz/aa.aa.aa.aa : keepalive
+(the last part is your netblock/netmask)
+
+/etc/hosts.deny
+in.epassd : ALL
+
+
+THIS FILE MUST BE RUN OUT OF A TCPWRAPPER!
+
+Your security is SWISS CHEESE if you don't, as poppassd does no checking
+of origin address. Do not let anyone outside your local network change
+their passwords via this port. It's just too risky to allow.
+
+Don't run this code until you're bloody sure you know how it works and
+what it's capable of doing. I accidentally wiped /etc/passwd while
+hacking at the original poppassd release on a Sun a few years ago...
+
+Your milage may vary, no guarantees, etc. I didn't write most of the
+code, merely poked at it and got a local volunteer to code the bits I
+couldn't (which was 90% or so, I'm not a programmer) :-)
+
+
+If it doesn't work, don't bug me - fix/improve it and submit it back to
+Qualcomm. They seem to have become the default custodians of the code. 
+
+
+Alan Brown, network admin, Manawatu Internet Services, New Zealand.
+alan@manawatu.gen.nz

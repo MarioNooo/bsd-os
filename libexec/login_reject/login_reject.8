@@ -1,0 +1,45 @@
+.\"	BSDI	login_reject.8,v 1.2 1996/08/01 21:02:26 prb Exp
+.\"
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd September 29, 1995
+.Dt LOGIN_REJECT 8
+.Os
+.Sh NAME
+.Nm login_reject
+.Nd provide rejected authentication
+.Sh SYNOPSIS
+.Nm login_reject
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm
+utility provides the rejection authentication class.
+The
+.Ar user
+name, while required, is ignored.
+The
+.Ar class
+name, which is optional, is also ignored.
+The
+.Nm reject
+authentication mechanism is intended to be used to disallow certain
+types of logins.  For example, a class entry (see
+.Xr login.conf 5 )
+may contain
+.Bd -literal
+	:auth=krb-or-pwd,kerberos,passwd:
+	:auth-ftp=reject:
+.Ed
+which would allow authentication for this class in most situations
+but would reject attempts to authenticate from
+.Xr ftpd 8 .
+.Sh SEE ALSO
+.Xr login.conf 5 ,
+.Xr ftpd 8 ,
+.Xr login 8

@@ -1,0 +1,126 @@
+.\"	BSDI bpatch.1,v 2.4 1998/05/13 19:31:22 donn Exp
+.\" Copyright 1992 BSDI
+.Dd October 18, 1997
+.Dt BPATCH 1
+.Os
+.Sh NAME
+.Nm bpatch
+.Nd display or patch executable binary files
+.Sh SYNOPSIS
+.Nm bpatch 
+.Op Fl bclqsw
+.Op Fl r
+.Op Fl M Ar memfile
+.Op Fl N Ar a.out
+.Ar location
+.Op Ar value
+.Sh DESCRIPTION
+The
+.Nm bpatch
+utility displays or patches values in
+executable binary files.
+It defaults to displaying the kernel image
+.Pa /bsd .
+It may also be used to display values from a running kernel in memory.
+.Pp
+The
+.Ar location
+parameter is a symbol name,
+or an address specified as a number.
+An address may be specified in decimal, hexadecimal or octal;
+a leading
+.Dq 0
+indicates an octal value,
+a leading
+.Dq 0x
+indicates a hexadecimal value,
+and the default is a decimal value.
+.Pp
+If a
+.Ar value 
+is specified,
+it is stored into that location, as specified by the type options.
+If no
+.Ar value
+is specified,
+the current value at the location is displayed
+as specified by the type options.
+.Pp
+If no type option is specified, the value at the location is assumed
+to be a 32-bit integer, signed or unsigned.
+.Pp
+The type options specify the format and width of the value
+to be displayed or patched:
+.Bl -tag -width flag
+.It Fl b
+The value is an 8-bit byte given as a number, signed or unsigned.
+.It Fl c
+The value is an 8-bit byte given as an ASCII character.
+.It Fl l
+The value is a 32-bit integer
+.Dq Li longword ,
+signed or unsigned.
+.It Fl q
+The value is a 64-bit integer
+.Dq Li quadword ,
+signed or unsigned.
+.It Fl s
+The value is a string of bytes.
+.It Fl w
+The value is a 16-bit integer
+.Dq Li word ,
+signed or unsigned.
+.El
+.Pp
+Other options:
+.Bl -tag -width "-N\0system\0\0"
+.It Fl M Ar memfile
+Patch the specified memory device rather than the
+.Li a.out
+file itself.
+User and kernel core files are not supported.
+.\" XXX If we supported procfs, we could patch running user programs...
+.It Fl N Ar a.out
+Specify an alternate
+.Li a.out
+file instead of the default file
+.Pa /bsd .
+.It Fl r
+Patch the running kernel in memory rather than the kernel image
+.Pa /bsd
+on disk.
+This option is equivalent to
+.Fl M Ar /dev/kmem .
+.El
+.Pp
+Note that kernel memory may not be modified if
+the system's current security level is greater than 0.
+This normally means that you may not use the
+.Fl r
+option unless the system is in single user mode.
+.Pp
+The
+.Nm bpatch
+utility is generally used only in those rare cases where
+.Xr sysctl 8 ,
+.Xr getconf 8
+or
+.Xr gdb 1
+are not more suitable.
+.Sh SEE ALSO
+.Xr gdb 1 ,
+.Xr hexdump 1 ,
+.Xr mem 4 ,
+.Xr sysctl 8
+.Sh AUTHOR
+Mike Karels, BSDI
+.Sh BUGS
+Only
+.Xr a.out 5
+and
+.Xr elf 5
+binary file types are supported.
+.Pp
+The 16-bit
+.Dq Li word
+terminology is quaint.

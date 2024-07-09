@@ -1,0 +1,5 @@
+Disksetup will initialize your disk with 2 FDISK partitions.  You
+must choose how much space to assign BSD/OS and how much for DOS.
+BSD/OS requires between 60 and 300 MB of disk space depending on the
+installation options chosen.  Typically you should try to have at least
+120 MB for BSD/OS, 200 if you plan to use the X Window System.

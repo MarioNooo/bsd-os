@@ -1,0 +1,6 @@
+#
+# SLIP Hosts initialization file
+#
+# login		localaddr	remoteaddr	netmask		opt_args
+#-------	---------	----------	-------		--------
+#Slogin		XX.XX.XX.XX	YY.YY.YY.YY	255.255.255.0	autocomp

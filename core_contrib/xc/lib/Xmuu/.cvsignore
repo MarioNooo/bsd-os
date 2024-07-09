@@ -1,0 +1,4 @@
+Makefile
+unshared
+.depend
+libXmuu.so.1.0

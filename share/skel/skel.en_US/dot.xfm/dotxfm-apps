@@ -1,0 +1,25 @@
+#
+# xfm applications file
+# written by xfm  Wed Aug 21 01:59:13 1996
+#
+##########################################
+
+Terminal:::xterm.xpm:exec sh -c "SHELL=$REALSHELL; export SHELL; xterm":
+Editor:::editor.xpm:exec xterm -e pico:exec xterm -e pico $*
+Printer:::printer.xpm:exec lpq 2>&1 | xless -title lpq:exec lpr $*
+Mail:::mail.xpm:exec exmh:exec mail -sFILE_TRANSMISSION %Mail to?% < $*
+Calculator:::calc.xpm:exec xcalc -rpn -stipple:
+Manual:::xman.xpm:exec xman:
+Trash::.trash:trash.xpm:OPEN: mv $* ~/.trash
+xv:::xv.xpm:exec xv:exec xv $*
+Password:::xlock.xpm:exec xterm -exec passwd:
+Clipboard:::clipboard.xpm:exec xclipboard:
+Internet::.xfm/xfm-internet:network.xbm:LOAD:
+Toolbox::.xfm/xfm-tools:toolbox.xpm:LOAD:
+System::.xfm/xfm-system:prog.icon:LOAD:
+games::.xfm/xfm-games:xfm_appmgr.xpm:LOAD:
+#
+# below is an example of how to get an X program running on a remote
+# host via xfm.
+#
+#houdini:::xterm.xpm:exec /bin/sh -c "xhost + houdini.wynn.com;xon houdini.wynn.com":

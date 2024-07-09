@@ -1,0 +1,2 @@
+The number of heads must be between 1 and 255
+(1 and 16 for BSD geometries on IDE disks)

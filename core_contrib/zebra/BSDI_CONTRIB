@@ -1,0 +1,19 @@
+Software Package:       
+	Zebra
+
+Release/Version:
+	0.93a
+
+Retrieved from:
+	http://www.zebra.org/download
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and at http://www.zebra.org
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile 

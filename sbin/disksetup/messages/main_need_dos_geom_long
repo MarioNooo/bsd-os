@@ -1,0 +1,3 @@
+Enter the geometry that will be used by the other OS.  This should
+be what you will set the CMOS geometry to, or, if it will be
+determined by a driver, the geometry that driver will expect.

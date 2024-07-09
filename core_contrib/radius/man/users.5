@@ -1,0 +1,164 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH USERS 5 "9 December 1997"
+.SH NAME
+users \- Merit \s-2AAA\s+2 server user security and configuration file
+.SH SYNOPSIS
+.B ../raddb/users
+.SH DESCRIPTION
+.LP
+The
+.I users
+file resides in the Merit \s-2AAA\s+2 server configuration directory (named
+.I .../raddb
+somewhere).  It contains a list of users on which the Merit \s-2AAA\s+2 server
+will perform authentication.
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+The file contains one or more lines of information for each such user.
+The first line of each entry consists of one or more fields:
+.IP
+.I "<users-name>" " <check-item>" " [, <check-item>]" " ..."
+.LP
+For example:
+.IP
+.ft B
+george   Password = "foobar"
+.LP
+There are four special user names,
+.IR \s-2DEFAULT\s+2 ,
+.IR dumbuser ,
+.IR pppuser " and"
+.IR slipuser ,
+which are used 1) as the default entry for user names which do not match any
+previous entries, 2) to hold non-framed
+.IR reply-items ,
+3) to hold \s-2PPP\s+2
+.IR reply-items ,
+and 4) to hold \s-2SLIP\s+2
+.IR reply-items ,
+respectively.
+The latter three entries allow a user to authenticate with the same account
+name for any of the framed or non-framed protocols.
+The \s-2DEFAULT\s+2 entry specifies how user names, not explicitly matched
+above it in this file, are to be authenticated.
+.LP
+Additional lines associated with the first line described above, but
+beginning with leading whitespace, follow the first line and indicate
+the (Attribute/Value Pairs) reply items to be passed back to the requesting
+\s-2RADIUS\s+2 client or server.
+These may include things like \s-2PPP\s+2 configuration values, the name
+of the host to which the user wishes to connect or an optional packet
+filter name.
+Attribute/Value Pair names must be defined in the
+.I dictionary
+file.
+.LP
+These additional lines consist of one or more fields:
+.IP
+.I "<whitespace>" " <reply-item>," " [<reply-item>,]" " ..."
+.LP
+For example:
+.IP
+.ft B
+<\s-2TAB\s+2>   \s-2F\s+2ramed-\s-2P\s+2rotocol = \s-2PPP\s+2,
+.LP
+Note that the first line (of
+.IR check-item s)
+for each entry does \s-2NOT\s+2
+end with a comma
+.RB (' , ')
+character while the
+.I reply-item
+lines of each entry begin with a \s-2TAB\s+2 or space character
+and end with a comma character, except for the final
+.I reply-item
+of each entry, which omits the trailing comma.
+.LP
+There are two types of
+.IR check-item s:
+regular
+.IR check-item s
+and
+.IR deny-item s.
+A
+.I deny-item
+is a regular attribute (identical in all respects to a
+.I check-item
+except that instead of using an equals ("=") character, you
+may specify not-equals by using the two character ("!=") sequence).
+The
+.IR deny-item s
+are used to reverse the sense of the authentication-time check from
+"must match" this attribute to "must not match" this attribute.
+In other words, a
+.I deny-item
+causes an Access-Request to be rejected if it matches an attribute
+in the request.
+You may also configure a denial message as a deny-item (all on the
+first line) as follows:
+.IP
+.ft B
+Deny-Message = "Access to this port is not allowed"
+.LP
+This string would be returned to the user in the Access-Reject as
+a Reply-Message if any deny-item for this user caused a rejection.
+You may also use the special string ("*") consisting of just the
+asterisk character as follows:
+.IP
+.ft B
+Deny-Message = "*"
+.LP
+This provides a canned message indicating which deny-item triggered the
+rejection:
+.IP
+.ft B
+"Access denied, <attribute> = <value>"
+.LP
+Vendor specific attributes may be specified as
+.I "<vendor>:<attribute>"
+in place of normal
+.I check-item
+and
+.I reply-item
+attributes, for example:
+.IP
+.B Ascend:Ascend-Metric
+.LP
+The
+.I users
+file is optionally read into internal tables by
+.B radiusd
+at startup and whenever a \s-2HUP\s+2 signal is received by
+.BR radiusd .
+The Merit \s-2AAA\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+The
+.I users
+file may be converted into a
+.BR dbm (3)
+database by using the
+.BR builddbm (8)
+utility.
+This file is maintained by the system administrator using a text editor.
+.SH FILES
+.PD 0
+.TP 20
+.I ../raddb/dictionary
+the file describing the possible Attribute/Value Pairs.
+.TP 20
+.I ../raddb/users
+this file.
+.PD
+.SH "SEE ALSO"
+.BR dbm (3),
+.BR signal (3),
+.BR dictionary (5),
+.BR builddbm (8),
+.BR radiusd (8),
+.BR radcheck (8),
+.BR radpwtst (8)

@@ -1,0 +1,42 @@
+Source: ld.so
+Section: base
+Priority: required
+Maintainer: David Engel <david@debian.org>
+Standards-Version: 0.2.1.1
+
+Package: ldso
+Section: base
+Priority: required
+Essential: yes
+Architecture: any
+Provides: libdl1
+Breaks: libc6 (<=2.0.1-1)
+Description: The Linux dynamic linker, library and utilities.
+ The dynamic linker provides the user-level support for loading and
+ linking DLL and ELF shared libraries.  It is required by any program
+ that uses shared libraries, which is just about all of them.
+ .
+ WARNING: Do NOT downgrade this package to version 1.8.x or earlier.
+ Doing so may leave your system in an unusable state.
+
+Package: libdl1-dev
+Section: devel
+Priority: standard
+Architecture: any
+Depends: ldso (=${Source-Version}), libc5-dev (>=5.4.0-0)
+Replaces: libc
+Conflicts: ldso (<<1.9.0-0), libc6-dev
+Description: The Linux dynamic linker library (development files).
+ The files in this package were formerly included in the ldso package.
+ They were moved into this package because they conflict with the 
+ libc6-dev package.
+
+Package: libdl1-altdev
+Section: devel
+Priority: standard
+Architecture: any
+Depends: ldso (=${Source-Version}), libc5-altdev (>=5.4.0-0)
+Description: The Linux dynamic linker library (alternative dev files).
+ This package can be used to build libc5-based binaries even when 
+ the libc6-dev package is installed.
+

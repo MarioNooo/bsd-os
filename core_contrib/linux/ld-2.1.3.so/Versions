@@ -1,0 +1,78 @@
+GLIBC_2.0 {
+global:
+	__pthread_atfork;
+	__pthread_getspecific;
+	__pthread_initialize;
+	__pthread_key_create;
+	__pthread_mutex_destroy;
+	__pthread_mutex_init;
+	__pthread_mutex_lock;
+	__pthread_mutex_trylock;
+	__pthread_mutex_unlock;
+	__pthread_mutexattr_destroy;
+	__pthread_mutexattr_init;
+	__pthread_mutexattr_settype;
+	__pthread_once;
+	__pthread_setspecific;
+	_pthread_cleanup_pop_restore;
+	_pthread_cleanup_push_defer;
+
+	__libc_enable_secure;
+	__libc_internal_tsd_get;
+	__libc_internal_tsd_set;
+	_dl_catch_error;
+	_dl_check_all_versions;
+	_dl_debug_fd;
+	_dl_debug_impcalls;
+	_dl_debug_initialize;
+	_dl_debug_message;
+	_dl_debug_state;
+	_dl_global_scope;
+	_dl_init_next;
+	_dl_lookup_symbol;
+	_dl_lookup_symbol_skip;
+	_dl_lookup_versioned_symbol;
+	_dl_lookup_versioned_symbol_skip;
+	_dl_map_object;
+	_dl_map_object_deps;
+	_dl_relocate_object;
+	_dl_signal_error;
+	_dl_starting_up;
+	_dl_sysdep_start;
+	_r_debug;
+	calloc;
+	free;
+	malloc;
+	realloc;
+local:
+	*;
+};
+
+GLIBC_2.1 {
+global:
+	__libc_stack_end;
+	_dl_fpu_control;
+	_dl_global_scope_alloc;
+	_dl_initial_searchlist;
+	_dl_loaded;
+	_dl_main_searchlist;
+	_dl_mcount;
+	_dl_profile;
+	_dl_profile_map;
+	_dl_profile_output;
+	_dl_start_profile;
+	_dl_unload_cache;
+local:
+	*;
+} GLIBC_2.0;
+
+GLIBC_2.1.1 {
+global:
+	_dl_dst_count;
+	_dl_dst_substitute;
+	_dl_lazy;
+	_dl_origin_path;
+	_dl_platformlen;
+local:
+	*;
+} GLIBC_2.1;

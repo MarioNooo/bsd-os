@@ -1,0 +1,52 @@
+.\"	BSDI ps_strings.5,v 2.1 1998/02/12 01:28:32 donn Exp
+.Dd February 11, 1998
+.Dt PS_STRINGS 5
+.Os
+.Sh NAME
+.Nm ps_strings
+.Nd "argument and environment information
+.Sh SYNOPSIS
+.Fd #include <sys/exec.h>
+.Sh DESCRIPTION
+A variety of programs and library functions need to be able to find
+the argument and environment vectors in a running program.
+For example, the
+.Xr ps 1
+program needs to be able to print the arguments to programs.
+To make it easy to find the vectors,
+the system places a
+.Fa ps_strings
+structure at the top of the stack:
+.Bd -literal -offset indent
+struct ps_strings {
+	char	**ps_argv;
+	int	ps_argc;
+	char	**ps_envp;
+	int	ps_nenv;
+};
+.Ed
+.Pp
+The
+.Fa ps_argv
+field points to the program's argument vector,
+and the
+.Fa ps_argc
+field counts the number of elements in the vector.
+The
+.Fa ps_envp
+field points to the program's environment vector,
+and the
+.Fa ps_nenv
+field counts the number of elements in the vector.
+.Pp
+The system passes the address of this structure to the program
+in a machine dependent and/or binary format dependent way.
+On the i386 architecture,
+the address is passed in the EBX register and,
+if the program is an ELF executable,
+in an
+.Dv AT_PSSTRINGS
+element in the auxiliary vector.
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr auxv 5

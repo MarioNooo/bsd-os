@@ -1,0 +1,81 @@
+#!/bin/sh -
+#
+#	BSDI	daily,v 2.10 2000/05/23 16:36:12 jch Exp
+#	from 	@(#)daily	8.2 (Berkeley) 1/25/94
+#
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/contrib/bin:/usr/local
+bak=/var/backups
+
+cd /tmp
+msgs -c
+[ -f /etc/news.expire ] && /etc/news.expire
+
+[ -f /var/account/acct ] && {
+	echo ""; echo "Rotating accounting records:"
+	rotate -r 3 /var/account/acct
+	accton /var/account/acct
+	sa -s /var/account/acct.0 > /dev/null
+	gzip /var/account/acct.0
+}
+
+[ -f /var/log/ipx.log ] && {
+	echo ""; echo "Rotating ipx.log:"
+	rotate -z -r 3 /var/log/ipx.log
+}
+
+echo ""; echo "Running calendar:"
+calendar -a
+
+echo ""; echo "Rotating mail log:"
+rotate -z -r 7 /var/log/maillog
+kill -1 `cat /var/run/syslog.pid`
+
+cd /
+echo ""; echo "Checking subsystem status:"
+echo ""; echo "disks:"
+BLOCKSIZE=1024 df
+echo ""
+[ -f /etc/dumpdates ] && dump W
+
+echo ""; echo "mail:"
+mailq
+
+# Perform LPRng maintenance 
+checkpc -t 10K -A3 -r > /dev/null 2>&1
+
+if [ -f /etc/uucp/daily ]; then
+	echo ""; echo "Cleaning up UUCP:"
+	su -m uucp -fc /etc/uucp/daily
+fi
+
+if [ -f /var/www/squid/bin/squid.daily ]; then 
+    su -m www -fc /var/www/squid/bin/squid.daily  
+fi
+
+echo ""; echo "network:"
+netstat -ins
+echo ""
+ruptime
+
+# If you have filesystems that you don't trust, uncommenting the following
+# two lines will cause fsck to be run nightly on all filesystems listed in
+# the fstab file.  This will give you a daily sanity check that the
+# filesystems are not accumulating errors.  Please note that running fsck
+# on mounted filesystems will generate some small number of spurious errors,
+# depending on the amount of filesystem activity when the fsck is run.  If
+# you suspect filesystem damage, do not act based on this output.  Run fsck
+# again when the filesystem is unmounted to ensure correct information.
+#
+#echo ""; echo "Checking filesystems:"
+#fsck -n | grep -v '^\*\* Phase'
+
+if [ -f /etc/Distfile ]; then
+	echo ""; echo "Running rdist:"
+	rdist -f /etc/Distfile
+fi
+
+[ -f /etc/daily.local ] && sh /etc/daily.local
+
+sh /etc/security 2>&1 | /usr/bin/mail -s "$(hostname -s) daily insecurity output" root
+
+exit 0

@@ -1,0 +1,227 @@
+Copyright [C] The Regents of the University of Michigan and Merit Network,
+Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+
+
+        Finite State Machine (FSM) Information for the Merit AAA Server
+
+
+  The Finite State Machine (FSM) addition to the Merit AAA Server evolved out
+of the need to have a way to call more than one Authentication/Authorization
+Transfer Vector (AATV) action function in order to handle an incoming request.
+The Merit AAA Server FSM depends on the Merit AAA Server AATV concept.  The
+AATV concept predates the FSM design by only a few months, since, from the
+start, it was considered that the two would indeed "play" together.
+
+  For more information on the AATV concept, see the "aatv.txt" file in this
+distribution.  An AATV action function is a normal C function which performs
+some algorithm to process a RADIUS authentication, authorization or accounting
+request.  Each AATV has a unique, 32 character maximum, identifier or name.
+The Merit AAA Server FSM is able to distinguish one AATV from another using
+the AATV identifier.
+
+  The FSM is part of the Merit AAA Server mainline or engine.  Incoming socket
+requests generate "events" which are small integers representing the events.
+The FSM is basically an infinite while loop which controls the execution of
+one or more AATV action functions, in turn, as is dictated by: incoming events,
+the results of previous "states" in the FSM (also modeled as events) and the
+structure of the FSM configuration table (usually "radius.fsm" but this is
+configurable, too!).
+
+  The FSM configuration table (or FSM table) is read into memory at server
+initialization time.  The syntax of the FSM table is one or more entries,
+where each entry describes one state.  Comment text is allowed in this file
+and takes the form of arbitrary lines of text which begin with the pound
+sign ("#") character.  Any such lines lines are ignored.  The contents of the
+FSM file are not case sensitive, since everything is converted to uppercase
+when the file is parsed.  The state name for each entry is followed by a
+colon (":") character.  All state names are normally the first (column one)
+and only items on that line.  All subsequent lines, until the next state name
+is encountered, indicate various conditions which result in the invocation of
+AATV action functions from this state.
+
+  Each such line consists of from three to five fields, the first three of
+which are required while the last two are optional.  The fields are separated
+from each other on each line with whitespace characters and should not start
+in the first column.  The fields are named, in turn, the "event", the "action",
+the "next state", and optionally, an integer and a string.  The optional last
+two fields are used to pass an arbitrary, user specified integer and/or string,
+respectively, to any AATV to be used according to the AATV implementation.
+
+  The event field is actually a three-tuple which is used to identify an event.
+The three sub-fields are: a state name, an action name and an event number.
+Each of the three sub-fields are separated from each other with a period (".")
+character.  The state name identifies which state generated this event.  The
+action name is either the name of an AATV which generated this event (from the
+state in the first field) or an arbitrary string preceded by the plus ("+")
+sign character.  These strings are found in the code or may arrive in a packet.
+The event number is usually the "return code" from the named AATV, several of
+which are listed at the end of this document.
+
+  If a state has many such entries, a match on these three sub-fields with the
+current incoming event will either select one of these entries or else match a
+set of built-in events to determine which action to issue next.  The action
+field names an AATV whose action function is to be invoked for the matching
+event.  When that action function terminates, the FSM regains control and now
+begins to process the entries of the state indicated in the "next state" field.
+
+  It is an error (detected when the FSM configuration file is initially read
+into memory) for a state to be defined, but never referenced.  It is also an
+error if a "next state" is referenced, but never defined.  It is all right to
+refer to a state which is not yet defined, but which is defined in an entry
+found later on in the configuration file.
+
+  When the action function terminates in one of several different ways, it
+returns an event number to the FSM which is used to select which event (of
+several) in the next state to process next.  The FSM continues in this way
+until the end of the FSM table is reached or a condition is reached in which
+there is "nothing left to do" in the processing of the current request.  This
+might happen if, for example, a remote request was indicated and the local
+machine needed to wait for the results of the remote processing before it was
+able to complete its processing.
+
+  When an event is pending in this fashion an entry is placed on a linked list
+of event structures which remembers the fact of the outstanding request.  This
+list is used to help identify and match up incoming replies with outstanding
+or pending requests and to perform the retransmission of proxy requests when
+duplicate requests are detected.  Note that this event list based architecture
+enables multiple RADIUS requests to be pending at once.  This capability allows
+for redundant requests to be issued simultaneously and for timeouts of remote
+requests to cause transmission of these requests to alternate servers, for
+example.  Such complex actions are actually fairly easy to configure.
+
+  The event list has entries for both socket and forking type activity.  For
+the forking type, a match is made with the recorded PID of the forked child
+process.  For the socket type, the match is made using the value of the state
+from which the proxy request originated.  This requires that the proxy request
+include the Proxy-State attribute-value pair containing the requesting server's
+current state.  It also requires the remote RADIUS server to return, without
+modification, the Proxy-State attribute value pair in the RADIUS reply packet.
+
+  Several different "utility" AATV concepts have been identified and made part
+of the Merit AAA Server engine, for convenience.  A sample list of AATV names
+is given at the end of this document.  Some of these utility AATVs are used
+to help process the event list mentioned above.  The AATV "NULL" causes the
+event list to be ignored when a duplicate request is detected.  The REDO AATV
+causes all pending events of the matching request to be re-issued.  The KILL
+AATV causes the list of pending events to be cleared (in this case, all events
+are assumed to be satisfied).
+
+  Other utility AATVs perform other useful functions.  The PENDING AATV checks
+if any events are still pending on the request's event list.  The TIMER AATV
+sets a timer interval to an initial value.  The END AATV terminates the FSM
+for this request.  The LOG AATV is used to log an error condition.  The REPLY
+AATV is used to do whatever is needed to issue the reply or response to the
+RADIUS request.  The TIMEOUT AATV simply logs the fact that a request on the
+global request queue has timed out.
+
+  Below is a diagram of the Merit AAA Server finite state machine showing the
+entry and exit points plus various internal items and internal control flow.
+
+              +-----------------------------------------------+
+              |                                               |
+     request ---> do any initialization needed                |   E
+              |                                               |
+              |   create an auth_req structure                |   N
+              |                                               |
+              |   do duplicate detection                      |   G
+              |                                               |
+              |   create an event:                            |   I
+              |                                               |
+              |      AUTHEN, ACCT, PASSWD, AUTH_ONLY, etc.    |   N
+              |                                               |
+              |   call state_machine (event, auth_req) below  |   E
+              |                                               |
+              +-----------------------------------------------+
+              |                                               |
+event -->---> |  state_machine (integer event code,           |
+        /     |                 auth. request pointer)        |
+        |     |                                               |
+        |     |  *** Decision Function based on FSM Table *** |
+        |     |                                               |
+        |     |  (action, next_state) = f (cur_state, event)  |
+        |     |                                               |
+        |     |        "cur_state" is a field in auth_req     |
+        |     |                                               |
+        |     |        "event" is the first argment above     |
+        |     |                                               |
+        |     |  set cur_state = next_state                   |
+        |     |                                               |
+        |     +-----------------------------------------------+
+        |     |                                               |
+        |     |             *** Take Action ***               |
+        |     |                                               |
+        |     |  if (action .EQ. "NULL") exit state machine -------+
+        |     |                                               |    |
+        |     |  else, call AATV "action" function passing    |    |
+        |     |                                               |    |
+        |     |  to it the auth. request pointer "ap":        |    |
+        |     |                                               |    |
+        |     |      result = AATV->act_func (ap, ...)        |    |
+        |     |                                               |    |
+        |     |  where "result" is an integer event from      |    |
+        |     |                                               |    |
+        |     |  the set: [ACK, NAK, WAIT, ERROR, etc.]       |    |
+        |     |                                               |    |
+        |     |         loop within state machine             |    |
+        |     |         ----------+--------------             |    |
+        |     |                   |                           |    |
+        |     +------------------ | --------------------------+    |
+        |                         |                                v
+        +-------------------------+         back to main engine select() loop
+
+               Sample List of Event Names and Their Meaning
+
+    ACK          acknowledgment of the previous action
+    NAK          negative acknowledgment of the previous action
+    WAIT         the previous action generated a pending event
+    ERROR        the previous action generated an error
+    FATAL        the previous action generated a fatal error
+    DUP          the incoming request is a duplicate
+    TIMER        the timer value has expired
+    TIMEOUT      the request has timed out due to inactivity
+    AUTHEN       the incoming request is an Access-Request
+    ACCT         the incoming request is an Accounting-Request
+    PASSWD       the incoming request is a Passwd-Request
+    REACCESS     the incoming request is is an Access-Request with State
+    ACC_CHAL     the incoming request is and Access-Challenge
+    MGT_POLL     the incoming request is is a Status-Server
+    AUTH_ONLY    the incoming request is for Authentication-Only
+    RC1          general purpose return code of one
+    RC2          general purpose return code of two
+    RC3          general purpose return code of three
+    RC4          general purpose return code of four
+    RC5          general purpose return code of five
+    RC6          general purpose return code of six
+    RC7          general purpose return code of seven
+    RC8          general purpose return code of eight
+    RC9          general purpose return code of nine
+    RC10         general purpose return code of ten
+    RC11         general purpose return code of eleven
+    RC12         general purpose return code of twelve
+
+               Sample List of AATV Names and Their Purpose
+
+    ACCT          the AATV for Accounting requests
+    ACK           utility AATV used to always signify success
+    AKERB         the AATV for AFS Kerberos Authentication
+    AUTHENTICATE  the AATV for Authentication requests
+    CLEANUP       utility AATV used to exit the FSM
+    FILE          the AATV for FILE Authentication
+    KCHAP         the AATV for KCHAP Authentication
+    KILL          utility AATV used to unconditionally remove pending events
+    LOG           utility AATV used to log some error
+    MKERB         the AATV for MIT Kerberos Authentication
+    NULL          utility NULL AATV
+    PASSWD        the AATV for Passwd requests
+    PENDING       utility AATV used to test for pending events
+    RAD2RAD       the AATV used to send RADIUS proxy requests
+    RADDNS        the AATV for resolving DNS names
+    RADIUS        the main AATV in the Merit AAA Server engine
+    REALM         the AATV for handling realm based Authentication
+    REDO          utility AATV used to re-invoke an action
+    REPLY         utility AATV used to send a RADIUS reply
+    SRV_STATUS    the AATV for Status-Server (Management-Poll) requests
+    TACACS        the AATV for TACACS Authentication
+    TIMEOUT       utility AATV used to do timeout logging
+    TIMER         utility AATV used to initialize the timeout value
+    UNIX-PW       the AATV for for UNIX password file Authentication

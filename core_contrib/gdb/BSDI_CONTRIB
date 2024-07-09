@@ -1,0 +1,18 @@
+Software Package:       
+	gdb
+
+Release/Version:
+	5.2.1
+
+Retrieved from:
+	ftp.gnu.org:pub/gnu/gdb/gdb-5.2.1.tar.gz
+
+Bug reports:
+	This software package is maintained by both Wind River and the
+	software contributor.  Please send any bug reports to both
+	support@windriver.com and bug-gnu-utils@prep.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

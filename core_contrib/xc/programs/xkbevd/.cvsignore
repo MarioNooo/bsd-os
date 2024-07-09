@@ -1,0 +1,6 @@
+Makefile
+cfgparse.c
+xkbevd
+xkbevd.0
+.depend
+xkbevd._man

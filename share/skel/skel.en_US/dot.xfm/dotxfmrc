@@ -1,0 +1,50 @@
+#
+# sample xfm configuration file   Sun Apr 24 1994   AG
+#
+##########################################################
+
+*.a:xfm_a.xpm:EDIT:
+*.bm:xfm_xbm.xpm:exec bitmap $1:
+*.c:xfm_c.xpm:EDIT:
+*.cc:xfm_cc.xpm:EDIT:
+*.dvi:xfm_data.xpm:exec xdvi $1:
+*.gif:xfm_gif.xpm:exec xv $1:
+*.jpg:jpeg.xbm:exec xv $1:
+*.tar.gz:xfm_taz.xpm:exec tar xfvz $1:exec tar cfvz $*
+*.gz:xfm_z.xpm:exec gunzip $1:
+*.h:xfm_h.xpm:EDIT:
+*.o:xfm_o.xpm::
+*.ps:xfm_ps.xpm:exec ghostview $1:
+*.tar:xfm_tar.xpm:exec tar xfv $1:exec tar cfv $*
+*.taz:xfm_taz.xpm::
+*.tex:xfm_tex.xpm:EDIT:
+*.tgz:xfm_taz.xpm:exec tar xfvz $1:exec tar cfvz $*
+*.tiff:xfm_tiff.xpm:exec xv $1:
+*.xbm:xfm_xbm.xpm:exec bitmap $1:
+*.xpm:xfm_xpm.xpm:exec pixmap -f $1:
+*.tar.Z:xfm_taz.xpm::
+*.Z:xfm_z.xpm:exec uncompress $1:
+*.tar.z:xfm_taz.xpm::
+*.z:xfm_z.xpm:exec gunzip $1:
+*.zip:xfm_zip.xpm:exec unzip $1:exec zip -r $*
+
+.xfm-*:xfm_apps.xpm:LOAD:
+xfm-*:xfm_apps.xpm:LOAD:
+*.core:xfm_core.xpm::
+Imakefile:xfm_make.xpm:xmkmf; echo "*** imake done ***":
+Makefile:xfm_make.xpm:make; echo "*** make done ***":
+Makefile.*:xfm_make.xpm:make -f $*; echo "*** make done ***":
+makefile:xfm_make.xpm:make; echo "*** make done ***":
+makefile.*:xfm_make.xpm:make -f $*; echo "*** make done ***":
+README:xfm_info.xpm:EDIT:
+README*:xfm_info.xpm:EDIT:
+#
+# added by Brett Wynkoop [ wynkoop@wynn.com]
+#
+###################################################
+#*.html:Mosaic.xpm:exec mosaic $1:
+*.html:netscape.xpm:exec netscape $1:
+*.JPG:jpeg.xbm:exec xv $1:
+*.GIF:xfm_gif.xpm:exec xv $1:
+*.mpg:movie.xpm:exec xanim $1:
+*.MPG:movie.xpm:exec xanim $1:

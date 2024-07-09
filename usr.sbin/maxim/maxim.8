@@ -1,0 +1,84 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI maxim.8,v 1.6 1997/01/16 03:03:01 bostic Exp
+.\"
+.Dd September 27, 1996
+.Os
+.Dt MAXIM 8
+.Sh NAME
+.Nm maxim
+.Nd "system maintenance interface"
+.Sh SYNOPSIS
+.Nm maxim
+.Op Fl s | Fl S
+.br
+.Sh DESCRIPTION
+The
+.Nm maxim
+program starts the system maintenance interface (known as MaxIM).
+The user will be required to enter their username and password to
+continue and the user must be in the ``maxim'' group to be accepted
+(the root user is also allowed access).  It is highly recommended
+that users exit from the browser when they are finished (and
+therefore revoke their browsers access tokens to the administration
+interfaces) so that someone else cannot walk up and use their
+computer to make unauthorized changes to the system.
+.Pp
+.Nm Maxim
+will run either a text-mode browser (defaults to
+.Xr lynx 1 , or you can select
+another text-mode browser by setting the environment variable
+.Ev MAXIM_TXTBROWSER )
+or, if the environment variable
+.Ev DISPLAY
+is set, it will run a graphical browser (defaults to netscape, or you can
+select another graphical browser by setting the environment variable
+.Ev MAXIM_XBROWSER . )
+.Pp
+If
+.Nm maxim
+is starting the netscape browser it will attempt to load the page
+into an existing netscape session using the netscape remote control
+facility, if that fails, it will start it's own netscape session.
+.Pp
+The user can override the default starting URL by setting the
+environment variable
+.Ev MAXIM_URL .
+The user may also access the maintenance interface by going to the
+URL <http://localhost:880> via any means at their disposal (e.g.,
+bookmarking the MaxIM URL).
+.Pp
+.Bl -tag -width indent
+.It Fl s
+Starts the administrative server if it isn't already running.
+Must be run as root to do this.
+.It Fl S
+Stops the currently running administrative server.
+Must be run as root to do this.
+.El
+.Pp
+The default behavior is to make sure the server is running and then
+to point a web browser at the interface.
+.Sh ENVIRONMENT
+.Bl -tag -width MAXIM_TXTBROWSER
+.It DISPLAY
+if set, runs MAXIM_XBROWSER
+.It Ev MAXIM_TXTBROWSER
+browser use for text-only systems, defaults to lynx
+.It Ev MAXIM_XBROWSER
+browser to use for X, defaults to netscape
+.It Ev MAXIM_NOREMOTE
+don't use the netscape -remote feature
+.It Ev MAXIM_URL
+the URL to load, defaults to the Maxim interface
+.El
+.Sh SEE ALSO
+.Xr lynx 1 ,
+.Xr group 5
+.Sh HISTORY
+The 
+.Nm maxim
+command first appeared in BSD/OS and is currently under development.

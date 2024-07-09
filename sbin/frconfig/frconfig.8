@@ -1,0 +1,203 @@
+.\"	BSDI	frconfig.8,v 1.3 1997/11/18 16:39:30 bostic Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd August 4, 1997
+.Os
+.Dt FRCONFIG 8
+.Sh NAME
+.Nm frconfig
+.Nd configure frame relay parameters
+.Sh SYNOPSIS
+.Nm frconfig
+.Ar interface
+.Op Ar command ...
+.Op ...
+.Sh DESCRIPTION
+.ft B
+This utility may change dramatically in future releases.
+.ft R
+.Pp
+The
+.Nm frconfig
+utility allows the setting and retrieving of the frame relay parameters.
+The
+.Ar interface
+must be configured to the
+.Li fr
+linktype prior to using
+.Nm frconfig.
+This is done with the
+.Xr ifconfig 8
+command:
+.sp
+.Li Ta ifconfig Ar interface Li linktype fr
+.sp
+.Pp
+Once configured for frame relay, 3 types of information may be retrieved:
+configuration parameters, static DLCI (Data Link Connection Identifier)
+maps, and dynamic DLCI maps.
+Calling
+.Nm frconfig
+with just the
+.Ar interface
+will display the first two types of information.  The information is
+display is in format that allows it to be replayed to
+.Nm frconfig .
+(e.g., 
+.Dq Li frconfig ntwo0 $(frconfig ntwo0)
+is a no-op.)
+Calling
+.Nm frconfig
+with the command
+.Fl map
+will cause it to display the dynamic DLCI map.
+.Pp
+When first configured, the output of
+.Nm frconfig Ar interface
+will be:
+.Bd -literal -offset indent
+.Ar interface
+type DTE
+lmi ANSI
+N391 6
+N392 3
+N393 4
+T391 10
+maxframe 4000
+fecn unused
+becn unused
+niarps 3
+discard 0
+mode P2P
+default 0
+.Ed
+.sp
+Aside from the
+.Ar interface ,
+the parameters, which are also the list of commands to frconfig are:
+.Bl -tag -width iarptimexx
+.It type
+Either DTE (Data Terminal Equipment) or DCE (Date Computer Equipment).
+DCE mode is used when mimicking a switch.  DTE mode is almost always the
+correct setting.
+.It lmi
+One of ORIG, ANSI, or CCITT.
+This determines the format of the LMI (Local Management Interface) messages.
+.It T391
+Link integrity verification polling timer.
+This value, in seconds, is how often to send LMI status request messages.
+.It N391
+Polling cycles for full status of all PVCs.
+Every
+.Li T391
+seconds a status message is sent.
+Every
+.Li N391 Ns No th
+message requests a full reporting of DLCIs.
+New DLCIs are only discovered when a full status message is requested.
+.It N392
+Number of errors occurring during
+.Li N393
+monitored events that cause the
+link to become unreliable.  Must be no greater than
+.Li N393 .
+.It N393
+Monitored events counter.
+Number of events used when looking for errors.
+.It maxframe
+Maximum frame size, in bytes.
+.It fecn
+Forward Explicit Congestion Notification.
+Currently ignored by the system.
+.It becn
+Backward Explicit Congestion Notification.
+Currently ignored by the system.
+.It niarps
+Number of IARP requests allowed per
+.Li T391
+seconds.
+.It discard
+Determine setting of the discard eligibility bit.
+Currently the only meaningful values are 0 (never set DE) and 1 (set DE
+for IP packets, but not LMI packets).
+.It mode
+Either P2P (Point-To-Point) or MDNB (Multiple Destination No Broadcast).
+When set to P2P ifconfig must be called with a local and remote address:
+.sp
+.Li Ta ifconfig Ar interface local-addr remote-addr
+.sp
+When set to MDNB the ifconfig command should contain a local address
+and netmask:
+.sp
+.Li Ta ifconfig Ar interface local-addr/netmask
+.sp
+Where
+.Ar netmask
+is the number of bits in the network mask (e.g., 24).
+When MDNB mode is used all the IP addresses associated with the frame relay
+network must be within the same subnet.
+MDNB is recommended when more than a single DLCI is to be used.
+.It default
+The DLCI to use when no DLCI is associated with the destination IP address
+of the packet.
+This is most useful in MDNB mode.
+.El
+.sp
+To receive a usage message about any individual command use:
+.sp
+.Li Ta frconfig Ar interface command
+.sp
+In normal circumstances, the only steps needed in setting up a Frame Relay
+link are:
+.sp
+.Li Ta ifconfig Ar interface Li linktype fr
+.br
+.Li Ta frconfig Ar interface ...
+.br
+.Li Ta ifconfig Ar local-address ...
+.sp
+At this point LMI messages will be sent out and as new PVCs (Permanent
+Virtual Circuits) are discovered IARP (Inverse Address Resolution Protocol)
+packets are sent to the associated DLCI to determine the IP address at the
+remote side.  (The
+.Xr ifconfig 8
+command only affects routing, it does not determine DLCI to IP address mapping).
+If the remote side does not support IARP, or if it reports incorrect
+information, static DLCI mapping may be used.  To statically map an IP
+address to a DLCI use the following syntax:
+.sp
+.Li Ta frconfig Ar interface Li dlci Ar index remote-address
+.sp
+This will cause packets destined for the IP address
+.Ar remote-address
+to be sent to DLCI
+.Ar index .
+The mapping may be removed by the command:
+.sp
+.Li Ta frconfig Ar interface Li -dlci Ar index remote-address
+.sp
+Multiple mappings may be made for a single DLCI.  To remove all
+mappings use a
+.Ar remote-address
+of 0.
+When a new PVC is discovered with a DLCI that is statically mapped,
+no IARP packet is sent, only the static mapping is used.
+.Pp
+Dynamic DLCI maps are the ones actually used by the system.  These maps
+are dynamically created by the results of IARP queries or taken from static
+DLCI maps.  Dynamic DLCI maps are read-only and reflect all the active
+DLCIs that have associated IP addresses.  Unlike static DLCI maps, only
+active DLCIs are reported.  Static DLCI maps may be made for any DLCI,
+real or imaginary (or even impossible).
+.Sh DCE MODE
+When in DCE mode all DLCIs must have static maps.  The DCE determines
+what PVCs/DLCIs are available.  The driver currently is not smart about
+this and will relate all DLCIs to all DTEs, even the DLCI that others
+use to contact that DTE.  Conversely, a DLCI will be advertised even if
+the associated client is not active.
+.Sh SEE ALSO
+.Xr ifconfig 8

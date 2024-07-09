@@ -1,0 +1,174 @@
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)arp.8	8.2 (Berkeley) 4/27/95
+.\"
+.Dd April 27, 1995
+.Dt ARP 8
+.Os
+.Sh NAME
+.Nm arp
+.Nd address resolution display and control
+.Sh SYNOPSIS
+.Nm arp
+.Op Fl n 
+.Ar hostname
+.Nm arp
+.Fl a Op Fl n
+.Nm arp
+.Fl d Ar hostname
+.Nm arp
+.Fl f Ar filename
+.Nm arp
+.Fl s Ar hostname link_addr
+.Op Ar temp
+.Op Ar pub
+.Sh DESCRIPTION
+The
+.Nm arp
+program displays and modifies the Internet-to-Link Level address translation
+tables used by the address resolution protocol
+.Pq Xr arp 4 .
+With no flags, the program displays the current
+.Tn ARP
+entry for
+.Ar hostname .
+The host may be specified by name or by number,
+using Internet dot notation.
+.Pp
+The following options are available:
+.Bl -tag -width Ds
+.It Fl a
+The program displays all of the current
+.Tn ARP
+entries.
+.It Fl d
+A super-user may delete an entry for the host called
+.Ar hostname
+with the
+.Fl d
+flag.
+.It Fl f
+Causes the file
+.Ar filename
+to be read and multiple entries to be set in the
+.Tn ARP
+tables.  Entries
+in the file should be of the form:
+.Bd -filled -offset indent
+.Ar hostname link_addr
+.Op Ar temp
+.Op Ar pub
+.Ed
+.Pp
+where the
+.Ar pub
+and
+.Ar temp
+arguments have the meanings described below for the
+.Fl s
+option.
+.It Fl n
+When no flags or the
+.Fl a
+option is specified
+.Nm arp
+attempts to display addresses symbolically as
+well as numerically.
+If the
+.Fl n
+option is specified, no symbolic lookup is done and a ``?'' is
+displayed in place of a symbolic address.
+.It Fl s Ar hostname link_addr
+Create an
+.Tn ARP
+entry for the host called
+.Ar hostname
+with the link level address 
+.Ar link_addr .
+The entry will be permanent unless the word
+.Ar temp
+is given in the command. 
+If the word
+.Ar pub
+is given, the entry will be "published"; i.e., this system will
+act as an
+.Tn ARP
+server,
+responding to requests for 
+.Ar hostname
+even though the host address is not its own.
+.El
+.Pp
+The link level address is of the form:
+.Pp
+.Bd -filled -offset indent -compact
+.Ar m:m:m:m:m:m[/route_info]
+.Ed
+.Pp
+Where
+.Ar m
+is a hexadecimal byte value (with or without a leading 0x).
+.Pp
+The optional
+routing information may be used with IEEE 802.5 (token ring) networks and
+is of the form:
+.Pp
+.Bd -filled -offset indent -compact
+.Ar dir:seg1[:seg2...]
+.Ed
+.Pp
+The
+.Ar dir
+flag is either
+.Li f
+(forward) or
+.Li r
+(reverse), this specifies the direction the route segments should be
+interpreted in. Route segments are 16 bit values that are converted to
+network order. The upper bits specify the ring number and the lower bits
+specify the bridge number. The number of bits in ring and bridge are
+configured into the bridges.
+.Pp
+No whitespace may appear in the link address.
+.Sh SEE ALSO
+.Xr inet 3 ,
+.Xr arp 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+The nonstandard `trailer protocol' support was deleted in
+.Bx 4.4 ;
+the system now accepts, but never generates, trailers.
+IEEE 802.5 source route handling was added in BSD/OS 2.1.

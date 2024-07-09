@@ -1,0 +1,451 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH RADIUSD 8 "21 February 1997"
+.SH NAME
+radiusd \- Remote Authentication Dial In User Service daemon
+.SH SYNOPSIS
+.B radiusd
+[
+.BI \-d database_directory
+]
+[
+.BI \-a accounting_directory
+]
+.if n .ti +5
+[
+.BI \-c current_working_directory
+]
+.if t .ti +5
+[
+.B \-C 
+]
+[
+.B \-P 
+]
+.if n .ti +5
+[
+.BI \-p radius_port
+]
+[
+.BI \-q accounting_port
+]
+[
+.BI \-f fsm_file
+]
+.if n .ti +5
+.if t .ti +5
+[
+.BI \-pp radius_relay_port
+]
+[
+.BI \-qq accounting_relay_port
+]
+.if n .ti +5
+[
+.BI \-g " 'syslog' \(bv 'logfile' \(bv 'stderr "
+]
+.if t .ti +5
+[
+.BI \-l logformat
+]
+.if n .ti +5
+[
+.BI \-t timeout
+]
+[
+.B \-s
+]
+[
+.B \-x
+]
+[
+.B \-v
+]
+[
+.B \-z
+]
+[
+.B \-h
+]
+[
+.B \-u
+]
+.SH DESCRIPTION
+The
+.B radiusd
+server handles Access-Requests for user authentication from \s-2RADIUS\s+2
+clients.
+These clients may be terminal servers, for example, a Network Access
+Server (\s-2NAS\s+2) or other \s-2RADIUS\s+2 servers.
+Authentication requests come to
+.B radiusd
+in the form of \s-2UDP\s+2 packets conforming to the \s-2RADIUS\s+2 protocol.
+.LP
+The
+.B radiusd
+server collects authentication requests and processes them depending on their
+type (see the
+.IR dictionary (5)
+man page).
+If so requested,
+.B radiusd
+may authenticate a user by calling upon other \s-2RADIUS\s+2 servers, various
+authentication services, such as Kerberos, and operating system services, such
+as the \s-2UNIX\s+2 system subroutines which access the
+.I /etc/passwd
+file.
+.LP
+Once a request is received,
+.B radiusd
+validates the sending client and then consults a local database of users (see
+the 
+.IR users (5)
+man page) to find a user name matching the request.
+The user entry contains a list of requirements which must be met to allow the
+user to be authenticated.
+This list normally includes verification of the password, but it may not, and
+it may also specify other requirements.
+If any condition is not met,
+.B radiusd
+sends an Access-Reject response.
+If all the conditions are met, a list of configuration values (reply items)
+are placed into an Access-Accept response.
+Such values as the type of service allowed and other values necessary to
+deliver that service are typically included.
+.LP
+The
+.IR authfile ,
+.IR clients ,
+.I dictionary
+and, optionally, the
+.I users
+files (plus optional, prefixed
+.I authfile
+and
+.I users
+files) are read into memory resident tables.
+As a purely unrelated informational side note, the current version
+of the Merit \s-2AAA\s+2 server stores \s-2IP\s+2 addresses internally
+in host byte order (as opposed to network byte order).
+A version of the Merit \s-2AAA\s+2 server
+may be built that uses
+.BR dbm (3)
+to refer to the
+.I users
+file (see
+.BR builddbm (8)
+for more information).
+Sending
+.B radiusd
+a \s-2HUP\s+2 signal refreshes these internal tables.
+Sending
+.B radiusd
+a \s-2INT\s+2 signal initializes only the \s-2AATV\s+2 modules.
+Sending
+.B radiusd
+a \s-2USR1\s+2 signal turns on debugging much as the
+.B \-x
+option does, except repeated use of the \s-2USR1\s+2 signal continues to
+increase the debugging level (see below, for more about the
+.B \-x
+flag).
+Sending
+.B radiusd
+a \s-2USR2\s+2 signal turns off debugging altogether.
+Sending
+.B radiusd
+a \s-2TERM\s+2 signal provides an orderly way of shutting down the
+the Merit \s-2AAA\s+2 server.
+.LP
+Installing the Merit \s-2AAA\s+2 server involves adding the following lines
+to the
+.I /etc/services
+file:
+.IP
+.PD 0
+.ft B
+#  \s-2RADIUS\s+2 protocol
+.IP
+.ft B
+radius          1645/udp
+.br
+radacct         1646/udp
+.ft R
+.PD
+.LP
+Since the Merit \s-2AAA\s+2 server exits after a configurable number of
+minutes (currently
+.I fifteen
+minutes) of inactivity, you may want to have
+the Merit \s-2AAA\s+2 server run automatically when requests arrive.
+It is possible to override this default behaviour buy supplying the
+.BR \-t 0
+option on the Merit \s-2AAA\s+2 server's command line.
+So, for example, you may want to install the following line in your
+.I /etc/inetd.conf
+file:
+.TP
+.nf
+.ft B
+ radius dgram udp wait root /usr/private/etc/radiusd radiusd
+.ft R
+.fi
+.LP
+Note, that the Merit \s-2AAA\s+2 server need not run as root (\s-2UID\s+2 0),
+although it normally is run that way.  It may be safer to pick a less
+powerful user, say
+.IR radius ,
+which has no password and is used only for administrative purposes, unless
+the server needs superuser privilege to access some shadow password file.
+Also, do not forget to send a \s-2HUP\s+2 signal to your running
+.B inetd
+process to force it to re-read its own database file,
+.IR /etc/inetd.conf ,
+into memory.
+.PD
+.SH OPTIONS
+.TP
+.BI \-d " database_directory"
+allows the user to override the default database and configuration file
+directory by specifying an alternate directory name containing the Merit
+\s-2AAA\s+2 server
+.IR authfile ,
+.IR clients ,
+.IR dictionary ,
+.I radius.fsm
+and
+.I users
+configuration files instead of the default
+.I /usr/private/etc/raddb
+directory.
+See the
+.IR authfile (5),
+.IR clients (5),
+.IR dictionary (5),
+.IR radius.fsm (5)
+and
+.IR users (5)
+man pages for more information.
+.TP
+.BI \-a " accounting_directory"
+allows the user to override the default accounting directory by specifying
+an alternate directory name to contain the standard \s-2RADIUS\s+2 accounting
+detail files instead of the default
+.I /usr/private/etc/radacct
+directory.
+.TP
+.BI \-c " current_working_directory"
+allows the user to override the default current working directory by specifying
+an alternate directory name instead of the default
+.I /usr/private/etc/raddb
+directory.
+This option only affects file system operation for files specified with
+relative file names (no leading slash ("/") character).
+.TP
+.B \-C
+enables the Merit \s-2AAA\s+2 server to do token caching [Ascend].
+.TP
+.B \-P
+enables the Merit \s-2AAA\s+2 server to honor password changing
+requests [Ascend].
+.TP
+.BI \-p " port"
+allows the user to specify an alternate authentication port number instead of
+the default port
+.IR 1645 .
+.TP
+.BI \-q " acct_port"
+allows the user to specify an alternate accounting port number instead of the
+default port
+.IR 1646 .
+.TP
+.BI \-f " fsm_file"
+allows the user to specify an alternate \s-2FSM\s+2 table file instead of the
+default
+.I radius.fsm
+file.
+.TP
+.BI \-l " logformat"
+specifies the optional
+.BR strftime (3)
+format for the Merit \s-2AAA\s+2 server logfile.
+.TP
+.BI \-pp " port"
+allows the user to specify an alternate authentication relay port number
+instead of the default port
+.IR 1645 .
+.TP
+.BI \-qq " acct_port"
+allows the user to specify an alternate accounting relay port number instead
+of the default port
+.IR 1646 .
+.TP
+.BI \-g " 'syslog' \(bv 'logfile' \(bv 'stderr "
+allows the user to specify whether to use
+.BR syslog (3)
+style, logfile style or stderr logging for warning, error and informational
+messages.
+It is possible to specify arbirarily complex logfile file names using the
+.B \-l
+option.
+The
+.BR strftime (3)
+format string may be used to provide logfile renaming and optional compression
+on a yearly, monthly, weekly, daily, hourly or by the minute(!) basis.
+See the \s-2RADIUS_COMPRESS\s+2 and \s-2RAD_LOG_DEFAULT_FILENAME\s+2 macros
+in the
+.I radius.h
+include file.
+.TP
+.BI \-t " timeout"
+allows the user to specify a timeout value for the
+.BR select (2)
+system call which is different from the default timeout value of
+.I fifteen
+minutes.
+If the
+.B \-t
+option is given with a value of zero
+.BR \-t 0
+then the server is essentially put into a blocking mode, that is,
+it will never timeout and terminate, but will wait (at the
+.BR select (2)
+call) forever.
+.TP
+.B \-s
+places the Merit \s-2AAA\s+2 server into the single process (non-spawning) mode.
+.TP
+.B \-x
+allows the user to turn on debugging output:
+.sp
+.nf
+	-x		minimal debugging output, send/receive a/v pairs, etc.
+
+	-x -x		above + \s-2FSM\s+2 high level output + some function tracing.
+
+	-x -x -x		above + remaining function tracing.
+
+	-x -x -x -x	above + \s-2FSM\s+2 low level output + low level config files.
+.fi
+.LP
+Debugging output is directed to the
+.I radius.debug
+file.
+Since the
+.B \-x
+option turns off some of the daemon behaviour of the server (such as
+disconnecting from the controlling terminal, etc.) it is not a good
+idea to try running the server from
+.BR (x)inetd (8)
+while specifying one or more
+.B \-x
+options.
+.sp
+.TP
+.B \-v
+causes the Merit \s-2AAA\s+2 server to place its version information
+onto stdout.
+.TP
+.B \-z
+causes the Merit \s-2AAA\s+2 server logfile and debug file to be emptied,
+but only if the debugging option
+.B -x
+is enabled.
+This option has no effect on the logfile if the
+.B -g
+option specifies
+.BR syslog (3)
+style logging.
+.TP
+.B \-h
+causes the Merit \s-2AAA\s+2 server to place a usage (help) message onto stdout.
+.TP
+.B \-u
+specifies to \s-2NOT\s+2 read the
+.I users
+file into the internal data structures.
+This option is typically used when the Merit \s-2AAA\s+2 server has been built
+to use the
+.BR dbm (3)
+support library.
+.PD
+.SH EXIT STATUS
+.nf
+255 (-1)  dict_init
+254 (-2)  config_init
+253 (-3)  init_fsm
+252 (-4)  config_files
+251 (-5)  disconnect
+250 (-6)  open \s-2PID\s+2 file
+249 (-7)  \s-2SIG_FATAL\s+2
+248 (-8)  usage
+247 (-9)  user_update
+246 (-10) version
+245 (-11) setupsock (can't bind, is the Merit \s-2AAA\s+2 server already running?)
+244 (-12) init_id_to_key
+243 (-13) list_copy
+242 (-14) find_state
+241 (-15) chdir
+240 (-16) hostname
+239 (-17) \s-2SC_OPEN_MAX\s+2 error
+238 (-18) exit on \s-2SIGQUIT\s+2
+.fi
+.LP
+Also, look in the
+.IR logfile ,
+or
+.BR syslog (3)
+entries, depending upon configuration, for information about error
+termination conditions.
+.PD
+.SH FILES
+.PD 0
+.TP 20
+.I /usr/private/etc/raddb/*
+directory containing Merit \s-2AAA\s+2 server configuration and database files.
+.TP 20
+.I /etc/passwd
+contains user passwords for \s-2UNIX\s+2 users.
+.TP 20
+.I /etc/(x)inetd.conf
+holds configuration information for
+.BR (x)inetd (3).
+.TP 20
+.I /etc/services
+contains lists of \s-2TCP/UDP\s+2 services and their port numbers.
+.TP 20
+.I /etc/shells
+used to check the user's shell entry in
+.IR /etc/passwd .
+.TP 20
+.I users.dir
+directory file for
+.BR dbm (3)
+support of the
+.I users
+file.
+.TP 20
+.I users.pag
+data file for
+.BR dbm (3)
+support of the
+.I users
+file.
+.PD
+.SH SEE ALSO
+.LP
+.BR select (2),
+.BR dbm (3),
+.BR signal (3),
+.BR strftime (3),
+.BR syslog (3),
+.BR authfile (5),
+.BR clients (5),
+.BR dictionary (5),
+.BR users (5),
+.BR (x)inetd.conf (5),
+.BR services (5),
+.BR builddbm (8),
+.BR radcheck (8),
+.BR radpwtst (8),
+.BR (x)inetd (8)

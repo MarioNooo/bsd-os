@@ -1,0 +1,45 @@
+DEFS =  -DKRB5_DNS_LOOKUP_KDC=1 -DKRB5_DNS_LOOKUP_REALM=1 -DKRB5_DNS_LOOKUP=1
+CFLAGS+=-DHAVE_SYSLOG_H=1 -DHAVE_OPENLOG=1 -DHAVE_SYSLOG=1 \
+	-DHAVE_CLOSELOG=1 -DHAVE_STRFTIME=1 -DHAVE_VSPRINTF=1 \
+	-DHAVE_REGEXEC=1 -DHAVE_REGCOMP=1 -DHAVE_SRAND48=1 \
+	-DHAVE_SRAND=1 -DHAVE_SRANDOM=1 -DHAVE_TCL_H=1 
+
+.depend: kadm_err.c kadm_err.h \
+	adb_err.c adb_err.h \
+	chpass_util_strings.c chpass_util_strings.h \
+	kadm5 gssapi gssapi_krb5.h
+
+CLEANFILES+= kadm_err.c kadm_err.h adb_err.c adb_err.h \
+	chpass_util_strings.c chpass_util_strings.h \
+	kadm5 gssapi gssapi_krb5.h
+
+SRCS+=	kadm_err.c adb_err.c chpass_util_strings.c \
+	ovsec_glue.c misc_free.c kadm_rpc_xdr.c chpass_util.c \
+	alt_prof.c str_conv.c logger.c
+
+kadm5:
+	if [ ! -h kadm5 ]; then \
+		ln -s . kadm5; \
+	fi
+gssapi:
+	if [ ! -h gssapi ]; then \
+		ln -s . gssapi; \
+	fi
+
+gssapi_krb5.h:
+	if [ ! -h gssapi_krb5.h ]; then \
+		ln -s ${.CURDIR}/../../gssapi/krb5/gssapi_krb5.h  gssapi_krb5.h; \
+	fi
+
+kadm_err.h: ${.CURDIR}/../kadm_err.et
+	awk -f ${.CURDIR}/../../../util/et/et_h.awk outfile=${.TARGET} ${.ALLSRC}
+kadm_err.c: ${.CURDIR}/../kadm_err.et
+	awk -f ${.CURDIR}/../../../util/et/et_c.awk outfile=${.TARGET} ${.ALLSRC}
+adb_err.h: ${.CURDIR}/../adb_err.et
+	awk -f ${.CURDIR}/../../../util/et/et_h.awk outfile=${.TARGET} ${.ALLSRC}
+adb_err.c: ${.CURDIR}/../adb_err.et
+	awk -f ${.CURDIR}/../../../util/et/et_c.awk outfile=${.TARGET} ${.ALLSRC}
+chpass_util_strings.h: ${.CURDIR}/../chpass_util_strings.et
+	awk -f ${.CURDIR}/../../../util/et/et_h.awk outfile=${.TARGET} ${.ALLSRC}
+chpass_util_strings.c: ${.CURDIR}/../chpass_util_strings.et
+	awk -f ${.CURDIR}/../../../util/et/et_c.awk outfile=${.TARGET} ${.ALLSRC}

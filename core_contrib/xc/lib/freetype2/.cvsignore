@@ -1,0 +1,4 @@
+Makefile
+unshared
+.depend
+libfreetype.so.6.0

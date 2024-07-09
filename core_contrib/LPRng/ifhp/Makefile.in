@@ -1,0 +1,213 @@
+###########################################################################
+# ifhp Software
+# copyright 1988-1998 Patrick Powell
+#    papowell@astart.com 
+# See LICENSE for conditions of use.
+###########################################################################
+# $Id: Makefile.in,v 1.22 2000/04/19 01:36:55 papowell Exp papowell $
+########################################################################## 
+
+SRC=@srcdir@
+@SET_MAKE@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+sysconfdir=@sysconfdir@
+libexecdir=@libexecdir@
+INSTALLCMD=@INSTALL@
+FILTERDIR=@FILTERDIR@
+CONFIG_FILE=@CONFIG_FILE@
+
+#=============================================================================
+# List the directories you want to generate:
+# DIRS for all, clean, etc.
+# ALLDIRS for other such as documentation
+#=============================================================================
+
+#GNU
+ifeq ($(FILTERDIR),)
+FILTERDIR=${libexecdir}/filters
+endif
+ifeq ($(CONFIG_FILE),)
+CONFIG_FILE=${sysconfdir}/ifhp.conf
+endif
+
+#BSD
+#BSD .if $(FILTERDIR) == ""
+#BSD FILTERDIR=${libexecdir}/filters
+#BSD .endif
+#BSD .if $(CONFIG_FILE) == ""
+#BSD CONFIG_FILE=${sysconfdir}/ifhp.conf
+#BSD .endif
+
+DIRS= src man
+ALLDIRS= $(DIRS) fonts HOWTO
+TARGET=
+
+# define default target
+MAKETARGET=all
+
+all: $(DIRS)
+
+.PHONY: all install init ci cifiles newmake clean shar configure dist tar cifast update \
+	$(ALLDIRS)
+#force phony target to be made
+
+$(ALLDIRS):
+#GNU
+	$(MAKE) -C $@ $(MAKETARGET) 
+#
+#BSD 	(cd $@; $(MAKE) -f Makefile.bsd $(MAKEFLAGS) $(MAKETARGET))
+
+###############################################################################
+
+install: all init
+#GNU
+	$(MAKE) MAKETARGET=$@ $(DIRS)
+#
+#BSD 	$(MAKE) -f Makefile.bsd $(MAKEFLAGS) MAKETARGET=$@ $(DIRS)
+
+###############################################################################
+
+init:
+	d=`echo ${CONFIG_FILE} | sed -e 's/[,;].*//'`; \
+	d=`dirname $$d`; \
+	if [ ! -d $${d} ] ; then \
+		echo $(SRC)/mkinstalldirs $${d}; \
+		$(SRC)/mkinstalldirs $${d}; \
+	fi; \
+	$(INSTALLCMD) -m 755 $(SRC)/ifhp.conf $${d}/ifhp.conf.sample; \
+	if [ ! -f $${d}/ifhp.conf -o "X${UPDATE}" != "X" ] ; then \
+		echo $(INSTALLCMD) -m 755 $(SRC)/ifhp.conf $${d}; \
+		$(INSTALLCMD) -m 755 $(SRC)/ifhp.conf $${d}; \
+	fi;
+
+ci: cifiles
+	if test ! -d RCS ; then mkdir RCS; fi;
+	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
+
+CI=
+#CO=-kv
+CO=-l
+
+cifiles:
+	if test ! -d RCS ; then mkdir RCS; fi;
+	checkin() { \
+		rcs -l $$1 ; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
+	}; \
+	for i in *; do \
+		if test -f "$$i" ; then \
+			case "$$i" in  \
+			config.h.in ) checkin $$i;; \
+			config.* ) ;; \
+			* ) checkin $$i ;; \
+			esac; \
+		fi; \
+	done;
+
+newmake:
+	for i in Makefile.in */Makefile.in ; do \
+		d=`dirname $$i`; b=`basename $$i .in`; c=$${d}/$${b}.bsd.in; \
+		echo $$i $$c; \
+		sed -e '/^#GNU/,/^#/d' -e 's/^#BSD.//' -e 's/$$^/$$>/' \
+		 -e	's/^if /.if /' -e 's/^endif/.endif/' $$i >/tmp/Makefile.bsd.in; \
+		rm -f $$c ; cp /tmp/Makefile.bsd.in $$c;\
+	done;
+
+###############################################################################
+
+clean:
+	-rm -f *.o *.core core $(TARGET) intl/po2tbl.sed po/POTFILES
+	$(MAKE) MAKETARGET=$@ $(DIRS)
+
+realclean distclean: clean
+	$(MAKE) MAKETARGET=distclean $(ALLDIRS)
+	-rm -f Makefile Makefile.bsd */Makefile */Makefile.bsd \
+		ifhp.conf config.cache config.h config.log config.status
+
+###############################################################################
+
+shar:
+	DIR=`pwd | sed 's,.*/,,' `; \
+	if [ ! -f /tmp/$${DIR}.tgz ]; then \
+		echo You must make TAR file first; \
+		exit 1; \
+	fi; \
+	cd ..; tar ztf /tmp/$${DIR}.tgz | sed -e '/\/$$/d' |  \
+		shar -S -n $${DIR} -a -s papowell@astart.com \
+		   -c -o /tmp/$${DIR}-Part -L100
+
+configure: configure.in
+	autoconf
+	autoheader
+
+dist: configure update clean newmake ci tar
+
+tar:
+	echo RCS >/tmp/L_X
+	echo DOCS >>/tmp/L_X
+	echo PPD >>/tmp/L_X
+	echo Makefile >>/tmp/L_X
+	echo *.core >>/tmp/L_X
+	echo '?' >>/tmp/L_X
+	echo */src/banner >>/tmp/L_X
+	echo */src/pclbanner >>/tmp/L_X
+	echo '*.o' >>/tmp/L_X
+	echo '*,v' >>/tmp/L_X
+	echo '*.a' >>/tmp/L_X
+	echo '*.orig' >>/tmp/L_X
+	echo '*.rej' >>/tmp/L_X
+	echo '*.sh' >>/tmp/L_X
+	echo '*ifhp' >>/tmp/L_X
+	echo '*ofhp' >>/tmp/L_X
+	echo '*status' >>/tmp/L_X
+	echo '*monitor' >>/tmp/L_X
+	echo '*textps' >>/tmp/L_X
+	echo '*ifhp.conf' >>/tmp/L_X
+	for i in $(TARGET) Makefile config.cache config.h config.log config.status; \
+		 do echo \*$$i >>/tmp/L_X; done
+	cat /tmp/L_X
+	DIR=`pwd | sed 's,.*/,,' `; \
+	cd ..; \
+		tar zXcfv /tmp/L_X $${DIR}.tgz $${DIR}; \
+		md5 $${DIR}.tgz |pgp -fast > $$DIR.tgz.md5
+
+cifast:
+	find . -type f -newer VERSION -print \
+		| sed \
+			-e '/core$$/d' \
+			-e '/RCS/d' \
+			-e '/\.o$$/d'  \
+			-e '/.*ifhp$$/d' \
+			-e '/.*ofhp$$/d' \
+		 >/tmp/list
+	echo README >>/tmp/list
+	cat /tmp/list
+	checkin() { \
+		rcs -l $$1 ; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
+	}; \
+	for i in ` cat /tmp/list `; do \
+		checkin $$i; \
+	done;
+
+update:
+	for i in VERSION ./src/patchlevel.h configure.in configure; do \
+		rcs -l $$i; chmod +w $$i; \
+	done;
+
+	DIR=`pwd | sed 's,.*/,,' `; \
+		echo "#define PATCHLEVEL " \"$$DIR\" >./src/patchlevel.h; \
+		sleep 1; \
+		echo $$DIR >VERSION ; \
+		cp configure.in /tmp/configure.in; \
+		D=`echo $$DIR | sed 's,.*-,,' ` ; \
+		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure.in >configure.in; \
+		cp configure /tmp/configure; \
+		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure >configure ;
+
+	$(MAKE) newmake
+	$(MAKE) MAKETARGET=$@ HOWTO man
+

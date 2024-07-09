@@ -1,0 +1,47 @@
+#! /bin/sh
+#
+# BSDI mkioctls,v 2.3 2003/08/20 23:50:16 polk Exp
+
+awk '
+function include(file) {
+	if (system("test -e /usr/include/" file) == 0)
+		printf "#include <%s>\n", file
+}
+
+BEGIN {
+	include("sys/param.h")
+	include("sys/socket.h")
+	include("net/route.h")
+	include("net/if.h")
+	include("netinet/in.h")
+	include("netinet/ip_mroute.h")
+	include("sys/termios.h")
+	print "#define COMPAT_43"
+	print "#define COMPAT_SUNOS"
+	include("machine/compat.h")
+	include("sys/ioctl.h")
+	print ""
+	print "char *"
+	print "ioctlname(val)"
+	print "{"
+	print ""
+}
+
+/^#[ 	]*define[ 	]*(TIO|FIO|SIO|OSIO)[A-Z]*[ 	]*_IO/ {
+	
+	# find where the name starts
+	for (i = 1; i <= NF; i++)
+		if ($i ~ /define/)
+			break;
+	++i;
+	# 
+	printf("\tif (val ==  %s)\n\t\treturn(\"%s\");\n", $i, $i);
+
+}
+END {
+	print "\n\treturn(NULL);"
+	print "}"
+}
+' ${1+"$@"}
+
+exit 0

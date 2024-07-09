@@ -1,0 +1,6 @@
+There is no partition defined in the FDISK table for BSD/OS.
+There must be a BSD/OS FDISK partition defined in order to install
+BSD/OS.  If you continue on with this FDISK table you will not be able
+to install BSD/OS.
+
+Do you wish to modify the table in order to add a BSD/OS partition?

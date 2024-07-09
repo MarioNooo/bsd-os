@@ -1,0 +1,40 @@
+! text colors
+#define FOREGROUND_TEXT  black
+#define BACKGROUND_TEXT  C_grayish
+#define POINTER_COLOR    C_forest
+#define CURSOR_COLOR     C_forest
+#define BORDER_COLOR     blue
+
+! color definitions
+#define C_amber          #ffc070
+#define C_grayish        #bfbfbf
+#define C_forest         #006000
+#define C_blue           #307090
+#define C_purple         #8925d1
+#define C_khaki          #505a1b
+#define C_orange         #c75a00
+#define C_brown          #714820
+#define C_charcoal       #403640
+#define C_chocolate      #563028
+#define C_green          #308070
+#define C_auga           #009080
+#define C_maroon         #6e003c
+#define C_newgreen       #007079
+#define C_gold           #c08900
+
+!
+! Motif colors
+!
+! active colors and inactive colors
+#define motifAC          C_gold
+#define motifIC          C_newgreen
+
+! background color for IconBox
+#define motifSC          DimGrey
+
+! icontext should contrast with motifIC
+#define icontext         white
+
+! set text colors to contrast with the motif colors
+#define textAC           black
+#define textIC           white

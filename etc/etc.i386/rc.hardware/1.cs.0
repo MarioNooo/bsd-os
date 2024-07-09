@@ -1,0 +1,10 @@
+#	BSDI 1.cs.0,v 1.3 1996/11/01 18:46:44 prb Exp
+
+# Configure PC Card Services driver
+if [ -f /sbin/csctl -a -f /sbin/csconfig -a -f /etc/pccard.conf ]; then
+	echo -n ' csctl'
+	if csctl -qld ; then
+		echo -n ' cs'
+		csconfig -a up
+	fi
+fi

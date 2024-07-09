@@ -1,0 +1,160 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI gettydproxy.1,v 1.4 1998/08/13 22:47:48 chrisk Exp
+.Dd October 11, 1996
+.Dt GETTYDPROXY 1
+.Sh NAME
+.Nm gettydproxy
+.Nd acquire tty from gettyd
+.Sh SYNOPSIS
+.Nm gettydproxy 
+.Op Fl dv
+.Op Fl o Ar option Ns Op Ar =value
+.Ar "command ..."
+.Sh DESCRIPTION
+The
+.Nm gettydproxy
+utility requests a tty from
+.Xr gettyd 8
+and passes the file descriptor of the open modem to the
+specified command.
+The following options are available:
+.Bl -tag -width indent
+.It Fl d
+Pass the actual device name (e.g.,
+.Pa /dev/tty00 )
+instead of the path name to the open file descriptor (e.g.,
+.Pa /dev/fd/4 )
+to the command (see below).
+.It Fl o
+Pass the specified
+.Ar option
+(with a value of
+Ar value )
+to
+.Xr gettyd .
+See
+.Xr ttys.conf 5
+for the list of options used by
+.Xr gettyd .
+.It Fl v
+Do not contact
+.Xr gettyd ,
+instead print to standard output the command that would have been executed
+after
+.Xr gettyd
+was contacted. Any
+.Dq %MODEM%
+string will not be replaced since gettyd was not contacted for a port
+assignment.
+.El
+.Pp
+Any occurrence of the special string
+.Dq %MODEM%
+is replaced with the path name to the open file descriptor of the modem
+(e.g., 
+.Pa /dev/fd/4 )
+or the path name to the device if
+.Fl d
+is specified
+(e.g.,
+.Pa /dev/tty00 ) .
+When the specified command exits,
+.Nm gettydproxy
+will also exit which will cause
+.Xr gettyd
+to revoke the line and make it available for use by other programs.
+.Pp
+This utility is provided to allow programs which do not know how to
+talk to
+.Xr gettyd
+to take advantage of the functionality provided by
+.Xr gettyd .
+.Sh EXAMPLE
+The following is an example script.
+It assumes that there is a program called
+.Pa /usr/local/bin/kermit
+which expects the name of the device to use to be specified
+with the
+.Fl l
+option and the baud rate to be specified with the
+.Fl b
+option.
+It processes its arguments and then executes
+.Nm gettydproxy
+with the appropriate arguments.
+.Bd -literal -offset indent
+#!/bin/sh
+CMD="/usr/local/bin/kermit -l %MODEM%"
+OPTS=
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-l)
+		OPTS="$OPTS -o line=$2"
+		shift 2
+		;;
+	-b)
+		OPTS="$OPTS -o dte=$2"
+		CMD="$CMD $1 $2"
+		shift 2
+		;;
+	-*)
+		CMD="$CMD $1 $2"
+		shift 2
+		;;
+	*)
+		CMD="$CMD $1"
+		shift
+		;;
+	esac
+done
+
+exec gettydproxy -d $OPTS $CMD
+.Ed
+.Pp
+The following script supports the
+.Xr seyon 1
+program:
+.Bd -literal -offset indent
+#!/bin/sh
+CMD="/usr/X11/bin/seyon -modem %MODEM%"
+OPTS=
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-modem)
+		OPTS="$OPTS -o line=$2"
+		shift 2
+		;;
+	--)
+		CMD="$CMD $*"
+		shift $#
+		;;
+	-*)
+		CMD="$CMD $1 $2"
+		shift 2
+		;;
+	*)
+		CMD="$CMD $1"
+		shift
+		;;
+	esac
+done
+
+exec gettydproxy -d $OPTS $CMD
+.Ed
+.Sh BUGS
+Earlier versions of gettydproxy mistakenly recognized only
+.Dq %MODEM
+instead of
+.Dq %MODEM%.
+All scripts should use
+.Dq %MODEM%,
+however, for compatibility with scripts written for earlier
+releases of gettydproxy
+.Dq %MODEM
+is still recognized, but strongly discouraged.
+.Sh SEE ALSO
+.Xr ttys.conf 5 ,
+.Xr gettyd 8

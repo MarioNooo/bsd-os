@@ -1,0 +1,191 @@
+.\"
+.\"     @(#)wv.8	1.0 (Wind River) 05/24/02
+.\"
+.Dd May 24, 2002
+.Dt WV 8
+.Os BSD 5.0
+.Sh NAME
+.Nm wv
+.Nd control windview event logging.
+.Sh SYNOPSYS
+.Nm wv
+.Ar command
+.Oo
+.Ar args
+.Oc
+.Sh DESCRIPTION
+.Nm wv
+is a utility used to manually control windview event logging.
+.Pp
+The
+.Nm wv :
+utility provides four commands:
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm cfg
+configure event buffer.
+.It Cm off
+turn off event logging.
+.It Cm on
+turn on event logging.
+.It Cm upload
+upload event buffer.
+.El
+.Pp
+The
+.Cm cfg
+command has the syntax
+.Pp
+.Bd -filled -offset indent -compact
+.Nm wv
+.Cm cfg 
+.Op Fl D
+.Op Fl m Ar min
+.Op Fl M Ar max
+.Op Fl s Ar size
+.Op Fl l Ar level
+.Op Fl o Ar options
+.Op Fl p No \&| Fl g Ar id
+.Op Fl d
+.Op Fl i
+.Ed
+.Pp
+.Bl -tag -width Ds
+.It Fl D
+indicates upload will be deferred (see wv upload command)
+.It Fl m Ar min
+specifies the minimum number of buffers.
+.It Fl m Ar max
+specifies the maximum number of buffers.
+.It Fl s Ar size
+specifies the size of each buffer.
+.It Fl l Ar level 
+specifies the instrumentation level,
+.Pp
+.Bl -tag -width flag -compact
+.It Cm 1
+is context switch level,
+.It Cm 3
+is state transition level,
+.It Cm 7
+is additional level.
+.El
+.It Fl o Ar options
+describe optional events, values that can be or'ed are
+.Pp
+.Bl -tag -width flag -compact
+.It Cm 0x0001 Ar system calls
+.It Cm 0x0002 Ar system calls return
+.It Cm 0x0004 Ar nameI
+.It Cm 0x0008 Ar genio
+.It Cm 0x0010 Ar signals
+.It Cm 0x0040 Ar wayout
+.It Cm 0x0080 Ar run queue
+.It Cm 0x0100 Ar system V message, semaphore, shared memory
+.It Cm 0x0200 Ar threads (requires to use an instrumented library).
+.El
+.It Fl p Ar | Fl g Ar id
+describes the instrumented process/process group, by default every processes are instrumented.
+.It Fl d
+specifies that existing children of instrumented processes are also
+instrumented.
+.It Fl i
+specifies that future chidren of instrumented processes will inherit
+instrumentation.
+.El
+.Pp
+The
+.Cm off
+command has the syntax
+.Pp
+.Nm wv
+.Cm off 
+.Bd -filled -offset indent -compact
+.Op Fl d
+.Op Fl r
+.Op Fl v
+.Ed
+.Bl -tag -width Ds
+.It Fl d
+destroy the event buffer.
+.It Fl r
+reset (empty) the event buffer.
+.It Fl v
+prints informations about the event buffer.
+.El
+.Pp
+The
+.Cm upload
+command run with a buffer configured in continuous upload mode starts a process that regularly uploads event log following specified upload path. In deferred upload mode this command will upload the whole event log before returning. Upload path is specified with the syntax
+.Pp
+.Nm wv
+.Cm upload
+.Bd -filled -offset indent -compact
+.Op Fl P Ar FILE|SOCKET
+.Op Fl F Ar fileName
+.Op Fl f Ar flags
+.Op Fl S Ar hostIp
+.Op Fl s Ar portNb
+.Ed
+.Bl -tag -width Ds
+.It Fl P Ar FILE|SOCKET
+specifies the upload path. Supported upload paths are FILE to store event buffer in  filename or SOCKET to send event buffer to a listening application (eg eventReceive).
+.It Fl F Ar filename
+specifies filename when FILE upload path is selected (default /tmp/wvLog.wvr).
+.It Fl f Ar flags
+specifies the open flags (default O_CREAT|O_TRUNC) for fileName when FILE upload path is selected.
+.It Fl S Ar hostIp
+specifies host IP address (no default is provided).
+.It Fl s Ar portNb
+specifies port number to connect to (default is 6164).
+.El
+.Pp
+The
+.Cm on
+command combines
+.Cm cfg
+an
+.Cm upload
+syntax. If the event buffer is configured in continuous upload mode, this command starts the upload process if it is not already running.  Default values are continuous upload mode and FILE upload path (/tmp/wvLog.wvr).
+.Pp
+.Nm wv
+.Cm on
+.Bd -filled -offset indent -compact
+.Op Fl l Ar level
+.Op Fl o Ar options
+.Op Fl p No \&| Fl g Ar id
+.Op Fl d
+.Op Fl i
+.Op Fl P Ar FILE|SOCKET
+.Op Fl F Ar filename
+.Op Fl f Ar flags
+.Op Fl S Ar hostIp
+.Op Fl s Ar portNb
+.Ed
+.Pp
+.Sh EXAMPLES
+# logs context switches and system calls event and store event log in
+.br
+# /tmp/wvLog.wvr
+.Dl $ wv on -l 1 -o 3
+.Dl $ ...
+.Dl $ wv off
+.Pp
+# same log sent to listening application on host xxx.xxx.xxx.xxx
+.Dl $ wv on -l 1 -o 3 -P SOCKET -S xxx.xxx.xxx.xxx
+.Dl $ ...
+.Dl $ wv off
+.Pp
+# configure deferred mode, start event logging with system calls and 
+.br
+# pthread events, stop event logging and eventually upload event log
+.br
+# to listening aplication.
+.Dl $ wv cfg -D
+.Dl $ wv on -l 7 -o 0x203
+.Dl $ ...
+.Dl $ wv off
+.Dl $ wv upload -P SOCKET -S xxx.xxx.xxx.xxx
+.Pp
+.Sh SEE ALSO
+.Xr trg 8

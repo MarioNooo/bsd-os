@@ -1,0 +1,26 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.iopro,v 1.2 1997/01/16 02:12:39 karels Exp
+#
+
+if [ ! -c /dev/iopro/all ]
+then
+	exit
+fi
+
+# Lose error message from head if we are running the wrong kernel
+cards=`head -1 /dev/iopro/all 2> /dev/null`
+
+if [ -z "$cards" ]
+then
+	exit
+fi
+
+while [ $cards -gt 0 ]
+do
+	cards=`expr $cards - 1`
+	echo -n " ioprod";  /usr/sbin/ioprod $cards
+done

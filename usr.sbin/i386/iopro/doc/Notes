@@ -1,0 +1,267 @@
+
+		    Chase Research IOPRO Drivers for BSD/OS
+		    		R.J.Dunlop
+
+		Notes,v 1.13 1995/07/28 10:42:07 rjd Exp
+
+
+This package contains the source for BSD/OS drivers for the Chase Research
+Intelligent Modular serial I/O systems IOPRO and IOLITE.
+
+
+
+INSTALLATION NOTES
+
+Install.sh will patch the driver into the BSD/OS V2.0 kernel and install
+the utilities. READ IT BEFORE YOU RUN IT !
+
+Install.sh and the drivers should continue to work with V1.0 and V1.1
+systems BUT THIS HAS NOT BEEN TESTED. All new code for 2.0 should be
+#if'd with "BSDI_RELEASE >= 200" but I may have missed a few. One thing
+to watch for is #include <file.h> lines, these may have to be restored
+to #include "file.h".
+
+I have added a new directory /usr/src/sys/i386/isa/fw to the kernel source
+tree to contain firmware interface structures in a similar way to
+/usr/src/sys/i386/isa/ic containing chip information.
+
+Two device drivers are added to /usr/src/sys/i386/isa along with a bunch of
+header files, all with the prefix "aim". ( It was the original project code
+name ).
+
+Several utilities are added to /usr/src/libexec all with the prefix iopro.
+
+MAKEDEV.iopro is placed in /dev. It would be a nice idea it MAKEDEV would
+call the file MAKEDEV.xxx if handed a device name xxx that it does not know
+about, but thats for the future.
+
+The support daemon startup is added into /etc/rc.local although you may
+wish to move this forward in the sequence if using serial connections for
+PPP and the like. See also iopro_wait(8).
+
+Finally the script will prompt you with (but not perform unless you confirm)
+the builds and makes that you will need to perform to install the driver.
+
+
+
+OVERALL STRUCTURE
+
+This is brief, but all you get at present. Please contact at me with any
+specific questions and I will try to help and expand this document in the
+future.
+
+
+Drivers
+
+aimctl.c (aimc) is a physical device driver and handles the hardware and
+all special control functions such as power monitoring, downloading and
+configuration. This driver is common to all AIM products ( IOPRO being the
+first simple async serial port product ).
+
+aimdata.c (aim) is a pseudo driver designed to provide a tty interface for
+serial I/O. It is a pseudo driver slave to the control driver although the
+driver linking does not follow the "standard" BSD/OS method at present.
+
+It is planned that other interface drivers will be added in the future as
+more AIM products are developed. It helps to think of AIM as a serial I/O
+equivalent of SCSI with aimctl performing the role of the HBA driver and
+aimdata being say the disk driver.
+
+
+Devices
+
+All the control devices (aimc) created by MAKEDEV.iopro are contained in the
+sub-directory /dev/iopro. Most are designed to make it easy to use scripts to
+control the cards by presenting simple ASCII based interfaces ( The standard
+Chase drivers use a massive collection of complex ioctls ). The naming is
+relatively straight forward.
+
+    /dev/iopro/all	Refers to all the cards. Simulates a file containing
+   			one line of information, the number of cards
+   			installed. Further information may be added latter
+   			so use "head -1" to access.
+
+    /dev/iopro/c0	Interface card 0. Used for power detection. Open for
+    			reading waits for power up, opening for writing waits
+    			for power down.
+
+    /dev/iopro/c0u0	Card 0 unit 0. Configuration interface. Strings are
+    			passed directly to and from the IOPRO firmware
+    			interpretor. See firmware interface spec for more
+    			details.
+
+    /dev/iopro/c0u0d	Card 0 unit 0. Download interface. Raw access to the
+			external units memory. Also supports special Ioctls
+			for processor control ( well I had to have some ).
+			It is very useful to be able to hexdump card memory
+			for debugging, it is also a good way to grab someone's
+			password from the input buffers. Default installation
+			is of root access only.
+			iopro_dump(8) provides a prettier (but ultimately less
+			useful) interface than hex dumping.
+
+
+Data driver devices (aim) are created in /dev following Chase ( and others )
+naming standard.
+
+    /dev/{type}{unit}{port}
+
+Type is "tty" for a normal serial port and "prn" for a transparent printer
+piggy backed on a terminal.
+
+Unit is a single letter and refers to the interface card and external unit in
+use.
+	    Card	Unit
+		 0  1  2  3  4  5  6  7
+	     0	 4  5  6  7  8  9  A  B
+	     1	 C  D  E  F  G  H  I  J
+	     2	 K  L  M  N  O  P  Q  R
+	     3	 S  T  U  V  W  X  Y  Z
+
+Finally port is a single letter 'a' to 'p' designating the physical port on
+a unit. Note that uppercase invocations for modem ports are not supported as
+I prefer to use the far more sensible BSD semantics with CLOCAL and friends.
+
+Unlike most systems the data port minor device number values are irrelevant,
+as long as they are unique and in the range specified by NAIM ( set in the
+kernel config file ) they can be any value. The linking of minor device number
+to firmware logical channel is performed by the support demon ioprod.
+
+
+
+UTILITIES
+
+They all have man pages now so this is just the highlights.
+
+
+ioprod
+
+This is the main support daemon and is responsible for holding the system
+together. One instance of ioprod is started for each interface card
+detected at system power up. Ioprod then waits for the card to signal that
+the external units have been powered before calling the download utility
+iopro_dload for each unit. Once units are downloaded and running ioprod
+carries out the configuration dialogue with the unit and assigns minor
+devices to the firmware logical channels and informing the data driver
+of the assignments via special ioctls.
+
+
+iopro_debug
+
+Simply issues an ioctl to the driver to turn on debugging printfs if debug
+has been compiled in.
+
+
+iopro_dump
+
+Displays the contents of the external units shared memory in hacker
+readable form. Mainly used for debug but can also provide silly stats
+like number of characters in/out. WARNING general access to the devices
+in /dev/iopro/ is a very large security hole, for this reason they are
+normally created read/write by root only.
+
+
+iopro_dload
+
+A simple program that performs the downloading of an external unit and
+releases the processor. Should normally only be called from the support
+daemon.
+
+
+iopro_wait
+
+If an attempt is made to open a data device before the relevant external unit
+becomes operational then one of two actions occur. Non-blocking opens return
+the error EWOULDBLOCK, blocking opens do just that. The former causes some
+daemons problems and the latter can lock the system ( consider opening a port
+before the download daemon is started ).
+
+iopro_wait is an attempt to solve this problem. It can be used to delay the
+launching of a daemon until the data port is available.
+
+
+
+BUGS, PROBLEMS AND OMISSIONS
+
+
+I consider my spelling a feature rather than a bug. Life is to short.
+
+Where I have doubts about implementation or don't like something I have
+flagged this in the code with a comment starting XXX.
+
+Several nice to have things are still missing.
+
+   1. The support daemon needs to handle more complex configurations such as
+      transparent printers. The firmware does all the work but the daemon
+      needs to set it up. The same goes for special functions such as robust
+      flow control. The Chase standard config file can run to several thousand
+      lines, there has to be a better way.
+
+   2. A pretty printer for the firmware interface structures is a very useful
+      tool when debugging. It saves you going crosseyed looking at hex dumps.
+      DONE (sort of) see iopro_dump.
+
+   3. I added the STICKY mode function ( preserving line mode over a close/open
+      sequence rather than reseting to the default on open ) very useful with
+      SCO print spoolers. I forgot to get around to writing code to turn it
+      on and off :-(
+
+   4. The Chase "standard" drivers have mode locks so that the sysadmin can
+      prevent users from changing the baudrate etc.
+
+   5. Documentation :-(
+
+
+
+CHANGES
+
+
+V1.0 Patch 1
+
+    Corrected FIONREAD ioctl call processing to include characters held
+    in external units buffer during 10mS interrupt holdoff.
+
+    Modified Files: aimdata.c 
+
+V1.0 Patch 2
+
+    Firmware now supports split baudrates and DTR/RTS reporting so add to
+    driver.
+
+    Modified Files: aimdata.c aim_master.h aim_channel.h
+
+V1.0 Patch 3
+
+    Flush any input received while the line is closed.
+
+    Modified Files: aimdata.c
+
+Changed for 1.1 Kernel
+
+   Added select support to data driver
+
+	Modified Files: aimdata.c aimvar.h
+
+   Added interrupt disabling on system shutdown
+
+	Modified Files: aimctl.c aimvar.h
+
+Changed for 2.0 Kernel
+
+    New improved auto config system.
+
+	Modified Files: aimdata.c aimctl.c aim.h
+
+    More kludges to the installation script
+
+	Install.sh
+
+--
+	R.J.Dunlop			Tel: +44 1256 52260
+	Technical Director		Fax: +44 1256 810159
+	Chase Research PLC		Net: <Bob.Dunlop@chaser.co.uk>
+	Cedarwood
+	Chineham Business Park
+	Basingstoke
+	RG24 8WD
+	United Kingdom

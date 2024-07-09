@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "config_ppp has been replaced by functionality in maxim." 1>&2
+echo "see maxim(8) for more details." 1>&2
+exit 1

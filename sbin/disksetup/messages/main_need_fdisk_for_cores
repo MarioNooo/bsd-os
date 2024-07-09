@@ -1,0 +1,3 @@
+Disksetup cannot continue as an FDISK table must be specified and
+accepted in order to continue with the options that have been chosen.
+Please rerun disksetup when you have decided on a new course of action.

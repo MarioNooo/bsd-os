@@ -1,0 +1,16 @@
+!
+! This is an `xmodmap' input file for the DELL PC keyboard.
+! This file was automatically generated on Wed Jun 15 16:04:02 1994
+! by schneck with XKeyCaps 1.27; Copyright 1993 Jamie Zawinski <jwz@lucid.com>.
+!
+! This file presupposes that the keyboard is in the default state, and
+! may malfunction if it is not.
+!
+
+keycode 0x26 =  A               NoSymbol        Adiaeresis
+keycode 0x20 =  O               NoSymbol        Odiaeresis
+keycode 0x1E =  U               NoSymbol        Udiaeresis
+keycode 0x27 =  S               NoSymbol        ssharp          ssharp
+
+keycode 0x71 =  Mode_switch
+add    Mod3    = Mode_switch

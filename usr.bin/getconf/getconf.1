@@ -1,0 +1,98 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"      BSDI getconf.1,v 2.2 1996/09/18 15:01:00 bostic Exp
+.Dd "September 16, 1996"
+.Dt GETCONF 1
+.Os
+.Sh NAME
+.Nm getconf
+.Nd get configuration values
+.Sh SYNOPSIS
+.Nm getconf
+.Fl a
+.Op Ar path
+.Nm getconf
+.Ar system_variable
+.Nm getconf
+.Ar path_variable path
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.2 .
+A far more complete interface is available using
+.Xr sysctl 8 .
+.Pp
+The
+.Nm getconf
+utility displays system configuration values.
+The system configuration values that may be requested are those available
+from the underlying functions
+.Xr confstr 3 ,
+.Xr pathconf 2
+and
+.Xr sysconf 3 .
+.Pp
+If a
+.Ar system_variable
+or a
+.Ar path_variable
+and
+.Ar path
+are specified as arguments to
+.Nm getconf ,
+the requested configuration value will be written to standard output.
+If the requested configuration value is valid but undefined for the
+system, the string
+.Dq undefined
+is written to the standard output instead.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+Write all currently available configuration values to the standard output,
+using the format:
+.Pp
+.Dl value name = value
+.Pp
+If
+.Ar path
+is specified, all file oriented values (e.g.,
+values available from the
+.Xr pathconf 2
+function) will be based on the specified file, otherwise,
+they will be based on the file
+.Pa \&/ .
+.El
+.Pp
+The
+.Nm getconf
+utility exits 0 on success, and >0 if an error occurs.
+.Sh EXAMPLES
+.Pp
+To retrieve the longest name supported by the
+.Pa /mnt/cdrom
+filesystem, one would use the following request:
+.Pp
+.Dl getconf name_max /mnt/cdrom
+.Pp
+To determine if the system supports the POSIX FORTRAN Development
+Utilities Option, one would use the following request:
+.Pp
+.Dl getconf posix2_fort_dev
+.Pp
+To retrieve the maximum input queue available for the current tty,
+one would use the following request:
+.Pp
+.Dl getconf max_input \`tty\`
+.Sh SEE ALSO
+.Xr pathconf 2 ,
+.Xr confstr 3 ,
+.Xr sysconf 3 ,
+.Xr sysctl 8
+.Sh STANDARDS
+The
+.Fn getconf
+utility conforms to
+.St -p1003.2 .

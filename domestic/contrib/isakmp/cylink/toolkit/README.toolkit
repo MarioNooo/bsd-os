@@ -1,0 +1,227 @@
+/*
+ * This cryptographic library is offered under the following license:
+ * 
+ *      "Cylink Corporation, through its wholly owned subsidiary Caro-Kann
+ * Corporation, holds exclusive sublicensing rights to the following U.S.
+ * patents owned by the Leland Stanford Junior University:
+ *  
+ *         Cryptographic Apparatus and Method
+ *         ("Hellman-Diffie") .................................. No. 
+4,200,770
+ *  
+ *         Public Key Cryptographic Apparatus
+ *         and Method ("Hellman-Merkle") .................. No. 4,218, 582
+ *  
+ *         In order to promote the widespread use of these inventions from
+ * Stanford University and adoption of the ISAKMP reference by the IETF
+ * community, Cisco has acquired the right under its sublicense from Cylink 
+to
+ * offer the ISAKMP reference implementation to all third parties on a 
+royalty
+ * free basis.  This royalty free privilege is limited to use of the ISAKMP
+ * reference implementation in accordance with proposed, pending or 
+approved
+ * IETF standards, and applies only when used with Diffie-Hellman key
+ * exchange, the Digital Signature Standard, or any other public key
+ * techniques which are publicly available for commercial use on a royalty
+ * free basis.  Any use of the ISAKMP reference implementation which does 
+not
+ * satisfy these conditions and incorporates the practice of public key may
+ * require a separate patent license to the Stanford Patents which must be
+ * negotiated with Cylink's subsidiary, Caro-Kann Corporation."
+ * 
+ * Disclaimer of All Warranties  THIS SOFTWARE IS BEING PROVIDED "AS IS", 
+ * WITHOUT ANY EXPRESS OR IMPLIED WARRANTY OF ANY KIND WHATSOEVER.
+ * IN PARTICULAR, WITHOUT LIMITATION ON THE GENERALITY OF THE FOREGOING,  
+ * CYLINK MAKES NO REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING 
+ * THE MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+ * PURPOSE.
+ *
+ * Cylink or its representatives shall not be liable for tort, indirect, 
+ * special or consequential damages such as loss of profits or loss of 
+goodwill 
+ * from the use or inability to use the software for any purpose or for any 
+ * reason whatsoever.
+ *
+ *******************************************************************
+ * This cryptographic library incorporates the BigNum multiprecision 
+ * integer math library by Colin Plumb.
+ *
+ * BigNum has been licensed by Cylink Corporation 
+ * from Philip Zimmermann.
+ *
+ * For BigNum licensing information, please contact Philip Zimmermann
+ * (prz@acm.org, +1 303 541-0140). 
+ *******************************************************************
+ * 
+*/
+
+
+The CryptoGraphic Toolkit Library implements the cryptographic 
+functions needed for Cylink security products. To use this version of 
+the toolkit you will need to install Big Num package separately.
+
+
+** How to build the toolkit 
+
+The configuration information needed to compile the toolkit include 
+the Endian type of the machine (BIG_ENDIAN or LITTLE_ENDIAN),
+word size (ORD_16 or ORD_32, 64 bit word sizes are not supported yet)
+and whether assembly functions are available (ASM_FUNCTION or
+C_FUNCTION). These can be specified in the Makefile.h.
+
+The  current version of the toolkit uses the BigNum package for math
+functions. The BigNum package needs to be separately installed. Please
+read the README.BN file under the Big Num directory to determine how 
+to install it. If you are installing Big Num package on a non-unix 
+systems you may have to manually change the lbn.h file to specify the 
+word sizes and endian architecture of the machine.
+
+Once the bignum package has been installed update the Makefile to 
+specify the directory  that contains the Big Num package. You can use
+the Makefile to compile and test the Toolkit. If your machine does not 
+have the make utility you will have to compile and install them using 
+some other tool available on your machine. You will have to specify the 
+configuration information (Endianness, Word size and assembly functions 
+availablitiy) in the file endian.h.
+
+The CryptoGraphic ToolKit provides the following functions:
+*
+*      int SHA( uchar *message, ushort message_bytes,
+*               uchar  *hash_result )
+*      void SHAInit( SHA_context *hash_context )
+*      int SHAUpdate( SHA_context *hash_context,
+*                     uchar        *message,
+*                     ushort      message_bytes )
+*      int SHAFinal( SHA_context *hash_context,
+*                    uchar        *hash_result )
+*      int GenDSSSignature( ushort dss_p_bytes, uchar  *dss_p,
+*                           uchar  *dss_q,      uchar  *dss_g,
+*                           uchar  *dss_x,      uchar  *dss_k,
+*                           uchar  *r,          uchar  *s,
+*                           uchar  *hash_result )
+*      int VerDSSSignature( ushort dss_p_bytes, uchar  *dss_p,
+*                           uchar  *dss_q,      uchar  *dss_g,
+*                           uchar  *dss_y,      uchar  *r,
+*                           uchar  *s,          uchar  *hash_result)
+*      int InitRand( ushort SEED_bytes, uchar  *SEED,
+*                                       uchar  *RVAL )
+*      int GenRand( ushort A_bytes, uchar  *A,
+*                                   uchar  *RVAL )
+*      int GenDSSKey( ushort dss_p_bytes, uchar  *dss_p,
+*                     uchar *dss_q,       uchar  *dss_g,
+*                     uchar  *dss_x,      uchar  *dss_y,
+*                     uchar  *XKEY )
+*
+*      int GenDSSNumber( uchar *dss_k,   uchar dss_q,
+*                        uchar *KKEY )
+*      int GetDHSharedNumber( ushort DH_modulus_bytes,uchar  *DH_secret,
+*                             uchar  *DH_public, uchar  *DH_shared,
+*                             uchar  *DH_modulus )
+*      void DESKeyExpand( uchar *key, uchar *expanded_key )
+*      int DESEncrypt( uchar  *des_iv,       uchar  *des_key,
+*                      ushort des_mode,      uchar  *input_array,
+*                      uchar  *output_array, ushort input_array_bytes )
+*      int DESDecrypt( uchar  *des_iv,  uchar  *des_key,
+*                      ushort des_mode, uchar  *data_array,
+*                      ushort data_array_bytes )
+*      int DHOneTimePad( ushort DH_modulus_bytes, uchar  *DH_shared,
+*                        uchar  *X,               uchar  *Y )
+*      int SetCipherKey( ushort DH_shared_bytes,
+*                         uchar  *DH_shared,
+*                         uchar  *Key,
+*                         ushort cryptoMethod )
+* 
+*      int GetDHKey( ushort DH_modulus_bytes,  uchar *DH_secret,
+*                    uchar *DH_public,         ushort key1_bytes,
+*                    uchar *key1,              ushort key2_bytes,
+*                    uchar *key2,              uchar *DH_modulus )
+*       int GenDHPair( ushort DH_modulus_bytes, uchar  *DH_secret,
+*                      uchar  *DH_public,       uchar  *DH_base,
+*                      uchar  *DH_modulus,      uchar  *RVAL );
+*       int GetPasswordKeySHA( ushort Password_bytes, uchar  *Password,
+*                               uchar  *salt,          ushort Count,
+*                               uchar  *K,             uchar  *IV );
+*       int GenDSSParameters( ushort dss_p_bytes, uchar  *dss_p,
+*                             uchar  *dss_q,      uchar  *dss_g,
+*                                                  uchar  *RVAL );
+*       int GenShamirTriplet( ushort Secretnumber_bytes, uchar *SecretNumber,
+*                             uchar *first_value,  uchar *second_value,
+*                             uchar *third_value,  uchar *RVAL )
+*       int GetNumberShamirDuplex( ushort Secretnumber_bytes, uchar  *value_A,
+*                                ushort A_position, uchar  *value_B,
+*                                ushort B_position, uchar  *SecretNumber )
+*
+*       int SFDHEncrypt( ushort DH_modulus_bytes,
+*                        uchar  *DH_modulus, uchar  *DH_base,
+*                        uchar  *DH_public, uchar  *DH_random_public,
+*                        uchar  *DH_shared, uchar  *RVAL )
+*       int SFDHDecrypt( ushort DH_modulus_bytes,
+*                        uchar  *DH_modulus,
+*                        uchar  *DH_secret, uchar  *DH_random_public,
+
+
+Files:
+
+cencrint.h - Toolkit internal functions header
+
+toolkit.h - Toolkit public functions header
+
+c_asm.h    - Toolkit C/ASM switching support functions header
+
+des.h      - DES and KAPPA tables header
+
+desext.h   - DES and KAPPA external tables header
+
+sha.h	   - SHA definitions
+
+cylink.h   - general header
+
+endian.h   - Platform-dependend compilation modes header
+
+dssnum.h   -  Cylink DSS Numbers (P Q G) support header
+
+test.c     - Toolkit test functions
+
+main.c     - Toolkit test example
+
+c_asm.c    - Toolkit C/ASM switching support functions
+
+bits.c	   - Bits shifting and byte transferring operations 
+
+math.c     - Math routines for the Toolkit
+
+keyshare.c - Shamir Key sharing routines
+
+swap.c     - Byte and word swap functions 
+
+sha.c      - Secure Hash Functions
+
+rand.c	   - Random number genaration functions
+
+dss.c	   - Digital Signature functions
+
+des.c	   - Data Encryption Standard Functions
+
+dh.c	   - Diffe-Hellman Key-Exchange Functions
+
+prime.c    - Prime Number genaration and verification
+
+
+README.toolkit    - this file
+
+Makefile	  - Makefile to compile and test the Toolkit.
+
+
+Assembly codes for Intel 386 (DES functions):
+
+encdec.asm
+
+encdec32.asm
+
+
+Assembly codes for SPARC (DES functions):
+
+
+des6.s
+

@@ -1,0 +1,8 @@
+#
+# sample xfm device configuration   Thu Apr 28 1994   AG
+# Adapt this to your system configuration.
+#
+##########################################################################
+
+/disk/a:mount -t msdos -o user /dev/fd0 /disk/a:umount /disk/a
+/disk/b:mount -t msdos -o user /dev/fd1 /disk/b:umount /disk/b

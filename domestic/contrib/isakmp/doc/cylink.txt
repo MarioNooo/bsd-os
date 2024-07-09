@@ -1,0 +1,13 @@
+
+  The Cylink cryptographic library uses Colin Plumb's Big Number library.
+It is necessary to compile the bignum library before the crypto library.
+README files in the directory isakmp/cylink/bignum describe how to build and
+test the bignum library on a variety of architectures.
+  The README in isakmp/cylink/toolkit describes how to build and verify the
+cryptographic toolkit.
+
+  This toolkit operates on numbers which are LSB first. It has been modified 
+(dnh.c) to flip Diffie-Hellman parameters and exponentials. Note that
+DSS has not been modified to similarly flip it's parameters and it therefore
+cannot interoperate with implementations which are MSB first (like BSAFE).
+

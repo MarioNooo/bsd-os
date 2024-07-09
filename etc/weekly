@@ -1,0 +1,54 @@
+#!/bin/sh -
+#
+#	BSDI	weekly,v 2.13 1998/06/08 21:54:02 eng-support Exp
+#	from	@(#)weekly	8.2 (Berkeley) 1/2/94
+#
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec:/usr/contrib/bin
+export PATH
+
+if [ -f /etc/uucp/weekly ]; then
+	echo ""; echo "Cleaning up UUCP:"
+	su -m uucp -fc /etc/uucp/weekly
+fi
+
+echo ""; echo "Rotating messages:"
+rotate -z -r 3 /var/log/messages
+echo ""; echo "Rotating daemon log:"
+rotate -z -r 3 /var/log/daemon.log
+kill -1 `cat /var/run/syslog.pid`
+
+echo ""; echo "Rotating cron log:"
+rotate -z -r 3 /var/log/cron
+kill -1 `cat /var/run/syslog.pid`
+
+
+if [ -f /var/log/ftpd/xferlog ]; then
+	echo "Rotating xferlog:"
+	rotate -z -r 3 /var/log/ftpd/xferlog
+fi
+
+if [ -f /var/account/gettyd ]; then
+	echo "Rotating gettyd accounting:"
+	rotate -z -r 3 /var/account/gettyd
+fi
+
+if [ -f /var/log/httpd/access_log ]; then
+	echo "Rotating httpd logfiles:"
+	rotate -z -r 3 /var/log/httpd/access_log
+	rotate -z -r 3 /var/log/httpd/error_log
+	if [ -f /var/run/httpd.pid ]; then
+		kill -1 `cat /var/run/httpd.pid`
+	fi
+fi
+
+if [ -f /var/www/squid/bin/squid.weekly ]; then
+	su -m www -fc /var/www/squid/bin/squid.weekly
+fi
+
+echo "Rebuilding whatis database for man..."
+/usr/sbin/makewhatis >/dev/null 2>&1
+
+[ -f /etc/weekly.local ] && sh /etc/weekly.local
+
+exit 0

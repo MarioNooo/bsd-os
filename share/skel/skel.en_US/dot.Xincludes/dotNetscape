@@ -1,0 +1,9 @@
+! app-defaults file for Netscape
+
+! use server default visual (netscape default is Best)
+*visualID:			Default
+
+! select approriate fonts for window size
+! the definitions comes from .Xincludes/Fonts
+*documentFonts.defaultFont*iso-8859-1.prop:	NETSCAPE_PROP
+*documentFonts.defaultFont*iso-8859-1.fixed:	NETSCAPE_FIXED

@@ -1,0 +1,198 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"     BSDI routed.8,v 1.1 2002/10/18 21:29:54 polk Exp
+.\"
+.Dd June 24, 1996
+.Dt ROUTED 8
+.Os
+.Sh NAME
+.Nm routed
+.Nd network routing daemon emulator
+.Sh SYNOPSIS
+.Nm routed
+.Op Fl qst
+.Op Ar logfile
+.Sh DESCRIPTION
+.Nm Routed
+is a script that builds a
+.Xr gated 8
+configuration file based on the specified flags and invokes
+.Xr gated 8
+to emulate the historic routed command.
+.Nm Routed
+is invoked at boot time to manage the network forwarding
+tables.
+.Pp
+The
+.Nm
+process waits for a signal or for
+.Xr gated 8
+to terminate, then removes the temporary
+configuration file before exiting.  On receipt of a
+.Dv HUP or TERM
+signal,
+.Nm
+will terminate
+.Xr gated 8
+and exit.  It is also possible to manage
+.Xr gated 8
+with the
+.Xr gdc 8
+interface.
+.Pp
+The following flags are supported:
+.Bl -tag -width XXq
+.It Fl q
+Specifies
+.Dq quiet
+mode.
+.It Fl s
+Specifies
+.Dq supplier
+mode.
+.It Fl t
+Enables packet tracing.
+.Tn RIP
+and router discovery
+.Tn ICMP
+packets will be traced.  Tracing occurs to stderr or the specified
+.Ar logfile .
+.El
+.Pp
+When a
+.Ar logfile
+is specified,
+.Xr gated 8
+is instructed to log changes to the routing tables and other events in
+the specified log file.  When the
+.Fl t
+flag is specified,
+.Tn RIP
+and router discovery
+.Tn ICMP
+packets sent and received will also be logged.
+.Pp
+.Nm Routed
+has three modes of operation:
+.Bl -tag -width automatic
+.It automatic
+If IP forwarding is enabled
+.Xr gated 8
+will be configured for supplier mode.  Otherwise,
+.Xr gated 8
+will be configured for quiet mode.  The mode is determined at startup
+by querying the
+.Dv net.inet.ip.forwarding
+kernel variable with
+.Xr sysctl 8 .
+.It quiet
+This mode is appropriate for single and multi-homed hosts.
+In this mode
+.Xr gated 8
+will not supply routing information, instead it will listen for RIP
+packets and participate as a router discovery client.
+.It supplier
+This mode is appropriate for systems acting as a router and forwarding
+packets between two network interfaces.  
+.Xr Gated 8
+will supply 
+.Tn RIP
+routing information and participate as a router discovery server.
+.El
+.Pp
+Differences when invoking
+.Xr gated 8
+via this interface and the historic version of routed are:
+.Bl -bullet
+.It
+.Tn RIP
+packets are not sent out point-to-point (i.e. 
+.Tn SLIP 
+and
+.Tn PPP )
+interfaces.
+.It
+.Xr Gated 8
+participates as a router discovery client or server, depending on the
+mode in which it is operating.  When acting as a router discovery
+client, the
+.Dq default 
+route created to point to the router in use is preferred over a route
+learned via
+.Tn RIP .
+.It
+When acting as a host,
+.Xr gated 8
+is configured to listen for broadcast 
+.Tn RIPv1
+packets and broadcast or multicast
+.Tn RIPv2
+packets.
+When acting as a router,
+.Xr gated 8
+is configured to broadcast
+.Tn RIPv2
+packets that are compatible with
+.Tn RIPv1
+clients.
+.It
+The tracing options work somewhat differently and
+.Fl d
+is not supported.
+.It
+The 
+.Fl g
+option to originate a 
+.Dq default
+route is not supported.
+.It
+The
+.Dv USR1
+and
+.Dv USR2
+signals are not available to toggle tracing.  See the
+.Xr gdc 8
+command for information on how to toggle tracing with
+.Xr gated 8 .
+.It
+The
+.Dv INT
+signal is not available to flush the routing table.
+.It
+The
+.Pa /etc/gateways
+file is not supported,
+.Nm
+will not start
+.Xr gated 8
+it if is present.
+.It
+.Xr Gated 8
+monitors changes in interface configuration.
+.It
+.Xr Gated 8
+monitors changes to the kernel forwarding table with the
+.Xr route 8
+command.  Static routes added in this manner override
+.Tn RIP
+routes and the 
+.Dq default
+generated on a router discovery client, but are never supplied
+in
+.Tn RIP
+advertisements.
+.It
+.Xr Gated 8
+monitors ICMP redirects and times them out after three minutes.
+.El
+.Sh SEE ALSO
+.Xr udp 4 ,
+.Xr icmp 4 ,
+.Xr XNSrouted 8 ,
+.Xr gated 8 ,
+.Xr gdc 8 ,
+.Xr htable 8 ,
+.Xr sysctl 8 .

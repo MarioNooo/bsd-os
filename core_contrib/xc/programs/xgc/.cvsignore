@@ -1,0 +1,8 @@
+Makefile
+.depend
+lex.c
+gram.h
+gram.c
+xgc
+xgc.0
+xgc._man

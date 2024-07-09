@@ -1,0 +1,3 @@
+If this disk is to be bootable to BSD/OS, you must assure that
+boot blocks have been installed at the start of the BSD/OS partition.
+

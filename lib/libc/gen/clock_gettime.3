@@ -1,0 +1,97 @@
+.\" 
+.\"  Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\"  The Berkeley Software Design Inc. software License Agreement specifies
+.\"  the terms and conditions for redistribution.
+.\"
+.\"  BSDI clock_gettime.3,v 2.2 1996/06/26 14:23:15 mdickson Exp
+.\" 
+.Dd May 3, 1996
+.Dt CLOCK_GETTIME 3
+.Os BSD 4
+.Sh NAME
+.Nm clock_gettime ,
+.Nm clock_settime ,
+.Nm clock_getres
+.Nd get/set a POSIX clock
+.Sh SYNOPSIS
+.Fd #include <time.h>
+.Ft int
+.Fn clock_gettime "clockid_t which" "struct timespec *curtime"
+.Ft int
+.Fn clock_settime "clockid_t which" "struct timespec *curtime"
+.Ft int
+.Fn clock_getres "clockid_t which" "struct timespec *resolution"
+.Sh DESCRIPTION
+.Pp
+The
+.Fn clock_gettime
+function retrieves the current time as indicated by the clock specified 
+by the clock identifier
+.Fa which .
+Currently,
+.Fa which
+must be set to
+.Li CLOCK_REALTIME ,
+as only that clock is supported.
+The result is returned in 
+.Fa curtime .
+.Pp
+The
+.Fn clock_settime
+function sets the value of the specified clock using the value in
+.Fa curtime .
+.Pp
+The
+.Li CLOCK_REALTIME
+clock maintains the system time expressed in seconds and nanoseconds
+since midnight (0 hour), January 1, 1970.
+The resolution of the system clock is hardware dependent,
+and the time may be updated continuously or periodically.
+.Pp
+The platform specific resolution supported by the clock is returned by the
+.Fn clock_getres
+function.
+.Pp
+The structures pointed to by
+.Fa curtime
+and
+.Fa resolution
+are defined in 
+.Ao Pa time.h Ac
+as:
+.Pp
+.Bd -literal
+struct timespec {
+	long	tv_sec;		/* seconds */
+	long	tv_nsec;	/* nanoseconds */
+};
+.Ed
+.Pp
+Only the super-user may set the time of day.
+.Sh RETURN
+A 0 return value indicates that the call succeeded,
+otherwise -1 is returned and the global variable
+.Va errno
+is set appropriately.
+.Sh ERRORS
+The
+.Fn clock_getres
+function may fail and set errno for any of the errors specified for
+the library function
+.Xr sysctl 2 .
+.Pp
+The
+.Fn clock_gettime
+function may fail and set errno for any of the errors specified for
+the library function
+.Xr gettimeofday 2 .
+.Pp
+The
+.Fn clock_settime
+function may fail and set errno for any of the errors specified for
+the library function
+.Xr settimeofday 3 .
+.Sh SEE ALSO
+.Xr gettimeofday 2 ,
+.Xr settimeofday 2 ,
+.Xr ctime 3

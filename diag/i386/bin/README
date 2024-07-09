@@ -1,0 +1,11 @@
+The files in this directory are completely unsupported by BSDI and may
+cause undefined behavior if run on an active system. These are intended to
+be run at the request of BSDI support or engineering personnel when trying
+to track down a problem.
+
+Use any of these at your own risk.
+
+-------------------------
+
+Please see the README.xxx files in the bin directory for more information
+on each utility.

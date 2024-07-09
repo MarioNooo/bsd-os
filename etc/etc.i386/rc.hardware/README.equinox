@@ -1,0 +1,24 @@
+/*
+ * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README.equinox,v 1.2 1997/02/01 01:05:36 donn Exp
+ */
+
+The Equinox prototype file is proto.equinox.  As there are no known
+reasons to setup the Equinox hardware early or late in the sequence
+of setting up hardware it is suggested that it be run in the middle.
+Assigning the first digit as a "5" will accomplish this. As the Equinox
+startup script automagically scans for all boards the trailing digit can
+be any digit, 0 is suggested.
+
+To cause a Equinox boards to be configured copy the prototype file
+to a file with the named formed as follows:
+
+5.equinox.0
+
+The following commands would accomplish this:
+
+cd /etc/rc.hardware
+cp proto.equinox 5.equinox.0

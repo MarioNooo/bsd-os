@@ -1,0 +1,166 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\"	BSDI sched_getscheduler.2,v 1.2 2001/10/03 17:30:41 polk Exp
+.\"
+.\" Copyright (c) 1997, 2001 Berkeley Software Design Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd November 21, 1997
+.Dt SCHED_GETSCHEDULER 2
+.Os BSD 4
+.Sh NAME
+.Nm sched_getscheduler ,
+.Nm sched_setscheduler
+.Nd get/set scheduling policy and priority scheduling parameter
+.Sh SYNOPSIS
+.Fd #include <sched.h>
+.Ft int
+.Fn sched_getscheduler "pid_t pid"
+.Ft int
+.Fn sched_setscheduler "pid_t pid" "int policy" "struct sched_param *param"
+.Sh DESCRIPTION
+The
+.Fn sched_setscheduler
+function sets the scheduling policy and scheduling parameters of the process
+specified by
+.Fa pid
+to 
+.Fa policy
+and the parameters specified by the
+.Fa sched_param
+structure pointed to by
+.Fa param.
+The value of the
+.Fa sched_priority
+member in the
+.Fa param
+structure shall be any integer within the inclusive priority range for the
+current scheduling policy of the process specified by
+.Fa pid.
+Higher numerical values for the priority represent higher priorities. If
+the value of
+.Fa pid
+is negative, the behavior of the
+.Fn sched_setscheduler
+function is unspecified.
+.Pp
+The possible values for the
+.Fa policy
+parameter are defined in the header file
+.Pq Aq Pa sched.h .
+.Pp
+If a process specified by the
+.Fa pid
+exists and if the calling process has permission, the scheduling parameters
+shall be set for the process whose process ID is equal to
+.Fa pid.
+.Pp
+If
+.Fa pid
+is zero, the scheduling policy and scheduling parameters shall be set for the
+calling process.
+.Pp
+The target process, whether it is running or not running, shall resume
+execution after all other runnable processes of equal or greater priority
+have been scheduled to run.
+.Pp
+If the priority of the process specified by the
+.Fa pid
+argument is set higher than that of the lowest priority running process
+and if the specified process is ready to run, the process specified by the
+.Fa pid
+argument shall preempt a lowest priority running process. Similarly, if
+the process calling
+.Fn sched_setscheduler
+sets its own priority lower than that of one or more other nonempty
+process lists, then the process that is the head of the highest priority
+list shall also preempt the calling process. Thus, in either case, the
+originating process might not receive notification of the completion of the
+requested priority change until the higher priority process has esecuted.
+.Pp
+If the value of 
+.Fa policy
+being set for the process specified by
+.Fa pid
+is not
+.Dv SCHED_FIFO
+or
+.Dv SCHED_RR ,
+then the parameters pointed to by the
+.Fa param
+shall not be used to set the scheduling parameters but instead internal
+values shall be used.
+
+.Pp
+The
+.Fn sched_getscheduler
+function returns the scheduling policy of the process specified by
+.Fa pid .
+.Pp
+If
+.Fa pid
+is zero, the scheduling policy for the calling process shall be returned.
+The behavior of the
+.Fn sched_getscheduler
+function is unspecified if the value of
+.Fa pid
+is negative.
+.Sh RETURN VALUES
+If successful, the
+.Fn sched_setscheduler
+function shall return the former scheduling policy of the specified process.
+If unsuccessful, the
+.Fn sched_setscheduler
+function shall leave the scheduling policy and parameters of the specified
+process unchanged and return a value of -1 and set
+.Fa errno
+to an appropriate value.
+.Pp
+If successful, the
+.Fn sched_getscheduler
+function shall return the scheduling policy of the specified process.
+If unsuccessful, the
+.Fn sched_getscheduler
+function shall return a value of -1 and set
+.Fa errno
+to an appropriate value.
+.Sh ERRORS
+.Fn Sched_setscheduler
+and
+.Fn sched_getscheduler
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+One or more of the requested scheduling parameters contained in
+.Fa param
+is outside the range defined for the scheduling policy specified by
+.Fa policy
+for the specified
+.Fa pid .
+.It Bq Er ENOSYS
+The functions
+.Fn sched_setscheduler
+and
+.Fn sched_getscheduler
+are not supported by this implementation.
+.It Bq Er EPERM
+A process was located, but neither its effective nor real user
+ID matched the effective user ID of the caller.
+.It Bq Er ESRCH
+No process was located using the 
+.Fa pid
+value specified.
+.El
+.Sh SEE ALSO
+.Xr sched_setparam 2 ,
+.Xr sched_get_priority_max 2 ,
+.Xr getpriority 2 ,
+.Sh STANDARDS
+The
+.Fn sched_getscheduler
+and
+.Fn sched_setscheduler
+function calls are expected to
+conform to IEEE Std 1003.1-1996
+.Pq Dq Tn POSIX .

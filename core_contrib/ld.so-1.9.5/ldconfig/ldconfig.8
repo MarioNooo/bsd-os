@@ -1,0 +1,171 @@
+.\"	BSDI ldconfig.8,v 1.5 1998/05/06 18:06:19 donn Exp
+.Dd February 11, 1998
+.Os
+.Dt LDCONFIG 8
+.Sh NAME
+.Nm ldconfig
+.Nd compile a table of dynamically linked shared libraries
+.Sh SYNOPSIS
+.Nm ldconfig
+.Op Fl DvnNX
+.Op Fl C Ar cache
+.Op Fl f Ar conf
+.Op Fl r Ar root
+.Op Ar directory \&...
+.Pp
+.Nm ldconfig
+.Fl l
+.Op Fl \&Dv
+.Ar library
+.Ar \&...
+.Pp
+.Nm ldconfig
+.Fl p
+.Sh DESCRIPTION
+The
+.Nm ldconfig
+utility creates and maintains the file
+.Pa /etc/ld.so.cache ,
+which the dynamic linker
+.Xr ld.so 8
+uses to map symbolic library names into library pathnames.
+.Nm Ldconfig
+also looks for the most up-to-date version
+in a set of libraries with version suffixes and
+creates a symlink from that version to the generic library name.
+.Pp
+.Nm Ldconfig
+processes the shared libraries
+that it finds in each directory in its argument list, if any are given,
+followed by each directory listed in the file
+.Pa /etc/ld.so.conf .
+Directory names in
+.Pa /etc/ld.so.conf
+may be separated by colons, whitespace, commas or newlines.
+.Pp
+If one or more libraries has a version suffix,
+.Nm ldconfig
+uses the built-in library name
+(see
+.Xr ld.so 8 )
+to figure out which libraries are really the same.
+It then compares the filenames to choose
+the most up-to-date version.
+Strings of numbers in the version suffix are compared numerically,
+while non-numeric strings are compared in ASCII collating order.
+The comparison works from left to right.
+A version suffix like
+.Li \&.2.9
+would thus be interpreted as a major version number
+.Li 2
+followed by a minor version number
+.Li 9 ;
+if another version of the library has a version suffix
+.Li \&.2.10 ,
+.Nm ldconfig
+will choose the latter one.
+.Pp
+.Nm Ldconfig
+updates the database file
+.Pa /etc/ld.so.cache
+to record the library name with the pathname
+of the up-to-date version of the library.
+If the file named by the built-in library name for a library
+does not exist or is a symbolic link,
+.Nm ldconfig
+creates a symbolic link from
+the most up-to-date version of the library to that filename.
+.Pp
+.Nm Ldconfig
+should normally be run by the super-user, as it may require write 
+permission on some root owned directories and files.
+You should run it whenever you install new shared libraries.
+.Pp
+The following options are supported:
+.Bl -tag -width "-C cache\0
+.It Fl D
+Debug mode.
+Implies
+.Fl N
+and
+.Fl X .
+.It Fl v
+Verbose mode.
+Print the current version number, the name of each directory as it
+is scanned and any links that are created.
+.It Fl n
+Only process directories specified on the command line.
+Don't process
+.Pa /etc/ld.so.conf .
+Implies
+.Fl N .
+.It Fl N
+Don't rebuild the cache.
+Unless
+.Fl X
+is also specified, links are still updated.
+.It Fl X
+Don't update links.
+Unless
+.Fl N
+is also specified, the cache is still rebuilt.
+.It Fl f Ar conf
+Use
+.Ar conf
+instead of
+.Pa /etc/ld.so.conf .
+.It Fl C Ar cache
+Use
+.Ar cache
+instead of
+.Pa /etc/ld.so.cache .
+.It Fl r Ar root
+Change to and use
+.Ar root
+as the root directory.
+.It Fl l
+Library mode.
+Manually link individual libraries.
+Intended for use by experts only.
+.It Fl p
+Print the lists of directories and candidate libraries stored in
+the current cache.
+.El
+.Sh EXAMPLES
+The command
+.Bd -literal -offset indent
+ldconfig -v
+.Ed
+.Pp
+will set up the correct links for the shared libraries and rebuild
+the cache, printing information about each action as it is taken.
+.Pp
+The command
+.Bd -literal -offset indent
+ldconfig -n /shlib
+.Ed
+.Pp
+executed as root after the installation of a new shared library,
+will properly update the
+shared library symbolic links in
+.Pa /shlib.
+.Sh FILES
+.Bl -tag -width /shlib/ld-bsdi.so\0 -compact
+.It Pa /shlib/ld-bsdi.so
+dynamic linker/loader
+.It Pa /etc/ld.so.conf
+search path for shared libraries
+.It Pa /etc/ld.so.cache
+database that maps library names to pathnames
+.El
+.Sh SEE ALSO
+.Xr ld.so 8
+.Sh BUGS
+.Nm Ldconfig ,
+being a user process, must be run manually and has no means of dynamically
+determining and relinking shared libraries for use by
+.Xr ld.so 8
+when a new shared library is installed.
+.Sh AUTHORS
+David Engel and Mitch D'Souza.
+This manual page has been updated for BSD/OS from the original Linux version.

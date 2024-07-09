@@ -1,0 +1,123 @@
+.\"	BSDI ldd.1,v 1.1 1998/05/06 19:15:28 donn Exp
+.Dd May 6, 1998
+.Os
+.Dt LDD 1
+.Sh NAME
+.Nm ldd
+.Nd print shared library dependencies
+.Sh SYNOPSIS
+.Nm ldd
+.Op Fl drv
+.Op Ar files \&...
+.Sh DESCRIPTION
+A program or other ELF file may require specific ELF shared libraries
+or shared objects in order to run.
+The ELF dynamic linker
+.Pq see Xr ld.so 8
+automatically loads these specific files when you run a program,
+and if the files that it loads in turn require still more files,
+it loads those files too, and so on.
+The
+.Nm ldd
+utility invokes the dynamic linker in a special way
+so that it prints the names all of the files that it would load
+if you were to run the given program.
+.Pp
+.Nm Ldd
+recognizes the following options:
+.Bl -tag -width Fl
+.It Fl d
+Perform relocations and report any missing functions.
+.It Fl r
+Perform relocations for both data objects and functions,
+and report any missing objects.
+.It Fl v
+Report the version of the dynamic linker utilities.
+.El
+.Pp
+The given
+.Ar files
+may be ELF programs, shared libraries or shared objects.
+For a program,
+.Nm ldd
+executes the program in a special way so that
+the dynamic linker prints the dependencies that it finds
+and then exits without actually running the program.
+For a shared library or shared object,
+.Nm ldd
+executes a dummy program named
+.Pa lddstub
+and adds the given library or object
+to the dummy program's required libraries;
+the dynamic linker then runs in the same way as for executable programs.
+.Pp
+The output of
+.Nm ldd
+has the following form:
+.Bd -filled -offset indent
+.Ar dependency-name
+.Li \&=>
+.Ar filename
+.Pq Ar address
+.Ed
+.Pp
+This says that the dynamic linker found a
+.Ar dependency-name
+and it was able to map that to a
+.Ar filename .
+The
+.Ar address
+that the dynamic linker assigns to the file
+appears in parentheses.
+If the dynamic linker could not match a filename to a dependency name,
+.Nm ldd
+will print
+.Dq Li not found
+instead of a filename and an address.
+If a file is not dynamically linked,
+.Nm ldd
+will print
+.Dq Li statically linked
+for that file.
+.Pp
+There are a couple of confusing situations in which
+.Nm ldd
+won't find and print the appropriate dependencies.
+If a program or library uses
+.Xr dlopen 3
+to load a shared object,
+that object will not appear in the dependency list for that program.
+This is because that shared object is not in the list
+of shared libraries and shared objects that need to be loaded automatically.
+Also, if you need to set
+.Ev LD_LIBRARY_PATH
+in the environment to make a program find a shared object,
+then
+.Ev LD_LIBRARY_PATH
+must be set appropriately when you run
+.Nm ldd .
+See
+.Xr ld.so 8
+for details about search paths and the dynamic linker.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+$ ldd /bin/tcsh
+	libgcc.so => /shlib/libgcc.so (0xc080000)
+	libc.so => /shlib/libc.so (0xc083000)
+$ ldd /usr/X11/lib/libXt.so
+	libX11.so.6 => /usr/X11R6/lib/libX11.so.6 (0xc093000)
+	libSM.so.6 => /usr/X11R6/lib/libSM.so.6 (0xc131000)
+	libICE.so.6 => /usr/X11R6/lib/libICE.so.6 (0xc139000)
+	libc.so => /shlib/libc.so (0xc14e000)
+.Ed
+.Sh FILES
+.Bl -tag -width /usr/contrib/libexec/lddstub\0 -compact
+.It Pa /usr/contrib/libexec/lddstub
+dummy program
+.El
+.Sh SEE ALSO
+.Xr ld.so 8 ,
+.Xr ldconfig 8
+.Sh AUTHORS
+David Engel.
+This manual page has been updated for BSD/OS from the original Linux version.

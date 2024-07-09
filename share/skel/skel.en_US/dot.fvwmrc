@@ -1,0 +1,545 @@
+#
+#	BSDI	dot.fvwmrc,v 2.9 2002/08/21 23:45:19 polk Exp
+#
+# Motif/MS-Windows-ish interface for fvwm-1
+#
+######################################################################
+#
+# The correct order for configuration data is:
+# 1. Desktop Colors and Fonts.
+# 2. Desktop Configuration / Focus / Icons / Windows / MWM Emulation
+# 3. Path Configuration (ModulePath, PixmapPath, IconPath)
+# 4. Style Settings
+# 5. INIT Function Definitions (InitFunction and ResetFunction)
+# 6. Function Definitions.  Functions cannot be forward referenced.
+# 7. Menu Definitions.	Menus cannot be forward referenced.
+# 8. Key and Mouse Bindings.
+# 9. Module options.
+# [5, 6, and 7 can be in any order]
+
+######################################################################
+###  1.	 Desktop Colors and Fonts  ###################################
+######################################################################
+# Some nice colors for backgrounds:
+#     #60c0a0 #a4988e #c06077 #908090
+#     grey RosyBrown MediumSeaGreen PeachPuff3
+# inactive window text & decorations
+Style "*"	Color black/gray70
+
+# active window title text & decorations
+HiForeColor	White
+HiBackColor	NavyBlue
+
+# sticky windows text & decorations
+StickyForeColor black
+StickyBackColor #a4988e
+
+# menu text, background, and inactive menu area
+MenuForeColor	black
+MenuBackColor	RosyBrown
+MenuStippleColor SlateGrey
+
+# pager active and inactive areas
+PagerForeColor	gray95
+PagerBackColor	gray75
+
+# CONFIGURE: font selection (you can use `xfontsel' to choose fonts)
+Font		-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*
+WindowFont	-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*
+IconFont	-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*
+PagerFont	-adobe-helvetica-bold-r-normal--*-80-*-*-*-*-*-*
+
+
+######################################################################
+###  2.	 Desktop Configuration	######################################
+######################################################################
+# CONFIGURE: you can configure multiple virtual desktops here
+#DeskTopSize	4x1			# width x height in screens
+DeskTopSize     2x2			# width x height in screens
+DeskTopScale	16			# scale size for pager
+Pager		0 -0			# built-in pager location
+EdgeScroll	100 100			# in percent of screen size
+#EdgeResistance	250 10			# [delay_in_milliseconds pixels]
+EdgeResistance	1000 1000		# [delay_in_milliseconds pixels]
+ClickTime	200			# milliseconds
+#Cursor	 cursor_num cursor_type
+#CenterOnCirculate
+
+### FOCUS
+# CONFIGURE: do you like ClickToFocus?
+#ClickToFocus				# default: focus follows pointer
+#AutoRaise	750			# auto raise delay in milliseconds
+SloppyFocus				# lazy focus
+Lenience
+
+###  ICONS
+IconBox 0 -50 -1 -1			# region really, no box
+CirculateSkipIcons
+StickyIcons				# icons follow you around
+#StubbornIcons				# de-iconify to prev position
+StubbornIconPlacement			# don't hide under windows
+#SuppressIcons				# so you can just use the window list
+
+###  WINDOW PLACEMENT
+#DontMoveOff				# disallow placement off screen
+SmartPlacement				# don't overlap windows
+StubbornPlacement			# don't hide icons
+RandomPlacement				# if all that fails, do whatever
+NoPPosition				# ignore PPosition data
+
+###  WINDOW DECORATIONS
+DecorateTransients
+BoundaryWidth	5			# boundary width on decorated windows
+NoBoundaryWidth 2			# boundary width on window w/o title
+OpaqueMove	100			# I have a really fast video system
+
+###  MWM EMULATION
+# Some applications depend on MWMFunctionHints and MWMDecorHints
+MWMFunctionHints
+MWMDecorHints
+MWMHintOverride				# to allow iconification of all windows
+MWMMenus
+#MWMBorders
+#MWMButtons
+
+
+######################################################################
+###  3.	 Path Configuration  #########################################
+######################################################################
+ModulePath /usr/X11R6/lib/X11/fvwm/:/usr/X11R6/bin/
+IconPath /usr/X11R6/include/X11/bitmaps/
+PixmapPath /usr/X11R6/include/X11/pixmaps/:/usr/X11/lib/X11/xfm/pixmaps
+
+######################################################################
+###  4.	 Application Styles  #########################################
+######################################################################
+# Title Buttons
+ButtonStyle 1 50x15
+ButtonStyle : 2 4 50x35@1 65x65@0 35x65@0 50x35@1
+ButtonStyle : 4 4 50x65@1 35x35@1 65x35@1 50x65@0
+
+# Style Attributes:
+# BorderWidth, HandleWidth, Icon/NoIcon, NoTitle/Title, NoHandles/Handles,
+# WindowListSkip/WindowListHit, CirculateSkip/CirculateHit,
+# StaysOnTop/StaysPut, Sticky/Slippery, StartIconic/StartNormal,
+# Color, ForeColor, BackColor, StartsOnDesk/StartsAnyWhere.
+Style "*"	    BorderWidth 5, HandleWidth 5, Icon unknown1.xpm
+
+Style "Fvwm*"	    NoTitle, NoHandles, Sticky, WindowListSkip, BorderWidth 0
+Style "Fvwm Pager"  StaysOnTop, CirculateSkip, NoButtons, Handles
+Style "FvwmFileMgr" Title, Handles, Slippery, CirculateSkip
+Style "FvwmFileMgr" Icon dir.xpm
+Style "FvwmBanner"  StaysOnTop
+Style "GoodStuff"   NoTitle, Sticky, WindowListSkip, BorderWidth 0
+Style "GoodStuff"   Icon toolbox.xpm, CirculateSkip
+Style "Fastdoc"	    NoTitle, NoHandles,		WindowListSkip, BorderWidth 0
+Style "Fastdoc"	    Icon toolbox.xpm, CirculateSkip
+Style "Quiktool"    NoTitle, NoHandles, Sticky, WindowListSkip, BorderWidth 0
+Style "Quiktool"    Icon toolbox.xpm, CirculateSkip
+Style "XBiff"	    NoTitle, NoHandles, Sticky, WindowListSkip, BorderWidth 0
+Style "XBiff"	    Icon mail1.xpm, CirculateSkip
+Style "*lock"	    NoTitle, NoHandles, Sticky, WindowListSkip
+Style "Clock"	    NoTitle, NoHandles, Sticky, WindowListSkip, BorderWidth 0
+Style "xmailbox"    NoTitle, NoHandles, Sticky, WindowListSkip, BorderWidth 0
+Style "XTerm"	    Icon xterm.xpm
+Style "console"	    CirculateSkip
+
+Style "xcalc"	    Icon xcalc.xpm, CirculateSkip
+Style "xmh"	    Icon mail1.xpm
+Style "xman"	    Icon man_green.xpm, CirculateSkip
+Style "xrn"	    Icon news.xpm, CirculateSkip
+Style "news"	    Icon news.xpm, CirculateSkip
+Style "Xarchie"	    Icon xarchie.xpm, CirculateSkip
+Style "xpostit"	    Icon postit.xpm, CirculateSkip
+Style "xpaint"	    Icon pixmap.xpm, CirculateSkip
+Style "emacs"	    Icon emacs.xpm, CirculateSkip
+Style "Emacs"	    Icon emacs.xpm, CirculateSkip
+Style "*mix*"	    Icon audio.xpm, CirculateSkip
+Style "xmixer"	    Icon audio.xpm, CirculateSkip, StartIconic
+Style "mxv"	    Icon audio.xpm, CirculateSkip
+Style "xanim"	    Icon video.xpm, CirculateSkip
+Style "viola"	    Icon viola.xpm
+
+#Style "Mosaic"	    Icon mosaic-s.xpm
+#Style "Mosaic"	    Icon world.xbm
+Style "Ghostview"   Icon arthur.xpm, CirculateSkip
+#Style "Ghostview"  Icon words.xbm, CirculateSkip
+Style "Bitmap"	    Icon pixmap.xpm, CirculateSkip
+#Style "Bitmap"	    Icon bitmap.xbm, CirculateSkip
+Style "Xman"	    Icon man_green.xpm, CirculateSkip
+#Style "Xman"	    Icon manpage.xbm, CirculateSkip
+Style "Xgopher"	    Icon xgopher.xpm, CirculateSkip
+#Style "Xgopher"    Icon gopher.xbm, CirculateSkip
+Style "Xedit"	    Icon xedit.xpm, CirculateSkip
+#Style "Xedit"	    Icon page.xbm, CirculateSkip
+Style "XMag"	    Icon mag_glass.xpm, CirculateSkip
+#Style "XMag"	    Icon magnifier.xbm, CirculateSkip
+
+#Style "Maker"	    StartsOnDesk 1
+Style "Appointment" Icon datebook.xpm, CirculateSkip
+Style "Fig"	    Icon fig.xbm, CirculateSkip
+Style "Gnuplot"	    Icon graph.xbm, CirculateSkip
+Style "MOTD"	    Icon info.xbm, CirculateSkip
+Style "Ups"	    Icon roach.xbm, CirculateSkip
+Style "XCalc"	    Icon calculator.xbm, CirculateSkip
+Style "XConsole"    Icon terminal.xbm, CirculateSkip
+Style "XVed"	    Icon page.xbm, CirculateSkip
+Style "nethack"	    Icon wizard.xbm, CirculateSkip
+Style "xdbx"	    Icon roach.xbm, CirculateSkip
+Style "xv"	    Icon xv.xbm, CirculateSkip
+
+
+######################################################################
+###  5.	 INIT Functions	 #############################################
+######################################################################
+Function "InitFunction"
+	Module	"I"	GoodStuff
+	Wait	"I"	GoodStuff
+	GotoPage "I"	0 0
+EndFunction
+
+Function "RestartFunction"
+	Module	"I"	GoodStuff
+	Wait	"I"	GoodStuff
+	GotoPage "I"	0 0
+EndFunction
+
+
+######################################################################
+###  6.	 Function Definitions  #######################################
+######################################################################
+Function "move-or-raise"
+	Move		"Motion"
+	Raise		"Click"
+	RaiseLower	"DoubleClick"
+EndFunction
+
+Function "resize-or-lower"
+	Resize		"Motion"
+	Lower		"Click"
+	RaiseLower	"DoubleClick"
+EndFunction
+
+Function "move-or-iconify"
+	Move		"Motion"
+	Iconify		"Click"
+	Iconify		"DoubleClick"
+EndFunction
+
+Popup "WindowOps"
+  Title		"WindowOps"
+    Maximize	"&Restore	"
+    Move	"&Move	"
+    Resize	"Re&size	"
+    Iconify	"Ico&nify	"
+    Maximize	"Ma&ximize	F10"
+    Nop		""
+    Close	"&Close Alt+F4"
+    Destroy	"&Destroy"
+    Nop		""
+    Raise	"R&aise "
+    Lower	"L&ower "
+    Stick	"S&ticky	"
+    Module	"Id&entify	" FvwmIdent
+    Refresh	"Refres&h	"
+    Focus	"&Focus		"
+EndPopup
+
+Function "Title-Bar-Left"
+	Move	"Motion"
+	Raise	"Click"
+	Maximize "DoubleClick"
+EndFunction
+
+Function "Title-Bar-Middle"
+	Popup	"Immediate" WindowOps
+EndFunction
+
+Function "Title-Bar-Right"
+	Move	"Motion"
+	Lower	"Click"
+	Maximize "DoubleClick"
+EndFunction
+
+Function "App-Button"
+	Popup	"Immediate" WindowOps
+#	Close	"DoubleClick"
+EndFunction
+
+Function "Frame"
+	Resize		"Motion"
+	Raise		"Click"
+	RaiseLower	"DoubleClick"
+EndFunction
+
+Function "Icon"
+	Move	"Motion"
+	Raise	"Click"
+	Iconify "DoubleClick" -1
+EndFunction
+
+# maximization under different parameters
+Function "maximize-window"
+        Maximize        "Motion" 0 100
+        Maximize        "Click" 100 100
+        Maximize        "DoubleClick" 0 80
+EndFunction
+
+
+######################################################################
+###  7.	 Menus Definitions  ##########################################
+######################################################################
+Popup "Backgrounds"
+  Title		"Backgrounds	"
+    Exec	"Plain Background	"	xsetroot
+    Exec	"Lattice	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/Lattice.gif
+    Exec	"bow-tiles	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/bow-tiles.gif
+    Exec	"concrete	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/concrete.gif
+    Exec	"ether	"			xv -root -quit /usr/X11R6/lib/X11/backgrounds/ether.gif
+    Exec	"firering	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/firering.gif
+    Exec	"jeweled_tiles	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/jeweled_tiles.gif
+    Exec	"marbled	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/marbled.gif
+    Exec	"mmaze	"			xv -root -quit /usr/X11R6/lib/X11/backgrounds/mmaze.gif
+    Exec	"overlap	"		xv -root -quit /usr/X11R6/lib/X11/backgrounds/overlap.gif
+    Exec	"pmaze	"			xv -root -quit /usr/X11R6/lib/X11/backgrounds/pmaze.gif
+    Exec	"slate	"			xv -root -quit /usr/X11R6/lib/X11/backgrounds/slate.gif
+    Exec	"waves	"			xv -root -quit /usr/X11R6/lib/X11/backgrounds/waves.gif
+  Title		"Programs	"
+    Exec	"xearth "			xrunclient xearth -grid -nomarkers -label -ncolors 64 -wait 900 -night 30 -proj mercator -pos fixed,0,0
+    Exec	"xphoon "			xrunclient xphoon
+    Exec	"xfishtank	"		xrunclient xfishtank
+    Exec	"xsnow	"			xrunclient xsnow -snowflakes 200 -santa 1 -notrees -nokeepsnow -slc sienna3
+EndPopup
+
+Popup "Games"
+  Title "Games"
+    Exec  "xtetris	"		xrunclient xtetris -boxsize 24 -color
+    Exec  "xboing	"		xrunclient xboing -speed 1 -sound -grab -startlevel 7
+    Exec  "xmille	"		xrunclient xmille
+    Exec  "spider	"		xrunclient spider
+    Exec  "xrubik	"		xrunclient xrubik
+    Exec  "15 puzzle	"		xrunclient puzzle
+    Exec  "maze "			xrunclient maze
+    Exec  "xeyes	"		xrunclient xeyes
+    Exec  "xgas "			xrunclient xgas
+    Exec  "xmandel	"		xrunclient xmandel
+EndPopup
+
+Popup "Exit-Fvwm"
+  Title		"Are You Sure?"
+    Nop		"Cancel "
+    Nop		""
+    Quit	"Terminate X Session	"
+EndPopup	
+
+# CONFIGURE: you can add or customize menu items here
+Popup "XTools"
+  Title		"X Tools"
+    Exec	"xload	"		xrunclient xload -g 128x64 -scale 2
+    Exec	"xarchie	"	xrunclient xarchie
+    Exec	"xmag	"		xrunclient xmag
+    Exec	"xclipboard	"	xrunclient xclipboard
+    Exec	"xcalendar	"	xrunclient xcalendar -fn 6x10
+    Exec	"xcalc	"		xrunclient xcalc -stip -rpn
+    Exec	"xpaint "		xrunclient xpaint
+EndPopup
+
+Popup "Control"
+  Title		"Control Panel	"
+    Exec	"HELP	"		xrunclient xless -g 64x24 -title 'fvwm help' /usr/X11R6/lib/X11/fvwm/fvwm-help
+    Exec	"Manpages"		xrunclient xman -notopbox
+    Nop		""
+    Exec	"New Window	"	xrunclient xterm
+    Nop		""
+    # Exec	"Mosaic "		daemon - /usr/X11R6/bin/mosaic
+    Exec	"Netscape	"	daemon - /usr/X11R6/bin/netscape
+    Popup	"X Tools	"	XTools
+    Popup	"Games...	"	Games
+    Popup	"Backgrounds... "	Backgrounds
+    Nop		""
+    Refresh	"Refresh	"
+    Popup	"WindowOps...	"	WindowOps
+    WindowList	"WindowList...	"
+    Exec	"Reload .Xresources	"	xrdb -load -DHOME=$HOME -I$HOME -load -Ubsdi $HOME/.Xresources
+    Restart	"Restart Fvwm	" fvwm
+    Nop		""
+    Popup	"Terminate X Session	"	Exit-Fvwm
+EndPopup
+
+
+######################################################################
+###  8.	 Key and Mouse Bindings	 #####################################
+######################################################################
+# NOTES:
+#buttons:	0-any, 1 2 3
+#contexts:	Root Window Title Side Frame Icon 0-9[title buttons] Any
+#modifiers:	None Control Shift Meta Any
+#keynames:	/usr/X11/include/X11/keysymdef.h (minus the leading ``XK_'')
+#title buttons are numbered [1 3 5 7 9	title  0 8 6 4 2]
+#binding a key to a title-bar button requires a mouse binding also.
+
+# Root Window --
+#     Left Button (Hold) -> Control Panel
+#   Middle Button (Hold) -> Window List
+#    Right Button (Hold) -> Window Control Menu
+#
+# Window Functions --
+#    Title Bar
+#	 Left Button Single-Click -> Raise Window
+#	 Left Button Drag	  -> Move Window
+#	 Left Button Double-Click -> Maximize Window (also F10)
+#      Middle Button Hold	  -> Window Control Menu
+#	Right Button Single-Click -> Lower Window
+#	Right Button Drag	  -> Move Window
+#	Right Button Double-Click -> Maximize Window (also F10)
+#    Application Button (Title Bar - Dash)
+#	  Any Button Hold	  -> Window Control Menu
+#    Iconify Button (Title Bar - Down Arrow)
+#	  Any Button Single-Click -> Iconify Window
+#    Maximize Button (Title Bar - Up Arrow)
+#	  Any Button Single-Click -> Maximize Window
+#    Frame
+#	  Any Button Single-Click -> Raise Window
+#	  Any Button Drag	  -> Resize Window
+#	  Any Button Double-Click -> Raise/Lower Window
+#    Side
+#	  same as Title
+#    Icon
+#	  Any Button Single-Click -> Raise Icon
+#	  Any Button Drag	  -> Move Icon
+#	  Any Button Double-Click -> Deiconify
+#
+# Short-Cuts --
+#     F10			  -> Maximize/Minimize
+#     Meta-F1			  -> Window Control Menu
+#     Meta-F4			  -> Close Window
+#     Meta-Escape		  -> Circulate Focus
+#     Control-Shift-LeftButton	  -> Raise Window/Icon
+#     Control-Shift-RightButton	  -> Lower Window/Icon
+#     Meta-LeftButton		  -> Raise Window/Icon
+#     Meta-RightButton		  -> Lower Window/Icon
+#     Meta-LeftButton-Drag	  -> Move Window/Icon
+#     Meta-MiddleButton		  -> Iconify/Deiconify
+#     Meta-RightButton-Drag	  -> Resize Window
+#
+
+#
+#Key	keyname context modifiers function
+#------ ------- ------- --------- ------------------
+Key	Left	A	CM    Scroll -10 +0
+Key	Right	A	CM    Scroll +10 +0
+Key	Up	A	CM    Scroll +0 -10
+Key	Down	A	CM    Scroll +0 +10
+
+Key	Escape	A	C     WindowList
+Key	Escape	A	M     CirculateDown
+Key	Escape	R	SMC   Quit
+Key	F1	A	M     Popup "WindowOps"
+Key	F4	W	M     Close
+Key	F10	W	N     Maximize
+
+#
+#Mouse	button	context modifiers function
+#------ ------- ------- --------- -------------------
+Mouse	1	R	N	  Popup "Control"
+Mouse	2	R	N	  WindowList
+Mouse	3	R	N	  Popup "WindowOps"
+Mouse	0	1	N	  Function "App-Button"
+Mouse	0	2	N	  Function "maximize-window"
+Mouse	0	4	N	  Iconify +1
+Mouse	0	I	N	  Function "Icon"
+Mouse	0	F	N	  Function "Frame"
+# title
+Mouse	1	T	N	  Function "Title-Bar-Left"
+Mouse	2	T	N	  Function "Title-Bar-Middle"
+Mouse	3	T	N	  Function "Title-Bar-Right"
+# sides
+#Mouse	0	S	N	  Function "move-or-raise"
+Mouse	1	S	N	  Function "Title-Bar-Left"
+Mouse	2	S	N	  Function "Title-Bar-Middle"
+Mouse	3	S	N	  Function "Title-Bar-Right"
+
+Mouse	1	A	CS	  Raise
+Mouse	3	A	CS	  Lower
+
+Mouse	1	A	M	  Function "move-or-raise"
+Mouse	2	A	M	  Iconify
+Mouse	3	A	M	  Function "resize-or-lower"
+
+######################################################################
+###  9.	 Module Options	 #############################################
+######################################################################
+
+###   FvwmFileMgr   ##################################################
+*FvwmFileMgrFore Black
+*FvwmFileMgrBack #908090
+*FvwmFileMgrFont -adobe-helvetica-bold-r-normal--*-80-*-*-*-*-*-*
+# *FvwmFileMgrGeometry 800x540+159+875
+
+
+###   FvwmIdent	  ####################################################
+# Just choose colors and a fonts
+*FvwmIdentFore black
+*FvwmIdentBack #c06077
+*FvwmIdentFont -adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+
+
+###   FvwmPager	  ####################################################
+*FvwmPagerFore #484048
+*FvwmPagerBack #908090
+*FvwmPagerFont -adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+*FvwmPagerHilight #cab3ca
+*FvwmPagerGeometry -1-1
+*FvwmPagerLabel 0 WorkSpace
+*FvwmPagerSmallFont -adobe-helvetica-bold-r-normal--*-80-*-*-*-*-*-*
+
+
+###   FvwmWinList   ##################################################
+*FvwmWinListFore Black
+*FvwmWinListBack #908090
+*FvwmWinListFont -adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+*FvwmWinListAction Click1 Iconify -1,Focus
+*FvwmWinListAction Click2 Iconify
+*FvwmWinListAction Click3 Module "FvwmIdent" FvwmIdent
+*FvwmWinListUseSkipList
+*FvwmWinListGeometry +0-1
+
+
+###   GoodStuff (toolbar)   ##########################################
+# Colors
+*GoodStuffFore Black
+*GoodStuffBack #908090
+
+# Font
+*GoodStuffFont -adobe-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
+# Geometry - really likes to pick its own size, but giving a position is OK
+*GoodStuffGeometry -1-1
+
+# Layout: specify rows or columns, not both
+#*GoodStuffColumns 1
+*GoodStuffRows 1
+
+# CONFIGURE: you can add/customize toolbar buttons here
+# Define the buttons to use.....
+
+*GoodStuff Lock	    xlock.xpm	    Exec "" xlock -allowroot -mode random -message "Berkeley Software Design"
+*GoodStuff Help	    info_2.xpm	    Exec "xless" xrunclient xless -g 64x24 -title 'fvwm help' /usr/X11R6/lib/X11/fvwm/fvwm-help
+*GoodStuff Manpages man_green.xpm   Exec "" xrunclient xman -notopbox
+*GoodStuff Xterm    rterm.xpm	    Exec "xterm" xrunclient xterm
+*GoodStuff Xcalc    rcalc.xpm	    Exec "xcalc" xrunclient xcalc -rpn -stipple
+*GoodStuff calendar calendar.xpm    Exec "xcalendar" xrunclient xcalendar
+*GoodStuff News	    newspaper.xpm   Exec "xterm" xrunclient xterm -title "Usenet News" -exec rtin
+#*GoodStuff Mosaic  Mosaic.xpm	    Exec "Mosaic" xrunclient mosaic
+*GoodStuff Netscape netscape.xpm    Exec "Netscape" xrunclient netscape
+*Goodstuff Xfm     xfm_apps.xpm     Exec ""       xrunclient xfmstart
+
+# CONFIGURE: select one of the follow (or add your own)
+*GoodStuff Mail    mail2.xpm	    Exec "exmh" xrunclient exmh
+#*GoodStuff Mail    mail2.xpm	    Exec "xterm" xrunclient xterm -title "Elm" -exec elm
+#*GoodStuff Mail	    mail2.xpm	    Exec "xterm" xrunclient xterm -title "Pine" -exec pine
+
+
+# Swallowed things
+# *GoodStuff(4x1) - whatever SwallowModule "FvwmPager" FvwmPager 0 3
+*GoodStuff xbiff    mail2.xpm	Swallow "xbiff" xrunclient xbiff -fg black -bg \#908090 -geometry -1500-1500 -file $MAILPATH -update 15 -bw 0 -xrm '*flip: false'
+*GoodStuff xclock   clock.xpm	Swallow "xclock" xrunclient xclock -bg \#908090 -geometry -1500-1500 -padding 0

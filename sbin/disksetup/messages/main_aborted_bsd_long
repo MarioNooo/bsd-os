@@ -1,0 +1,6 @@
+You have aborted the BSD partition editor.  If you have done this
+because you had altered the standard layout that was provided and
+thought that was a mistake, it is safe to go on.  If on the other
+had you aborted the BSD partition editor because you did not want
+any changes made to the BSD partition table, you should not continue.
+

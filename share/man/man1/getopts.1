@@ -1,0 +1,114 @@
+.\"	BSDI getopts.1,v 2.1 1999/08/23 16:51:48 prb Exp
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd August 23, 1999
+.Dt GETOPTS 1
+.Os
+.Sh NAME
+.Nm getopts
+.Nd POSIX option parsing
+.Sh SYNOPSIS
+.Nm getopts
+.Ar optstring
+.Ar name
+.Op Ar args...
+.Sh DESCRIPTION
+The
+.Nm getopts
+shell builtin implements POSIX 1003.2 option parsing, compatible with
+.Xr getopt 3 .
+Options are obtained by examining
+.Ar args ,
+or the positional parameters if no arguments are provided.
+As with
+.Xr getotpt 3 ,
+.Ar optstring
+is examined for letters, indicating boolean options, and for letters
+followed by colons, indicating options taking an argument.
+.Pp
+Each invocation of
+.Nm getopts
+stores a result (the option, when no error occurs) in the shell variable
+.Ar name ,
+stores the number of the next argument to be processed in the
+shell variable
+.Ev OPTIND ,
+and, if an option taking an argument was found, stores the argument
+in the shell variable
+.Ev OPTARG .
+.Pp
+If an invalid option is found, a question-mark (?) is stored in
+.Ar name ,
+and, if the first character of
+.Ar optstring
+was a colon, the character found is stored in
+.Ev OPTARG .
+.Sh ENVIRONMENT
+Normally,
+.Nm getopts
+does not modify the environment, however, the shell variables it modifies
+can be exported.
+.Pp
+The variables set by
+.Nm getopts
+are:
+.Bl -tag -width OPTARG
+.It Ev OPTARG
+When an option is returned, if it takes an argument, the argument is
+stored in
+.Ev OPTARG .
+.Ev OPTARG
+is not cleared when options without arguments are parsed, or when errors
+occur in parsing.
+.It Ev OPTIND
+The index of the last argument processed by
+.Nm getopts .
+Setting this to 1 causes
+.Nm getopts
+to process arguments from the beginning.
+.El
+.Sh EXAMPLES
+A simple shell program to process arguments might look like this:
+.Bd -literal -compact
+
+	#!/bin/sh
+	while getopts ab: o
+	do
+		case $o in
+		a)	aflag="Y";;
+		b)	bvar="$OPTARG";;
+		\\?)	echo >&2 "usage: cmd [-a] [-b bval] [file ...]"
+			exit 1
+			;;
+		esac
+	done
+	shift $(expr $OPTIND - 1)
+	# now $* contains all the arguments not processed by getopt.
+
+.Ed
+The shell itself will diagnose options taking arguments for which no
+arguments are provided.
+.Sh STANDARDS
+The
+.Nm getopts
+shell builtin is expected to conform to the
+.St -p1003.2
+standard.
+Conformance may vary from shell to shell; see specific shell manuals
+for details.
+.Sh BUGS
+There may be slight variance between the way that different shells implement
+.Nm getopts .
+The
+.Xr csh 1
+shell and its derivatives do not support
+.Nm getopts.
+.Sh SEE ALSO
+.Xr getopt 3 ,
+.Xr sh 1 ,
+.Xr ksh 1 ,
+.Xr bash 1

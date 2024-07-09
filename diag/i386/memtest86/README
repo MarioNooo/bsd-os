@@ -1,0 +1,147 @@
+			===================
+			= MemTest-86 v1.1 =
+			===================
+
+Introduction
+============
+MemTest-86 is thorough, stand alone memory test for 386, 486 and 586
+systems.  MemTest-86 uses a "moving inversions" algorithm that is proven
+to be effective in finding memory errors.  The BIOS based memory test is
+just a quick check that will often miss many of the failures that are
+detected by MemTest-86.
+
+
+Enhancements in v1.1
+====================
+1) The memory sizing algorithm has been improved by limiting the memory
+   scan to the memory size from the BIOS.
+
+2) A provision to disable L1, L2 caches was added.  With this enhancement
+   cache is on for even numbered passes and off for odd passes.  The
+   test algorithms used by MemTest-86 are able to do fairly effective
+   testing of memory with cache on.  However, testing with cache off may
+   be more effective.  In addition the test algorithms will not work
+   correctly on systems with write-back cache when cache is enabled.
+   The down side is that execution time is much, much longer when cache
+   is off.  This feature may be disabled by commenting out the
+   "CACHE=-DCACHE" line in the Makefile (not recommended).
+
+3) The ability to test memory using longer refresh rates was added.  This
+   enhancement makes is possible to detect marginal errors that otherwise
+   would go undetected with the normal refresh rate.  Two refresh rates
+   are used, the normal of 15ms and an extended refresh rate of 150ms.
+   The test alternates between normal and extended refresh every two
+   passes.  This allows for testing with cache both on and off before
+   switching refresh rates.  This feature may be disabled by commenting
+   out the "REFRESH=-DREFRESH" line in the Makefile.  If this feature is
+   disabled the refresh rate set by the BIOS is not altered. 
+
+4) Changes were made to accommodate building MemTest-86 under Linux 1.3.
+
+5) The placement of the data segment is overridden to make the executable
+   more compact (the new size is just over 3k). 
+
+
+Installation
+============
+MemTest-86 is a stand alone program and must be loaded from a floppy disk.
+
+To create a MemTest-86 boot-disk:
+
+   1) Edit the Makefile and adjust the following options as needed:
+	 REL_1.x - Set Linux release level
+	 FDISK - path to your floppy drive
+   2) Insert a blank write enabled floppy disk.
+   3) Type "make install"
+
+Incompatibilities have been encountered with each of the last two versions
+of the loader.  If you are running a version of Linux other than 1.2 or 1.3
+and encounter build problems a binary image has been included (image.bin).
+To create a boot-disk with this pre-built image do the following:
+
+   1) Insert a blank write enabled floppy disk.
+   2) Type "make install-bin"
+
+
+Bugs
+====
+It has been reported that with some motherboards MemTest-86 fails when
+shadow memory is enabled.  The cause for this failure is not yet
+understood.  If you encounter large numbers of errors on an otherwise
+working system try disabling shadow memory.
+
+
+Functional Description
+======================
+Bootstrap and setup code (robbed shamelessly from the Linux kernel) is used
+to load MemTest-86 from the floppy disk, setup memory management registers
+and do miscellaneous setup.  When the load and setup are complete the
+memory layout will be as follows.
+
+0x000	|-------------------------------|
+	|	Stack (256bytes)	|
+0x100	|-------------------------------|
+	|	MemTest (3.25k)		|
+0xe00	---------------------------------
+	
+When MemTest-86 is loaded into memory it first scans memory to find all
+segments of available read/write memory (DRAM).  DRAM is identified by
+reading a location and then writing its complement.  If any bits change
+then we assume that it is DRAM.  To save time we only do this check every
+64 bytes.  Video display memory is skipped over.  Each segment of memory
+is displayed on the left side of the screen.  All segments of memory that
+are found will be tested regardless of size.  The memory scan is limited
+by the memory size value obtained from the BIOS.
+
+After the memory segments have been identified the actual testing begins.
+Since the memory chips used in PC's are either one or four bits wide
+(ie. 1x1meg, 4x1meg, 1x4meg or 4x4meg) a four bit wide test patterns
+replicated to fill a 32 bit word are used.  If memory chips become available
+in PC's that are wider than four bits then this pattern should be adjusted.
+A moving inversions algorithm is then used to test all of memory.  Every
+pass through memory is done sequentially through each memory segment.  This
+must be done to preserve the integrity of the moving inversions algorithm. 
+
+
+Display Description
+===================
+The following is a description of each field displayed by MemTest-86:
+
+Testing:	A list of all DRAM segments that have been found and will
+		be tested.
+
+MemSz-BIOS:	The memory size obtained from BIOS (The test will not
+		scan for memory beyond this size)
+
+Pattern:	The current 32 bit data pattern used for testing
+
+Refresh:	The current refresh rate  ("Default" indicates that the
+		refresh rate has not been altered)
+
+Pass:		Pass count.  (A complete checkout with/without cache and
+		extended refresh requires four passes)
+
+Errors:		Total errors.
+
+Cache:		Cache status for both L1 and L2 cache.
+
+The following information is displayed when a memory error is detected.
+An error message is only displayed for errors with a different address or
+failing bit pattern.  Only the first 23 error messages are displayed and
+subsequent error information is lost.  All displayed values are hexadecimal.
+
+Addrs:		Failing memory address 
+Good:		Current data pattern 
+Bad:		Failing data pattern 
+Xor:		Exclusive or of good and bad data (this shows the position
+		of the failing bit(s))
+
+
+Acknowledgments
+===============
+The initial versions of the source files bootsect.S, setup.S, head.S and
+build.c are from the Linux 1.2.1 kernel and have been heavily modified. 
+
+--
+Chris Brady
+E-mail cbrady@cray.com

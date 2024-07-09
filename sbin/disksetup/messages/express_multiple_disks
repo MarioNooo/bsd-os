@@ -1,0 +1,4 @@
+Express Setup has detected multiple disks on your system.  Express Setup
+requires that BSD/OS be installed on the disk from which your computer
+boots.  Typically this is the first IDE disk, or first SCSI disk if there
+are no IDE disks on your system.

@@ -1,0 +1,18 @@
+Software Package:       
+	byacc
+
+Release/Version:
+	1.9 (the SCCS id from the skeleton file).
+
+Retrieved from:
+	ftp.cs.berkeley.edu:ucb/4bsd/byacc.tar.gz
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and robert.corbett@eng.Sun.COM.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

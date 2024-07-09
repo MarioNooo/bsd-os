@@ -1,0 +1,59 @@
+!
+! XTerm
+!
+XTerm*foreground:                       FOREGROUND_TEXT
+XTerm*background:                       BACKGROUND_TEXT
+XTerm*Foreground:                       FOREGROUND_TEXT
+XTerm*Background:                       BACKGROUND_TEXT
+XTerm*VT100*foreground:                 FOREGROUND_TEXT
+XTerm*VT100*background:                 BACKGROUND_TEXT
+
+XTerm*VT100*borderColor:                BORDER_COLOR
+XTerm*VT100*cursorColor:                CURSOR_COLOR
+XTerm*VT100*pointerColor:               POINTER_COLOR
+XTerm*VT100*pointerColorBackGround:     BACKGROUND_TEXT
+
+XTerm*SimpleMenu*menuLabel.font:        STD_FONT
+XTerm*VT100*iconFont:                   STD_FONT
+XTerm*VT100*font:                       STD_FONT
+XTerm*VT100*font1:                      UNREADABLE_FONT
+XTerm*VT100*font2:                      TINY_FONT
+XTerm*VT100*font3:                      SMALL_FONT
+XTerm*VT100*font4:                      MEDIUM_FONT
+XTerm*VT100*font5:                      LARGE_FONT
+XTerm*VT100*font6:                      HUGE_FONT
+
+XTerm*VT100*c132:                       true
+XTerm*VT100*curses:                     true
+XTerm*VT100*deiconifyWarp:              false
+XTerm*VT100*fullCursor:                 true
+XTerm*VT100*iconStartup:                false
+XTerm*VT100*internalBorder:             2
+XTerm*VT100*jumpScroll:                 true
+XTerm*VT100*logFile:                    XtermLog.XXXXX
+XTerm*VT100*logging:                    false
+XTerm*VT100*logInhibit:                 false
+XTerm*VT100*loginShell:                 true
+XTerm*VT100*marginBell:                 false
+XTerm*VT100*multiScroll:                true
+XTerm*VT100*nMarginBell:                10
+XTerm*VT100*pageOverlap:                1
+XTerm*VT100*pageScroll:                 false
+XTerm*VT100*reverseVideo:               false
+XTerm*VT100*reverseWrap:                true
+XTerm*VT100*saveLines:                  1024
+XTerm*VT100*scrollBar:                  true
+XTerm*VT100*scrollInput:                true
+XTerm*VT100*scrollKey:                  false
+XTerm*VT100*scrollPosition:             right
+XTerm*VT100*statusLine:                 false
+XTerm*VT100*statusNormal:               false
+XTerm*VT100*termName:                   x11term
+XTerm*VT100*textUnderIcon:              true
+XTerm*VT100*title:                      xterm
+XTerm*VT100*titleBar:                   true
+XTerm*VT100*titleFont:                  STD_FONT
+XTerm*VT100*utmpInhibit:                false
+XTerm*VT100*visualBell:                 false
+XTerm*VT100*vt102:                      false
+XTerm*VT100*warp:                       false

@@ -1,0 +1,38 @@
+1) need to implement/test grace period lock recovery.
+
+	we correctly release locks for a client when notified it has rebooted.
+
+	if we get notified a server has rebooted, we need to re-request
+	all the locks we have out-standing on that server... this requires
+	lockd to share it's lock state between it's two processes, which 
+	we need to do anyway for retring of unlocks.
+
+2) retries of unlocks need to occur on the client.
+
+	currently we just send one off, and then ignore the whole issue.
+	if that one gets dropped, then there is no way to release that lock
+	with out resetting either the client or server NLM system.
+
+	need to be able to share some data between the client side and server
+	side daemons for lockd, so one can inform the other when it gets an
+	unlock responce.
+
+3) move client side RPC into the kernel.
+	
+	unlock retries would still be managed by lockd.
+
+4) RPC handles should not timeout
+
+	They should be invalidated when ever we get an error, or
+	when we get notice that a host has rebooted.
+
+5) verify we don't have to run as root.
+
+	The define RUN_AS_DAEMON controls this, but I'm worried some
+	implementations may not talk to us if we're not on a privledged
+	socket number for our rpc requests/answers.
+
+6) use the same transport type (udp vs tcp) as the NFS request.
+
+	over long haul networks, udp just isn't going to cut it, and that
+	is what we send all requests out on.

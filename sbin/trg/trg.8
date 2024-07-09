@@ -1,0 +1,186 @@
+.\"
+.\"     @(#)trg.8	1.0 (Wind River) 05/24/02
+.\"
+.Dd May 24, 2002
+.Dt WV 8
+.Os BSD 5.0
+.Sh NAME
+.Nm trg
+.Nd control windview event logging.
+.Sh SYNOPSYS
+.Nm trg
+.Ar command
+.Oo
+.Ar args
+.Oc
+.Sh DESCRIPTION
+.Nm trg
+is a utility used to manually control triggering
+.Pp
+The
+.Nm trg :
+utility provides eight commands:
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm add
+add a trigger.
+.It Cm chain
+chain a trigger to an existing one.
+.It Cm del
+delete a trigger.
+.It Cm dis
+disable a trigger.
+.It Cm en
+enable a trigger.
+.It Cm list
+print existing triggers.
+.It Cm on
+turn on triggering.
+.It Cm off
+turn off triggering.
+.El
+.Pp
+The
+.Cm add
+command has the syntax
+.Pp
+.Bd -filled -offset indent -compact
+.Nm trg
+.Cm add 
+.Op Fl s
+.Op Fl E
+.Op Fl a Ar action
+.Op Fl c Ar chainId
+.Op Fl e Ar eventId
+.Op Fl p Ar pid
+.Op Fl t Ar ctxType
+.Ed
+.Pp
+.Bl -tag -width Ds
+.It Fl s
+single usage flag specifies the trigger should be disabled once hit.
+.It Fl E
+specifies the trigger is initially enabled.
+.It Fl a
+.Ar action
+specifies the action to perform when trigger is hit. It can be
+.Pp
+.Bl -tag -width flag -compact
+.It Cm 0
+no action
+.It Cm 1
+start event logging
+.It Cm 2
+stop event logging
+.El
+.It Fl c Ar chainId
+specifies chained trigger (trigger enabled when this one is hit).
+.It Fl e Ar eventId
+specified the expected event (see sys/evtlog.h) for values.
+.It Fl p Ar pid
+specifies the process id event should be received in.
+.It Fl t Ar ctxType
+specifies the context type event should be received in. Supported
+values are
+.Pp
+.Bl -tag -width flag -compact
+.It Cm 0
+any context(including interrupt threads)
+.It Cm 1
+any process 
+.It Cm 2
+given process (-p option)
+.It Cm 3
+any interupt thread
+.It Cm 4
+given interrupt thread (-p option)
+.It Cm 5
+system context(see wdb)
+.El
+.El
+.Pp
+The
+.Cm chain
+command has the syntax
+.Pp
+.Nm trg
+.Cm chain 
+.Bd -filled -offset indent -compact
+.Op Fl c Ar chainId
+.Op Fl i Ar trgId
+.Ed
+.Bl -tag -width Ds
+.It Fl c Ar chainId
+specifies trigger that should be enabled whe trgId is hit.
+.It Fl i Ar trgId
+specifies updated trigger.
+.El
+.Pp
+The
+.Cm del
+(delete) and 
+.Cm list
+commands have the syntax
+.Pp
+.Nm trg
+.Cm del|list
+.Bd -filled -offset indent -compact
+.Op Fl a
+.Op Fl i Ar trgId
+.Ed
+.Bl -tag -width Ds
+.It Fl a
+deletes|lists every triggers.
+.It Fl i Ar trgId
+deletes|lists the specified trigger trgId.
+.El
+.Pp
+The
+.Cm dis
+(disable) and
+.Cm en
+(enable) commands have the syntax
+.Pp
+.Nm trg
+.Cm dis|en
+.Bd -filled -offset indent -compact
+.Op Fl i Ar trgId
+.Ed
+.Bl -tag -width Ds
+.It Fl i Ar trgId
+disable|enable the specified trigger trgId.
+.El
+.Pp
+The
+.Cm off
+command takes no optional arguments, it stops triggering.
+.Pp
+The
+.Cm on
+command takes no optional argument, it starts triggerring (if an enabled
+trigger exists). 
+.Pp
+.Sh EXAMPLES
+# configure a deferred upload
+.Dl $ wv cfg -D -m 
+# or start an upload process using the upload path of your choice
+.Dl $ wv upload -P SOCKET -S xxx.xxx.xxx.xxx
+# install triggers
+.br
+# trgWvOn2 starts logging and enables trgWvOn1 on EVENT_TASKNAME (process
+.br
+# creation)
+.br
+# trgWvOn1 has no action and enables trgWvOff on event EVENT_TASKNAME
+.br
+# trgWvOff stops logging on event EVENT_CTX_EXIT
+.Dl $ trgWvOff=`./trg add -e 54 -s -a 2`
+.Dl $ trgWvOn1=`./trg add -e 3 -s -a 0 -c $trgWvOff`
+.Dl $ trgWvOn2=`./trg add -e 3 -E -s -a 1 -c $trgWvOn1`
+# in deferred upload mode, upload the buffer
+.Dl $ wv upload -P SOCKET xxx.xxx.xxx.xxx 
+
+.Pp
+
+.Sh SEE ALSO
+.Xr wv 8

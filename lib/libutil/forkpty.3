@@ -1,0 +1,40 @@
+.\"	BSDI forkpty.3,v 1.2 1996/05/22 21:52:46 jch Exp
+.\"
+.Dd May 8, 1996
+.Dt FORKPTY 3
+.Os
+.Sh NAME
+.Nm forkpty
+.Nd create a slave process with a controlling terminal
+.Sh SYNOPSIS
+.Fd #include <termios.h>
+.Ft int
+.Fn forkpty "int *amaster" "char *name" "struct termios *termp" "struct winsize *winp"
+.Sh DESCRIPTION
+The
+.Fn forkpty
+function uses
+.Xr fork 2
+to create a child process controlled by a pseudo terminal.
+.Pp
+The child process is made the session leader of a new process.  The
+slave side of the pseudo terminal is the process's controlling
+terminal and is available on file descriptors 0, 1 and 2
+.Pq Dv stdin , stdout and stderr .
+.Sh RETURN VALUES
+Upon successful completion, 
+.Fn forkpty
+returns 0 to the child process and the child process' ID to the parent
+process.
+.Pp
+On failure,
+.Fn forkpty
+returns -1, setting
+.Va errno .
+.Sh SEE ALSO
+.Xr fork 2 ,
+.Xr wait 2 ,
+.Xr login_tty 3 ,
+.Xr openpty 3 ,
+.Xr pty 4 ,
+.Xr termios 4

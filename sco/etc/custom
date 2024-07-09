@@ -1,0 +1,252 @@
+#!/usr/bin/perl
+#	BSDI custom,v 2.1 1995/02/03 15:16:46 polk Exp
+
+    chdir("/");
+
+    system("rm", "-rf", "tmp/perms");
+    printf ("enter floppy dev for volume 1: </dev/rfd0> ");
+    $devname = <>;
+    chop $devname;
+    if ($devname eq "") {
+	$devname = "/dev/rfd0";
+    }
+    system("tar", "xvf", "$devname", "./tmp/perms");
+
+    opendir(dir, "./tmp/perms");
+    $cnt = 0;
+
+    while ($fname = readdir(dir)) {
+	if ($fname eq ".") {
+		next;
+	}
+	if ($fname eq "..") {
+		next;
+	}
+	$fnames[$cnt] = $fname;
+	$cnt++;
+    }
+    if ($cnt == 0) {
+	printf ("no perms file(s) found\n");
+	exit (1);
+    }
+    if ($cnt == 1)
+    {
+	$fname = $fnames[0];
+    } else {
+	$cnt = 0;
+	foreach $fname (@fnames) {
+	    printf("%d  %s\n",$cnt, $fname);
+	    $cnt++;
+	}
+	printf ("numerically select product from above list: ");
+	$fname = $fnames[<>];
+    }
+    printf("package selected = %s\n",$fname);
+    
+    mkdir("./etc", 0755);
+    mkdir("./etc/perms", 0755);
+    system("cp", "tmp/perms/$fname", "etc/perms");
+
+    open(permfile,"tmp/perms/$fname");
+
+    #
+    # read through perms file and pull out all of the packages
+    #
+
+    $linecnt = 0;
+    $lastvol = 1;
+    while ($inline = <permfile>) {
+	chop $inline;
+	@words = split(' ',$inline);
+	if (@words == 0) {
+		next;
+	}
+	if (@words[0] eq "#") {
+		next;
+	}
+	if (@words[0] eq "uid") {
+		next;
+	}
+	if (@words[0] eq "gid") {
+		next;
+	}
+	if (@words[0] eq "PERM") {
+		$perms[$linecnt++] = $inline;
+		next;
+	}
+
+	#
+	# code to handle hash stuff goes here
+	#
+	if (substr($words[0],0,1) eq "#") {
+		next;
+	}
+
+	$perms[$linecnt++] = $inline;
+
+	#
+	# suck in link lines
+	#
+	$cnt = $words[3] -1;
+	while($cnt) {
+		$perms[$linecnt++] = <permfile>;
+		$cnt--;
+	}
+
+	#
+	# watch for highest volume number
+	#
+	$char = substr($words[1],0,1);
+	if (($char ne "c") && ($char ne "b")) {
+		if ($words[5] > $lastvol) {
+			$lastvol = $words[5];
+		}
+	}
+
+	#
+	# continue on packages we have already seen
+	#
+	if (@pkgs{@words[0]} ne "") {
+		next;
+	}
+	@pkgs{@words[0]} = 'unselected';
+    }
+
+    @pkgnames=keys(%pkgs);
+    $cnt = 1;
+    foreach $pkg (@pkgnames) {
+	printf("%d  %s\n",$cnt, $pkg);
+	$cnt++;
+    }
+    printf("%d  ALL of the above\n",$cnt);
+    printf("enter space separated list of package numbers: ");
+    $_=<>;
+    chop;
+    @devs = split;
+    foreach $a (@devs) {
+	if ($a == 0 || $a > $cnt) {
+	    printf("invalid argument %s \n", $a);
+	}
+	if ($a == $cnt) {
+	    foreach $pkg (@pkgnames) {
+		print ("pkg=$pkg\n");
+		@pkgs{$pkg} = 'selected';
+	    }
+	    last;
+	}
+	@pkgs{$pkgnames[$a-1]} = 'selected';
+
+    }
+    print "\n";
+    while (($key,$value) = each %pkgs) {
+	print "$key=$value\n";
+    }
+
+    @pkgs{"PERM"} = 'selected';
+
+    #
+    # go through and run any prep scripts
+    #
+    for ($curline = 0; $curline < $linecnt; $curline++) {
+	@words = split(' ', $perms[$curline]);
+	#
+	# continue if this package is not selected
+	#
+	if ($pkgs{$words[0]} ne 'selected') {
+	    $curline += $words[3] -1;
+	    next;
+	}
+	if (substr($words[4],0,17) ne "./tmp/perms/prep.") {
+	    $curline += $words[3] -1;
+	    next;
+	}
+	print "prep script = $words[4]\n";
+	system(sh $words[4]);
+    }
+
+
+    #
+    # go through and extract selected packages
+    #
+    for ($curvol = 1; $curvol <= $lastvol; $curvol++) {
+	$#filenames = -1;
+	for ($curline = 0; $curline < $linecnt; $curline++) {
+	    @words = split(' ', $perms[$curline]);
+
+	    #
+	    # continue if this package is not selected
+	    #
+	    if ($pkgs{$words[0]} ne 'selected') {
+		$curline += $words[3] -1;
+		next;
+	    }
+
+	    #
+	    # we don't try and extract character or block devices
+	    #
+	    $char = substr($words[1],0,1);
+	    if (($char eq "c") || ($char eq "b")) {
+		$curline += $words[3] -1;
+		next;
+	    }
+	    if ($words[5] != $curvol) {
+		$curline += $words[3] -1;
+		next;
+	    }
+
+	    #
+	    # we are going to extract file. Also get any links. They
+	    # better be on the same volume or we have problems.
+	    #
+	    push(@filenames, $words[4]);
+	    $i = $words[3] -1;
+	    while($i) {
+		$curline++;
+		@words = split(' ', $perms[$curline]);
+		push(@filenames, "$words[0]");
+		$i--;
+	    }
+	}
+
+	if ($#filenames == -1) {
+	    next;
+	}
+	@filenames = reverse(@filenames);
+
+	print "\nenter floppy dev for volume $curvol:<$devname> ";
+	$ndevname = <>;
+	chop $ndevname;
+	if ($ndevname ne "" ) {
+		$devname = $ndevname;
+	}
+	$#tarnames = -1;
+	while ($tmp = pop(@filenames)) {
+	    if (length(join("      ", @tarnames)) > 18000) {
+		reverse (@tarnames);
+		system("tar", "xvf", "$devname", @tarnames);
+		$#tarnames = -1;
+	    }
+	    push(@tarnames, $tmp);
+	}
+	@tarnames = reverse (@tarnames);
+	system("tar", "xvf", "$devname", @tarnames);
+    }
+
+    #
+    # go through and run any init scripts
+    #
+    for ($curline = 0; $curline < $linecnt; $curline++) {
+	@words = split(' ', $perms[$curline]);
+	#
+	# continue if this package is not selected
+	#
+	if ($pkgs{$words[0]} ne 'selected') {
+	    $curline += $words[3] -1;
+	    next;
+	}
+	if (substr($words[4],0,11) ne "./tmp/init.") {
+	    $curline += $words[3] -1;
+	    next;
+	}
+	system("sh", "$words[4]");
+    }

@@ -1,0 +1,193 @@
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)config.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd April 19, 1994
+.Dt CONFIG 8
+.Os BSD 4
+.Sh NAME
+.Nm config
+.Nd build kernel compilation directories
+.Sh SYNOPSIS
+.Nm config
+.Op Fl gpss
+.Op Fl D Ar variable=value
+.Op Fl m Ar makeoption
+.Op Fl o Ar option
+.Ar system-name
+.Sh DESCRIPTION
+.Pp
+.Nm Config
+builds a set of configuration files from the file
+.Ar system-name ,
+which describes
+the system to configure.
+.Pp
+.Nm Config
+should run from the board specific subdirectory of the
+.Pa bsp
+directory of the system source (usually
+.Pa /sys/bsp/BSP ,
+where
+.Pa BSP
+is a board specific identifier).
+.Nm Config
+will create a
+.Pa compile
+subdirectory, if needed, in the local directory and place all output files
+in a subdirectory of the
+.Pa compile
+directory with the name
+.Ar system-name
+, creating the
+.Ar system-name
+subdirectory if necessary. Thus, configuring with
+.Dq Li config PICKLE
+will use the directory
+.Pa compile/PICKLE
+within the board specific directory.
+.Pp
+The options are as follows:
+.Bl -tag -width Fl
+.It Fl D
+Set 
+.Ar variable
+to the specified
+.Ar value .
+This overrides and assignment of
+.Ar variable
+within the configuration file.
+.It Fl g
+Equivalent to
+.Dq Li -m DEBUG=-g ,
+this causes the resulting Makefile to build a
+.Dq bsd.gdb
+file containing debugging symbols.
+.It Fl m Ar makeoption
+Inserts a
+.Ar makeoption
+as if it appeared in the configuration file.
+.It Fl o Ar option
+Inserts an
+.Ar option
+as if it appeared in the configuration file.
+.It Fl p
+Similar to
+.Dq Li -m PROF=-pg -o GPROF ,
+but the suffix
+.Pa .PROF
+is added to the compilation directory name.
+This will build a system that includes profiling code; see
+.Xr kgmon 8
+and
+.Xr gprof 1 .
+.It Fl s
+Equivalent to
+.Dq Li options SOURCE ,
+or if repeated, to
+.Dq Li options SOURCE, ALLSRC ,
+this can be used by source customers
+to build from source using binary-only configurations.
+.El
+.Pp
+All of the command line options
+are best used only for
+.Dq one-shot
+special compilations of existing configurations.
+If more than one build will use the same options,
+making a new configuration file containing the proper
+.Li options
+and
+.Li makeoptions
+lines will avoid future errors such as forgetting an option
+or misspelling the option on the command line.
+.Pp
+The output of
+.Nm config
+consists of a number of files, principally
+.Pa ioconf.c ,
+a description of I/O devices that may be attached to the system; and a
+.Pa Makefile ,
+used by
+.Xr make 1
+in building the kernel.
+.Pp
+After running
+.Nm config ,
+it is wise to run
+.Dq Li make depend
+in the directory where the new makefile
+was created.
+.Nm Config
+prints a reminder of this when it completes.
+.Pp
+If
+.Nm config
+stops due to errors, the problems reported should be corrected and
+.Nm config
+should be run again.
+.Nm Config
+attempts to avoid changing the compilation directory
+if there are configuration errors,
+but some problems (such as running out of disk space)
+are unrecoverable.
+.Pp
+Both single quotes and double quotes may be used as delimiters of
+a word when defining options in a kernel configuration file. If " are
+used as the delimiter then it is possible to insert a " in the word
+by preceding the " inside the word with \\. If ' are used as the delimiter
+then it is possible to insert a ' in the word by preceding the ' inside the
+word with a \\. It is not necessary to precede a ' by a \\ in a word if " is
+being used as the delimiter nor is it necessary to precede a " by a
+\\ if ' is being used as a delimiter. Therefore, the following two
+options:
+.Pp
+options	"WDB_NETWORK='\\"rtl0\\"'"
+.Pp
+options	'WDB_NETWORK=\\'"rtl0"\\''
+.Pp
+both yield the following definition in the Makefile:
+.Pp
+-DWDB_NETWORK='"rtl0"'
+.Sh SEE ALSO
+The SYNOPSIS portion of each device in section 4.
+.Rs
+.%T "Building Kernels on BSD/OS"
+.\" .%T "Device Support in 4.4BSD"
+.Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.1 .
+It was completely revised in
+.Bx 4.4 .

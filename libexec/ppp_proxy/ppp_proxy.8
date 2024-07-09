@@ -1,0 +1,70 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ppp_proxy.8,v 1.2 1997/11/11 20:04:14 chrisk Exp
+.Dd April 16, 1996
+.Dt PPP_PROXY 8
+.Os BSD/OS
+.Sh NAME
+.Nm ppp_proxy
+.Nd do login sequence for ppp
+.Sh SYNOPSIS
+.Nm ppp_proxy
+.Op Fl s Ar ppp.sys-file
+.Op Fl x
+.Ar sysname
+.Sh DESCRIPTION
+The
+.Nm ppp_proxy
+utility
+is called by the
+.Xr ppp 8
+command to proxy a request to
+.Xr gettyd 8
+utility.
+The
+.Fl x
+flag implies the login sequence should be reported on standard output
+(reserved to the super user).
+If
+.Ar ppp.sys-file
+is specified by the
+.Fl s
+flag then it is used instead of
+.Pa /etc/ppp.sys .
+The
+.Ar sysname
+argument defines the entry in the
+.Pa ppp.sys
+file to search for.
+The
+.Nm ppp_proxy
+utility reads a request destined for
+.Xr gettyd 8
+from standard input and forwards it to
+.Xr gettyd 8 .
+When
+.Xr gettyd 8
+returns the file descriptor of the connected device,
+.Nm ppp_proxy
+applies the login rules defined in the
+.Pa ppp.sys
+file (see
+.Xr ppp.sys 5 ) .
+If the rules fail, the connection to
+.Xr gettyd 8
+is dropped and failure is returned to
+.Xr ppp 8 .
+If the rules succeed, the file descriptors to both
+.Xr gettyd 8
+and the connected device are passed back to
+.Xr ppp 8
+and
+.Nm ppp_proxy exits with a zero status.
+.Sh FILES
+.Pa /etc/ppp.sys
+.Sh SEE ALSO
+.Xr ppp.sys 5 ,
+.Xr gettyd 8 ,
+.Xr ppp 8

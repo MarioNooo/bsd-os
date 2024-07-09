@@ -1,0 +1,6 @@
+Your disk appears to have a valid BSD partition table.
+You may either start with this table or start with a clean table.
+Note that starting with a clean table, or altering any partitions
+in the current table, will cause the data associated with the changed
+partitions (all partitions if you clean the table) to be lost.
+

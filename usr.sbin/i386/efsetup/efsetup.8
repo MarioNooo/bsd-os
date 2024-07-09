@@ -1,0 +1,138 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI efsetup.8,v 1.3 1996/12/11 14:39:34 donn Exp
+.\"
+.Dd March 21, 1996
+.Dt EFSETUP 8
+.Os
+.Sh NAME
+.Nm efsetup
+.Nd manipulate eeprom settings on 3COM 3C59x ethernet cards
+.Sh SYNOPSIS
+.Nm efsetup
+.Op Fl vsS
+.Op Fl m Ar type
+.Op Fl p Ar ratio
+.Ar interface-name
+.Sh DESCRIPTION
+The
+.Nm efsetup
+program displays information regarding adapter configuration and allows
+options to be changed and stored in adapter EEPROM. This program will
+display the contents of the EEPROM from any adapter recognized by the
+.Xr ef 4
+driver, however only newer adapters (3c59x) may be programmed. Display
+of older adapter options may not correctly decode some options, allowing
+such displays is intended primary for debugging purposes.
+.Pp
+.Bl -tag -width Fl
+.It Fl v
+This displays the adapter configuration state before any changes are
+applied.
+.It Fl s
+Enable 100baseTX start of stream delimiter corruption checking.
+.It Fl S
+Disable 100baseTX start of stream delimiter corruption checking.
+.It Fl m Ar type
+Set default media type. This media type is used by the hardware when the
+card is first powered on and is used by the 
+.Xr ef 4
+driver to set default
+link flags at boot time. Available media types are:
+.Bl -tag -width "xxx"
+.It tp
+10baseT
+.It aui
+10base5 (DB15 AUI connector)
+.It bnc
+10base2 (Thinnet)
+.It tx
+100baseTX
+.It fx
+100baseFX
+.It mii
+Media independent interface (daughter card)
+.It t4
+100-VgAnyLan via MII daughter card
+.El
+.Pp
+It is only possible to select a media type supported by the card.
+.Pp
+It is
+.Em very
+important to set the media type correctly on
+cards that support 100Mbps operation, a card set for 100Mbit will
+jam a 10Mbit network (as soon as the workstation is powered up), the
+same is true of a card configured for 10Mbit on a 100Mbit network.
+To be safe: always 
+configure a new style (3c59x) card
+.Em before
+attaching the network cable.
+.It Fl p Ar ratio
+Set ram buffer partitioning. This determines how much of the adapter ram
+is allocated to the receive FIFO vs. the transmit FIFO. Possible settings
+are
+.Li 5:3 , 3:1,
+and
+.Li 1:1 .
+Not all combinations of adapter ram size, width, and partition ratios are
+supported, an error will be generated if an attempt is made to select
+an unsupported ratio.
+.El
+.Pp
+The 'media autoselect' option does not work correctly (in hardware)
+and may cause a connected network to be jammed when the machine is
+powered up; if this option is set
+via the 3COM DOS based diagnostic,
+.Nm efsetup
+will turn it off automatically when run (a warning will be issued).
+.Pp
+The EEPROM is only programmed if some option has changed, this is
+to prevent unneeded programming cycles (which can wear the part out).
+.Pp
+Changing options only affects the EEPROM, not the current
+settings being used by the driver.
+.Xr Ifconfig 8
+can be used to change media while running via manipulation of link flags (see
+.Xr ef 4
+), changes to other options require a reboot to take effect.
+.Sh EXAMPLES
+.Bd -literal
+# efsetup -v ef2
+Product ID            : 3C597-TX (0x7059)
+Media supported       : 10BaseT, 100BaseTX
+Media select on reset : 10BaseT
+Ram size              : 64 Kb
+Ram width             : word
+Ram wait states       : 1
+Rom size              : 8 Kb
+BadSSD detect         : on
+Buffer ratio          : 3:1
+Read FIFO size        : 48 Kb
+Write FIFO size       : 16 Kb
+Media autoselect      : off
+
+EEPROM dump:
+        00: 0020 afee f58a 7059 bf6d 0036 5841 6d50
+        08: 0000 3000 0020 afee f58a 3f10 0000 0000
+        10: 11c6 0000 001b 0001 0000 0000 0000 007b
+        18: 0000 0000 0000 0000 0000 0000 0000 0000
+        20: 0000 0000 0000 0000 0000 0000 0000 0000
+        28: 0000 0000 0000 0000 0000 0000 0000 0000
+        30: 0000 0000 0000 0000 0000 0000 0000 0000
+        38: 0000 0000 0000 0000 0000 0000 0000 0000
+
+# efsetup -m tx ef2
+EEPROM programmed.
+# efsetup -m tx ef2
+No changes made to ef2
+.Ed
+.Sh SEE ALSO
+.Xr ef 4 ,
+.Xr ifconfig 8 ,
+.Xr rc 8
+.Sh HISTORY
+The
+.Nm efsetup
+command first appeared in BSD/OS 3.0.

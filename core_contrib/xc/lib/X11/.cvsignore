@@ -1,0 +1,7 @@
+Makefile
+ks_tables.h
+unshared
+libX11.so.6.1
+libX11_s
+.depend
+libX11.so.6.2

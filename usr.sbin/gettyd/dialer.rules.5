@@ -1,0 +1,317 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"     BSDI dialer.rules.5,v 1.2 1996/10/29 00:36:36 prb Exp
+.Dd June 11, 1996
+.Dt DIALER.RULES 5
+.Os
+.Sh NAME
+.Nm dialer.rules
+.Nd phone number dialing rules
+.Sh SYNOPSIS
+.Nm /etc/dialer.rules
+.br
+.Nm /etc/dialer.rules.local
+.Sh DESCRIPTION
+The
+.Pa /etc/dialer.rules
+file contains rules for breaking down a phone number, classifying the
+number, and producing a number suitable to be passed to a dialing script
+(see
+.Xr gettyd 8 ) .
+.Pp
+There are 4 types of entries in
+.Pa /etc/dialer.rules Ns No .
+.Bl -tag -width indent
+.It "#include <filename>" Ta
+Include the specified filename at the current location in the file.
+.It <SPECIAL>=c Ta
+Indicate the the special sequence is denoted by the character
+.Ar c .
+Special sequences are are strings like
+.Li <PAUSE> .
+The are typically mapped to individual characters to ease the writing of
+numbers.  Since
+.Li <PAUSE>
+is typically mapped to
+.Li ,
+(comma), the following two numbers would be considered the same:
+.Li 123<PAUSE>456
+and
+.Li 123,456 .
+.Pp
+The standard mappings of special characters are:
+.Bd -literal -offset indent
+<DIALTONE>=%     # Wait for dialtone
+<FLASH>=!        # Flash hook
+<PAUSE>=,        # Pause (typically for 2 seconds)
+<PULSE>=^        # Use pulse dialing
+<REVERSE>=~      # Dial an originate only modem
+<SILENCE>=@      # Wait for silence
+<TONE>=:         # Use touch tone dialing
+.Ed
+.It VARIABLE=value Ta
+Assign a value to a variable.  If the
+.Li =
+is replaced by
+.Li ?=
+then the value will only be assigned if the variable does not already
+have a value.  Standard values used are:
+.Bl -tag -width indent
+.It INTL_ACCESS_CODE Ta
+The access code for dialing international numbers.  Defaults to
+.Li 011 ,
+which is direct access code in the United States.
+.It LOCAL_COUNTRY_CODE Ta
+The country code for the local country.
+Defaults to
+.Li 1 ,
+which is the country code for the United States.
+.It LOCAL_CITY_CODE Ta
+The local city code (or area code).  Defaults to
+.Li 612 ,
+which is the area code for central Minnesota.
+.It LPREFIX Ta
+The access code for dialing national long distance numbers.  Defaults to
+.Li 1 ,
+which is the direct dial access code in the United States.
+.It RULE Ta
+The ruleset which should be used to classify a phone number.  Defaults to
+.Li Default-Rules .
+.El
+.It "RULESET {"
+.It ...
+.It }
+Defines the specified ruleset.  Note that the placement of the
+.Li {
+and
+.Li }
+are critical.  The opening
+.Li {
+must be on the same line on the ruleset.
+The closing
+.Li }
+must be on a line by itself.
+.El
+.sp
+Comments are introduced by the
+.Li ;
+(semicolon) character.
+.Sh RULESETS
+As mentioned above, a ruleset has the form of:
+.Bd -literal -offset indent
+name {
+	rule
+	...
+}
+.Ed
+.fi
+Rules are newline delimited and hence must each be on a line of their own.
+All rules have the form:
+.sp
+.No Ta Op Ar label:
+.Ar pattern actions
+.sp
+The number being processed is compared against
+.Ar pattern .
+If the number matches 
+.Ar pattern
+then
+.Ar actions
+are applied.
+The portion of the number which matched the pattern is stripped.
+.Pp
+Patterns and actions, as well as the original number being processed,
+are subject to variable expansion.
+A variable is indicated by enclosing it within
+.Li { } Ns No .
+For instance, the string
+.Li {LPREFIX}
+would replaced by the value of the
+.Li LPREFIX
+variable, if any.
+.Pp
+The normal character used consists of the 
+10 digits (
+.Li "0, 1, 2, 3, 4, 5, 6, 7, 8,"
+and
+.Li 9 Ns No )
+as well as
+.Li + Ns No ,
+.Li # Ns No ,
+and
+.Li * Ns No .
+As indicated above, variables are introduced by
+.Li { Ns No .
+Variable names, which are case sensitive, are limited to the alpha-numeric
+characters as well as
+.Li _
+and
+.Li - Ns No .
+When processing a number or a pattern, alphabetic characters may be
+used to represent number, as on a phone:
+A, B, and C map to 2;
+D, E, and F map to 3;
+G, H, and I map to 4;
+J, K, and L map to 5;
+M, N, and O map to 6;
+P, R, and S map to 7;
+T, U, and V map to 8; and
+W, X, and Y map to 9.
+This allows numbers to specified such as:
+.Li 1-800-GO-TWINS .
+When processing the number, any other character, other than
+.Li + Ns No ,
+.Li < Ns No ,
+.Li > Ns No ,
+.Li { Ns No ,
+.Li } Ns No ,
+.Li ? Ns No ,
+.Li [ Ns No ,
+.Li ] Ns No ,
+and
+.Li -
+are expanded, if possible, into the special sequence defined for it.
+(For instance,
+.Li ,
+would expand to
+.Li <PAUSE> Ns No ).
+When processing a pattern there are several wild cards available:
+.Bl -tag -width indent
+.It Op Ar abc
+Matches any character contained within the set
+.Ar abc .
+.It Op Ar a-c
+Matches any character between
+.Ar a
+and
+.Ar c
+inclusive.  The string
+.Li [#-9]
+will match any character.
+.It Li ?
+Matches any digit.
+Same as
+.Li [0-9] .
+.It Li $
+Matches the end of the number, or
+.Li <EXT> Ns No .
+.It Li -
+Matches the null string.  This pattern always matches and does not
+cause any characters to be stripped from the number.
+.El
+.Pp
+When a special sequence is encountered, it is passed through with the
+preceeding normal character (or the following normal character if the
+special sequence comes before any normal character).  The only exception
+to this rule is that <EXT> terminates a phone number.  All following
+characters are assumed to be part of an extension to be dialed.
+For example, the pattern "123" matches all of:
+.Bd -literal -offset indent
+123
+123<SPECIAL>
+<SPECIAL>123
+<SPECIAL>1<SPECIAL>2<SPECIAL>3<SPECIAL>
+.Ed
+but does not match:
+.Bd -literal -offset indent
+12<EXT>3
+.Ed
+.Pp
+Actions normally consist of variable assignment:
+.Ar VARIABLE=name .
+Typically a ruleset will start by reseting internal variables used
+by the ruleset.  For example:
+.sp
+.nf
+.in +.5i
+-               NATIONAL=NATIONAL INTL=INTL
+-               CARRIER= PREFIX= IPREFIX= LPREFIX=
+.fi
+.in -.5i
+.Pp
+The
+.Li NUMBER
+variable is always undefined when a ruleset starts.  When the ruleset
+is finished,
+.Li NUMBER
+must contain the number to dial, including <EXT> and anything following it.
+.Pp
+When the action field is parsed, the following symbols have special
+meanings:
+.Bl -tag -width indent
+.It &
+Replaced by the characters which matched the pattern
+.It $
+Replaced by all characters following the characters which matched
+the pattern, including <EXT> and the characters following it.
+.El
+.Pp
+Besides variable assignment, an action may also be one of the following
+directives:
+.Bl -tag -width prependxvaluexxx
+.It goto Ar label
+Continue processing from
+.Ar label .
+.It prepend Ar value
+Prepend
+.Ar value
+to the remaining number.  This has the effect of mapping the matched
+pattern to
+.Ar value .
+For instance:
+.Bd -literal -offset indent
++	prepend 011
+.Ed
+has the effect of replacing a leading
+.Li +
+with
+.Li 011 .
+.It reject
+Reject this number.
+.It resolved Ar type
+The number has been resolved.
+.Li NUMBER
+contains the number to dial, which is of
+.Ar type.
+By convention, the following types are used:
+.Bl -tag -width ASSISTEDXNATIONALXX
+.It DIRECT
+Everything was after <EXT>
+.It LOCAL
+A local call
+.It NATIONAL
+A national long distance call
+.It INTL
+An international long distance call
+.It ASSISTED-NATIONAL
+A national operator assisted call
+.It ASSISTED-INTL
+An international operator assisted call
+.El
+.El
+.Pp
+While it is not proper to fall out the bottom of a ruleset,
+if the final rule processed is not a
+.Li resolved
+or
+.Li reject
+directive then the number is assumed to be rejected.
+.Pp
+The default distributed ruleset is simply:
+.Bd -literal -offset indent
+;
+; Default Rules
+; Very permissive (everything is a local call except for direct calls)
+;
+default-Rules {
+	;
+	; If there is no number then this is a DIRECT call
+	;
+	$		NUMBER=$ resolved DIRECT
+	-		NUMBER=$ resolved LOCAL
+}
+.Ed
+.Sh SEE ALSO
+.Xr gettyd 8

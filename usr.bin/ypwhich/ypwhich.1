@@ -1,0 +1,46 @@
+.\" Id: ypcat.1,v 1.1 1994/08/08 01:13:29 wollman Exp 
+.\"	BSDI ypwhich.1,v 1.2 1998/06/08 18:08:49 donn Exp
+.Dd July 8, 1996
+.Dt YPWHICH 1
+.Os
+.Sh NAME
+.Nm ypwhich
+.Nd "return hostname of YP/NIS server or map master
+.Sh SYNOPSIS
+.Nm ypwhich
+.Op Fl t
+.Op Fl d Ar domainname
+.Op Fl m Op Ar mname
+.Op Ar hostname
+.Nm ypwhich
+.Fl x
+.Sh DESCRIPTION
+The
+.Nm ypwhich
+utility displays the name of the YP/NIS server for the current host,
+or, if
+.Ar hostname
+is specified, that host.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl d Ar domainname
+Specify a domain other than the default domain.
+.It Fl m
+Display the master YP/NIS server for the specified map or map nickname
+.Ar mname .
+If no map or map nickname is specified,
+a list of the possible maps is displayed.
+The
+.Ar hostname
+argument may not be specified with the
+.Fl m
+option.
+.It Fl t
+Inhibit translation of map nicknames to their corresponding map names.
+.It Fl x
+Display the map nickname table.
+.El
+.Sh SEE ALSO
+.Xr ypcat 1 ,
+.Xr ypmatch 1

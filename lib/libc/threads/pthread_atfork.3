@@ -1,0 +1,99 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_atfork.3,v 1.3 1996/12/12 03:03:38 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_ATFORK 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_atfork
+.Nd pthread fork handlers
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_atfork "void (*prepare)(void)" "void (*parent)(void)" "void (*child)(void)"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_atfork
+function registers fork handlers to be called before and after a call to
+.Fn fork
+in the context of the thread that calls
+.Fn fork .
+The
+.Fa prepare
+fork handler is called before the actual fork operation is completed. 
+The
+.Fa parent
+fork handler is called in the parent process after the fork operation is
+completed.
+The
+.Fa child
+fork handler is called in the newly created child process after the fork 
+operation is completed.
+Any one of
+.Fa prepare ,
+.Fa parent , 
+and
+.Fa child
+may be 
+.Dv NULL
+in which case no action is performed for that fork handler.
+.Pp
+Multiple calls to 
+.Fn pthread_atfork
+are allowed and the order of these calls is significant.
+The
+.Fa parent 
+and
+.Fa child
+fork handlers are called in the order they were established.
+The
+.Fa prepare
+fork handlers are called in the reverse order.
+.Sh RETURN VALUES
+The 
+.Fn pthread_atfork
+function returns 0 upon successful completion.  If an error occurs, a 
+non-zero error value is returned.
+.Sh ERRORS
+The
+.Nm pthread_atfork
+function may fail and return the following error:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+Insufficient memory to record the the fork handlers.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_exit 3 ,
+.Xr fork 2
+.Sh STANDARDS
+The
+.Nm pthread_atfork
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_atfork
+function first appeared in BSD/OS 3.0.
+.Sh BUGS
+.Pp
+No processing is performed for for variants such as
+.Fn vfork .
+This is intentional.  It is assumed that a call to 
+.Fn vfork 
+will be followed by an
+.Fn exec
+and no atfork processing is desired.
+.Pp
+In general calling 
+.Fn fork
+in a threaded application is a bad idea and is discouraged.
+

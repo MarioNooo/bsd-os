@@ -1,0 +1,7 @@
+Makefile
+Makefile.bsd
+config.log
+config.h
+config.cache
+config.status
+ifhp.conf

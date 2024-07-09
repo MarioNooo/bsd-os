@@ -1,0 +1,150 @@
+.\"	BSDI	ipfwechochk.8,v 1.1 2000/01/24 22:04:28 prb Exp
+.\"
+.\" Copyright (c) 2000 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd January 19, 2000
+.Dt IPFWECHOCHK 8
+.Sh NAME
+.Nm ipfwechochk
+.Nd Check ICMP echo packet
+.Sh SYNOPSIS
+.Nm ipfwechochk
+.Op Fl nv
+.Op Fl b Ar buckets
+.Op Fl s Ar serial
+.Op Fl t Ar when
+.Op Fl T Ar tag
+.Op Ar maxentries
+.Sh DESCRIPTION
+The
+.Nm ipfwechochk
+utility is used to reject ICMP Echo Reply packets that have no matching
+ICMP Echo Request packets.  This is accomplished by recording each
+ICMP Echo Request and accepting only ICMP Echo Replies that match
+the outgoing request.  The IP addresses, sequence number and id must
+all match.  When an ICMP Echo Reply is matched to a previous ICMP Echo
+Request the entry is removed, further replies will be ignored unless
+a new echo request is sent.
+.Pp
+Since the only way for an entry to be automatically removed is for
+a matching ICMP Echo Reply to be seen, a maximum number of entries
+must be specified by
+.Ar maxentries
+when installing the filter.  The value used will depend on how many hosts
+inside the network will be doing pings at the same time.  If an
+ICMP Echo Request is seen and there are too many entries, the old oldest
+entry is removed.
+.Pp
+With no arguments (options only), all outstanding echo requests are displayed.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl b Ar buckets
+Set the number of hash buckets to be used to 
+.Ar buckets .
+The default setting of 997 is probably good for most situations.
+If you are expecting a large number of simultaneous icmp echo requests you may
+want to increase this value.  The value should be reasonably
+prime.  To support about 50,000 outstanding requests a value of 9977
+would probably work fine.
+.It Fl n
+Do not sort output when displaying.
+.It Fl s Ar serial
+Display only the information for the specified
+.Ar serial
+number.
+.It Fl t Ar when
+Expire all outstanding requests that are older than
+.Ar when
+seconds.
+Times may be modified with s, m, h, d, w, and y to specify seconds,
+minutes, hours, days, weeks and years.  For example: 1m30s is 1 minute
+and 30 seconds.  A year is always considered to have 365 days.
+.It Fl T Ar tag
+Specify the
+.Ar tag
+to be used.  If this is not specified then the tag "echochk" will be used.
+.It Fl v
+Provide additional information while running.
+.El
+.Sh HOW TO USE
+Typically only a single echochk filter is installed on a system, there is
+little advantage in installing more than one.  It is always installed on the
+CALL filter chain.  A pre-input and pre-output filter are then installed.
+The pre-output filter should contain code similar to:
+.Bd -literal -offset indent
+icmp {
+	switch icmptype {
+	case echo:
+		call("echochk");
+		break;
+	case echoreply:		// don't allow incoming pings
+		reject;
+		break;
+	}
+}
+.Ed
+.Pp
+The pre-input filter would contain:
+.Bd -literal -offset indent
+icmp {
+	switch icmptype {
+	case echo:		// don't allow incoming pings
+		reject;
+		break;
+	case echoreply:
+		! call("echochk") {
+			reject;	// unknown reply
+		}
+		break;
+	}
+}
+.Ed
+.Pp
+In each case, the standard IPFW language is used to determine if the packet
+should be subject to the check.  If it is subject to the check the echochk
+filter is called.  For ICMP Echo requests we simply call the filter to
+have us recorded.  For ICMP Echo replies we reject the packet if the filter
+does not report a match.
+.Pp
+A gateway could also put the checks on the forward filter based on what
+IP addresses are being used:
+.Bd -literal -offset indent
+input interface(exp0) {
+	// Packets from inside my net
+	...
+	switch icmptype {
+	case echo:
+		call("echochk");
+		break;
+	case echoreply:
+		reject;
+		break;
+	}
+	...
+}
+input interface(exp1) {
+	// Packets from outside my net
+icmp {
+	switch icmptype {
+	case echo:		// don't allow incoming pings
+		reject;
+		break;
+	case echoreply:
+		! call("echochk") {
+			reject;	// unknown reply
+		}
+		break;
+	}
+}
+}
+.Ed
+.Pp
+Old entries can be periodically removed, however, it is generally okay
+to let them be removed when the maximum number of entries is hit.
+.Sh SEE ALSO
+.Xr ipfw 8,
+.Xr ipfwcmp 8

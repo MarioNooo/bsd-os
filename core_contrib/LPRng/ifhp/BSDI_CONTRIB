@@ -1,0 +1,97 @@
+Software Package:       
+	ifhp
+
+Release/Version:
+	ifhp ifhp-3.3.11beta.7
+
+
+Retrieved from:
+	ftp://ftp.astart.com/pub/LPRng/private/ifhp-ifhp-3.3.11beta.7.tgz
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and papowell@astart.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Add device and resolution support to pcl_ps_conversion printer.
+
+Index: ifhp.conf.in
+===================================================================
+RCS file: /master/contrib/LPRng/ifhp/ifhp.conf.in,v
+retrieving revision 1.2
+diff -c -r1.2 ifhp.conf.in
+*** ifhp.conf.in	2000/04/19 03:18:25	1.2
+--- ifhp.conf.in	2000/04/20 02:02:00
+***************
+*** 798,808 ****
+  pcl
+  ps@
+  text@
+  file_output_match = [
+    *pcl*  pcl
+- #  if your printer does not handle text but has PS, use:
+    *text*  pcl
+!   *postscript*  pcl @GS@ -dSAFER -q -sDEVICE=ljet4 -sOutputFile=- -
+   ]
+  
+  # PRINTER ghostscript - Printer with GhostScript conversion to raster files
+--- 798,808 ----
+  pcl
+  ps@
+  text@
++ device=ljet4
+  file_output_match = [
+    *pcl*  pcl
+    *text*  pcl
+!   *postscript*  pcl @GS@ -dSAFER -q -sDEVICE=\%s{device} \%s{resolution} -sOutputFile=- -
+   ]
+  
+  # PRINTER ghostscript - Printer with GhostScript conversion to raster files
+
+
+Add support for the 10030 PJL status message (copied from a later release).
+
+Index: checkcode.c
+===================================================================
+RCS file: /master/contrib/LPRng/ifhp/src/checkcode.c,v
+retrieving revision 1.3
+diff -c -r1.3 checkcode.c
+*** checkcode.c	2000/04/17 18:57:03	1.3
+--- checkcode.c	2001/01/23 03:51:56
+***************
+*** 87,92 ****
+--- 87,93 ----
+  	{ 10024, "waiting" },
+  	{ 10027, "remove paper from printer" },
+  	{ 10029, "formfeeding" },
++ 	{ 10030, "job message displayed" },
+  
+  	/* 11xxx (Background Paper Loading Messages */
+  	{ 11304, "tray 3 empty (tray 3=LC)" },
+
+Prevent error message from unexpanded WITH_CC macro.
+
+diff -c -r1.4 -r1.5
+*** configure	2000/04/19 03:18:24	1.4
+--- configure	2002/01/29 17:34:48	1.5
+***************
+*** 734,740 ****
+    echo "$ac_t""no" 1>&6
+  fi
+  
+! WITH_CC WITH_CCOPTS WITH_LINKER WITH_LDOPTS WITH_CPPOPTS 
+  
+  
+  
+--- 734,740 ----
+    echo "$ac_t""no" 1>&6
+  fi
+  
+! # WITH_CC WITH_CCOPTS WITH_LINKER WITH_LDOPTS WITH_CPPOPTS 
+  
+  
+  

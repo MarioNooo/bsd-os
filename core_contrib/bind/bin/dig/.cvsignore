@@ -1,0 +1,9 @@
+Makefile
+dig
+host
+nslookup
+.libs
+dig.lo
+dighost.lo
+host.lo
+nslookup.lo

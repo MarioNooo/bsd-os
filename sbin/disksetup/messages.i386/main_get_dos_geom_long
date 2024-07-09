@@ -1,0 +1,6 @@
+The geometry (number of heads, sectors per track and number of
+cylinders) of the disk that will be used by the generic boot
+block (and DOS as well as other systems which use the BIOS)
+must be known in order to create an FDISK partition.  Disksetup
+will try to automatically determine this geometry...
+

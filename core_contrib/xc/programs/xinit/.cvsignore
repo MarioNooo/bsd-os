@@ -1,0 +1,9 @@
+Makefile
+startx
+xinit
+xinitrc
+xinit.0
+startx.0
+.depend
+xinit._man
+startx._man

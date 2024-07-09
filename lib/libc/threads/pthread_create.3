@@ -1,0 +1,81 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_create.3,v 1.3 1996/12/12 03:03:42 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_CREATE 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_create
+.Nd create a new pthread
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_create "pthread_t *tid" "const pthread_attr_t *attr" "void *(*start_routine) (void *)" "void *arg"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_create
+function creates a new pthread using the thread creation attributes 
+defined by the attribute object 
+.Fa attr .
+If
+.Fa attr
+is 
+.Dv NULL ,
+the default creation attributes are used. 
+The thread is created using 
+.Fa start_routine
+as the initial function to execute with
+.Fa arg
+passed as the sole argument to
+.Fa start_routine .
+If the thread exits 
+.Fa start_routine ,
+the effect shall be the same as the thread calling
+.Fn pthread_exit
+with the return value of
+.Fa start_routine 
+as the value passed to 
+.Fn pthread_exit .
+.Pp
+Upon successful completion, the 
+.Fn pthread_create
+function returns the thread id of the newly created thread in
+.Fa tid .
+.Sh RETURN VALUES
+The 
+.Fn pthread_create
+function returns 0 upon successful completion.  If an error occurs, a 
+non-zero error value is returned.
+.Sh ERRORS
+The
+.Nm pthread_create
+function may fail and return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+The system lacked the necessary resources
+to create another thread.
+.It Bq Er EINVAL
+The value specified by
+.Fa attr
+is invalid.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_exit 3 
+.Sh STANDARDS
+The
+.Nm pthread_create
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_create
+function first appeared in BSD/OS 3.0.

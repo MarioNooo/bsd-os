@@ -1,0 +1,158 @@
+.Dd September 19, 1999
+.Dt APMD 8
+.Os
+.Sh NAME
+.Nm apmd
+.Nd run scripts on apm events
+.Sh SYNOPSIS
+.Nm apmd
+.Op Fl x
+.Op Fl d Ar script-dir
+.Op Fl m Ar mode
+.Op Fl t Ar threshold
+.Sh DESCRIPTION
+The
+.Nm apmd
+daemon looks for apm events and runs the script associated with the event,
+if it exists.
+The optional arguments are:
+.Bl -tag -width indent
+.It Fl d
+Specify the directory that the scripts are stored in.
+By default this is
+.Pa /usr/libdata/apmd .
+.It Fl m
+Set the APM mode to
+.Li user
+or
+.Li auto .
+By default the system runs in
+.Li auto
+mode.  In this mode the system will automatically take action on a user
+suspend or standby request.  In
+.Li user
+mode the system will only report these to the APM logging socket.
+Setting the mode to
+.Li user
+will allow you to provide a meaningful
+.Li user_suspend_req
+script.  The script should probably terminate with
+.Li apm suspend .
+The
+.Li user_suspend_req
+script could then be used to turn of PC Cards that have a problem
+if the system is suspended while they are active.
+.It Fl t
+Set the "de-bounce" threshold to the specified number of mille-seconds.
+The default is 2000 mille-seconds (2 seconds).  If an event is repeated
+within the specified threshold the repeated event is suppressed.
+.It Fl x
+Run in debug mode.  Do not become a daemon.
+.El
+.Sh SCRIPTS
+Scripts are located in the directory
+.Pa /usr/libdata/apmd
+and must be one of the following names:
+.Bl -tag -width indent
+.It Li battery
+A battery changed status.
+.It Li battery_0
+Battery 0 changed status.
+.It Li battery_1
+Battery 1 changed status.
+.It Li battery_2
+Battery 2 changed status.
+.It Li battery_3
+Battery 3 changed status.
+.It Li critical_resume
+System resumed from critical suspend.
+.It Li clock_change
+The speed of the cycle counter has changed (Intel SpeedStep technology).
+The info field contains the new clock rate in cycles per second.
+.It Li critical_suspend
+System suspending for a critical reason.
+.It Li error_resume
+System resuming from a failed suspend.
+.It Li low_battery
+Low battery warning.
+.It Li normal_resume
+System resumed.
+.It Li standby_req
+System requesting standby.
+.It Li standby_resume
+System resumed from standby.
+.It Li status_change
+Power status change.
+.It Li suspend_req
+System requesting suspend.
+.It Li update_time
+The time was updated.
+.It Li user_standby_req
+User requesting standby.
+.It Li user_suspend_req
+User requesting suspend.
+.It Li other
+Any event not recognized.
+.El
+.Pp
+For all but "other" scripts a single argument is passed which is an
+unsigned integer in decimal containing the info field (the ECX register)
+returned with the APM event.
+For "other" scripts the event number, in hexadecimal, proceeds the info field.
+.Sh EXAMPLE
+The following example would be named
+.Pa /usr/libdata/apmd/normal_resume
+and linked to
+.Pa /usr/libdata/apmd/critical_resume .
+This script is run when the machine resumes from being in suspend mode.
+It attempts to regain an IP address from a dhcp server using the ISC
+dhcp client.
+.Pp
+.Bd -literal -offset indent
+#!/bin/sh
+
+if [ -f /var/run/dhclient.pid ]
+then
+	kill $(cat /var/run/dhclient.pid)
+	rm -f /var/run/dhclient.pid
+	sleep 2			# let PC Cards come back up
+	dhclient
+else
+	exit 0
+fi
+.Ed
+.Pp
+The following script would named
+.Pa /usr/libdata/apmd/user_suspend_req
+when the system is in
+.Li user
+mode.
+.Pp
+.Bd -literal -offset indent
+#!/bin/sh
+
+csconfig -a down
+sleep 2
+apm suspend
+.Ed
+.Pp
+The following script would named
+.Pa /usr/libdata/apmd/normal_resume
+when the system is in
+.Li user
+mode.
+.Pp
+.Bd -literal -offset indent
+#!/bin/sh
+
+csconfig -a up
+.Ed
+.Sh SEE ALSO
+.Xr apm 8 ,
+.Xr apmstart 8 ,
+.Xr apmstop 8
+.Sh AUTHOR
+Steve Bellovin, ATT Research.
+.br
+(The manual page was not provided by Mr. Bellovin and all mistakes and
+shortcomings should not be attributed to him.)

@@ -1,0 +1,88 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_join.3,v 1.4 1999/10/08 12:48:42 jch Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_JOIN 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_join
+.Nd wait until a specified thread exits
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_join "pthread_t tid" "void **value"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_join
+function blocks execution of the calling thread until the thread
+specified by
+.Fa tid
+terminates.  If the thread specified by
+.Fa tid
+is already terminated,
+.Fn pthread_join 
+will return immediately.  
+.Pp
+Upon completion of a successful call to
+.Fn pthread_join ,
+.Fa value
+will contain the exit status of the target thread passed to 
+.Fn pthread_exit .
+If the target thread was canceled a value of
+.Dv PTHREAD_CANCELED
+is returned.  
+Care should be taken to insure that the value of
+.Dv PTHREAD_CANCELED
+is not returned in a call to
+.Xr pthread_exit 2 Ns .
+If 
+.Fa value
+is 
+.Dv NULL
+no exit status is returned.
+.Sh RETURN VALUES
+The 
+.Fn pthread_join
+function returns 0 upon successful completion.  If an error occurs, a 
+non-zero error value is returned.
+.Sh ERRORS
+The
+.Nm pthread_join
+function may fail and return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EDEADLK
+A call to to
+.Fn pthread_join
+was made with 
+.Fa tid 
+specifying the calling thread.
+.It Bq Er EINVAL
+The value specified by
+.Fa tid
+does not refer to a joinable thread.
+.It Bq Er ESRCH
+No thread could be found corresponding to the specified thread ID
+.Fa tid .
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_create 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_detach 3
+.Sh STANDARDS
+The
+.Nm pthread_join
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_join
+function first appeared in BSD/OS 3.0.

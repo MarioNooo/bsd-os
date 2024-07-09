@@ -1,0 +1,120 @@
+#!/bin/sh
+
+# Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI hardwire-condition,v 1.6 1996/10/17 03:40:53 prb Exp
+
+# hardwire-condition / hardwire-watcher / hardwire-call 
+
+DEFCOMMAND=/usr/bin/login	# default command to use if not specified
+DEFTERM=unknown			# default terminal type to use if not specified
+PROG=$0				# how we were called
+
+DEV=				# device we are attached to
+COMMAND=			# command (for watcher only)
+TERM=				# terminal type
+MODES=				# stty modes
+DTE=				# DTE rate
+
+# Process the command line arguments.
+# Arguments are supposed to be of the format: -argument [value [value ...]]
+
+while [ $# -gt 0 ] ; do
+	ARG0=			# will be the first value found
+	ARGV=			# start with an empty value vector
+	DONE=			# This is set when we are done with the values
+	ARG=$1 ; shift		# shift off the argument name
+
+	# scan through the remaining arguments, looking for an entry that
+	# starts with a -.  Once we find one (or hit the end of the argument
+	# list) then we will have collected all the values for this argument.
+
+	while [ $# -gt 0 -a X$DONE = X ] ; do
+		case "$1" in
+		-*)	DONE=Done ;;		# new argument, terminate loop
+		*)	if [ $ARG0 ] ; then	# If this is not the first value
+				ARGV="$ARGV $1"	# tack it on with a space
+			else
+				ARG0=$1
+				ARGV=$1		# otherwise it is the value list
+			fi
+			shift ;;
+		esac
+	done
+
+	# now check the argument
+
+	case "$ARG" in
+	-command)		# the command to execute
+		COMMAND=$ARGV ;;
+	-dte-speeds)
+		DTE=$ARG0 ;;	# the dte rate for the serial port
+	-f)	DEV=$ARG0 ;;	# the file descriptor open to the serial port
+	-stty-modes)	
+		MODES=$ARGV ;;	# the modes to send stty
+	-term)	TERM=$ARG0 ;;	# the terminal type
+	-*)	;;		# Just ignore unknown -arguments
+	*)	echo "Invalid argument: $ARG" 1>&2 ;;
+	esac
+done
+
+# Require that a device is specified
+
+if [ X"$DEV" = X ] ; then
+	echo "Missing device" 1>&2
+	exit 1
+fi
+
+if [ X"$DTE" = X ] ; then
+	DTE=$(ttydesc <> $DEV dte-speeds 0)
+fi
+if [ X"$TERM" = X ] ; then
+	TERM=$(ttydesc <> $DEV term 0)
+	if [ X"$TERM" = X ] ; then
+		TERM=$DEFTERM
+	fi
+fi
+if [ X"$MODES" = X ] ; then
+	MODES=$(ttydesc <> $DEV stty-modes)
+fi
+
+export TERM				# make sure TERM variable is exported
+
+stty -f $DEV $(stty -D -g < $DEV)	# reset device to default stty modes
+
+# if either the DTE speed or some stty modes were passed in,
+# call stty to set those modes.
+
+if [ ! X"$DTE" = X -o ! X"$MODES" = X ] ; then
+	stty -f $DEV $DTE $MODES
+fi
+
+# check what type of program we are.  If we are a watcher we need to
+# exec $COMMAND once we think the line is up, else we must be a condition
+# script in which case we just exit with a 0
+
+case $PROG in
+*-watcher)
+	echo -n > $DEV                  # wait until CD and/or CTS comes up
+
+	# finally exec the specified command
+	# make sure file descriptors 0, 1 and 2 are opened for both
+	# reading and writing and point to the serial port
+
+	if [ X"$COMMAND" = X ] ; then
+		COMMAND=$(ttydesc <> $DEV command 0)
+		if [ X"$COMMAND" = X ] ; then
+			COMMAND=$DEFCOMMAND
+		fi
+	fi
+
+	exec $COMMAND <> $DEV 1<> $DEV 2<> $DEV
+	exit 1
+	;;
+*)
+	;;
+esac
+
+exit 0

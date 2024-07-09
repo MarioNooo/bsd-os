@@ -1,0 +1,8 @@
+Makefile
+lex.c
+to_wfont.c
+to_wfont.h
+Roman.phont
+to_wfont
+Roman_M.phont
+.depend

@@ -1,0 +1,6 @@
+
+The bootany(8) utility will now be run.  This utility will enable you
+to assign up to 4 partitions to be selectable as the boot partition
+at boot time.  If you do not select any partition, your disk will
+not be bootable.
+

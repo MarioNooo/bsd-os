@@ -1,0 +1,952 @@
+Software Package:       
+	ld.so
+
+Release/Version:
+	1.9.5
+
+Retrieved from:
+	ftp://sunsite.unc.edu/pub/Linux/devel/GCC/ld.so-1.9.5.tar.gz
+
+Bug reports:
+	This software package is maintained by the software contributor
+	and BSDI.  Report bugs to BSDI.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/linuxelf.h,v
+retrieving revision 1.1.1.1
+retrieving revision 1.3
+diff -c -1 -r1.1.1.1 -r1.3
+*** linuxelf.h	1997/06/10 23:05:06	1.1.1.1
+--- linuxelf.h	1997/10/21 03:26:40	1.3
+***************
+*** 1 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
++ 
++ #ifdef __bsdi__
++ #include <linux/elf.h>
++ #endif
++ 
+  /* This should eventually appear in the distribution version of linux/elf.h */
+***************
+*** 140,142 ****
+--- 146,150 ----
+  #ifdef IBCS_COMPATIBLE
++ #ifndef __bsdi__
+  #define BROKEN_LINKER
++ #endif
+  #endif
+
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/libdl/dlib.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.4
+diff -c -1 -r1.1.1.1 -r1.4
+*** dlib.c	1997/06/10 23:05:07	1.1.1.1
+--- dlib.c	1997/11/18 23:03:15	1.4
+***************
+*** 1 ****
+--- 1,3 ----
++ /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
++ 
+  /*
+***************
+*** 7,11 ****
+  #include "dlfcn.h"
+! #include <link.h>
+  #include <stdlib.h>
+! #include <sys/mman.h>
+  #ifdef IBCS_COMPATIBLE
+--- 9,13 ----
+  #include "dlfcn.h"
+! #include "link.h"
+  #include <stdlib.h>
+! #include <linux/mman.h>
+  #ifdef IBCS_COMPATIBLE
+***************
+*** 21,22 ****
+--- 23,28 ----
+  
++ #ifndef IBCS_COMPATIBLE
++ #define	USE_WEAK
++ #endif
++ 
+  extern int _dl_error_number;
+***************
+*** 464,466 ****
+  /* Generate the correct symbols that we need. */
+! #ifndef IBCS_COMPATIBLE
+  #if 1
+--- 470,472 ----
+  /* Generate the correct symbols that we need. */
+! #ifdef USE_WEAK
+  #if 1
+***************
+*** 491,493 ****
+  
+! #ifndef IBCS_COMPATIBLE
+  #if 1
+--- 497,499 ----
+  
+! #ifdef USE_WEAK
+  #if 1
+
+We added support for the Solaris dladdr() function:
+
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/libdl/dlib.c,v
+retrieving revision 1.4
+retrieving revision 1.5
+diff -c -1 -r1.4 -r1.5
+*** dlib.c	1997/11/18 23:03:15	1.4
+--- dlib.c	1998/01/11 17:28:16	1.5
+***************
+*** 1,2 ****
+! /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
+  
+--- 1,2 ----
+! /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
+  
+***************
+*** 476,477 ****
+--- 476,478 ----
+  #pragma weak dlsym = _dlsym
++ #pragma weak dladdr = _dladdr
+  #else
+***************
+*** 481,482 ****
+--- 482,484 ----
+  __asm__(".weak dlsym;dlsym=_dlsym");
++ __asm__(".weak dladdr;dladdr=_dladdr");
+  #endif
+***************
+*** 568 ****
+--- 570,642 ----
+  
++ int
++ _dladdr(void *address, Dl_info *dlip)
++ {
++ 	const struct elf_resolve *erp;
++ 	const struct elf_resolve *cerp;
++ 	const char *v;
++ 	unsigned int syment;
++ 	const Elf32_Sym *s, *slast, *cs;
++ 	const Elf32_Word *hash;
++ 	const char *strtab;
++ 
++ 	/*
++ 	 * First we find a candidate elf_resolve entry.
++ 	 * Look for the entry with the highest load address
++ 	 * that is less than or equal to the given address.
++ 	 */
++ 	cerp = NULL;
++ 	for (erp = _dl_loaded_modules; erp != NULL; erp = erp->next) {
++ 		if (erp->loadaddr > (const char *)address)
++ 			continue;
++ 		if (cerp != NULL && erp->loadaddr <= cerp->loadaddr)
++ 			continue;
++ 		cerp = erp;
++ 	}
++ 
++ 	if (cerp == NULL)
++ 		return (0);
++ 
++ 	/*
++ 	 * We have the module.
++ 	 * Fill in the module information.
++ 	 */
++ 	dlip->dli_fname = cerp->libname;
++ 	dlip->dli_fbase = cerp->loadaddr;
++ 	dlip->dli_sname = NULL;
++ 	dlip->dli_saddr = NULL;
++ 
++ 	/*
++ 	 * Loop over symbols and find the symbol with the greatest address
++ 	 * that is less than or equal to the given address.
++ 	 */
++ 	v = cerp->loadaddr;
++ 	strtab = v + cerp->dynamic_info[DT_STRTAB];
++ 	syment = cerp->dynamic_info[DT_SYMENT];
++ 	s = (const Elf32_Sym *)(v + cerp->dynamic_info[DT_SYMTAB]);
++ 	hash = (const Elf32_Word *)(v + cerp->dynamic_info[DT_HASH]);
++ 	slast = (const Elf32_Sym *)((const char *)s + syment * hash[1]);
++ 	cs = NULL;
++ 	for (; s < slast; s = (const Elf32_Sym *)((const char *)s + syment)) {
++ 		/*
++ 		 * Dynamic symbols in executables have absolute addresses,
++ 		 * while those in shared objects have base-relative addresses.
++ 		 * To compensate, the loadaddr is 0 for executables.
++ 		 */
++ 		if (s->st_shndx == SHN_UNDEF || s->st_shndx == SHN_COMMON ||
++ 		    ELF32_ST_BIND(s->st_info) == STB_LOCAL)
++ 			continue;
++ 		if (v + s->st_value > (const char *)address)
++ 			continue;
++ 		if (cs != NULL && s->st_value <= cs->st_value)
++ 			continue;
++ 		cs = s;
++ 	}
++ 
++ 	/* If we found a symbol, fill in the symbol information.  */
++ 	if (cs != NULL) {
++ 		dlip->dli_sname = strtab + cs->st_name;
++ 		dlip->dli_saddr = (void *)(v + cs->st_value);
++ 	}
++ 
++ 	return (1);
++ }
+
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/libdl/dlfcn.h,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -c -1 -r1.1 -r1.2
+*** dlfcn.h	1997/06/10 23:05:07	1.1
+--- dlfcn.h	1998/01/11 17:20:29	1.2
+***************
+*** 5,30 ****
+  
+! /*
+!  * Various defines and so forth for the dynamic linker
+!  */
+! 
+! /* For dlopen () */
+! #define RTLD_LAZY	1
+! #define RTLD_NOW	2
+! #define RTLD_GLOBAL	0x100
+! 
+! /* For dlsym */
+! #define RTLD_NEXT	((void *)-1)
+! 
+! __BEGIN_DECLS
+! 
+! /* The usual prototypes.  We use void * instead of the actual
+!  * datatype - the user does not manipulate the handles at all.
+!  */
+!  
+! extern void * dlopen __P((__const char * __filename, int __flag));
+! extern __const char * dlerror __P((void));
+! extern void * dlsym __P((void *, __const char *));
+! extern int dlclose __P((void *));
+! 
+! __END_DECLS
+  
+--- 5,8 ----
+  
+! /* XXX */
+! #include "/usr/include/dlfcn.h"
+
+We changed the linker to ignore LD_PRELOAD in setuid() programs.
+It doesn't matter whether the preloaded library is in the regular
+search path -- bad guys could still use LD_PRELOAD to interpose
+libraries with security problems.
+
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/boot1.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -c -1 -r1.2 -r1.3
+*** boot1.c	1997/10/21 03:26:37	1.2
+--- boot1.c	1998/02/09 20:23:54	1.3
+***************
+*** 527,529 ****
+        _dl_secure = 1;
+!       _dl_preload = _dl_getenv("LD_PRELOAD", envp);
+        _dl_unsetenv("LD_AOUT_PRELOAD", envp);
+--- 527,529 ----
+        _dl_secure = 1;
+!       _dl_unsetenv("LD_PRELOAD", envp);
+        _dl_unsetenv("LD_AOUT_PRELOAD", envp);
+
+We changed ldconfig so that it doesn't automatically process the
+default Linux directories.  Since ld.so will check the two default
+directories anyway, these additions are unnecessary, and they make
+the output from ldconfig -v confusing.
+
+RCS file: /master/contrib/ld.so-1.9.5/D/util/ldconfig.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -c -r1.2 -r1.3
+*** ldconfig.c	1997/10/21 03:27:03	1.2
+--- ldconfig.c	1998/02/12 05:45:51	1.3
+***************
+*** 1,3 ****
+--- 1,5 ----
++ /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
++ 
+  /*
+   * ldconfig - update shared library symlinks
+   *
+***************
+*** 549,557 ****
+--- 551,561 ----
+  		free(extpath);
+  	    }
+  
++ #ifndef __bsdi__
+  	    /* everybody needs these, don't they? */
+  	    scan_dir("/usr/lib");
+  	    scan_dir("/lib");
++ #endif
+  	}
+  
+  	if (!nocache)
+
+We changed the IBCS_COMPATIBLE code so that on BSD/OS, we don't try to
+substitute /usr/i486-sysv4/lib for /usr/lib:
+
+Index: readelflib1.c
+===================================================================
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/readelflib1.c,v
+retrieving revision 1.2
+retrieving revision 1.3
+diff -c -5 -r1.2 -r1.3
+*** readelflib1.c	1997/10/21 03:26:40	1.2
+--- readelflib1.c	1998/02/11 22:46:12	1.3
+***************
+*** 259,269 ****
+      }
+    }
+  #endif
+  
+    /* Check in /usr/lib */
+! #ifdef IBCS_COMPATIBLE
+    pnt1 = "/usr/i486-sysv4/lib/";
+  #else
+    pnt1 = "/usr/lib/";
+  #endif
+    pnt = mylibname;
+--- 259,269 ----
+      }
+    }
+  #endif
+  
+    /* Check in /usr/lib */
+! #if defined(IBCS_COMPATIBLE) && !defined(__bsdi__)
+    pnt1 = "/usr/i486-sysv4/lib/";
+  #else
+    pnt1 = "/usr/lib/";
+  #endif
+    pnt = mylibname;
+***************
+*** 271,285 ****
+    pnt1 = libname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    *pnt++ = 0;
+    tpnt1 = _dl_load_elf_shared_library(mylibname, 0);
+    if (tpnt1) return tpnt1;
+!   
+  #ifndef IBCS_COMPATIBLE
+    /* Check in /lib */
+    /* try "/lib/". */
+    pnt1 = "/lib/";
+    pnt = mylibname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    pnt1 = libname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    *pnt++ = 0;
+--- 271,289 ----
+    pnt1 = libname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    *pnt++ = 0;
+    tpnt1 = _dl_load_elf_shared_library(mylibname, 0);
+    if (tpnt1) return tpnt1;
+! 
+  #ifndef IBCS_COMPATIBLE
+    /* Check in /lib */
+    /* try "/lib/". */
++ #ifdef __bsdi__
++   pnt1 = "/shlib/";
++ #else
+    pnt1 = "/lib/";
++ #endif
+    pnt = mylibname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    pnt1 = libname;
+    while(*pnt1) *pnt++ = *pnt1++;
+    *pnt++ = 0;
+Index: readelflib1.c
+===================================================================
+RCS file: /master/contrib/ld.so-1.9.5/D/d-link/readelflib1.c,v
+retrieving revision 1.4
+retrieving revision 1.5
+diff -c -5 -r1.4 -r1.5
+*** readelflib1.c	1998/09/09 06:11:05	1.4
+--- readelflib1.c	1999/01/31 15:50:00	1.5
+***************
+*** 1,6 ****
+! /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
+  
+  /* Load an ELF sharable library into memory.
+  
+     Copyright (C) 1993-1996, Eric Youngdale.
+  
+--- 1,6 ----
+! /*	BSDI BSDI_CONTRIB,v 1.7 1999/03/07 02:16:26 jch Exp	*/
+  
+  /* Load an ELF sharable library into memory.
+  
+     Copyright (C) 1993-1996, Eric Youngdale.
+  
+***************
+*** 163,173 ****
+   /* If the filename has any '/', try it straight and leave it at that.
+       For IBCS2 compatibility under linux, we substitute the string 
+       /usr/i486-sysv4/lib for /usr/lib in library names. */
+  
+    if (libname != full_libname) {
+! #ifdef IBCS_COMPATIBLE
+      if (_dl_strncmp(full_libname, "/usr/lib/", 9) != 0) {
+        tpnt1 = _dl_load_elf_shared_library(full_libname, 0);
+      } else {
+        pnt1 = "/usr/i486-sysv4/lib/";
+        pnt = mylibname;
+--- 163,173 ----
+   /* If the filename has any '/', try it straight and leave it at that.
+       For IBCS2 compatibility under linux, we substitute the string 
+       /usr/i486-sysv4/lib for /usr/lib in library names. */
+  
+    if (libname != full_libname) {
+! #if defined(IBCS_COMPATIBLE) && !defined(__bsdi__)
+      if (_dl_strncmp(full_libname, "/usr/lib/", 9) != 0) {
+        tpnt1 = _dl_load_elf_shared_library(full_libname, 0);
+      } else {
+        pnt1 = "/usr/i486-sysv4/lib/";
+        pnt = mylibname;
+
+We changed ldconfig to automatically build symlinks to the most recent
+major and minor version of a library and to do aliasing (a symlink from
+one library name to a library with a different soname.
+
+Index: D/util/ldconfig.c
+===================================================================
+RCS file: /master/contrib/ld.so-1.9.5/D/util/ldconfig.c,v
+retrieving revision 1.7
+diff -c -r1.7 ldconfig.c
+*** ldconfig.c	1998/09/09 06:11:09	1.7
+--- ldconfig.c	1999/03/05 22:04:28
+***************
+*** 72,78 ****
+  char *conffile = LDSO_CONF;	/* default cache file */
+  char *cachefile = LDSO_CACHE;	/* default cache file */
+  void cache_print(void);
+! void cache_dolib(char *dir, char *so, int libtype);
+  void cache_write(void);
+  
+  char *readsoname(char *name, FILE *file, int *type);
+--- 72,78 ----
+  char *conffile = LDSO_CONF;	/* default cache file */
+  char *cachefile = LDSO_CACHE;	/* default cache file */
+  void cache_print(void);
+! void cache_dolib(char *dir, char *so, char *fname, int libtype);
+  void cache_write(void);
+  
+  char *readsoname(char *name, FILE *file, int *type);
+***************
+*** 126,150 ****
+  
+  /* if shared library, return a malloced copy of the soname and set the
+     type, else return NULL */
+! char *is_shlib(char *dir, char *name, int *type, int *islink)
+  {
+      char *good = NULL;
+!     char *cp, *cp2;
+      FILE *file;
+      struct exec exec;
+      struct elfhdr *elf_hdr;
+      struct stat statbuf;
+!     char buff[1024];
+  
+      /* see if name is of the form libZ.so* */
+      if ((strncmp(name, "lib", 3) == 0 || strncmp(name, "ld-", 3) == 0) && \
+! 	name[strlen(name)-1] != '~' && (cp = strstr(name, ".so")))
+      {
+  	/* find the start of the Vminor part, if any */
+! 	if (cp[3] == '.' && (cp2 = strchr(cp + 4, '.')))
+! 	    cp = cp2;
+! 	else
+! 	    cp = cp + strlen(cp);
+  
+  	/* construct the full path name */
+  	sprintf(buff, "%s%s%s", dir, (*dir && strcmp(dir, "/")) ?
+--- 126,150 ----
+  
+  /* if shared library, return a malloced copy of the soname and set the
+     type, else return NULL */
+! char *is_shlib(char *dir, char *name, int *type, int *islink, int *isalias)
+  {
+      char *good = NULL;
+!     char *cp, *ep;
+      FILE *file;
+      struct exec exec;
+      struct elfhdr *elf_hdr;
+      struct stat statbuf;
+!     char buff[PATH_MAX];
+! 
+!     *islink = *isalias = *type = 0;
+  
+      /* see if name is of the form libZ.so* */
+      if ((strncmp(name, "lib", 3) == 0 || strncmp(name, "ld-", 3) == 0) && \
+! 	name[strlen(name)-1] != '~' && (ep = strstr(name, ".so")))
+      {
+  	/* find the start of the Vminor part, if any */
+! 	if (*(ep += 3) != '.' || (cp = strchr(ep + 1, '.')) == NULL)
+! 	    cp = ep + strlen(ep);
+  
+  	/* construct the full path name */
+  	sprintf(buff, "%s%s%s", dir, (*dir && strcmp(dir, "/")) ?
+***************
+*** 184,204 ****
+  		        /* always call readsoname to update type */
+  		        *type = LIB_ELF;
+  		        good = readsoname(buff, file, type);
+! 			if (good == NULL || *islink)
+  			{
+- 			    if (good != NULL)
+- 			        free(good);
+  			    good = xstrdup(name);
+  			}
+  			else
+  			{
+  			    /* if the soname does not match the filename,
+! 			       issue a warning, but only in debug mode. */
+! 			    int len = strlen(good);
+! 			    if (debug && (strncmp(good, name, len) != 0 ||
+! 				(name[len] != '\0' && name[len] != '.')))
+! 			        warn("%s has inconsistent soname (%s)",
+! 				     buff, good);
+  			}
+  		    }
+  		}
+--- 184,204 ----
+  		        /* always call readsoname to update type */
+  		        *type = LIB_ELF;
+  		        good = readsoname(buff, file, type);
+! 			if (good == NULL)
+  			{
+  			    good = xstrdup(name);
+  			}
+  			else
+  			{
+  			    /* if the soname does not match the filename,
+! 			       this is an alias */
+! 			    if (strncmp(good, name, ep - name) != 0)
+! 			    {
+! 				if (debug)
+! 				    warn("%s has inconsistent soname (%s)",
+! 					buff, good);
+! 				*isalias = 1;
+! 			    }
+  			}
+  		    }
+  		}
+***************
+*** 297,319 ****
+      return *p1 - *p2;
+  }
+  
+! struct lib
+  {
+!     char *so;			/* soname of a library */
+!     char *name;			/* name of a library */
+!     int libtype;		/* type of a library */
+!     int islink;			/* is it a symlink */
+!     struct lib *next;		/* next library in list */
+  };
+  
+! /* update all shared library links in a directory */
+  void scan_dir(char *name)
+  {
+      DIR *dir;
+      struct dirent *ent;
+!     char *so;
+!     struct lib *lp, *libs = NULL;
+!     int libtype, islink;
+  
+      /* let 'em know what's going on */
+      if (verbose)
+--- 297,386 ----
+      return *p1 - *p2;
+  }
+  
+! struct soname
+! {
+!     char *so_name;			/* Library name */
+!     char *so_fname;			/* Best filename match */
+!     struct prefix *so_spfx;		/* Pointer to the soname prefix */
+!     int so_islink;			/* Is a symbolic link */
+!     int so_isalias;			/* Is an alias */
+!     int so_libtype;			/* Library type */
+!     struct soname *so_next;		/* next soname in list */
+! };
+! 
+! struct prefix
+  {
+!     char *pfx_name;			/* Library prefix (no major version) */
+!     int pfx_count;			/* Count of sonames w/this prefix */
+!     struct soname *pfx_max_so;		/* Highest soname version */
+!     struct soname *pfx_max_alias;	/* Highest alias version */
+!     struct prefix *pfx_next;		/* next prefix in list */
+  };
+  
+! struct soname *
+! so_lookup(struct soname *so_list, char *soname)
+! {
+!     struct soname *sp;
+! 
+!     for (sp = so_list; sp != NULL; sp = sp->so_next)
+!     {
+! 	if (strcmp(soname, sp->so_name) == 0)
+! 	    break;
+!     }
+! 
+!     return (sp);
+! }
+! 
+! struct soname *
+! so_create(struct soname **so_list, char *soname)
+! {
+!     struct soname *sp;
+! 
+!     sp = xmalloc(sizeof(*sp));
+!     memset(sp, 0, sizeof(*sp));
+!     sp->so_name = xstrdup(soname);
+!     sp->so_next = *so_list;
+!     *so_list = sp;
+! 
+!     return (sp);
+! }
+! 
+! struct prefix *
+! pfx_lookup(struct prefix *pfx_list, char *prefix)
+! {
+!     struct prefix *pp;
+! 
+!     for (pp = pfx_list; pp != NULL; pp = pp->pfx_next)
+!     {
+! 	if (strcmp(prefix, pp->pfx_name) == 0)
+! 	    break;
+!     }
+! 
+!     return (pp);
+! }
+! 
+! struct prefix *
+! pfx_create(struct prefix **pfx_list, char *prefix)
+! {
+!     struct prefix *pp;
+! 
+!     pp = xmalloc(sizeof(*pp));
+!     memset(pp, 0, sizeof(*pp));
+!     pp->pfx_name = xstrdup(prefix);
+!     pp->pfx_next = *pfx_list;
+!     *pfx_list = pp;
+! 
+!     return (pp);
+! }
+! 
+  void scan_dir(char *name)
+  {
+      DIR *dir;
+      struct dirent *ent;
+!     struct prefix *pp, *spfx_list = NULL;
+!     struct soname *sp, *so_list = NULL;
+!     int libtype, islink, isalias;
+!     char *cp, *so;
+  
+      /* let 'em know what's going on */
+      if (verbose)
+***************
+*** 329,404 ****
+      /* yes, we have to look at every single file */
+      while ((ent = readdir(dir)) != NULL)
+      {
+  	/* if it's not a shared library, don't bother */
+! 	if ((so = is_shlib(name, ent->d_name, &libtype, &islink)) == NULL)
+  	    continue;
+  
+! 	/* have we already seen one with the same so name? */
+! 	for (lp = libs; lp; lp = lp->next)
+  	{
+! 	    if (strcmp(so, lp->so) == 0)
+! 	    {
+! 	        /* we have, which one do we want to use? */
+  
+! 		if (!lp->islink && strcmp(so, lp->name) == 0)
+! 			/* Can't do better than what we've got.  */
+! 			break;
+! 
+! 	        if ((!islink && lp->islink) ||
+! 		    (!islink && strcmp(so, ent->d_name) == 0) ||
+! 		    (islink == lp->islink && 
+! 		     libcmp(ent->d_name, lp->name) > 0))
+  		{
+! 		    /* let's use the new one */
+! 		    free(lp->name);
+! 		    lp->name = xstrdup(ent->d_name);
+! 		    lp->libtype = libtype;
+! 		    lp->islink = islink;
+! 		} 
+! 		break;
+  	    }
+  	}
+! 
+! 	/* congratulations, you're the first one we've seen */
+! 	if (!lp)
+  	{
+! 	    lp = xmalloc(sizeof *lp);
+! 	    lp->so = xstrdup(so);
+! 	    lp->name = xstrdup(ent->d_name);
+! 	    lp->libtype = libtype;
+! 	    lp->islink = islink;
+! 	    lp->next = libs;
+! 	    libs = lp;
+  	}
+- 
+  	free(so);
+      }
+  
+!     /* don't need this any more */
+!     closedir(dir);
+  
+!     /* now we have all the latest libs, update the links */
+!     for (lp = libs; lp; lp = lp->next)
+      {
+!         if (!lp->islink)
+! 	    link_shlib(name, lp->name, lp->so);
+! 	if (!nocache)
+! 	    cache_dolib(name, lp->so, lp->libtype);
+      }
+  
+      /* always try to clean up after ourselves */
+!     while (libs)
+      {
+! 	lp = libs->next;
+! 	free(libs->so);
+! 	free(libs->name);
+! 	free(libs);
+! 	libs = lp;
+      }
+  
+!     return;
+  }
+  
+  /* return the list of system-specific directories */
+  char *get_extpath(void)
+  {
+--- 396,547 ----
+      /* yes, we have to look at every single file */
+      while ((ent = readdir(dir)) != NULL)
+      {
++ 
+  	/* if it's not a shared library, don't bother */
+! 	if ((so = is_shlib(name, ent->d_name, &libtype, &islink, &isalias))
+! 	    == NULL)
+  	    continue;
+  
+! 	/* aliases sonames match their filename, we ignore other links */
+! 	if (isalias)
+  	{
+! 	    free(so);
+! 	    so = xstrdup(ent->d_name);
+! 	}
+! 	else if (islink)
+! 	{
+! 	    free(so);
+! 	    continue;
+! 	}
+  
+! 	/* Does this soname exist? */
+! 	sp = so_lookup(so_list, so);
+! 	if (sp == NULL)
+! 	{
+! 	    sp = so_create(&so_list, so);
+! 	    sp->so_fname = xstrdup(ent->d_name);
+! 	    sp->so_islink = islink;
+! 	    sp->so_isalias = isalias;
+! 	    sp->so_libtype = libtype;
+! 
+! 	    /* Find or create a prefix entry */
+! 	    if ((cp = strstr(so, ".so")) == NULL)
+! 		sp->so_spfx = NULL;
+! 	    else
+! 	    {
+! 		cp[3] = 0;
+! 		pp = pfx_lookup(spfx_list, so);
+! 		if (pp == NULL)
+! 		{
+! 		    pp = pfx_create(&spfx_list, so);
+! 		    if (sp->so_isalias)
+! 			pp->pfx_max_alias = sp;
+! 		    else
+! 			pp->pfx_max_so = sp;
+! 		}
+! 		else
+  		{
+! 		    if (sp->so_isalias)
+! 		    {
+! 			if (pp->pfx_max_alias == NULL ||
+! 			    libcmp(sp->so_name, pp->pfx_max_alias->so_name) > 0)
+! 			    pp->pfx_max_alias = sp;
+! 		    }
+! 		    else 
+! 		    {
+! 			if (pp->pfx_max_so == NULL ||
+! 			    libcmp(sp->so_name, pp->pfx_max_so->so_name) > 0)
+! 			    pp->pfx_max_so = sp;
+! 		    }
+! 		}
+! 		sp->so_spfx = pp;
+  	    }
+  	}
+! 	else
+  	{
+! 	    /* check for a higher version number of an existing soname */
+! 	    if (libcmp(ent->d_name, sp->so_fname) > 0)
+! 	    {
+! 		free(sp->so_fname);
+! 		sp->so_fname = xstrdup(ent->d_name);
+! 		sp->so_islink = islink;
+! 		sp->so_isalias = isalias;
+! 		sp->so_libtype = libtype;
+! 		pp = sp->so_spfx;
+! 		if ((cp = strstr(sp->so_name, ".so")) != NULL)
+! 		{
+! 		    if (sp->so_isalias)
+! 		    {
+! 			if (libcmp(sp->so_name, pp->pfx_max_alias->so_name) > 0)
+! 			    pp->pfx_max_alias = sp;
+! 		    }
+! 		    else
+! 		    {
+! 			if (pp->pfx_max_so == NULL ||
+! 			    libcmp(sp->so_name, pp->pfx_max_so->so_name) > 0)
+! 			    pp->pfx_max_so = sp;
+! 		    }
+! 		}
+! 	    }
+  	}
+  	free(so);
+      }
+  
+!     /* link each prefix to it's greatest major version */
+!     for (pp = spfx_list; pp != NULL; pp = pp->pfx_next)
+!     {
+! 	if (pp->pfx_max_alias != NULL &&
+! 	    strcmp(pp->pfx_max_alias->so_name, pp->pfx_name) != 0)
+! 	    link_shlib(name, pp->pfx_max_alias->so_name, pp->pfx_name);
+! 	else if (pp->pfx_max_so != NULL &&
+! 	    strcmp(pp->pfx_max_so->so_name, pp->pfx_name) != 0)
+! 	    link_shlib(name, pp->pfx_max_so->so_name, pp->pfx_name);
+!     }
+  
+!     /* Link each soname to it's filename */
+!     for (sp = so_list; sp != NULL; sp = sp->so_next)
+      {
+! 	/* don't link something to itself */
+! 	if (strcmp(sp->so_name, sp->so_fname) == 0)
+! 	    continue;
+! 
+! 	/* don't link if there is an alias for our root */
+! 	if (sp->so_spfx != NULL && sp->so_spfx->pfx_max_alias != NULL)
+! 	    continue;
+! 
+!         link_shlib(name, sp->so_fname, sp->so_name);
+      }
+  
++     /* create dynamic loader cache entries */
++     if (!nocache)
++ 	for (sp = so_list; sp != NULL; sp = sp->so_next)
++ 	{
++ 	    /* aliases never make it into the cache */
++ 	    if (sp->so_isalias)
++ 		continue;
++ 
++ 	    /* create entry, use file name if there is an alias */
++ 	    cache_dolib(name, sp->so_name,
++ 		sp->so_spfx->pfx_max_alias == NULL ? sp->so_name : sp->so_fname,
++ 		sp->so_libtype);
++ 	}
++ 
+      /* always try to clean up after ourselves */
+!     while ((sp = so_list))
+      {
+! 	so_list = sp->so_next;
+! 	free(sp->so_name);
+! 	free(sp->so_fname);
+      }
+  
+!     while ((pp = spfx_list))
+!     {
+! 	spfx_list = pp->pfx_next;
+! 	free(pp->pfx_name);
+!     }
+  }
+  
++ 
+  /* return the list of system-specific directories */
+  char *get_extpath(void)
+  {
+***************
+*** 436,442 ****
+      int printcache = 0;
+      char *cp, *dir, *so;
+      char *extpath;
+!     int libtype, islink;
+      char *chroot_dir = NULL;
+  
+      prog = argv[0];
+--- 579,585 ----
+      int printcache = 0;
+      char *cp, *dir, *so;
+      char *extpath;
+!     int libtype, islink, isalias;
+      char *chroot_dir = NULL;
+  
+      prog = argv[0];
+***************
+*** 530,536 ****
+  	    }
+  
+  	    /* we'd better do a little bit of checking */
+! 	    if ((so = is_shlib(dir, cp, &libtype, &islink)) == NULL)
+  		error("%s%s%s is not a shared library", dir,
+  		      (*dir && strcmp(dir, "/")) ? "/" : "", cp);
+  
+--- 673,679 ----
+  	    }
+  
+  	    /* we'd better do a little bit of checking */
+! 	    if ((so = is_shlib(dir, cp, &libtype, &islink, &isalias)) == NULL)
+  		error("%s%s%s is not a shared library", dir,
+  		      (*dir && strcmp(dir, "/")) ? "/" : "", cp);
+  
+***************
+*** 605,617 ****
+      return res;
+  }
+  
+! void cache_dolib(char *dir, char *so, int libtype)
+  {
+      char fullpath[PATH_MAX];
+      liblist_t *new_lib, *cur_lib;
+  
+      magic.nlibs++;
+!     sprintf(fullpath, "%s/%s", dir, so);
+      new_lib = xmalloc(sizeof (liblist_t));
+      new_lib->flags = libtype;
+      new_lib->soname = xstrdup(so);
+--- 748,760 ----
+      return res;
+  }
+  
+! void cache_dolib(char *dir, char *so, char *name, int libtype)
+  {
+      char fullpath[PATH_MAX];
+      liblist_t *new_lib, *cur_lib;
+  
+      magic.nlibs++;
+!     sprintf(fullpath, "%s/%s", dir, name);
+      new_lib = xmalloc(sizeof (liblist_t));
+      new_lib->flags = libtype;
+      new_lib->soname = xstrdup(so);

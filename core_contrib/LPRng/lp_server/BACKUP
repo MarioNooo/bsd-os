@@ -1,0 +1,33 @@
+#!/usr/contrib/bin/perl5
+($newvernum, $oldvernum) = @ARGV;
+($dir) = `pwd`;
+chomp $dir;
+print "dir $dir\n";
+($path, $prog) = ($dir =~ m,(.*)/(.*),);
+($name, $ver) = ($prog =~ m,(.*)-(.*),);
+print "prog $prog, name $name, ver $ver\n";
+@subs = split( /\./, $ver );
+@new = @subs;
+@old = @subs;
+$old[$#old] --;
+$newvernum = join( '.', @new ) unless $newvernum;
+$oldvernum = join( '.', @old ) unless $oldvernum;
+$oldprog = $name . "-" . $oldvernum;
+$olddir = $path . "/" . $oldprog;
+print "prog $prog, name $name, ver $ver, oldprog $oldprog, olddir $olddir\n";
+
+@err = `mv $dir $olddir`;
+if( $? ){ die "mv $dir $newdir failed - @err $!\n"; }
+if( -l "$path/$name" ){
+ 	print "removing link $path/$name\n";
+ 	@err = `rm $path/$name`;
+	if( $? ){ die "rm link $prog failed - @err $!\n"; }
+}
+@err = `chdir ..; ln -s $oldprog $name`;
+if( $? ){ die "ln -s $oldprog $name failed - @err $!\n"; }
+
+# make new version
+`gmake update 2>&1 1>/dev/tty`;
+if( $? ){
+	die "gmake update failed - $!\n";
+}

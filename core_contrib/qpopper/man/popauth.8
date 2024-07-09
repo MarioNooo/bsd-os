@@ -1,0 +1,92 @@
+.\"	@(#)local:usr/src/cmd/qpopper/popauth.8 4.0 19 March 2001
+.\"	
+.\"	@(MHWARNING)
+.\" @(#)$Id: popauth.8, v4.0 2001/3/19 05:01:06 qpop Exp $
+.\"
+.\" Copyright (c) 2001 QUALCOMM Incorporated. All rights reserved.
+.\" See License.txt file for terms and conditions for modification and
+.\" redistribution.
+.\"
+.TH POPAUTH 8
+.SH NAME
+popauth \-\- manipulate POP authorization DB
+.SH SYNOPSIS
+.B popauth
+[
+.BI \-trace " tracefile"
+] [
+.BI \-debug
+] [
+.BI \-init
+[
+.I  \-safe
+]
+]
+.if n .ti +8n
+[
+.BI \-list
+[
+.I    user
+|
+.I    ALL
+]
+] [
+.BI \-delete " user"
+]
+.if n .ti +8n
+[
+.BI \-user " user"
+[
+.I    password
+]
+] [
+.BI \-help
+] [
+.BI \-version
+]
+
+.SH DESCRIPTION
+The \fIpopauth\fR program allows POP subscribers to add or change the secret
+values used to generate their authentication credentials, or to verify the
+existance of their records.
+
+In addition, the super\-user or master POP user can add, delete, or reset
+credential data for a user, or list which records exist.  Only the
+super\-user may initialize the database.  \fIpopauth\fR is useful only when
+the APOP (or SCRAM) configuration option is defined.  See the INSTALL file
+in the Qpopper distribution for more information.
+
+Under normal usage,
+\fIpopauth\fR prompts for a new secret,
+just like the \fIpasswd\fR program.  It then updates the authorization DB.
+
+With the
+.I \-user
+switch,
+the super\-user or master POP user can create or reset credential data
+for the specified user.  This switch allows the password to be specified
+on the command line, which avoids the usual prompts and checks.  This is
+mostly useful in a batch environment, such as in a script.
+
+With the
+.I \-init
+switch,
+the super\-user can create a new (or zero the existing) authorization DB.
+
+With the
+.I \-list
+switch,
+the super\-user or master POP user can verify the presence of a record
+for the indicated user, or list users who have records.  Users can
+verify the presence of their own records with this switch.
+
+With the
+.I \-delete
+switch, the super-user or master POP user can remove
+a user entry from the authorization DB.
+.SH FILES
+/etc/pop.auth.* POP authorization DB
+.SH ACKNOWLEDGEMENTS
+This program was derived from MH 6.8.3
+.SH SEE ALSO
+popper(8), poppassd(8)

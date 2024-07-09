@@ -1,0 +1,32 @@
+Software Package:       
+	XFree86 Core Distribution (files 1-6)
+
+Release/Version:
+	4.3
+
+Retrieved from:
+	 ftp://ftp.xfree86.org
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and xfree86@xfree86.org.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+The following files were changed by BSDI:
+
+config/cf/bsdi.cf
+config/cf/Imake.cf
+config/cf/Imakefile
+programs/iceauth/iceauth.man
+programs/xinit/startx.cpp
+programs/xinit/xinitrc.cpp
+programs/xmh/msg.c
+programs/xdm/session.c
+programs/Xserver/hw/xfree86/common/xf86Configure.c
+programs/Xserver/hw/xfree86/common/xf86Events.c
+programs/Xserver/hw/xfree86/os-support/bsdi/Imakefile
+programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_init.c
+programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_VTsw.c

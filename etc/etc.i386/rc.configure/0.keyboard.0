@@ -1,0 +1,6 @@
+#	BSDI 0.keyboard.0,v 1.2 1996/12/31 03:22:41 polk Exp
+
+if [ -f /etc/keyboard.map ] ; then
+	echo 'loading console keyboard map'
+	setcons keymap /etc/keyboard.map
+fi

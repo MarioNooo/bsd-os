@@ -1,0 +1,52 @@
+# An abreviated sample config file for amd
+
+##############################################################################
+# GLOBAL OPTIONS SECTION (must be first in amd.conf file)
+[ global ]
+
+# Write pid to /var/run/amd.pid
+print_pid =			yes
+pid_file =			/var/run/amd.pid
+
+# Use /amd as automount directory
+auto_dir =			/amd
+
+# Log via syslog
+log_file =			syslog
+# Logging options
+log_options =			fatal,error,user,warn,noinfo,nomap,nostats
+
+# Do not lock down amd's pages
+plock =				no
+
+# selectors on /defaults are off by default
+selectors_on_default =		no
+
+# should browsable maps show number of entries to df/statfs (default=no)
+show_statfs_entries =		yes
+
+# the following options can be overridden by each map individually
+#browsable_dirs =		yes
+map_options =			cache:=all
+#map_type =			file
+
+# Use this to put amd maps in a seperate directory
+#search_path =			/etc/amdmaps
+
+# Use fully qualified host names
+#fully_qualified_hosts =		yes
+
+##############################################################################
+# DEFINE AN AMD MOUNT POINT
+[ /home ]
+# map name must be defined, all else are optional
+map_name =			/etc/amd.home
+#browsable_dirs =		yes
+
+##############################################################################
+# DEFINE ANOTHER AMD MOUNT POINT
+[ /src ]
+map_name = /usr/local/lib/amdmaps/amu.src
+#browsable_dirs =		yes
+
+##############################################################################

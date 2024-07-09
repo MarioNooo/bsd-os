@@ -1,0 +1,4562 @@
+<!-- IFHP-HOWTO SGML format -->
+<!doctype linuxdoc system>
+<article>
+<!-- must be matched by / article at end -->
+<!-- $Id: IFHP-HOWTO.sgml,v 1.43 2000/04/19 01:37:03 papowell Exp papowell $ -->
+<title> IFHP-HOWTO
+<author> Patrick Powell
+<tt><htmlurl url="mailto:papowell@astart.com" name="papowell@astart.com"></tt>
+<date> 18 Apr 2000 (For ifhp-3.3.11beta.7)
+<abstract>
+The <tt>ifhp</tt> program is an enhanced, extended, highly configurable,
+and portable implementation of a print filter for use with the <tt>LPRng</tt>
+Print spooler package.
+<tt>Ifhp</tt> supports network, serial, and parallel printers,
+does page accounting and job recovery,
+and allows an extremely high level of configuration and tuning.
+<tt>Ifhp</tt> gets its flexibility by using a configuration file
+to set its operational characteristics.  The configuration file can contain
+multiple separate printer configurations and the configuration selection is done
+by a very simple command line option.
+The filter supports text,  PostScript,
+PCL, and PJL printers, and can be configured to handle a wide range of
+printer quirks and mis-implementations.
+</abstract>
+<toc>
+<sect>Introduction
+<p>
+The <tt>ifhp</tt> print filter is the latest in a long evolutionary path
+of print filters for the <tt>LPRng</tt> print spooler system.
+It unifies the low level printer communication facilities
+and provide a common code base for future development.
+<p>
+This document is the complete set of references and
+installation guide for the <tt>ifhp</tt> print filter.
+It covers compilation, installation,
+initial testing,
+details of system configuration,
+and configuration options that would be needed by the
+system administrator.
+Previous releases of <tt>ifhp</tt> had a large selection of
+<tt/README/
+files
+which are now incorporated into the <tt>ifhp</tt>-HOWTO document.
+<p>
+<label id=website> 
+Information
+about LPRng and <tt>ifhp</tt> can be found on the LPRng web page
+<htmlurl url="http://www.lprng.com" name="http://www.lprng.com">.
+<p>
+<label id=maillist> 
+There is mailing list for <tt/ifhp/ and <tt/LPRng/ at <tt>lprng@lprng.com</tt>.
+In order to reduce the amount of unsolicited <em/spam/ mail posted to the list
+you must subscribe to the list before posting to it.
+To subscribe,
+send email message to
+<tt><htmlurl url="mailto:lprng-request@lprng.com" name="lprng-request@lprng.com"></tt>,
+with the single word <em/subscribe/ in the body.
+<p>
+Several presentations of LPRng and print spooling software have been made
+at the Large Scale Installation Administrator (LISA) conferences and
+are in the <tt>ifhp</tt> distribution and available on web sites.
+<htmlurl url="ftp://ftp.astart.com/pub/LPRng/LPRngLISA95.ps"
+name="ifhp - An Enhanced Printer Spooler System">
+was presented at the LISA95 conference,
+and is in the LPRng distribution as LPRng-LISA95.ps.
+The slides for the LISA97 tutorial on
+<htmlurl url="ftp://ftp.astart.com/pub/LPRng/LISA97.tgz" name="Printers and Network Print Spooling">
+are also in the LPRng distribution in the DOC/LISA97 directory.
+<p>
+During development of <tt/ifhp/, the following documents were invaluable
+references.
+For Printer Job Language (PJL) related issues
+see the Printer Job Language Technical Reference Manual,
+Hewlett Packard, 10th Edition, October 1997.
+For PCL related issues see
+the PCL 5 Printer Language Technical Reference Manual,
+First Edition, 1992.
+These manuals are available through the Hewlett Packard Developers Program.
+See
+<htmlurl url="http://www.hp.com/go/devexchange"
+name="http://www.hp.com/go/devexchange">
+for information on how to join.
+<sect1>Copyright and Disclaimer
+<p>
+Material included in this document from the <tt>ifhp</tt> distribution
+Copyright Patrick Powell 1988-1999, where applicable.
+The rights to distribute this document complete or in part are hereby
+granted for non-commercial purposes. Partial reproductions must
+acknowledge the source.
+Permission to distribute this file together with LPRng, <tt>ifhp</tt> and `derived
+works' is explicitly granted.
+<p>
+<bf>THE MATERIAL IN THIS HOWTO IS PROVIDED WITHOUT FEE AND AS-IS WITH NO
+WARRANTY REGARDING FITNESS OF USE FOR ANY PURPOSE. THE AUTHOR AND ALL
+CONTRIBUTORS ARE NOT LIABLE FOR ANY DAMAGES, DIRECT OR INDIRECT,
+RESULTING FROM THE USE OF INFORMATION PROVIDED IN THIS DOCUMENT.</bf>
+<sect1>Commercial Support
+<p>
+<htmlurl url="http://www.astart.com" name="AStArt Technologies (http://www.astart.com)">
+provides commercial support and enhancements for
+LPRng, <tt>ifhp</tt>, and other network software.
+AStArt provides network and system consulting services for UNIX and NT
+systems, as well as real time and network software.
+<sect1>Web Site
+<p>
+Web Page:
+<p>
+<htmlurl url="http://www.lprng.com" name="http://www.lprng.com">
+<label id="secftp">
+<sect1>FTP Sites
+<p>
+The software may be obtained from <newline>
+<htmlurl url="ftp://ftp.astart.com/pub/LPRng/FILTERS" name="ftp://ftp.astart.com/pub/LPRng/FILTERS">(Main site)
+<newline>
+<p>
+Mirrors:<newline>
+<htmlurl url="ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng" name="ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng"> (AU)<newline>
+<htmlurl url="ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng" name="ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng"> (AU/NZ)<newline>
+<htmlurl url="ftp://gwynne.cs.ualberta.ca/pub/LPRng" name="ftp://gwynne.cs.ualberta.ca/pub/LPRng"> (CA)<newline>
+<htmlurl url="ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng" name="ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng"> (DE)<newline>
+<htmlurl url="ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng" name="ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng"> (DE)<newline>
+<htmlurl url="ftp://ftp.iona.ie/pub/plp/LPRng" name="ftp://ftp.iona.ie/pub/plp/LPRng"> (IE)<newline>
+<htmlurl url="ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng" name="ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng"> (NO)<newline>
+<htmlurl url="ftp://ftp.mono.org/pub/LPRng" name="ftp://ftp.mono.org/pub/LPRng"> (UK)<newline>
+<htmlurl url="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng" name="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng"> (US)<newline>
+<htmlurl url="ftp://ftp.cs.umn.edu/pub/LPRng" name="ftp://ftp.cs.umn.edu/pub/LPRng"> (US)<newline>
+<htmlurl url="ftp://ftp.iona.com/pub/plp/LPRng" name="ftp://ftp.iona.com/pub/plp/LPRng"> (US)<newline>
+<htmlurl url="ftp://uiarchive.uiuc.edu/pub/packages/LPRng" name="ftp://uiarchive.uiuc.edu/pub/packages/LPRng"> (US)<newline>
+<sect1>Mailing List
+<p>
+To join the LPRng mailing list, please send mail to
+<htmlurl url="mailto: lprng-request@lprng.ie" name="lprng-request@lprng.ie"> with the only the
+word <em/subscribe/ in the body of the message.
+<label id="faqref">
+<sect1>PGP Public Key
+<p>
+The LPRng and <tt>ifhp</tt> distributions have MD5 checksum files
+which are signed with a PGP public key.
+Here is the key for validating the checksums:
+<tscreen>
+<verb>
+Type Bits/KeyID    Date       User ID
+pub  1024/00D95C9D 1997/01/31 Patrick A. Powell <papowell@astart.com>
+							  Patrick A. Powell <papowell@sdsu.edu>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.3i
+
+mQCNAzLygTQAAAEEANBW5fPYjN3wSAnP9xWOUc3CvsMUxjip0cN2sY5qrdoJyIhn
+qbAspBopR+tGQfyp5T7C21yfWRRnfXmoJ3FVtgToAsJUYmzoSFY08eDx+rmSqCLe
+rdJjX8aG8jVXpGipEo9U4QsUK+OKzx3/y/OaK4cizoWqKvy1l4lEzDsA2VydAAUT
+tCdQYXRyaWNrIEEuIFBvd2VsbCA8cGFwb3dlbGxAYXN0YXJ0LmNvbT6JAJUDBRA0
+XonoiUTMOwDZXJ0BAQ2cBAC7zU9Fn3sC3x0USJ+3vjhg/qA+Gjb5Fi1dJd4solc4
+vJvtf0UL/1/rGipbR+A0XHpHzJUMP9ZfJzKZjaK/d0ZBNlS3i+JnypypeQiAqo9t
+FV0OyUCwDfWybgAORuAa2V6UJnAhvj/7TpxMmCApolaIb4yFyKunHa8aBxN+17Ro
+rrQlUGF0cmljayBBLiBQb3dlbGwgPHBhcG93ZWxsQHNkc3UuZWR1PokAlQMFEDLy
+gTSJRMw7ANlcnQEBYBYD/0zTeoiDNnI+NjaIei6+6z6oakqO70qFVx0FG3aP3kRH
+WlDhdtFaAuaMRh+RItHfFfcHhw5K7jiJdgKiTgGfj5Vt3OdHYkeeh/sddqgf9YnS
+tpj0u5NfrotPTUw39n6YTgS5/aW0PQfO9dx7jVUcGeod1TGXTe9mIhDMwDJI4J14
+=3Zbp
+-----END PGP PUBLIC KEY BLOCK-----
+</verb>
+</tscreen>
+<sect>Software Installation and Configuration
+<p>
+Before you do an installation
+please read the following instructions.
+You will need to:
+<enum>
+<item>
+Use GNU Make.  You can get it from
+<htmlurl url="http://www.gnu.org/software/software.html"
+name="http://www.gnu.org/software/software.html">.
+Don't even think about trying to use another
+make unless you are a Wizard.  And even the Wizards use GNU Make.
+<item>
+Use an ANSI C compiler.
+<tt/ifhp/ is developed and tested with the GNU C compiler.
+You can get it from
+<htmlurl url="http://www.gnu.org/software/software.html"
+name="http://www.gnu.org/software/software.html">.
+Solaris users should consult the excellent 
+<htmlurl url="http://sunfreeware.com"
+name="http://sunfreeware.com">
+site for binary distributions.
+</enum>
+<sect1> Additional Recommended Software
+<p>
+The following software is recommended for use with <tt/ifhp/.
+If your printer does not support PostScript, PCL, or text printing directly
+you will need to install GhostScript to convert from PostScript to the printer
+format and use a suitable text to PostScript converter.
+<descrip>
+<tag>Unix File Utility</tag>
+<label id="fileutil">
+The <tt/ifhp/ filter will recognize that a file
+is PostScript, PJL, or PCL by examining the first
+couple of bytes of a file and applying a simple set of rules.
+If you require more elaborate file type detection then you can
+configure <tt/ifhp/ to also use the UNIX <tt/file/ utility
+if it is unable to determine the file type.
+See <htmlurl url="ftp://ftp.astron.com/pub/file/"
+name="ftp://ftp.astron.com/pub/file/">
+to obtain this software.
+<p>
+<tag>LPRng Print Spooler</tag>
+<htmlurl url="http://www.astart.com/LPRng.html"
+name="http://www.astart.com/LPRng.html" >
+The <tt/ifhp/ filter works best with the later versions of this software,
+and the two are developed as an integrated unit.
+<p>
+<tag>GhostScript</tag>
+<label id="ghostscript">
+<htmlurl
+url="http://www.cs.wisc.edu/~ghost/index.html"
+name="http://www.cs.wisc.edu/~ghost/index.html"
+>
+or
+<htmlurl
+url="http://www.ghostscript.com/"
+name="http://www.ghostscript.com"
+>
+If your printer does not handle PostScript and you need to print PostScript,
+GhostScript is used to convert PostScript to a format usable by the printer.
+<p>
+<tag>a2ps - Ascii Text To PostScript Converter</tag>
+<label id="a2ps">
+If your printer is a PostScript only printer or you wish to have enhanced
+formatting capability for documents,  then you will need a text to PostScript converter.
+<htmlurl url="http://www-inf.enst.fr/~demaille/a2ps/"
+name="http://www-inf.enst.fr/~demaille/a2ps/" >
+This package does a very good job of text to PostScript conversion.
+It also makes use of the
+<ref id=fileutil name="file utility"> to determine the required conversions.
+<p>
+<tag>enscript - GNU Enscript</tag>
+<label id="enscript">
+<htmlurl url="http://www.gnu.org"
+name="http://www.gnu.org/" >
+This package is an alternative to <tt/a2ps/,
+but requires careful handling due to the exit codes it produces.
+Please see
+<ref id=wrappers name="Wrappers For Programs"> for details on how to use
+<tt/enscript/ with <tt/ifhp/.
+<p>
+<tag>textps</tag>
+<label id="textps">
+This program is included with the <tt/ifhp/ distribution
+and is an extremely primitive text to PostScript filter.
+It generates PostScript compatible with even the most ancient
+of PostScript printers and is useful where
+<tt/a2ps/ and <tt/enscript/ are just too modern.
+See
+<htmlurl url="http://www.astart.com/LPRng.html"
+name="http://www.astart.com/LPRng.html" >.
+<p>
+<tag>psutils</tag>
+<label id="psutils">
+The <tt/psutils/ package
+developed by Angus Duggan is available from
+<htmlurl url="ftp://ftp.dcs.ed.ac.uk/pub/ajcd/"
+name="ftp://ftp.dcs.ed.ac.uk/pub/ajcd/" >.
+These are a collection of programs for manipulation of
+PostScript files,
+and include facilities for doing page selection,
+page reversal, n-up printing,  and watermarking.
+<p>
+<tag>netcat</tag>
+<label id="netcat">
+The <tt/netcat/ utility is extremely useful when trying to
+send files to a network printer and you need to monitor its
+activity.
+Developed by <tt/hobbit@avian.org/, it is available from
+<htmlurl url="ftp://avian.org/src/hacks/nc110.tgz"
+name="ftp://avian.org/src/hacks/nc110.tgz" >.
+</descrip>
+<sect1> Installation
+<p>
+The installation procedure uses the <tt/configure/
+facility to generate Makefiles.
+By convention,
+these files have the following variables that install
+the <tt/ifhp/ executables and configuration files
+in the following locations:
+<tscreen>
+<verb>
+default installation directories:
+Variable         Value
+$&lcub;prefix&rcub;        /usr/local
+$&lcub;exec_prefix&rcub;   $&lcub;prefix&rcub;
+$&lcub;bindir&rcub;        $&lcub;exec_refix&rcub;/bin
+$&lcub;sbindir&rcub;       $&lcub;exec_prefix&rcub;/sbin
+$&lcub;libexecdir&rcub;    $&lcub;exec_prefix&rcub;/libexec   
+$&lcub;sysconfdir&rcub;    $&lcub;prefix&rcub;/etc (/usr/local/etc)
+$&lcub;mandir&rcub;        $&lcub;prefix&rcub;/man     (/usr/local/man)
+</verb>
+</tscreen>
+<p>
+The following files are installed as shown below:
+<tscreen>
+<verb>
+Name        Type              Location
+ifhp        executable        $&lcub;libexecdir&rcub;/filters/ifhp
+ifhp.conf   configuration     $&lcub;sysconfdir&rcub;/ifhp.conf
+ifhp.1      man pages         $&lcub;mandir&rcub;/man1/ifhp.1
+</verb>
+</tscreen>
+<p>
+First,  we untar,  configure,  compile, and install the software:
+<tscreen>
+<verb>
+gunzip -c ifhp-<release>.tgz |tar xvf -
+cd ifhp-<release>
+
+# for /usr/local/libexec/filters/ifhp,
+#     /usr/local/etc/ifhp.conf
+#     /usr/local/man/man1/ifhp.1
+   ./configure
+  
+OR
+
+# for /usr/libexec/filters/ifhp,
+#     /etc/ifhp.conf
+#     /usr/share/man/man1/ifhp.1
+   ./configure --prefix=/usr --sysconfdir=/etc/ --mandir=/usr/share/man
+
+make clean all
+su root
+make install
+</verb>
+</tscreen>
+<p>
+Modify your printcap file to use <tt/ifhp/.
+Your printcap usually has the following format;
+older version of <tt/lpd/ require <tt/:\/ at the end of each
+line of a printcap entry.
+The <tt/:if/ and <tt/:of/ filter entries are usually the ones of interest.
+<tscreen>
+<verb>
+lp:
+  :lp=xxxx:sd=xxxx:....
+  :if=/usr/local/path_to_old_filters/old_if_filter
+  :of=/usr/local/path_to_old_filters/old_of_filter
+</verb>
+</tscreen>
+<p>
+Your new printcap entry will look like the one below.
+The <tt/MODEL/ information is described in the next section.
+<tscreen>
+<verb>
+lp:
+  :lp=xxxx:sd=xxxx:....
+  #  see text for details about the next line
+  :ifhp=model=MODEL,status@
+  :if=/usr/local/libexec/filters/ifhp
+  :of=/usr/local/libexec/filters/ofhp
+</verb>
+</tscreen>
+<p>
+The configuration file
+(<tt>/usr/local/etc/lpd.conf</tt>
+or
+<tt>/etc/lpd.conf</tt>)
+contains a set of entries describing printer
+capabilities and requirements.
+Each of these is described by a model name.
+The following is a partial list of models supported:
+<tscreen>
+<verb>
+apple           hp4v            hpdj1200c       hpdj750c
+hp4             hp5             hpdj1600c       hpdj750cplus
+hp4000          hp5l            hpdj200         hpdj755cm
+hp4500          hp5m            hpdj2000cp      hpiiisi
+hp4l            hp5mp           hpdj220         hpljpro
+hp4lc           hp5p            hpdj230         hppjxl300
+hp4m            hp5si           hpdj2500cp      lexmark4039
+hp4ml           hp5simopier     hpdj250c        lj3pclonly
+hp4mp           hp5simx         hpdj330         phaser
+hp4mplus        hp6l            hpdj350c        postscript
+hp4mv           hp6mp           hpdj430         ps
+hp4p            hp6p            hpdj450c        qms1725
+hp4pj           hp8100          hpdj455ca       qms2025
+hp4plus         hpcolorlj       hpdj600         qms2060
+hp4si           hpcolorlj5      hpdj650c        qms860
+hp4simx         hpcolorlj5m     hpdj700         tek
+
+pclonly         pcl_ps_conversion
+ghostscript     gs
+</verb>
+</tscreen>
+<p>
+If you have a PostScript only printer,
+you should use the <tt/ps/ model.
+If you have a PCL only printer,
+then <tt/pclonly/ is recommended.
+If you want to process PostScript files,
+then install GhostScript in <tt>/usr/local/bin/gs</tt>,
+and use <tt/pcl_ps_conversion/.
+<p>
+The other model entries are used when specific printer
+functionality or features is needed.
+For example,
+if you want to do accounting or use <it/landscape/ mode,
+then you should check for your specific printer model in the
+configuration file.
+<p>
+Shut down and restart your print spooler and then send a job to the printer.
+If this works and you do not need any further capabilities of <tt/ifhp/
+such as error reporting or printer monitoring,
+then you are finished.
+<p>
+If you want to use additional capabilities,
+then you should read the detailed instructions in the next couple of sections.
+<sect>Printer Capabilities, Configurations, and Printcaps
+<p>
+One of the major difficulties with printer software
+is dealing with the wide range of different printer hardware configurations
+and printer connections.
+This section outlines the printer communication methods,
+the types of print job languages,
+and the effects of these on printing software and the <tt/ifhp/
+filter.
+<sect1> Printer Configurations
+<p>
+A printer consists of a hardware print engine which marks the output page
+and delivers it,
+a set of control hardware that takes a <it/print job/
+in a well defined format and operates the hardware to produce output
+according to information in the <it/print job/,
+and a communication channel from the computer to the control hardware.
+The control hardware is sometimes called a <it/print engine/.
+In most modern computers the control hardware may consist of multiple microprocessors,
+each with their own firmware,
+and each performing a specific printing task.
+For example,
+one may control the paper feed path,
+one may do rasterization,
+and one handle communications with the outside world.
+<p>
+In order to set up printing correctly,
+it is necessary to know the following information about your printer.
+<enum>
+<item>
+The capabilities of the hardware.
+This is dependent on the model of printer,
+and may be such things as the page feed,
+output and input tray selection,
+numbers of columns and/or rows of output available on the output device.
+This information is readily available from most manufacturers.
+<item>
+The <it/print job language/
+recognized by the control hardware.
+This is the special set of codes,
+commands, and formats recognized by the control hardware.
+<item>
+The protocol used to send jobs to the printer and obtain status
+about the printing activity.
+</enum>
+<p>
+Usually the capabilities of a modern printer are very well known
+and documented,
+and the <tt/ifhp/ filter and most print spooling software has
+little difficulty working with them.
+<p>The following checklist will help you in setting up your printer.
+The various options that you will need to know about are indicated
+where appropriate.
+<enum>
+<item>Printer Model (<tt/model=???/)
+<newline>
+What is the exact printer model?
+Check the serial number or other identification to get this information.
+You should check the <tt/ifhp.conf/
+configuration file to see if your printer is already supported.
+<item>Print Languages Supported By Your Printer
+<enum>
+<item>PJL? (<tt/pjl/ or <tt/pjl@/)
+<newline>
+The Printer Job Language (PJL) is a high level language supported by many Hewlett-Packard
+printers that allows some print system configuration to be performed.
+Due to historical developments,
+not all printers support all PJL language facilities,
+and some support them in different ways than other printers.
+The <tt/ifhp/ filter can use the PJL support for a printer if it is available.
+<item>PostScript (and what version)?  (<tt/ps/ or <tt/ps@/)
+<newline>
+PostScript is the most common print job language in use.
+If your printer supports PostScript,
+then you will have a relatively trouble free time with it. 
+One problem is that it requires a fairly substantial amount of
+memory and computational support,
+and is usually not found on the low end (less than $500) printers.
+<item>PCL? (<tt/pcl/ or <tt/pcl@/)
+<newline>
+PCL is another Print Language supported by
+many vendors, including Hewlett-Packard,
+Lexmark, and others.
+It is essentially text with escape sequences to tell the print engine
+to place markings on a page at specific places in a specific font.
+It is the second most common format used with modern printers.
+<item>Text? (<tt/text/ or <tt/text@/)
+<newline>
+Text is really just PCL without any control sequences.
+However, it is easy to have <tt/ifhp/ convert ordinary text into PCL
+by prefixing the appropriate PCL control codes.
+You may also need to use the <tt/crlf/ option to force
+<tt/CR/ to <tt/CR-LF/ translation.
+If you have a simple text printer then you may want to use the much
+easier to configure <tt/lpf/ filter from the LPRng distribution
+(<htmlurl url="http://www.astart.com/LPRng.html"
+name="http://www.astart.com/LPRng.html" >).
+<item>Vendor Specific
+<newline>
+There is a growing trend to have very proprietary Print Languages
+for very low end  (less than $300) printers.
+These printers usually require all of their jobs to be preformated by
+software running on the host and to have the job delivered to them
+in a specific manner.
+If you have one of these printers,
+you will need to get a rasterizing program that produces the correct format.
+Check to see if
+<ref id="ghostscript" name="GhostScript">,
+supports your printer.
+If it does then you can use <tt/GhostScript/ to translate
+PostScript to your printer's required format.
+</enum>
+<item>Memory Size.
+<newline>
+If you are going to be sending large print jobs or ones with a large
+amount of graphics to the printer, you will need a substantial amount
+of memory to deal with rasterization.
+Most high resolution Laser Copier based printers require a minimum of
+16 megabytes for adequate performance,
+and if you are printing complex PostScript or PDF documents you
+may want at least 32 megabytes.
+Color printers require substantially more and 64 megabytes is not uncommon.
+<item>
+Communications.
+The connection between your printer
+and the host computer.
+<enum>
+<item>
+Network Connection
+<newline>
+This is the most reliable and high speed way to connect a printer
+to a system.
+This is especially true if a printer must be accessible to multiple
+users and is located at a distance from the user.
+<item>Parallel Port (<tt/status@/)
+<newline>
+Note that this is a <em/unidirectional/ communications channel
+and there is little to no support for bidirectional communications.
+While there are drivers available for bidirectional communication with 
+various printers,
+these are usually limited in capability and have a severe impact on
+system performance.
+<item>
+Serial Ports
+<newline>
+This is the very worst way to communicate at high speed with a printer.
+Serial ports usually have a high error rate,
+suffer from data overruns,
+and have a severe impact on system performance.
+You will need to configure your printer speed,
+format (bits per character, parity, stop bit), 
+and flow control method,
+and then do the same for the host.
+This can be an endless source of frustration for the novice user.
+<item>
+Print Server Box
+<newline>
+Many older printers do not directly support a network connection
+and have an external <it/print server box/ attached to either their
+serial or parallel ports.
+If you have the printer connected to a parallel port,
+then you will still most likely only have unidirectional communication
+and no status information will be available from the printer.
+</enum>
+</enum>
+<sect1>Network Communication Protocols
+<label id="networkprotocols">
+<p>
+The most high speed and reliable connection to your printer is using a
+network connection.
+The following protocols are usually used to communicate with a network printer:
+RFC1179 (TCP/IP printing),
+Socket Protocol (TCP/IP),
+AppSocket Protocol (TCP/IP),
+Novell Print Protocol (IPX),
+SMB Print Protocol (TCP/IP),
+and AppleTalk Print Protocol (TCP/IP).
+<p>
+It is highly recommended that you use TCP/IP networking to communications to
+talk to your printer,
+and that you do not enable any other protocol on your printer.
+If you have two different systems trying to connect to the same printer
+using different protocols,
+a wide range of vendor's hardware will lock up and may require a power up reset
+to recover.
+Documented evidence for this behavior includes a wide range of
+printers, including those from Hewlett-Packard, LexMark, IBM and other vendors.
+<p>
+Only the TCP/IP based network job transfer protocols are discussed in
+this document.
+For details on using other protocols,
+please consult the consult the
+<htmlurl url="http://www.astart.com/LPRng.html"
+name="LPRng" >
+documentation.
+<sect1>RFC1179 (BSD or TCP/IP) Job Transfer Printcap Entry
+<label id="rfc1179pc">
+<p>
+RFC1179 is used to transfer print jobs between
+a client (user) and a print spooler,
+or between two print spoolers.
+Jobs are transferred as a set of files,
+and the only information exchanged during the transfer process is the
+success or failure of the transfer.
+In order to get status about the actual job printing,
+a separate query status (<tt/lpq/) is sent to the print spooler.
+<p>
+Many,
+if not all,
+printers with a network interface that supports the TCP/IP protocol support
+the RFC1179 protocol for job transfer.
+However,
+their support for print job status is usually minimal to non-existent.
+If you want to send a job to a printer using the RFC1179 protocol,
+please be aware of the following problems.
+<p>
+Normally a print spooler (System 5 lp, BSD lpd, LPRng)
+does not modify a print job when forwarding it to another print spooler.
+This means that your print job will normally pass from the originating
+<tt/lp/ or <tt/lpr/ program to the destination printer with no changes.
+This can have disastrous results if the job
+<bf/requires/
+filter processing.
+<p>
+If you are using the <tt/LPRng/ print spooler,
+job transfers using <tt/RFC1179/
+is specified by using <tt/:lp=spoolqueue@host/
+or <tt/:rp=spoolqueue:rh=host/ printcap entries.
+For example:
+<tscreen>
+<verb>
+raw:
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+cooked:
+  :rp=cooked:rm=host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+</verb>
+</tscreen>
+<p>
+Please note that no filters specified as the job is not modified,
+only transferred from one server to another.
+Even if filters were specified they would be ignored.
+The
+<bf/lpd_bounce/
+flag causes the LPRng spooler to pass the print job through
+the specified filter
+and then send the filter output to the actual network printer.
+The <tt/lpd/ print spooler will open a temporary file for
+to hold the filter output,
+and then proceed to start the specified filter with
+its <tt/STDOUT/ attached to the temporary file,
+its <tt/STDIN/ attached to the file to be processed,
+and
+its <tt/STDERR/ redirected to an error log.
+The single resulting file is then transferred to the destination
+system using the <tt/RFC1179/ protocol.
+<p>
+When a job is created
+the job format is specified (default is <tt/f/),
+and a filter named by the <tt/:i/><it/format/ option is selected
+for use.
+For example:
+<tscreen>
+<verb>
+raw:
+  :lpd_bounce
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :if=/usr/local/libexec/filters/ifhp
+cooked:
+  :lpd_bounce
+  :rp=cooked:rm=host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :if=/usr/local/libexec/filters/ifhp
+</verb>
+</tscreen>
+<p>
+Unfortunately,
+some print spooling systems also use the <tt/v/ format by default.
+You may find the following printcap entry useful in this case.
+The <tt/:filter/ option specifies a default filter that is used
+if one is not specified for the format.
+<tscreen>
+<verb>
+raw:
+  :lpd_bounce
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :filter=/usr/local/libexec/filters/ifhp
+</verb>
+</tscreen>
+<p>
+The <tt/lpr -l/ or <tt/lpr -b/ flag is used to specify that
+a job has the special <tt/binary/ flag.
+In this case,
+most filters will perform only the most perfunctory processing
+and pass the job directly to the printer.
+<sect1>Socket Protocol (TCP/IP) Operation Printcap Entry
+<label id="socketpc">
+<p>
+Many printers with a network interface provide
+a TCP/IP port that is a direct connection to the
+internal <it/print engine/.
+If a TCP/IP connection is made to this port
+and a file is sent over this connection,
+then the print engine will process the file.
+More importantly,
+the connection is bidirectional,
+and the printer will report errors and status conditions
+over the connection.
+PJL and PostScript status request commands can be sent to the printer
+and the printer will respond with information.
+<p>
+The <tt/ifhp/ filter makes extensive use of this protocol,
+and provides support for status and error reporting.
+In cooperation with the <tt/LPRng/ print spooler,
+it will provide a detailed description of the actual print job progress
+and any error conditions that arise.
+<p>
+To use a Socket connection with <tt/LPRng/,
+you use the <tt/:lp=host%port/ printcap entry shown below.
+The <tt/lpd/ print spooler will open a connection to the
+TCP/IP <tt/port/ on <tt/host/
+and passes the (bidirectional) connection to the <tt/ifhp/ filter
+on file descriptor 1 (<tt/STDOUT/) and the file to be printed on
+file descriptor 0 (<tt/STDIN/).
+Errors and status information are reported by the <tt/ifhp/ filter
+on file descriptor 2 (<tt/STDOUT/) and placed in the error status log by the
+<tt/lpd/ print spooler.
+<p>
+The connection made by the <tt/lpd/ server
+to the printer is <em/persistent/ over the entire job;
+all file transfers for the same job are made over the same
+connection.
+This is important as it prevents other printer users
+from <em/hijacking/ the printer in the middle of print a job
+and getting your job outputs mixed together.
+<p>
+The following is a typical printcap entry using the socket protocol.
+<tscreen>
+<verb>
+raw:
+  :lp=host%9100
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :if=/usr/local/libexec/filters/ifhp
+</verb>
+</tscreen>
+<sect1> Appsocket Protocol (TCP/IP) Operation Printcap Entry
+<label id="appsocketpc">
+<p>
+The Tektronics Phaser Series printers and QMS printers use the
+<it/Appsocket/ protocol when sending a job to the printer.
+This protocol uses two ports: a TCP/IP <it/listening/ port  which
+accepts TCP/IP connections and a UDP <it/query/ port that
+is used to obtain status information.
+Unfortunately,
+the UDP port is almost totally useless for job monitoring and status
+purposes and is not used except in an advisory role.
+<p>
+The Appsocket protocol is (briefly):
+<enum>
+<item> When a UDP packet is received on the UDP port a reply
+packet containing the status is returned to the originator's
+address.
+This packet contains an status indication
+in a <em/undefined/ format but usually is readable or has a clearly defined format.
+<item> To send a job to the printer,  a TCP/IP connection is opened to the TCP/IP port
+and a PostScript job is sent.
+Only a single job can be sent at a time - a EOJ in the job, i.e.-
+CTRL-D for PostScript or ESC E for PCL
+will cause the printer to terminate reading from the TCP/IP port,
+and after job processing has finished,
+to close the TCP/IP connection.
+All input after the EOJ may be ignored by the printer and not processed.
+<item>
+While processing the job,
+if <it/bidirectional/ support is available
+and has been enabled
+the printer will return job status or information until all of the print job
+which is has received has been processed.
+This support is usually not enabled by default and must be enabled
+by using a specialized administration interface or configuration tool.
+<item>
+Unfortunately,
+some printers will also close the connection when the EOJ has been received.
+These printers are virtually useless when trying to get error or status information
+about a job.
+<item>
+While processing the job,
+the printer will ignore any connection requests,
+and only until the job has been processed
+will the printer accept connections.
+<item>
+During job processing,  status and error indications can be obtained by sending
+a query to the UDP port.
+However,  the error conditions and other information are not very precise as the
+status may change dramatically during job processing.
+</enum>
+<p>
+The Appsocket protocol does not use a <em/persistent/ connection.
+If two people are sending jobs to the printer simultaneously it is very likely
+that the jobs will get intermixed.
+<p>
+The <tt/appsocket/ option causes the <tt/ifhp/ filter
+to open and close a TCP/IP connections to the printer.
+Since it is handling connections,
+you should specify
+<tt>:lp=/dev/null</tt>
+in the printcap to <it/trick/ the <tt/lpd/
+server into allowing the <tt/ifhp/ filter to make the connections.
+The following is a sample printcap entry for this printer:
+<tscreen>
+# Phaser Setup
+#  no status reporting - write only to the printer
+lp:server  <newline>
+&nbsp;&nbsp:<it>lp=/dev/null</it>  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp:ifhp=model=ps,appsocket,status@,dev=10.0.0.1%9100<newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<tscreen>
+# Phaser Setup
+#  bidirectional connection, status reporting
+lp:server  <newline>
+&nbsp;&nbsp:<it>lp=/dev/null</it>  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp:ifhp=model=ps,appsocket,dev=10.0.0.1%9100<newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<p>
+The <tt>lp=/dev/null/</tt>
+is necessary to force the <tt/lpd/ print server to open a connection
+to a dummy device.
+This is passed to the <tt/ifhp/ filter on file descriptor 1.
+The <tt/appsocket/
+option causes the filter to ignore this connection
+and to open a connection directly to <tt/dev=10.0.0.1%9100/,
+that is, port <tt/9100/ on IP address <tt/10.0.0.1/.
+This address can also be a DNS host entry.
+The <tt/status@/ tells it not to expect any status back from the printer.
+<p>
+For your convenience,
+the <tt/model=tek/
+entry is suitable for use with the appsocket protocol.
+<sect1>Common Print Server Boxes Configuration Information
+<p>
+The following is a list of print server manufacturers,
+models,
+and with hints on how to access these boxes with various protocols.
+<p>
+<table>
+<tabular ca="|l|l|l|l|">
+Manufacturer
+|
+Model
+|
+RFC1179 Port Name (rp=XXX)
+|
+Send to TCP port
+@
+<htmlurl url="http://www.digprod.com/" name="Digital Products Inc.">
+|
+NETPrint Print Server
+|
+<tt>PORT<it>n</it></tt>, where <it>n</it> is port on server
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.efi.com/" name="Electronics For Imaging Inc.">
+|
+Fiery RIP i series
+|
+<tt>normalq</tt> or <tt>urgentq</tt>
+|
+- Unknown if supported -
+@
+|
+Fiery RIP XJ series
+|
+<tt>xjprint</tt>
+|
+- Unknown if supported -
+@
+|
+Fiery RIP XJ+ and SI series
+|
+<tt>print_</tt><it>Model</it>, e.g. <tt>print_DocuColor</tt>
+|
+- Unknown if supported -
+@
+|
+Fiery models ZX2100, ZX3300, X2, X2e
+|
+<tt>print</tt>
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.emulex.com/" name="Emulex Corp.">
+|
+NETJet/NETQue print server
+|
+<tt>PASSTHRU</tt>
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.extendsys.com/" name="Extended Systems Inc.">
+|
+ExtendNet Print Server
+|
+<tt>Printer<it>n</it></tt>, where <it>n</it> is port on server
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.hp.com/" name="Hewlett-Packard">
+|
+JetDirect interface card
+|
+<tt>raw</tt>
+|
+9100
+@
+<htmlurl url="http://www.i-data.com/" name="I-Data">
+|
+Easycom 10 Printserver
+|
+<tt>par1</tt> (parallel port 1)
+|
+- Unknown if supported -
+@
+|
+Easycom 100 Printserver
+|
+<tt>LPDPRT1</tt>
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.printers.ibm.com/" name="IBM">
+|
+Network Printer 12, 17, 24, and 24PS
+|
+<tt>PASS</tt>
+|
+- Unknown if supported -
+@
+<htmlurl url="http://www.lantronix.com/" name="Lantronix">
+|
+EPS1, EPS2
+|
+<tt>EPS_XXXX_S1 (serial) port 1, EPS_XXXX_P1 (parallel) port 2</tt>, etc.
+|
+3001 (port 1), 3002 (port 2), etc.
+@
+<htmlurl url="http://www.qms.com/" name="QMS">
+|
+Various Models
+|
+<tt>RAW</tt>
+|
+35 (Appsocket)
+@
+<htmlurl url="http://www.tek.com/color_printers/" name="Tektronix">
+|
+Tektronix printer network cards
+|
+<tt>PS</tt> (PostScript), <tt>PCL</tt> (PCL), or <tt>AUTO</tt>
+(Auto-selection between PS, PCL, or HPGL).  Not reliable.
+|
+9100 (Appsocket on some models)
+@
+<htmlurl url="http://www.rosel.com" name="Rose Electronics">
+|
+Microserve Print Servers
+|
+lp
+|
+9100
+@
+<htmlurl url="http://www.xerox.com/" name="Xerox">
+|
+Models 4505, 4510, 4517, 4520
+|
+<tt>PASSTHRU</tt>
+|
+2501 (Appsocket on some models)
+@
+|
+Model 4512
+|
+<tt>PORT1</tt>
+|
+10001 (programmable)
+@
+|
+Model N17
+|
+<tt>RAW</tt>
+|
+9100
+@
+|
+Models N24 and N32
+|
+<tt>RAW</tt>
+|
+2000
+@
+|
+Models 4900, 4915, 4925, C55
+|
+<tt>PS</tt>
+|
+2000
+@
+|
+Document Centre DC220/230
+|
+<tt>lp</tt>
+|
+- Unknown if supported -
+@
+</tabular>
+</table>
+<p>
+All company, brand, and product names are properties of their respective owners.
+<sect1>IFHP Filter and Timeout Problems
+<p>
+As described later in this document,
+the <tt/ifhp/ filter may need to run a program
+such as <tt/ghostscript/ to do format conversion.
+For large files this can take quite a bit of time.
+Most printers have a
+<it/connection timeout/
+and if the printer is idle
+and no data is received for this time the printer will
+close the connection.
+By default this timeout is fairly short: 30 or 90 seconds on most printers.
+<p>
+If you are sending large jobs to the printer using the
+<tt/socket/ protocol and are getting timeout
+problems due to conversion timeouts,
+then there are two solutions: a) use the Appsocket protocol,
+which will open and close the connection for each file,
+and only when the converted file is available,
+or b)
+do your conversions first and then spooling the converted job to be sent
+directly to the printer.
+<tscreen>
+# Method a) Appsocket <newline>
+lp:server  <newline>
+&nbsp;&nbsp:<it>lp=/dev/null</it>  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline> 
+&nbsp;&nbsp:ifhp=model=printer,dev=10.0.0.1%9100,appsocket<newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline> 
+<newline>
+# Method b) Bounce Queue <newline>
+#  this queue does the conversion if required <newline>
+lp:server:lpd_bounce  <newline>
+&nbsp;&nbsp:<it>lp=real@localhost</it>  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline> 
+&nbsp;&nbsp:ifhp=model=printer<newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline> 
+<newline>
+# this queue does to transmission using the socket protocol <newline>
+raw:server  <newline>
+&nbsp;&nbsp:<it>lp=/dev/null</it>  <newline>
+&nbsp;&nbsp:ifhp=model=printer,dev=10.0.0.1%9100<newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline> 
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline> 
+</tscreen> 
+<p>
+For method a),
+the Appsocket protocol is used and the <tt/ifhp/ filter will be invoked before sending a job.
+For method b),
+you use two queues:  a <it/bounce/ queue that does the format conversion
+and then sends the job to the real queue,
+and the real queue that actually talks to the printer.
+<sect1>PS, PCL, PJL Printer with TPC/IP Network Interface
+<p>
+The most common TCP/IP protocols used for transferring
+jobs to network printers are
+<ref id=rfc1179pc name="RFC 1179">,
+a direct TCP/IP
+<ref id=socketpc name="socket">,
+connection to the print engine,
+and the very odd 
+<ref id=appsocketpc name="Appsocket"> protocol described
+in previous sections.
+Here is a reprise of the various printcaps and methods
+to use them.
+<tscreen>
+# printer setup  <newline>
+#  force clients (lpr, lpq, to use server)  <newline>
+lp:lp=lp@serverhost  <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline>
+<newline>
+&nbsp;&nbsp# No filtering, transfer using RFC1179
+&nbsp;&nbsp:lp=queue@10.1.1.1<newline>
+&nbsp;&nbsp#    or <newline>
+&nbsp;&nbsp:rp=queue:rm=10.1.1.1<newline>
+<newline>
+&nbsp;&nbsp# Filtering and then transfer using RFC1179
+&nbsp;&nbsp:lpd_bounce:lp=queue@10.1.1.1<newline>
+&nbsp;&nbsp#    or <newline>
+&nbsp;&nbsp:lpd_bounce:rp=queue:rm=10.1.1.1<newline>
+&nbsp;&nbsp:ifhp=model=<it/name/<newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+<newline>
+&nbsp;&nbsp# Filter, transfer using socket
+&nbsp;&nbsp:lp=10.1.1.1%9100 <newline>
+&nbsp;&nbsp:ifhp=model=<it/name/<newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+<newline>
+&nbsp;&nbsp# Filter, transfer using Appsocket
+&nbsp;&nbsp:lp=/dev/null <newline>
+&nbsp;&nbsp:ifhp=model=<it/name/,appsocket,dev=10.1.1.1%9100 <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<p>
+If your printer is a parallel port printer
+connected to an <em/external/ Network Print Spooler such as an HP JetDirect box,
+then while the network connection to the Network Print Spooler is
+bidirectional
+the connection from the Network Print Spooler to the printer 
+may be unidirectional
+and no status information will be returned from the Network Print Spooler.
+In this case you <em/must/ add the <tt/status@/
+option to tell <tt/ifhp/ not to expect status:
+<tscreen>
+&nbsp;&nbsp# Filter, transfer using socket
+&nbsp;&nbsp:lp=10.1.1.1%9100 <newline>
+&nbsp;&nbsp:ifhp=model=<it/name/,status@<newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+<newline>
+&nbsp;&nbsp# Filter, transfer using Appsocket
+&nbsp;&nbsp:lp=/dev/null <newline>
+&nbsp;&nbsp:ifhp=model=<it/name/,appsocket,status@,dev=10.1.1.1%9100 <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<sect1>PS, PCL, PJL Printer with Parallel Port Connection
+<p>
+Even if your printer is connected to a parallel port
+and parallel port is bidirectional
+you may still not <em/reliably/ read status from the printer.
+Use the
+<tt/status@/ option to prevent the
+<tt/ifhp/ filter from expecting status,
+and do not  use the
+<tt/:rw/ (open connection read-write) option:
+<tscreen>
+# printer setup  <newline>
+#  force clients (lpr, lpq, to use server)  <newline>
+lp:lp=lp@serverhost  <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp# no :rw option! <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp# parallel port <newline>
+&nbsp;&nbsp:lp=/dev/lpt<newline>
+&nbsp;&nbsp:ifhp=status@ <newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<p>
+<sect1>PS, PCL, PJL Printer with Serial Port
+<p>
+It is strongly advised that serial ports not be used
+for high speed data transfers.
+The main problem is trying to configure them in such as way
+that they do not lose characters due to data overruns or parity errors.
+LPRng is strongly deprecating support for serial port printers.
+<p>
+The LPRng print spooler will open and set the serial
+line characteristics,
+and pass the open connection to the
+<tt/ifhp/ filter.
+The 
+<tt/tty/ connection must pass all 8 bits with no parity,
+and should use hardware flow control if at all possible.
+Unfortunately,
+the various <tt/stty/
+options needed to do this vary from system to system.
+Also, you may discover that your serial connection does not
+support hardware flow control.
+If this is the case,
+then you will have to use software flow control
+which is rather unreliable for high speed (over 9600) serial
+lines due to the timing latencies involved.
+<tscreen>
+# printer setup  <newline>
+#  force clients (lpr, lpq, to use server)  <newline>
+lp:lp=lp@serverhost  <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/  <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp# serial port <newline>
+&nbsp;&nbsp:lp=<it>/dev/ttyxxx</it> <newline>
+&nbsp;&nbsp:stty=38400 -echo -crmod -raw -oddp -evenp \ <newline>
+&nbsp;&nbsp   ixon pass8 -ixany cbreak crtscts <newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<sect1>PostScript Only Printer
+<label id="psonly">
+<p>
+Use the configuration appropriate to the printer connection,
+and then specify
+<tt/model=ps/.
+<tscreen>
+# printer setup  <newline>
+#  force clients (lpr, lpq, to use server)<newline>
+lp:lp=lp@serverhost <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/ <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp:ifhp=model=ps <newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<p>
+If you have a parallel port printer with no PostScript support,
+you would use:
+<tscreen>
+:ifhp=model=ps,status@
+</tscreen>
+<p>
+<label id="no_ps_eoj">
+<label id="no_pcl_eoj">
+If your printer does not like PostScript EOJ (Control-D)
+flags at the start of a job,
+use the
+<tt/no_ps_eoj/ (No PS EOJ at Start)
+flag to cause <tt/ifhp/ to remove them.
+Similarly,
+the
+<tt/no_pcl_eoj/ (No PCL EOJ at Start)
+flag will remove the PCL EOJ (Esc E)
+command string from the start of a PCL job file.
+<tscreen>
+:ifhp=model=ps,no_ps_eoj
+</tscreen>
+<sect1>PostScript Only Printer Text Conversion
+<p>
+If <tt/ifhp.conf/
+can be configured to invoke a text to PostScript converter.
+See the section on
+<ref id=fileconversion name="File Conversion Support">.
+<sect1>GhostScript and ifhp
+<p>
+Generating a raster image from a PostScript or PCL file in
+a timely manner requires a high speed processor and substantial amounts
+of memory.
+Many of the low cost printers require the user's system to do the raster
+conversion,
+and a raster file is then transferred to the printer.
+These files are usually in a proprietary format.
+<p>
+The <ref id="ghostscript" name="GhostScript">
+program can process PostScript files and produce raster output for a
+wide range of devices.
+See the GhostScript documentation for details.
+The <tt/ghostscript/ printer configuration is intended to be used
+with these printers.
+See
+<ref id="ghostscriptconfig" name="Using GhostScript with ifhp">
+for details.
+<sect1>Tektronics Phaser, QMS, and Appsocket Protocol
+<label id="phaser">
+<p>
+The Tektronics Phaser, QMS Network Printers,
+and a few others use the
+<ref id=appsocketpc name="Appsocket"> protocol described
+in a previous section.
+The Tektronics (<tt/model=tek/) configuration entry
+has the required options for these printers:
+<tscreen>
+<verb>
+&lsqb; tek qms &rsqb;
+appsocket
+ps
+pjl@
+pcl
+</verb>
+</tscreen>
+<p>
+The following shows a typical printcap entry:
+<tscreen>
+#  force clients (lpr, lpq, to use server)<newline>
+lp:lp=lp@serverhost <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/ <newline>
+&nbsp;&nbsp:lp=/dev/null     <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp:ifhp=model=tek,dev=10.1.1.1%35 <newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<sect> Options and Arguments
+<label id="options">
+<label id="model">
+<label id="model_from_option">
+<p>
+The <tt/ifhp/ filter is designed to work with the LPRng print spooler
+and expects to be passed the standard set of filter options.
+These have the form:
+<tscreen>
+<verb>
+/.../ifhp &lsqb;-c&rsqb; &lsqb;-X option&rsqb;* accountingfile
+Example:
+/.../ifhp -n root -h localhost -P printer -s statusfile acct
+# - X is any letter except T
+</verb>
+</tscreen>
+<p>
+All of the option letters except <tt/T/ are reserved by the <tt/LPRng/
+program to pass information to the filter.
+For details about the options,  please consult the <tt/LPRng/ documentation.
+<sect1>Command Line Options
+<p>
+The most important options that LPRng passes and that uses are:
+<descrip>
+<tag>-s statusfile</tag>
+The file where <tt/ifhp/ status information is placed.
+<tag>-Z useroptions</tag>
+The <tt/lpr -Z/ options passed by the user, and are discussed in
+the <ref id=options name="options"> section.
+<tag>-T options</tag>
+These are usually options specified in the printcap entry
+and are discussed in
+the <ref id=options name="options"> section.
+<tag>accountingfile</tag>
+The file where accounting information is written.
+</descrip>
+<p>
+<tscreen>
+Examples:
+ifhp "-Tmodel=ps,status@" "-Za4,landscape"
+</tscreen>
+<p>
+Since commas are used to separate options,
+whitespace is used to separate multiple values
+for a particular option.
+You will need to quote this on a command line. For example:
+<tscreen>
+ifhp "-Tfont=elite greek1 dingbat"
+</tscreen>
+<p>
+The <tt/ifhp/ program first checks to see if the
+<tt/PRINTCAP/ environment variable is defined.
+By convention, <tt/LPRng/ will place the printer printcap entry in this
+variable when it starts the <tt/ifhp/ filter.
+The printcap <tt/:ifhp=options/ value is extracted and used
+as the default <tt/-T/ options.
+After getting the options from the printcap,
+the <tt/-Toptions/ command line options are appended to the list of <tt/-T/
+options.
+The single letter command line options are also made available to
+the <tt/ifhp/ programs as shown below:
+<tscreen>
+<verb>
+PRINTCAP=lp:ifhp=model=this,status@:...
+
+ifhp -n root -h localhost -Tmodel=that,debug=1
+
+Concatenated -T options:  model=this,status@,n=root,h=localhost,model=that,debug=1
+Resulting    -T options:  status@,n=root,h=localhost,model=that,debug=1
+</verb>
+</tscreen>
+<p>
+The <tt/-T/ option list is scanned from left to right,
+and later option values override earlier ones.
+The <tt/-T/ option values have priority over values that are obtained
+from the configuration file and cannot be overridden.
+There are several options that have important effects on the operation
+of the <tt/ifhp/ filter.
+<sect1>General Configuration Options - config, model, trace, debug
+<label id="config">
+<label id="trace">
+<label id="debug">
+<p>
+These options are used to control the global operation
+of the <tt/ifhp/ filter,
+and are only available from the <tt/-T/ command line options.
+<descrip>
+<tag>config=pathname</tag>
+The <tt/config/ option specifies the location of the <tt/ifhp.conf/ file.
+This overrides the default location.
+The pathname can be a file name, list of filenames separated by spaces,
+or a filter.
+For example:
+<tscreen>
+<verb>
+ifhp '-Tconfig=/etc/ifhp.conf /usr/local/etc/ifhp.conf'
+ifhp '-Tconfig=|/usr/local/bin/getconfig'
+</verb>
+</tscreen>
+<p>
+This will cause the <tt/getconfig/ program to be run and the configuration information
+read from the program's STDOUT.
+This facility is strongly deprecated and
+may not be supported in future releases.
+<p>
+<tag>model=MODEL</tag>
+The <tt/model/ option selects the portion of the ifhp configuration
+that will set values of configuration parameters.
+This is discussed in detail in the next section.
+<p>
+<tag>trace</tag>
+As <tt/ifhp/ processes the print job,  it produces tracing and error message
+information.
+By default this is written to the status file specified by the <tt/-s/
+command line option.
+The <tt/trace/ option will cause this information to be written to
+<tt/STDERR/ (file descriptor 2).
+This is usually used in debugging.
+<p>
+<tag>debug=n</tag>
+This option sets the debugging level to <tt/n/, where <tt/n/ is an integer number.
+Level 0 turns debugging off, level 1 produces a small amount of verbosity
+and increasing levels produce more verbose information.
+</descrip>
+<sect1>Status Messages - statusfile, statusfile_max, statusfile_min, summaryfile
+<label id="statusfile">
+<label id="statusfile_max">
+<label id="statusfile_min">
+<label id="summaryfile">
+<p>
+<descrip>
+<tag>statusfile=pathname or -s pathname</tag>
+The status file pathname is set by the command line
+<tt>-s pathname</tt>
+or if it is not present then the
+<tt>statusfile=pathname</tt>
+configuration option.
+The file must exist and will not be created.
+<p>
+<tag>statusfile_max=n</tag>
+If the status file is larger than
+<tt/statusfile_max/ K bytes (default 8K),
+then it is truncated to
+<tt/statusfile_min=min/
+K bytes.
+<p>
+<tag>statusfile_min=n</tag>
+The minimum size in Kbytes of the status file after truncation
+(default 1K).
+</descrip>
+<sect1>Printer Status Available - status
+<label id="status">
+<p>
+The <tt/status/ option indicates that there is a bidirectional
+connection to the printer,
+and that status can be obtained from the connection.
+During initialization
+the <tt/ifhp/ filter will test the printer connection and determine if
+it supports reading.
+If it does not then <tt/ifhp/ will set <tt/status@/.
+<sect1>Monitoring Options - sync, waitend, pagecount
+<p>
+The <tt/sync/, <tt/waitend/, and <tt/pagecount/
+options are ignored if no status is available from the printer.
+The <tt/sync/ option specifies the method to use to
+determine if the printer is ready and operational.
+The <tt/waitend/ option specifies the method used to determine
+when a print job is finished.
+The <tt/pagecount/ option specifies the method used to obtain pagecount
+or status information.
+<descrip>
+<tag>sync@, waitend@, pagecount@ </tag>
+This form of the tag indicates that the particular facility is disabled.
+<p>
+<tag>sync=pjl</tag>
+PJL is used to determine if the printer is ready.
+This can be done by sending a <tt/PJL JOB/ or <tt/PJL ECHO/
+command to the printer and waiting for return status.
+<p>
+<tag>sync=ps</tag>
+A small PostScript job which causes a status report to be returned
+is sent to the printer.
+<p>
+<tag>waitend=pjl, waitend=ps</tag>
+This is similar to the <tt/sync/ operation,
+but is done at the end of a job in order to determine if the
+printer is busy.
+<p>
+<tag>pagecount=pjl</tag>
+Many PJL capable printers support reporting total page usage by
+means of PJL.
+This option causes a PJL command to be sent requesting the
+total page usage by the printer.
+<p>
+<tag>pagecount=ps</tag>
+A small PostScript job which causes a status report to be returned
+is sent to the printer.
+</descrip>
+<sect1>User -Z Option Support
+<p>
+The <tt/ifhp/ filter provides a simple way for users to request
+a particular printer facility or option.
+The <tt/lpr -Zkey=value/ command causes the <tt/lpd/
+print spooler to pass the <tt/-Z/ options on the <tt/ifhp/ command line.
+<p>
+The <tt/ifhp/ filter implements these options by first determining if they
+are allowed,
+and then using them to select a set of strings that are sent to the printer.
+Since some options are implement by sending PJL strings to the printer,
+some by PostScript,
+and some by PCL commands,
+the method of specifying and generating them is a bit involved.
+<p>
+The following facility is used to control the names and types of user
+options.
+<descrip>
+<tag>pjl_user_opts=&lsqb; ... &rsqb;</tag>
+This tag specifies the list of user options that are implemented by
+sending PJL strings to the printer.
+This is available only if the printer is PJL capable.
+<tag>pcl_user_opts=&lsqb; ... &rsqb;</tag>
+This tag specifies the list of user options that are implemented by
+sending PCL strings to the printer.
+This is available only if the printer is PCL capable.
+<tag>ps_user_opts=&lsqb; ... &rsqb;</tag>
+This tag specifies the list of user options that are implemented by
+sending PostScript strings to the printer.
+This is available only if the printer is PostScript capable.
+</descrip>
+<p>
+For each option,
+the actual string or set of strings is specified as follows.
+<descrip>
+<tag>pjl_<it>key</it>= ...</tag>
+The value of the PJL user option <tt/key/.
+This value can be one or more lines;
+the lines are checked for correct PJL format and sent to the printer
+before any language specific information.
+<tag>ps_<it>key</it>= ... </tag>
+The value of the PostScript user option <tt/key/.
+This value can be one or more lines;
+leading and trailing whitespace is removed and the lines are
+placed before the first lines of a PostScript job file.
+<tag>pcl_<it>key</it>= ... </tag>
+The value of the PCL user option <tt/key/.
+This value can be one or more lines;
+whitespace and new lines are removed and the
+characters are placed before the first characters of a PCL job file.
+</descrip>
+<p>
+The following user options are predefined in the default
+<tt/ifhp.conf/ file and are recommended for use.
+<descrip>
+<tag>a3, a4, a5 </tag>
+Use a3, a4, or a5 paper
+<tag>copies=N</tag>
+Print N copies of a page or job
+<tag>duplex</tag>
+Use duplex printing,  tumble on.
+Pages will come out so that the margins are at opposite ends
+of a page.
+<tag>duplexshort</tag>
+Use duplex printing,  tumble off.
+Pages will come out so that the margins are at the same
+ends of a page.
+<tag>envelope</tag>
+Select envelope media
+<tag>inlower</tag>
+Select media from lower input bin.
+<tag>inupper</tag>
+Select media from upper input bin.
+<tag>landscape</tag>
+Use Landscape orientation
+<tag>lduplex</tag>
+Alias for duplex
+<tag>ledger</tag>
+Select ledger size (11x15 inches) media
+<tag>legal</tag>
+Select legal size (8.5x15 inches) media
+<tag>letter</tag>
+Select letters size (8.5x11 inches) media
+<tag>manual</tag>
+Select media from manual feed
+<tag>mediaselect=N</tag>
+Select media number N
+<tag>outlower</tag>
+Put output in lower tray or bin
+<tag>outupper</tag>
+Put output in upper tray or bin
+<tag>oversize</tag>
+Select oversize media
+<tag>portrait</tag>
+Use Portrait orientation
+<tag>sduplex</tag>
+Alias for simplex.  Print on the single side of the media. 
+<tag>simplex</tag>
+Print on the single side of the media. 
+<tag>transparency</tag>
+Select transparency media
+</descrip>
+<sect1>Adding User Options
+<p>
+The following shows how to add a PJL option to an <tt/ifhp.conf/
+file.
+By convention,
+the configuration is added to the end of the ifhp.conf file.
+<tscreen>
+<verb>
+&lsqb; newprinter &rsqb;
+pjl_user_opts += &lsqb; screen &rsqb;
+pjl_screen = PJL SCREEN = ON
+
+ps_user_opts += &lsqb; fuzzy &rsqb;
+ps_fuzzy = &lt;&lt;/Fuzzy (\%s&lcub;fuzzy&rcub;)&gt;&gt; setpagedevice
+
+</verb>
+</tscreen>
+<p>
+In the first example we define the <tt/screen/ option.
+The <tt/lpr -Zscreen/ option will cause the PJL command
+<tt/PJL SCREEN = ON/ to be put into the output to the printer.
+<p>
+Similarly,
+the <tt/lpr -Zfuzzy=5/ option will cause the PostScript command
+<tt> &lt;&lt;/Fuzzy (\%s&lcub;fuzzy&rcub;)&gt;&gt; setpagedevice </tt>
+to be sent to the printer.
+
+<sect1>Initialization and Setup Control
+<p>
+Several options are used during
+the processing steps discussed in
+<ref id="details" name="Filter Operation Details">
+to control what setup is done for the printer.
+<descrip>
+<tag>pjl_init = &lsqb; ... &rsqb;</tag>
+If PJL is enabled on this printer,
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <tt/pjl_user_opts/ are processed.
+<p>
+<tag>ps_init = &lsqb; ... &rsqb;</tag>
+If PostScript is enabled on this printer and a PostScript file
+is being processed,
+then the
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <tt/ps_user_opts/ are processed.
+<p>
+<tag>pcl_init = &lsqb; ... &rsqb;</tag>
+If PCL is enabled on this printer and a PCL file
+is being processed,
+then the
+options in this list are expanded and the resulting values
+are sent to the printer.
+After this,
+the -Z options are expanded and any options which
+are listed in the <tt/pcl_user_opts/ are processed.
+</descrip>
+<p>
+These initialization options are very useful in order to set up
+information controlling the default format or options for a
+print job.
+For example:
+<tscreen>
+<verb>
+pcl_init = &lsqb; normalpage &rsqb;
+pcl_normalpage=&lsqb; letter crlf linewrap
+  portrait clearmargins fixed pitch=10 courier &rsqb;
+</verb>
+</tscreen>
+<p>
+When processing a PCL job, <tt/normalpage/ is expanded by searching first
+for <tt/normalpage/ and then for <tt/pcl_normalpage/;
+this in turn results in the expansion of the list of values.
+For example,
+<tt/pcl_crlf/ is usually defined as <tt/pcl_crlf=\033&amp;k2G/,
+which is the PCL command to translate a New Line (<tt/\015/) character
+as a Carriage Return/New Line.
+The other entries have similar definitions that produce the
+desired effects.
+
+<sect>Configuration File
+<p>
+This section will cover the <tt/ifhp.conf/ file and the various options
+and configuration methods used to control the operation of the <tt/ifhp/
+filter.
+<sect1>Configuration File Entries
+<p>
+The <tt/ifhp/ filter uses a simple text based configuration file,
+usually <tt>/usr/local/etc/ifhp.conf</tt> or <tt>/etc/ifhp.conf</tt>
+to get a set of configuration values which control its operation.
+The following sample configuration file segment shows how information
+is specified.
+<tscreen>
+<verb>
+# comment line - first non-blank character is a #
+#---- DEFAULTS ----
+# we first have the default section
+#   - a flag option whose value is 1
+on_flag
+#   - a flag option whose value is 0
+off_flag@
+#   - a flag option whose value is a string (single line)
+#     its value will be 'this is a string'
+strval = this is a string
+#   - a flag option whose value is multiple lines
+#     each additional line starts with whitespace
+#     value is 'this\nis1\na\nstring'
+longstrval = this
+ is\061
+ a
+ string
+#   - and a list that gets expanded -
+#     '&lsqb; this &rsqb; &lsqb; is a\nlist &rsqb;' -> &lsqb; this is a list &rsqb;
+longlist = &lsqb; this &rsqb; &lsqb; is a
+ list &rsqb;
+#    we can extend a string.
+#    strval will  now be 'this is a string added'
+strval += added
+#    and we can expand a list
+#     '&lsqb; this &rsqb; &lsqb; is a\nlist &rsqb; &lsqb; more &rsqb;' -> &lsqb; this is a list more &rsqb;
+longlist += &lsqb; more &rsqb;
+
+# a printer specific section
+# ---- PRINTER ----
+&lsqb; hp hp4* &rsqb;
+# this match model=hp, model=hp4, model=hp4x
+# override the default
+onflag@
+include /usr/local/etc/ifhp.conf.local
+</verb>
+</tscreen>
+<p>
+The example shows the basic structure of the <tt/ifhp.conf/ file.
+Comments are lines whose first non-whitespace character is<tt/#/.
+<sect1>Option Setting
+<p>
+<tscreen>
+<verb>
+Syntax             Equivalent To
+option             option=1
+option@            option=0
+option=val
+option=&lsqb; v v  ... &rsqb;
+option=val1        val1\nval2\n val3
+ val2 
+option=val1        val1
+option+=val2       val1 val2
+option+=val4       val1 val2 val4\nval5
+include+=val4       val1 val2 val4\nval5
+ val5
+include /pathname
+</verb>
+</tscreen>
+<p>
+If an option's default value is the empty string (<tt/''/).
+The <tt/ifhp/ program uses the Perl language convention that this
+value is equivalent to 0 when used in a numerical context or
+the empty string when used in a string context.
+<p>
+In general when a string is used in an integer context it is converted
+to a the appropriate numerical type using the standard Perl/C
+numerical representation and conversion methods.
+<p>
+The <tt/flag/ syntax sets the value of <tt/flag/ to the string <tt/'1'/,
+that is, the string with a 1 value, and <tt/flag@/ sets it to <tt/'0'/. 
+<p>
+The <tt/option = value/ syntax sets the option value to a string.
+The string can extend across multiple lines.
+A line starting with a space has its value appended to the
+previous option with a <tt/\n/ separator.
+<p>
+As shown in the example,
+the <tt/+=/ operator is used to append to a string value
+The <tt/&lsqb; option option ...&rsqb;/ syntax is used to specify that the
+value is list.
+Lists are used to specify a list of options which can be flags or string
+values.
+Lists have the property of
+<em/recursive evaluation/
+which means that the individual list items will be further processed during
+printing.
+This is discussed later in detail.
+<p>
+The <tt/include/ facility is currently deprecated,
+and may not be implemented in future releases.
+It will cause the specified file to be read and processed at
+that point in the configuration file.
+<sect1> Option Use
+<p>
+Options and their values are used to control printer operation.
+There are two types of options:
+those with a predefined or
+<em/builtin/
+meaning to the
+<tt/ifhp/
+filter and those which
+have their values sent to the printer when appropriate.
+The builtin options are listed
+and their use is explained
+in later sections.
+<sect1>List Expansion
+<p>
+The
+<tt/ifhp/
+filter configures a printer by sending the values of options to the printer
+or performing built-in operations.
+An option can have a flag, string, or list value.
+<p>
+A LIST value has the form <tt/&lsqb; v1 v2 ... &rsqb;/.
+When a list value is to be sent to the printer
+each of <tt/v1/, <tt/v2/, etc. is expanded in turn
+and the corresponding string value or builtin action is carried out.
+If the string value of a term is itself a list,
+the list will be expanded in turn.
+Recursive list evaluation will result in an error.
+The following is an example of list expansion:
+<tscreen>
+<verb>
+t1=&lsqb; p1 p2 &rsqb;
+p1=this is
+p2=&lsqb; p3 p4 &rsqb;
+p3=a
+p4=test
+</verb>
+</tscreen>
+<p>
+The option <tt/t1/ is expanded by expanding <tt/p1/ and then <tt/p2/;
+The expansion of <tt/p1/ produces
+<tt/"this is"/,
+and <tt/p2/ produces
+<tt/&lsqb;p3 p4&rsqb;/.
+This list is then expanded to produce 
+<tt/"test"/
+and
+<tt/"living end"/.
+<p>
+Some LIST options are used in
+printer language specific contexts
+and their values are processed appropriately.
+For example,
+pjl_init=&lsqb;...&rsqb; specifies a set of
+initialization operations for PJL printers,
+and pcl_init=&lsqb;...&rsqb; is used to specify the initialization
+needed for PCL printing.
+The expansion of the LIST entries is done in the language
+specific context.
+For PJL this requires that the output be well formed PJL commands,
+and for PCL that all whitespace be removed.
+<p>
+The context dependent expansion is required because sometimes it
+is necessary to do operations both using PJL and PCL or PJL and PS
+combinations to ensure correct printer operation.
+During expansion the language name and an underscore
+is prefixed to the list entry name and this is used as the option name during expansion.
+If the prefixed name is not found then the unprefixed name will be used.
+For example,  suppose that we have:
+<tscreen>
+<verb>
+pjl_init=&lsqb; initstr test &rsqb;
+pcl_init=&lsqb; initstr &rsqb;
+pjl_initstr=&commat;PJL ECHO YES
+pcl_initstr=\033(*0V
+</verb>
+</tscreen>
+<p>
+When PJL initialization is being done and we want string values
+for the <tt/pjl_init/ LIST, we expand  <tt/initstr/ and <tt/test/
+in the <tt/pjl_/ context.
+First a defined <tt/pjl_initstr/ value will be looked for and then
+a defined <tt/initstr/ value.
+Since there is a value of <tt/pjl_initstr/ it will be used.
+<p>
+Similarly we will check for <tt/pjl_test/ and <tt/test/ values.
+Since <tt/pjl_test/ does not have a defined value
+the <tt/test/ value <tt/DONE/ will be used.
+<p>
+When PJC initialization is being done and we want string values
+for the <tt/pjc_init/ LIST, then we expand  <tt/initstr/ and <tt/test/
+in a similar way, resulting in <tt/\033(*0V/ and <tt/DONE/ values.
+<p>
+We can use the list entry
+<tt/&lsqb; option=value &rsqb;/
+to temporarily specify the value of a variable
+which is then used during language specific expansion.
+For example,
+suppose that we have the following set of definitions:
+<tscreen>
+<verb>
+pjl_init=&lsqb; initstr=testing &rsqb;
+pjl_initstr=@PJL INIT=\%s%lcub;initstr%rcub;XQ
+</verb>
+</tscreen>
+<p>As discussed in the next section,
+the <tt/\%s%lcub;initstr%rcub;/ will cause the value for the <tt/initstr/ value to
+be substituted into the <tt/pjl_initstr/ string.
+How this is done is discussed in the section on
+<ref id=stringescape name="String Escape Sequences">.
+<sect1>String Escape Sequences
+<label id="stringescape">
+<p>
+Strings values have a syntax similar to PERL or C.
+The <tt/\/ (escape) character indicates the start of an escape sequence string.
+This has the syntax:
+<descrip>
+<tag/Standard Character Replacement/
+<tt/\f/,
+<tt/\r/,
+<tt/\n/,
+and
+<tt/\t/
+are replaced in turn by the Ascii character FF, CR, NL,
+and HT whose values are 014, 015, 012, and 011 respectively.
+<tag/Octal Character Replacement/
+<tt/\nnn/
+where nnn are 3 octal digits is replaced by the corresponding character
+with the specified value.
+<tag/Option Value Replacement/
+<tt/\%format&lcub;option&rcub;  OR  \%format&lsqb;option&rsqb;/
+<p>
+The value of the option will be determined and replaced by a formatted string.
+The option value is determined by the following algorithm.
+<enum>
+<item>
+When expanding a list value, the
+<tt/option=word/
+will push the
+<tt/option=word/
+combination onto an evaluation stack,
+and then the <tt/option/ value is expanded in the
+current language context.
+<item>
+When starting a search for
+<tt/&lcub;option&rcub;/
+in a language context <tt/lang_/,
+the stack of list values is searched in oldest to newest order for a match
+for <tt/lang_option/ and then for <tt/option/.
+The first one found is used as the option value.
+<item>
+After searching the evaluation stack for
+<tt/&lcub;option&rcub;/
+and no match was found then the <tt/-Z/ command line option values
+are searched for a matching entry.
+<item>
+If none is found, then the <tt/-T/ command line option values
+and next the printer configuration will then be searched for
+<tt/lang_option/ and then for <tt/option/.
+If no match is found,  then the empty string will be the result
+if a string is wanted or the value 0 if a number is wanted.
+<item>
+If the result of this lookup is a list
+then the list will be expanded in turn,
+and the concatenating values of the expansion will be used.
+<item>
+When starting a search for
+<tt/&lsqb;option&rsqb;/
+the 
+<tt/-T/ command line options will be first
+and next the printer configuration will then be searched for
+<tt/lang_option/ and then for <tt/option/.
+If no match is found,  then the empty string will be the result
+if a string is wanted or the value 0 if a number is wanted.
+<item>
+If the result of this lookup is a list
+If no match was found,
+then the search rules for 
+<tt/&lcub;option&rcub;/
+will be used,
+and the list expansion will be done as described above.
+If no match was found a null (empty string) value will be used.
+</enum>
+<tag/Option Value Format/
+<tscreen>
+<verb>
+   %&lsqb;-&rsqb;&lsqb;0&rsqb;&lsqb;length&lsqb;.precision&rsqb;&rsqb;&lsqb;format&rsqb;
+   %d&lcub;1&rcub;   =>  '1'       %s&lcub;1&rcub;   => '1'
+   %3d&lcub;1&rcub;  =>  '  1'     %3s&lcub;1&rcub;  => '  1'
+   %03d&lcub;1&rcub; =>  '0001'    %-3s&lcub;1&rcub; => '1  '
+   %4.2f&lcub;1&rcub; => '1.00'
+</verb>
+</tscreen>
+The format specifies how the value is to appear,
+and is similar to the printf format usage.
+<p>
+Depending on the format type,
+a value will be converted and used appropriately.
+The empty string or null value (<tt/''/) will be treated as a <tt/'0'/
+value when used in an numeric context.
+<p>
+The default format is %d, ie, \%&lcub;val&rcub; would be \%d&lcub;val&rcub;.
+The numerical formats supported are: %d, %o, %x, %X, %e, %f, and %g;
+The %s format use the string value of the result.
+</descrip>
+<sect1>Language Context and Value Expansion
+<p>
+The <tt/ifhp/ filter sends initialization and configuration commands to the
+printer.
+Depending on the type of language of a print file (i.e. - PostScript or PCL),
+different command formats would need to be used to implement different options.
+For example,  to implement a <em/landscape/ option for a PJL aware printer
+you would need to send the PJL command <tt/@PJL SET ORIENTATION=LANDSCAPE/.
+For a PostScript printer you would need to send a very strange string
+which would depend on the actual printer mode.
+<p>
+Our language context also includes various checks for
+language specific dependencies.
+This section refers to material that is discussed in depth in later
+sections of this document,
+and on first reading may be a little confusing.
+However,
+if you are not aware of some of these restrictions then much of the information
+in the configuration files may be very confusing.
+<sect2>PJL Language
+<p>
+A PJL command has the form
+<tt/@PJL OPCODE .../,
+and PJL commands must be sent as a block before any other commands.
+In order to assist with this,
+the <tt/ifhp/ filter provides the following assistance.
+When expanding a list value,
+each list entry is expected to form a well formatted PJL command.
+<enum>
+<item>
+Before sending any PJL command to the printer,
+the PJL Universal Exit Command
+(<tt/\033%-12345X/)
+string is sent to the printer.
+This is automatically done if <tt/pjl/ is enabled for the printer.
+<item>
+The list item is expanded,
+and all value substitutions are done.
+Leading and trailing whitespace is removed,
+all characters are converted to uppercase,
+and a new line (<tt/\n/) value is appended to the command.
+<item>
+Because not all printers support all PJL commands,
+the <tt/ifhp/ filter performs uses the
+<tt/pjl_only/
+and
+<tt/pjl_except/
+configuration lists to ensure that the options are allowed by the printer.
+The OPCODE must appear in the
+<tt/pjl_only/
+list and not in the
+<tt/pjl_except/
+list.
+For example:
+<tscreen>
+<verb>
+pjl_only = &lsqb; JOB SET STATUS &rsqb;
+pjl_except = &lsqb; STATUS &rsqb;
+</verb>
+</tscreen>
+<p>
+The <tt/pjl_only/ indicates that the printer supports the PJL JOB, SET, and STATUS
+commands,  but the <tt/pjl_except/ list removes the STATUS from this list.
+This means that only the
+JOB and SET commands will be allowed.
+<item>
+If the command is a <tt/SET/ command,
+then the PJL variable must appear in the <tt/pjl_vars_set/  list
+and not in the <tt/pjl_vars_except/ list.
+<tscreen>
+<verb>
+pjl_vars_set = &lsqb; PAPER SIZE ORIENTATION &rsqb;
+pjl_vars_except = &lsqb; PAPER &rsqb;
+
+@PJL SET SIZE=A4
+@PJL SET PAPER=LETTER
+</verb>
+</tscreen>
+<p>
+In the above example, the <tt/SIZE=A4/ command would be allowed
+and sent while the
+<tt/PAPER=LETTER/ command would be rejected and not sent.
+</enum>
+<sect2>PCL Language
+<p>
+When sending PCL initialization strings to a printer,
+it is essential to send nothing that could cause a printable character to
+be sent before the actual file contents.
+Such output could cause the location and positioning of text to be altered
+in unexpected ways.
+To avoid this,
+the following steps are taken when expanding a list in a PCL language context.
+<enum>
+<item>
+Before any PCL string is sent to the printer,
+the PCL End of Job
+(<tt/\033E/) string is sent to the printer.
+<item>
+All whitespace (blanks, tabs, etc) are removed from the string value.
+<item>
+Next, all escaped values are substituted.
+At this point you can
+<em/force/
+printable strings containing whitespace into the output by using the
+<tt/\nnn/
+escape mechanism.
+<item>
+All list values are concatenated and then sent to the printer.
+</enum>
+<sect2>PostScript Language
+<p>
+The PostScript language processing is very minimal,
+as there are few problems sending PostScript to a printer.
+<enum>
+<item>
+Before sending any PostScript initialization strings,
+the PostScript End of Job indicator
+(<tt/\004/ or Control-D) is sent.
+<item>
+Strings are then expanded and the escape sequences are substituted.
+<item>
+Individual strings have a newline
+(<tt/\n/) appended to them before being sent to the printer.
+</enum>
+<sect1>Printer Entries
+<p>
+The <tt/ifhp.conf/ file is divided into printer entries by <tt/&lsqb; pattern pattern ...&rsqb;/
+lines.
+Each pattern is glob matched against the <tt/model/ option value,
+and if the match is successful then the options on the following lines
+until the next
+printer entry header
+are appended to the specific printer configuration entry.
+<p>
+By convention,
+each configuration file is assumed to start with the header
+<tt/&lsqb; default &rsqb;/,
+and the initial set of lines are used to
+set default values for the various <tt/ifhp/ options.
+<p>
+The algorithm for scanning the configuration files first
+sets the <tt/model/ value to <tt/default/,
+and extracts the default information.
+It then sets the <tt/model/ value to the user specified value,
+and rescans the configuration file information.
+<p>
+If users need to add or modify the <tt/ifhp.conf/ file,
+then they should add their entries to the end of the file,
+and override any default options by specific values in their new entry.
+To aid with system configuration and maintenance,
+the distributed <tt/ifhp.conf/ file has the following text at the end of the file:
+<tscreen>
+<verb>
+##### This is the end of the standard ifhp.conf file.
+##### Add your local files after this
+##### If you want to override some entries, simply change the names to
+##### something different, i.e. hp4 hp4.old
+##### Here is a script to do this and then append your local file to the
+##### end of the ifhp.conf file:
+#####
+##### #!/bin/sh
+##### for i in $* ; do
+#####   perl -spi.bak -e 's/ $i / $i.orig /g' ifhp.conf
+##### done
+#####
+##### sed -n -e '1,/XXX END XXX/p' ifhp.conf >ifhp.conf.new
+##### sed '1,/XXX END XXX/d' ifhp.old >> ifhp.conf.new
+#####
+##### You can probably improve on this.
+#####
+#### XXX END XXX #####
+
+# user adds new default values here for all printer entries
+&lsqb; default &rsqb;
+# set default value
+pcl_option= \033test
+
+&lsqb; mypcl_printer &rsqb;
+# override default value
+pcl_option=
+
+</verb>
+</tscreen>
+<sect1> Printer Models Supported
+<label id="modelselection">
+<p>
+There are over 500 different printer models,
+types and configurations supported by IFHP.
+If your printer is not currently supported
+and you have documentation about the printer then send mail to the
+<ref id=maillist name="LPRng Mailing List">
+and support will be added.
+<p>
+The <tt>ifhp.conf</tt> configuration file contains
+configuration entries for various models of printers.
+Each entry has a name usually corresponding to the model of printer
+or its basic capabilities.
+For example,
+the HP LaserJet 4 printer has the <tt/model=hp4/ configuration entry.
+The <bf/default/ printer configuration
+covers a wide range of network printers manufactured by Hewlett-Packard,
+Canon,  Epson, and others and
+is for a printer that has a bidirectional communications
+connection that allows it to report status information
+and the following capabilities:
+<enum>
+<item> PJL support (<tt/pjl/) compatible with HP 4 family of printers
+<item> PostScript (PS) support (<tt/ps/).
+<item> PCL support (<tt/pcl/).
+<item> Text files printed as PCL (<tt/text/, <tt/default_language=pcl/).
+</enum>
+<p>
+There is also support for
+<ref id="psonly" name="PostScript only printers"> (/tt/model=ps/),
+<ref id="phaser" name="Tektronics Phasers"> (<tt/model=tek/),
+<ref id="phaser" name="QMS"> (<tt/model=qmsXXX/).
+The best way to determine the printers currently supported are
+to examine the <tt/ifhp.conf/ file
+for the contents.
+The configuration file has the following entries:
+<tscreen>
+<verb>
+apple           hp4v            hpdj1200c       hpdj750c
+hp4             hp5             hpdj1600c       hpdj750cplus
+hp4000          hp5l            hpdj200         hpdj755cm
+hp4500          hp5m            hpdj2000cp      hpiiisi
+hp4l            hp5mp           hpdj220         hpljpro
+hp4lc           hp5p            hpdj230         hppjxl300
+hp4m            hp5si           hpdj2500cp      lexmark4039
+hp4ml           hp5simopier     hpdj250c        lj3pclonly
+hp4mp           hp5simx         hpdj330         phaser
+hp4mplus        hp6l            hpdj350c        postscript
+hp4mv           hp6mp           hpdj430         ps
+hp4p            hp6p            hpdj450c        qms1725
+hp4pj           hp8100          hpdj455ca       qms2025
+hp4plus         hpcolorlj       hpdj600         qms2060
+hp4si           hpcolorlj5      hpdj650c        qms860
+hp4simx         hpcolorlj5m     hpdj700         tek
+</verb>
+</tscreen>
+<sect>Filter Operation Details
+<label id="read_write">
+<label id="details">
+<p>
+The
+<tt/ifhp/
+filter operates by first reading a configuration file
+to determine the type of printer it is working with,
+and then proceeds to carry out operations requested by the values of
+option variables passed on the command line or found in the configuration
+files.
+In normal operation,
+input is read from 
+<tt/STDIN/
+(file descriptor 0)
+and results written to
+<tt/STDOUT/ (file descriptor 1).
+Status reports are written to
+a status file or optionally to
+<tt/STDERR/ (file descriptor 2),
+together with any error messages or diagnostics.
+<p>
+In addition to normal operation
+the filter can run in the
+<bf/OF/ mode and act as a printer initializer and job terminator.
+This is discussed in detail in the LPRng documentation.
+When in the OF mode
+the two character sequence <tt/"\031\001"/
+will cause the filter to suspend itself by sending itself a <tt/SIGSUSP/
+signal.
+The print spooler will detect this and then
+send job files to the same output device.
+After the files have been transferred the
+the filter will be restarted with a SIGCONT signal.
+<sect1>Filter Pseudo-Code
+<p>
+The details of the filter operations are 
+described in the following
+<em/pseudo-code/.
+The sections marked with <tt/###/ are discussed later in this document
+in detail.
+<p>
+<tt>///</tt> See: <ref id="setup" name="Options, Initialization and Setup" >
+<tscreen>
+<verb>
+###+++ Initialization and Setup
+// get ifhp information from PRINTCAP_ENTRY environment variable
+if( PRINTCAP_ENTRY environment variable has a value )&lcub;
+	split printcap information into printcap fields
+	if( :ifhp=options,options is present in printcap )&lcub;
+		split the options list and place in the Toptions list
+	&rcub;
+&rcub;
+Add the -T command line options to the Toptions list
+Add the -Z command line options to the Zoptions list
+foreach option in -Toptions do
+    if( option = "debug=level" )&lcub;
+        set Debuglevel = level;
+    &rcub;
+    if( option = "trace" )&lcub;
+        output error and trace on STDERR
+    &rcub;
+    if( option = "config=pathlist" )&lcub;
+        set configuration pathlist = pathlist;
+    &rcub;
+    if( option = "model=name" and model not set )&lcub;
+        set model = name;
+    &rcub;
+&rcub;
+Read the configuration files from the config file list
+Prepend each file with a &lsqb; default &rsqb; header
+
+Scan the configuration files for &lsqb; default &rsqb; entries;
+  later entry values will override earlier ones.
+
+Repeat the scan, but this time search for &lsqb; model &rsqb; entries
+  matching the specified model.
+
+Put the command line options and -T options into configuration
+  information, effectively overriding the information from the
+  configuration files.
+
+// open a connection to the printer if required
+// usually only done when appsocket protocol is used
+if( device specified using -Tdev=device )&lcub;
+	// if device is host%port, we open TCP/IP connection
+	fd = open(device);
+	// Note - option read_write will open the device or file read write
+	dup fd to 1; close fd;
+&rcub;
+
+###---
+</verb>
+</tscreen>
+<tt>///</tt> See: <ref id="syncpage" name="Synchronization and Pagecount" >
+<tscreen>
+<verb>
+###+++ Synchronization and Pagecount
+if( status returned by printer and sync requested )&lcub;
+	do&lcub;
+		send command and wait for timeout;
+    &rcub; while( no response );
+	if( appsocket )&lcub;
+		close and reopen TCP/IP connection;
+	&rcub;
+&rcub;
+
+
+if( status and pagecount requested )&lcub;
+    // pagecount has the form pagecount@ (none),
+    //   pagecount=ps, pagecount=pjl, ...
+    if( pagecount=language has value ) do &lcub;
+		if( pagecount TRUE )&lcub;
+			set pagecount= pjl or ps depending on availability
+		&rcub;
+        if( pagecount = pjl and PJL INFO available )&lcub;
+           send PJL INFO PAGECOUNT command to printer
+		&rcub; else if( pagecount = ps )&lcub;
+           send PS program to printer
+		&rcub; else &lcub;
+			terminate with error;
+		&rcub;
+    &rcub; while( no pagecount response );
+	if( appsocket )&lcub;
+		close and reopen TCP/IP connection;
+	&rcub;
+&rcub;
+###---
+</verb>
+</tscreen>
+<tt>///</tt> See: <ref id="pjlinit" name="PJL Initialization" >
+<tscreen>
+<verb>
+### PJL INITIALIZATION
+if( PJL enabled )&lcub;
+    language = "pjl_"
+    foreach option in pjl_init=&lsqb;...&rsqb; &lcub;
+       expand the option using the language value
+       #+++ PJL OPTION ACTIONS +++
+       if( option in pjl_vars_set=&lsqb; ... &rsqb;
+         and option not in pjl_vars_except
+         expand "@PJL SET OPTION=\%&lcub;option&rcub;"
+         output = expanded string value
+       &rcub; else &lcub;
+         if( option value is a string )&lcub;
+           output = expanded string value;
+         &rcub;
+       &rcub;
+       // output has the form @PJL COMMAND ....
+       if( COMMAND is in pjl_only=&lsqb; ... &rsqb;
+           and not in pjl_except=&lsqb; ... &rsqb; )&lcub;
+           send output to printer
+       &rcub;
+       #--- end PJL OPTION ACTIONS
+    &rcub;
+    if( !OF_mode )&lcub;
+         foreach option in -Toption=value &lcub;
+            if( option in pjl_user_opts )&lcub;
+                #+++ USER PJL OPTIONS
+                // join 'pjl_' and the option name
+                expand 'pjl_' . option
+                // perform PJL actions as above
+                    #+++ PJL OPTION ACTIONS +++
+                    ....
+                    #-- PJL OPTION ACTIONS +++
+                #--- USER PJL OPTIONS
+            &rcub;
+         &rcub;
+         foreach option in -Zoption=value &lcub;
+            if( option in pjl_user_opts )&lcub;
+                // perform USER PJL actions as above
+                #+++ USER PJL OPTIONS
+                #--- USER PJL OPTIONS
+            &rcub;
+         &rcub;
+    &rcub;
+&rcub;
+
+###--- PJL INITIALIZATION
+</verb>
+</tscreen>
+<tt>///</tt> See: <ref id="textfile" name="File Conversion Support" >
+<tscreen>
+<verb>
+// language is set to the type of job language
+// - PS, PCL, TEXT, RAW, UNKNOWN
+//  the first part of the job file is read and the filter takes
+//  a (wimpy) guess at the job file based only on the first couple
+//  of characters;  language is  be PJL, PS, or TEXT, or RAW
+//  This is the same algorithm as the UNIX FILE utility
+
+language = default_language (from configuration);
+if( command line -c (binary) option present )&lcub;
+    language = RAW;
+&rcub; else if( -Zlanguage=xxx option present )&lcub;
+    language=xxx
+&rcub; else if( forceconversion set )&lcub;
+    use UNIX file utility to get file type
+&rcub; else if( file is PS file )&lcub;
+    language=PS
+	if( file starts with PS EOJ (CTRL-D)
+		and no_ps_eoj is set )&lcub;
+		remove the PS EOJ
+	&rcub; else &lcub;
+		send a PS EOJ first
+	&rcub;
+&rcub; else if( file is PCL file )&lcub;
+    language=PCL
+	if( file starts with PCL EOJ (ESC E)
+		and no_pcl_eoj is set )&lcub;
+		remove the PCL EOJ
+	&rcub;
+&rcub;
+if( file conversion table specified then )&lcub;
+	look up file type in conversion table;
+	if( conversion program specified )&lcub;
+    	run input through conversion program
+	&rcub;
+	set file type to output type
+&rcub;
+
+
+if( language = TEXT and PCL allowed )&lcub;
+    language = PCL;
+&rcub;
+
+if( language not recognized by printer )&lcub;
+    exit with error;
+&rcub;
+
+if( PJL ENTER supported )&lcub;
+	use PJL ENTER command to select language;
+	send nullpad NULLS to force full buffer condition
+&rcub;
+</verb>
+</tscreen>
+<tt>///</tt> See: <ref id="languageinit" name="Language Specific Initialization">
+<label id="pcl_user_opts">
+<label id="ps_user_opts">
+<tscreen>
+<verb>
+// LANGUAGE SPECIFIC INITIALIZATIONS
+if( language = PCL )&lcub;
+    foreach option in pcl_init &lcub;
+        ###+++ expansion 
+        do expansion similar to PJL OPTION actions
+            using "pcl_" prefix for option lookup;
+        ###---
+    &rcub;
+    if( not in OF_MODE )&lcub;
+        foreach option in -Toption do &lcub;
+            if( option in pcl_user_vars=&lsqb; ... &rsqb; )&lcub;
+            ###+++ expansion as above
+            ###---
+        &rcub;
+        foreach option in -Zoption do &lcub;
+            if( option in pcl_user_opts=&lsqb; ... &rsqb; )&lcub;
+            ###+++ expansion as above
+            ###---
+        &rcub;
+    &rcub;
+    remove whitespace and expand string results;
+&rcub; else if( language = PS )&lcub;
+    ###+++ language specific actions as above,
+      using the ps_ prefix for lookup 
+      allow only user option in the ps_user_opts list
+    expand string results but do not remove whitespace
+&rcub;
+</verb>
+</tscreen>
+<tt>///</tt> See: <ref id="filetransfer" name="File Transfer and Error Status Monitoring">
+<tscreen>
+<verb>
+Transfer job to printer, reading error and other information
+  back from the printer if enabled
+
+if( language = PCL )&lcub;
+    send PCL End of Job
+&rcub; else if( language = PS )&lcub;
+    send PS End of Job
+&rcub;
+
+
+// job termination
+
+###+++ Synchronization and Pagecount as above
+finished = 0
+while( waitend and not finished )&lcub;
+	// timeouts and retries are done here
+	if( time taken is too long )&lcub;
+		give up and report an error
+	&rcub;
+	if( appsocket )&lcub;
+		send \r\n to get status reply
+	&rcub; else if( waitend with PJL )&lcub;
+		wait for end of job using UINFO;
+	&rcub; else if( waitend with PS )&lcub;
+		send PostScript echo program to printer
+		if end_ctrl_t then add ^T
+	&rcub;
+	wait for response
+	if( response has end of job indication ) &lcub;
+		finished = 1;
+	&rcub;
+&rcub;
+if( pagecount )&lcub;
+	if( appsocket )&lcub;
+		close and reopen connection;
+	&rcub;
+	get pagecount using previously described algorithm
+&rcub;
+
+###---
+
+exit
+</verb>
+</tscreen>
+<sect1>Options, Initialization and Setup
+<label id="setup">
+<p>
+During the setup step,
+the <tt/ifhp/ system will extract command line options
+and scan configuration files for printer entries.
+These operations are covered in detail in other sections.
+<p>
+<sect1>Languages Supported- pjl, pcl, ps, and text
+<label id="pjl">
+<label id="pcl">
+<label id="ps">
+<label id="text">
+<p>
+These flags set the languages that are recognized or processed by
+the filter.
+<sect2>pjl_job FLAG
+<label id="pjl_job">
+<p>
+If PJL is enabled and this flag is SET,
+a PJL JOB and PJL EOJ command will be generated
+and sent to the printer.
+The JOB command has the form:
+<tscreen>
+&commat;PJL JOB NAME = "..." &lsqb; START = nnn &rsqb; &lsqb; END = mmm &rsqb;
+</tscreen>
+The START and END values can be specified by
+<tt/-Zstartpage=nnn/
+and
+<tt/-Zendpage=mmm/
+command line options.
+The EOJ command has must match the JOB command.
+<tscreen>
+&commat;PJL EOJ NAME = "..." &lsqb; START = nnn &rsqb; &lsqb; END = nnn &rsqb;
+</tscreen>
+<sect2> pjl_enter FLAG
+<label id="pjl_enter">
+<p>
+If PJL is enabled and this flag is SET,
+a PJL ENTER LANGUAGE = xx command will be generated
+when PCL or PS files are sent to the printer.
+<tscreen>
+<verb>
+@PJL ENTER LANGUAGE = PCL
+@PJL ENTER LANGUAGE = POSTSCRIPT
+</verb>
+</tscreen>
+<sect2> nullpad STRING
+<label id="nullpad">
+<p>
+Some older model HP printers required sending a large number of
+NULL (0) characters to force commands in the input buffer to be read.
+This can be done using the
+<tt/nullpad/ option.
+<p>
+In practice,
+this has turned out to be largely historical,
+as most printers do not have this problem.
+<sect2> pjl_console FLAG
+<label id="pjl_console">
+<p>
+When this flag is set,
+PJL is available,
+and the PJL
+<tt/RDYMSG/
+command is supported,
+then a short message will be put on the console.
+<sect2> remove_ctrl STRING
+<label id="remove_ctrl">
+<p>
+The
+<tt/remove_ctrl/ string option species a list of (control) characters
+that will be removed from PostScript jobs.
+This solves the problem of jobs with embedded Control-T or Control-C
+characters causing abnormal printer operation.
+For example:
+<tscreen>
+<verb>
+remove_ctrl=CT
+</verb>
+</tscreen>
+would cause Control-C and Control-T characters to be removed.
+<sect2> tbcp FLAG
+<label id="tbcp">
+<p>The
+<tt/tbcp/
+flag can be specified as a user option as well as a
+configuration file option.
+If the file type is PostScript and this flag is set,
+then the file is transferred using the Transparent Binary Communication
+Protocol.
+(See the Adobe PostScript Language Reference Manual for details on
+the protocol.)
+<p>
+At the start of the PostScript job,
+the sequence <tt/\001/ <tt/M/ is sent.
+Afterwards,  all control characters in the set
+<tt>
+0x01, 0x03, 0x04, 0x05,
+0x11, 0x13, 0x14, 0x1C,
+</tt>
+are replaced by the two character sequence <tt/\001/
+<tt/X+'@'/ or
+<tt/X+'\100'/ or
+is sent.
+For example:
+<tscreen>
+<verb>
+C\001\003   ->  \001\115\103\001\101\001\103 or \001MC\001A\001C
+</verb>
+</tscreen>
+<p>
+<sect1>Synchronization and Pagecounts
+<label id="syncpage">
+<label id="pagecount">
+<label id="pagecount_interval">
+<label id="pagecount_timeout">
+<label id="pagecount_ps_code">
+<label id="sync">
+<label id="sync_interval">
+<label id="sync_timeout">
+<p>
+Many printers are able to provide status information back to the
+filter.
+It is assumed that in these circumstances file descriptor 1
+(FD1)
+is
+<em/bidirectional/
+and status information can be read from it.
+When the
+<tt/status/
+option is TRUE,
+then the filter assumes that it can read FD1.
+In order to simplify configuration,
+the
+<tt/ifhp/
+filter will test FD1, and if it is not
+a serial port or a network socket, will set
+<tt/status@/
+or OFF.
+<p>
+Synchronization is usually done in order to ensure that a previously
+spooled job or printer action has completed correctly,
+and the printer is ready to accept a new job.
+It is usually carried out by sending a request to the printer to
+echo a string back to the filter.
+Clearly,
+if the printer cannot provide status or echo values back,
+then synchronization is impossible.
+<p>
+The value of the
+<tt/sync/ option determines if a PJL ECHO command or simple PostScript 
+program is used.
+The PostScript program has the form:
+<tscreen>
+\004%!PS-Adobe-2.0
+<newline>
+( %%&lsqb; echo: <em/TODSTR/ &rsqb;%% ) print () = flush
+<newline>
+\004
+</tscreen>
+<p>
+where <em/TODSTR/ is replaced with the current Time of Day.
+<p>
+To control obtaining synchronization,
+the
+and
+<tt/sync_timeout=nnn/
+options are used.
+The PJL or PS command is repeated at
+<tt/sync_interval=nnn/
+second intervals; if nnn is 0, then it is sent only once.
+If synchronization is not obtained within
+<tt/sync_timeout=nnn/
+seconds, then the filter exits with an error status.
+A 0 value or
+<tt/sync_timeout@/
+disables timeouts.
+<p>
+Pagecounts are used to do accounting and report the number of pages
+used for a job.
+Most printer have a hardware based pagecounter mechanism whose value
+can be read by the appropriate PJL command or PostScript program.
+For example, if the PJL INFO command
+<tscreen>
+<verb>
+@PJL INFO PAGECOUNT
+</verb>
+</tscreen>
+is supported by a printer,
+the printer will return a status message containing the current pagecounter
+value.
+Printers that support PostScript may also be able to access the pagecounter
+value using a PostScript program.
+The exact details of the PostScript program vary from vendor to vendor and
+the
+<tt/pagecount_ps_code=.../
+option specifies the PostScript program to use.
+For example:
+<tscreen>
+<verb>
+pagecount_ps_code=
+  /p &lcub;print&rcub; def ( %%&lsqb; pagecount: ) p
+  statusdict begin pagecount end 20 string cvs p
+  ( &rsqb;%% ) p () = flush
+</verb>
+</tscreen>
+<p>
+Pagecounting is supported by the
+<tt/pagecount=/<it/language/,
+<tt/pagecount_interval=nnn/,
+and
+<tt/pagecount_timeout=nnn/
+options.
+The
+<tt/pagecount=/<it/language/
+option enables pagecounting, and sets the language to be used.
+Currently
+<tt/ps/ (PostScript)
+and
+<tt/pjl/ (PJL)
+are supported.
+The pagecount request is repeated every
+<tt/pagecount_interval=nnn/
+second intervals; if nnn is 0, then it is sent only once.
+If no pagecount value is obtained within
+<tt/pagecount_timeout=nnn/
+seconds, then the filter exits with an error.
+A 0 value or
+<tt/sync_timeout@/
+disables timeouts.
+<p>
+Some printers do not correctly report end of job and must be polled
+until the pagecount information stabilizes.
+The PJL TEOJ (True End Of Job) PJL has been tried with limited success
+on various printers to force End of Job reporting only when the
+job has finished.
+<tscreen>
+<verb>
+pjl_init=&lsqb; ... teoj ... &rsqb;
+pjl_teoj=&commat;PJL TEOJ=ON
+</verb>
+</tscreen>
+<sect1>PJL Initialization
+<label id="pjlinit">
+<label id="endpage">
+<label id="startpage">
+<label id="pjl_only">
+<label id="pjl_except">
+<label id="pjl_vars_set">
+<label id="pjl_vars_except">
+<label id="pjl_user_opts">
+<label id="pjl_init">
+<p>
+If a printer supports PJL,
+the many printer operations can be initiated and controlled using
+PJL commands.
+Unfortunately,
+not all printers support the same set of commands.
+In addition,
+not all printers support the same set of operations or options.
+A PJL command has the form:
+<tscreen>
+@PJL COMMAND OPTION OPTION ...
+</tscreen>
+A PJL variable is set using:
+<tscreen>
+@PJL SET <it/var/ = <it/value/ ...
+</tscreen>
+The
+<tt/pjl_only=&lsqb; ... &rsqb;/,
+<tt/pjl_except=&lsqb; ... &rsqb;/,
+<tt/pjl_vars_set=&lsqb; ... &rsqb;/,
+and
+<tt/pjl_vars_except=&lsqb; ... &rsqb;/
+options are used to control which PJL commands and which PJL variables
+can be set.
+The 
+<tt/pjl_only/
+variable lists the commands supported by the printer,
+and the
+<tt/pjl_except/
+lists commands <em/not/
+supported by the printer.
+Before sending a PJL command,
+the
+<tt/ifhp/
+filter checks to make sure that the command name is in
+<tt/pjl_only/
+and not in
+<tt/pjl_except/.
+If the tests fail, then tne command is not sent.
+<p>
+Similarly,
+when sending a command to set a PJL variable,
+the
+<tt/pjl_vars_set/
+and
+<tt/pjl_vars_except/
+lists are checked to determine if the variable name is in
+<tt/pjl_vars_set/
+and not in
+<tt/pjl_except/
+list.
+If the tests fail, then tne command is not sent.
+<p>
+If PJL is enabled,
+then the following actions are taken.
+<enum>
+<item> PJL Universal Exit Language (UEL) <tt/\033%-12345X/ is sent to the printer.
+<p>
+This is required to ensure that the following PJL commands are
+accepted.
+<item> PJL JOB command is sent at the start of job.
+The JOB command can be used to select pages or impressions to be printed.
+If the
+<tt/-Zstartpage=nnn/
+or
+<tt/-Zendpage=mmm/
+option is present, then the PJL JOB command has the form:
+<tscreen>
+@PJL JOB START=nnn END=mmm
+</tscreen>
+<item> The
+<tt/pjl_init=&lsqb; ... &rsqb;/
+value option is expanded using the PJL
+(<tt/"pjl_"/) language context as described above.
+<item> The
+<tt/-Toption=value/s
+and
+<tt/-Zoption=value/s
+are scanned for matching option names in the 
+<tt/pjl_user_opts=&lsqb; ... &rsqb;/ 
+list.
+If they are found,
+then the options are recursively evaluated in the PJL language context.
+The expansion algorithm will cause the option value to be used to set PJL
+variables.
+For example:
+<tscreen>
+<verb>
+Configuration:
+  pjl_vars_set=&lsqb; OUTBIN AUTOSELECT JAM=YES &rsqb;
+
+Command
+  ifhp -Zoutbin=upper,autoselect,jam
+
+PJL command generated:
+  @PJL SET OUTBIN=UPPER
+  @PJL SET AUTOSELECT=ON
+  @PJL SET JAM=YES
+</verb>
+</tscreen>
+</enum>
+<sect1>File Conversion Support
+<label id="fileconversion">
+<label id="textfile">
+<label id="default_language">
+<p>
+The <tt/lpr -l/ or <tt/lp -b/ flags indicate that the spooled files
+are not to be processed by an output file.
+The LPRng spooler recognizes this option and passes the <tt/-c/
+command line option to suppress any language specific processing for files.
+<p>
+However,
+many PostScript printers cannot handle text files,
+and produce many hundreds of pages of garbage
+output if they are sent to the printer without being translated
+into PostScript,
+and some printers require language specific setup in order to print
+PCL, PostScript or text files correctly.
+<p>
+The <tt/ifhp/ filter has builtin tests for PJL,
+PCL, and PostScript files.
+These tests are almost identical to those used
+by many printers which do
+<em/autodetection/.
+If you need to recognize a wider range of file types,
+you can configure <tt/ifhp/ to use the
+UNIX <tt/file/(1) program.
+<p>
+Finally,
+some printers have a very specialized job format that requires
+conversion to by a
+<tt/rasterizer/
+program.
+This is handled as detailed in the following sections.
+<sect2>Using the File Utility
+<label id="file_util_path">
+<label id="forceconversion">
+<p>
+By default,
+the builtin tests are first used to determine the file type.
+These tests are very successful in determining if a file is
+PJL, PostScript,
+and PCL, and text
+with language types
+<tt/pjl/,
+<tt/ps/,
+<tt/pcl/,
+and
+<tt/text/ respectively.
+If it cannot determine the language type, it is set to the
+<tt/default_language/ value, usually <tt/text/.
+<p>
+If this simple method is not satisfactory or is too limited,
+then setting the
+<tt/forceconversion/
+option will cause <tt/ifhp/ to use the UNIX
+<ref id="fileutil" name="file utility">
+utility to determine the file and produce a text description on
+its <tt/STDOUT/.
+For example:
+<tscreen>
+<verb>
+## default
+default_language=text
+## force use of file program
+force_conversion
+##  file utility path
+file_util_path=/usr/bin/file -
+</verb>
+</tscreen>
+<p>
+The output of the file utility is converted to lower case and
+used as the language type for further processing.
+<sect2>Conversion
+<label id="file_output_match">
+<label id="text_converter">
+<label id="ps_converter">
+<label id="pcl_converter">
+<label id="pjl_converter">
+<label id="wrappers">
+<label id="language">
+<p>
+Once the language type has been determined,
+the <tt/ifhp/ filter then decides if a conversion program
+needs to be run and will convert the input file to a required file type.
+This activity is  controlled by the <tt/file_output_match/
+table.
+<tscreen>
+<verb>
+file_output_match = &lsqb;
+  *postscript*  ps  \%s&lcub;ps_converter&rcub;
+  *pcl*         pcl  \%s&lcub;pcl_converter&rcub;
+  *pjl*         pjl  \%s&lcub;pjl_converter&rcub;
+  *printer*job*language* pjl
+#  if your printer has PCL, use:
+  *text*  pcl  \%s&lcub;pcl_converter&rcub;
+#  if your printer does not have PCL, use:
+#  *text*  pcl  \%s&lcub;text_converter&rcub;
+  &rsqb;
+</verb>
+</tscreen>
+Each line of the
+<tt/file_output_match/
+table contains
+a (URL encoded) <it/glob/ pattern,
+the language type (<tt/ps/, <tt/pcl/, etc.) produced by the conversion program,
+and the (optional) conversion program.
+<p>
+The format:
+<tscreen>
+<verb>
+file_output_match = &lt;/pathname
+</verb>
+</tscreen>
+<p>
+will cause <tt/ifhp/ to open and read the specified file
+for the <tt/file_output_match/ table.
+The file's contents must have the same format as the
+<tt/file_output_match/ table but without the <tt/&lsqb;/ or <tt/&rsqb;/ delimiters.
+<p>
+The <tt/file_match_table/ is scanned from first to last entry
+for a <tt/glob/ pattern that
+matches the file type determined by the <tt/ifhp/ program or the output of the
+<tt/file_util_path/ program.
+If no match is found,
+then the language is set to the
+<tt/default_language/ value.
+<p>
+The output language of the conversion program is set to the second entry.
+The conversion program will be run with its STDIN set to the input file
+and its STDOUT used as the converted output.
+If there is no conversion program then the original file is used
+and only the language type is modified.
+The following shows how you can use the
+<tscreen>
+<verb>
+# device=epsonc
+# resolution=-r1440
+# gs=/usr/bin/gs
+# ps_converter= \%s&lcub;gs&rcub; -dBATCH -q -sDEVICE=\%s&lcub;device&rcub; \
+#   \%s&lcub;resolution&rcub; -sOutputFile=- -
+ps_converter=
+pcl_converter=
+pjl_converter=
+text_converter=/usr/bin/a2ps -q -B -1 -M Letter
+  --borders=no -o- \%s&lcub;ps_converter&rcub;
+text_converter_output=ps
+</verb>
+</tscreen>
+There are a few details that should be observed when using this facility.
+<enum>
+<item>
+If <tt/file_output_match@/ is specified
+then the <tt/file_output_match/ table will not be used.
+<item>
+The glob pattern is URL encoded in order to allow spaces and other items
+to be put into it.
+In the example above,
+the pattern <tt/'*%20gif%20*'/ is  used as <tt/'* gif *'/.
+<item>
+The conversion program must exit with a 0 error code.
+<item>
+If the conversion program contains a shell meta character such as
+<tt/|/,
+<tt/;/,
+<tt/&gt;/,
+<tt/&lt;/,
+etc,
+then it will be executed using
+<tt>/bin/sh -c 'command'</tt>.
+This allows a pipe of conversion commands to be constructed.
+This is discussed in detail below.
+<item>
+If the converted file type is
+<tt/unknown/ or not supported by the printer then the file is not printed. 
+<item>
+The most commonly used conversion programs are
+<ref id="ghostscript" name="GhostScript">,
+used to convert PostScript to a format compatible with a non-PostScript
+printer,
+and the <ref id="a2ps" name="a2ps">,
+<ref id="enscript" name="enscript">, and <ref id="textps" name="textps">
+Text to PostScript conversion programs which
+convert text into PostScript for a non-text supporting printer.
+The use of a <tt/wrapper/ program with these utilities is discussed below.
+<item>
+The entire list of -Z and -T options will be substituted for the word ZOPTS and TOPTS
+respectively.
+<item>
+The argument list to the filter will be substituted for the work ARGV.
+This allows access to the entire argument list passed to the <tt/ifhp/ filter.
+</enum>
+<p>
+The conversion program must exit with a 0 (success) error code.
+Unfortunately,
+the <tt/enscript/ program
+will exit with a non-zero error codes even for successful conversions.
+We need to use a
+<tt/wrapper/ script that will run them and then return the correct
+error code as shown below.
+<tscreen>
+<verb>
+#!/bin/sh
+# /usr.../wrapper path &lsqb;options&rsqb;
+# wrapper script for a2ps, enscript and others
+#   path is the path to the program and options are the
+#   options to pass.  The program is run and then the exit
+#   code is corrected
+"$@"
+status=$?
+case "$status" in
+	1 ) exit $status ;;
+esac
+exit 0
+</verb>
+</tscreen>
+<p>
+If the conversion program specification contains one or more of the
+shell meta-characters
+<tt/|/, <tt/</, or <tt/</, etc,
+then it will be invoked using the <tt>/bin/sh -c filterprogram</tt>.
+This allows users to specify some rather bizarre conversion
+programs and to chain together conversion programs.
+For example,
+You can print a <tt/gif/ file by first converging it <tt/ppm/ and then
+to PostScript:
+then to a 
+<tscreen>
+<verb>
+ # gif to ppm
+ *ppm*  ps  ppm2ps
+ *gif*  ps  gif2ppm | ppm2ps
+</verb>
+</tscreen>
+<p>
+<label id="rasterizer">
+A more important use of this feature is when there is a need to
+<em/rasterize/ a file by converting it from a standard format to
+a specialized printer raster format.
+You can set this up by using the following method.
+<tscreen>
+<verb>
+rasterizer= /usr/bin/gs -sDEVICE=epson -dBATCH \
+        -sOutputFile=- -sPAPERSIZE=letter -q -
+text_converter=/usr/bin/a2ps -q -B -1 -M Letter
+  --borders=no -o- 
+file_output_match = &lsqb;
+ *postscript*  ps  \%s&lcub;rasterizer&rcub;
+ *text*        ps  \%s&lcub;text_converter&rcub; | \%s&lcub;rasterizer&rcub;
+ *             unknown
+ &rsqb;
+</verb>
+</tscreen>
+<p>
+The <tt/rasterizer/ option in the configuration program
+is expanded to produce the necessary pipeline to do conversion.
+<sect2>LF to CR/LF Conversion
+<label id="crlf">
+<p>
+When processing <tt/text/ or <tt/pcl/ files,
+the <tt/crlf/ option will enable translation of
+LF (<tt/\n/) to CR/LF (<tt/\r\n/) sequences.
+If you are using <tt/ifhp/ to simply do LF to CR/LF translation,
+then you can use:
+<tscreen>
+<verb>
+ifhp -Tcrlf
+</verb>
+</tscreen>
+<sect2>Text Treated Like PCL
+<p>
+Text is simply PCL with no special formatting codes.
+However, you will still need to send the PCL initialization
+strings to the printer.
+You can do this by using the following entry in the
+<tt/file_output_match/ table:
+<tscreen>
+<verb>
+file_output_match = &lsqb;
+ *text*  pcl
+ &rsqb;
+</verb>
+</tscreen>
+<sect2>Default to Passthrough
+<p>
+Your printer may be capable of handling a wide variety of job
+formats.  If you want to simply pass through files of
+unknown type or language then use the following entry in the
+<tt/file_output_match/ table:
+<tscreen>
+<verb>
+file_output_match = &lsqb;
+ *  raw
+ &rsqb;
+</verb>
+</tscreen>
+<sect1>GhostScript and ifhp
+<label id="ghostscriptconfig">
+<p>
+Generating a raster image from a PostScript or PCL file in
+a timely manner requires a high speed processor and substantial amounts
+of memory.
+Many of the low cost printers require the user's system to do the raster
+conversion,
+and a raster file is then transferred to the printer.
+These files are usually in a proprietary format.
+<p>
+The <ref id="ghostscript" name="GhostScript">
+program can process PostScript files and produce raster output for a
+wide range of devices.
+See the GhostScript documentation for details.
+The <tt/ghostscript/ printer configuration is intended to be used
+with these printers.
+<tscreen>
+<verb>
+# PRINTER ghostscript - Printer with GhostScript conversion to raster files
+[ ghostscript gs ]
+pcl@
+pjl@
+ps
+text
+# device=epsonc
+# resolution=-r240x72
+ps_converter= [ /usr/bin/gs -dSAFER -dBATCH -q -sDEVICE=\%s&lcub;device&rcub;
+   \%s&lcub;resolution&rcub; -sOutputFile=- -
+ ]
+text_converter= [ /usr/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+  | \%s&lcub;ps_converter&rcub;
+ ]
+file_output_match = [
+# PostScript to Raster
+  *postscript*  raw  \%s&lcub;ps_converter&rcub;
+# text to PostScript to Raster conversion
+  *text*  raw  \%s&lcub;text_converter&rcub;
+  ]   
+</verb>
+</tscreen>
+<p>
+The <tt/\%s&lcub;device&rcub;/ and <tt/\%s&lcub;resolution&rcub;/ parameters can now be
+specified in the printcap.
+The following shows a typical printcap entry for use with this entry.
+<tscreen>
+#  force clients (lpr, lpq, to use server)<newline>
+lp:lp=lp@serverhost <newline>
+# server information  <newline>
+lp:server  <newline>
+&nbsp;&nbsp:sd=<it/spooldir/ <newline>
+&nbsp;&nbsp:lp=/dev/lpt0     <newline>
+&nbsp;&nbsp:...  <newline>
+&nbsp;&nbsp:ifhp=model=gs,device=epson,resolution=-r240x72 <newline>
+&nbsp;&nbsp#path to ifhp filter  <newline>
+&nbsp;&nbsp:if=/.../ifhp  <newline>
+</tscreen>
+<p>
+The <tt/ifhp/ configuration entry uses GhostScript to do the
+rasterization of the PostScript file,
+and the <tt/a2ps/ program to do a text to PostScript conversion.
+<sect1> Language Specific Initialization
+<label id="languageinit">
+<p>
+After determining the output file language type,
+language specific operations are then carried out by
+expanding the
+<it/language_/<tt/_init=&lsqb; ... &rsqb;/
+options in the language context,
+and then the options in the
+<tt/-Toption=value/
+and
+<tt/-Zoption=value/
+command line options.
+The 
+<tt/-T/
+options are expanded before the
+<tt/-Z/,
+allowing the 
+<tt/-Z/ actions to override any set by the
+<tt/-T/ actions.
+<p>
+As mentioned elsewhere,
+the reason for the language specific processing is to allow
+different actions for the same command line option,
+depending on the file type that is being processed.
+For example,  when processing a PCL file it might be necessary to send
+PCL command strings and when processing a PostScript file,
+you would need to send PostScript commands.
+<sect1>File Transfer and Error Status Monitoring
+<label id="filetransfer">
+<label id="logall">
+<label id="pjl_error_codes">
+<label id="pjl_quiet_codes">
+<p>
+If the printer can return status, i.e., the
+<tt/status/ option is on,
+the filter will read status information from the printer.
+<p>
+If the
+<tt>logall</tt>
+flag is SET,
+then all error messages will be written to the status or log file.
+<p>
+If the printer is returning PJL status information,
+then this has a specific format:
+<tscreen>
+<verb>
+@PJL UINFO DEVICE
+CODE=nnnn
+DISPLAY="value"
+...
+
+@PJL UINFO JOB
+START
+...
+
+@PJL UINFO JOB
+END
+...
+
+</verb>
+</tscreen>
+<p>
+The
+<tt/ifhp/ program will extract the
+<tt/CODE/
+and job start and end flags,
+and log these as appropriate.
+<p>
+Unfortunately,
+some PJL based printers are extremely verbose in their generation of status
+messages.
+In order to reduce the amount of logging of redundant information,
+<tt/ifhp/
+will only record when a device status has
+<bf/changed/,
+rather than when it has been reported.
+<p>
+The
+pjl_quiet_codes=&lsqb; code code code &rsqb;
+value is used to suppress reporting of selected error codes.
+If the error code is in the pjl_quiet_codes list,  then the error status
+will not be reported to the user unless the
+<tt/logall/
+option is set.
+For example:
+<tscreen>
+<verb>
+  pjl_quiet_codes=&lsqb; 10000 10001 10003 10023 10024 35078 &rsqb;
+</verb>
+</tscreen>
+<p>
+Also, there may be error codes which does not have a builtin error
+message available.  New messages can be added using the
+<tt/pjl_error_codes/
+option.
+Its value is a list of lines, each line consisting of an error code
+followed by the corresponding error message:
+<tscreen>
+<verb>
+pjl_error_codes=&lsqb;
+   code=msg
+   code=msg
+   ...
+&rsqb;
+
+Example:
+  pjl_error_codes=&lsqb;
+     10000=powersave mode
+     10001=Ready Online
+     10002=Ready Offline
+     10003=Warming Up
+     10004=Self Test
+     10005=Reset
+  &rsqb;
+</verb>
+</tscreen>
+<sect1>End of Job
+<label id="waitend">
+<label id="waitend_interval">
+<label id="waitend_ctrl_t_interval">
+<label id="end_ctrl_t">
+<p>
+The <tt/waitend/ option controls the job termination sequence.
+By default,
+this will do the same work as the
+<tt/sync/ operation,
+and the option takes the same set of values.
+<p>
+If <tt/waitend/
+is suppressed using <tt/waitend@/,
+then as soon as a job has been transferred,
+the next step,
+<tt/pagecount/,
+will be attempted.
+If the print job has not finished at this point,
+then erroneous page counts will be reported.
+<p>
+When using the <tt/appsocket/ protocol,
+then suppressing <tt/waitend/ will cause no error messages from the printer to
+be reported.
+<p>
+Some printers do not have a True End Of Job reporting capability
+using PJL.
+This means that the job will be reported as done,
+but paper is still moving through the print engine.
+If you try to get pagecounts at this point you will get the wrong value.
+An alternative method is to set
+<tt/waitend=ps/
+and
+The <tt/end_ctrl_t=word:word:.../
+This will cause a CONTROL-T to be sent to the printer,
+a PostScript convention that will cause the PostScript interpreter to return
+the actual printing status.
+In most printers this will be
+<tt/printing/ or something other
+than
+<tt/idle/ or <tt/busy/
+as long as paper is moving in the print engine.
+When status is returned,
+the words in the
+<tt/end_ctrl_t=word:word:.../
+list value are examined for a match.
+If the status word is present then the end of job condition is assumed.
+<p>
+The <tt/waitend_interval/
+value controls how often the waitend operation is repeated.
+This is usually set to a fairly large value,
+as it is normally used only to recover from printer failures
+such as users turning the printer on and off.
+<p>
+The <tt/waitend_ctrl_t_interval/
+controls how often the printer is queried for status using CTRL-T
+and is usually set to a short (2 or 3 second) value.
+<p>
+<sect1>Tektronix Phaser, QMS and AppSocket Support
+<label id="appsocket">
+<p>
+The <tt/appsocket/ flag is used to specify that data transfer will
+be done using the
+<ref id="appsocketpc" name="AppSocket">
+protocol.
+The <tt/ifhp/ filter will open a connection to the ip address and
+port specified by the <tt/dev=host%port/ option
+and carry out the various operations that it needs to do.
+<p>
+Rather than closing a connection,
+<tt/ifhp/ will <tt/half-close/ it,
+that is the <tt/shutdown()/ system call is used to
+to close the connection for transmission but leave it open for receiving.
+The printer will send status information until the job is completed,
+and then close the connection.
+<p>
+If page count information is needed,
+the <tt/ifhp/ filter will then reopen the connection and get the page count information.
+<sect> Banners and OF Mode Operation
+<p>
+One of the more difficult administrative issues is whether to print
+banners (job separators) or to save the large amount of wasted
+paper, time and effort.
+The LPRng and
+<tt/ifhp/
+combination provide a rather esoteric set of methods to generate banners,
+at least one of which should be suitable for your application.
+<p>
+You should be aware that some printers have the obnoxious habit of
+generating their own banner pages when jobs are transferred via
+the RFC1179 protocol.
+You should consult the manufacturers documentation and take the
+necessary steps to turn printer banner page generation off.
+It may turn out that this is impossible to do,
+and in that case the only option is to use the Socket or Appsocket
+connection methods.
+<p>
+By the original BSD print spooler,
+the <tt/:of/ print filter was responsible for
+banner generation.
+The print server would send it a
+<it>magic string</it> that the filter would recognize
+as a <it/print a banner/ request,
+and it would then generate a banner.
+After this,
+another special <tt/magic cookie/ string,
+the character sequence <tt>0x19,0x01</tt>,
+was sent to cause the <tt/:of/ filter to suspend itself.
+This allowed the print spooler to hold the connection to the printer
+open while it started another filter to transfer a file.
+Finally,
+after all the jobs were sent the <tt/:of/ filter was
+sent a <tt/SIGCONT/ signal to wake up and perform whatever
+closing operations were necessary.
+<p>
+This mixing of functionality causes horrible problems when
+special setup strings must be sent to printers in order to
+configure them for various operation.
+In order to avoid these problems,
+the banner printing and filter functions have been separated in
+the <tt/ifhp/ filter.
+If a banner is needed,
+then <tt/LPRng/ will use a special banner generating program
+to generate the banner.
+The output of this program is then sent to the
+<tt/:of/ filter, or directly to the printer if there is no
+<tt/:of/ filter.
+<sect1>No Banner
+<p>
+Here is a typical printcap entry when banner printing
+is not wanted:
+<tscreen>
+<verb>
+lp:
+  :sh
+  :if=/.../ifhp
+</verb>
+</tscreen>
+<p>
+The <tt/:sh/ (suppress headers or banners) explicitly disables
+banner printing,
+and the <tt/lpd/ server will not even attempt to print a banner.
+<sect1>Banner Printing and No OF Filter
+<p>
+This printcap entry specifies a banner generator program and
+and banner generation.
+There is no <tt/:of/ filter specified, so the banner is sent
+directly to the printer.
+In such a case the banner printing program should make sure that
+it generates output with the appropriate set of initialization
+strings.
+The <tt/pclbanner/,
+<tt/psbanner/,
+and
+<tt/lpbanner/
+programs produce PCL,
+PostScript,
+and text banners suitable for a wide range of printers.
+The code for these banner generators is part of the LPRng distribution.
+<tscreen>
+<verb>
+lp:
+  :bp=/.../pclbanner
+   # or
+  :bp=/.../psbanner
+   # or
+  :bp=/.../lpbanner
+  :if=/.../ifhp
+</verb>
+</tscreen>
+<sect1>Banner Printing With OF Filter
+<p>
+Finally,
+we may want banner printing together with the <tt/:of/ filter.
+This is usually the case when we need to perform special printer
+setups or require the <tt/ifhp/ filter to do accounting.
+In this case we need to make sure that the banner page is counted
+as part of the job:
+<tscreen>
+<verb>
+lp:
+  :bp=/.../pclbanner
+   # or
+  :bp=/.../psbanner
+   # or
+  :bp=/.../lpbanner
+  :of=/.../ifhp
+  :if=/.../ifhp
+</verb>
+</tscreen>
+<p>
+When invoked as an <tt/:of/ filter, the <tt/lpd/
+server passes a <tt/-Fo/ option on the command line,
+so that the <tt/ifhp/ filter knows what mode it is operating in.
+<sect1>LPRng Options Controlling Banner Printing
+<p>
+There are several other options available to control banner printing.
+If the user has specifically requested that one
+<it/not/
+be generated using the <tt/lpr -h/ (no header or banner) option,
+then the LPRng <tt/lpd/ printcap option <it/force_banner/
+overrides the user option.
+In addition,
+the <tt/bs/ (banner at start)
+and
+the <tt/be/ (banner at end)
+can be used to control where the banner is placed.
+<sect> Accounting
+<p>
+In many Academic institutions avoiding printing accounting has been
+regarded as a challenge,  an ongoing game of fat cat and poor starving
+mouse, between the Administration and the downtrodden, poor, over-charged
+student.  The following is a lighthearted ramble down the dark lane of
+printing accounting.
+<p>
+We will disregard the fact that if most students put as much effort
+into their studies as in finding ways to avoid accounting procedures
+then they would be Rhodes Scholar material,  but I digress...
+<sect1>Page Accounting Algorithm
+<p>
+The accounting procedures put into the LPRng and the ifhp filters may
+appear to be extraordinarily complex,  but believe me, they are not.
+Firstly, we make the assumption that the printer has some sort of
+non-volatile page counter mechanism that is reliable and impervious to
+power on/off cycles.  Without this mechanism the enterprising student
+ummm... user will simply turn off the printer.  Software that prescans
+jobs for line counts and pages is notoriously unreliable,  given even
+the most modest efforts of users to hide these procedures.   The cost
+of running a PostScript simulator simply to do accounting has its
+flaws; without ensuring that the simulator has all of the interesting
+security loopholes closed, such as opening files, etc.,  it can become
+a trap door to hell for the system administrator.
+<p>
+Secondly,  we must make the assumption that the student... uhhh...
+user will not be able to tinker with the page counter mechanism, i.e.-
+they will not be able to roll back the odometer on the printer,
+<it/for the duration of a single job/.
+I will digress and point out that a student
+actually did this for a challenge;  it only took him a couple of weeks
+of study and a fully equipped microcontroller lab, and two (2) laser
+printers which he ruined in the experiment.
+HP was not amused when we
+sent them back under warranty,  claiming that this our 'normal lab usage.'
+<p>
+Lastly,  you should not mind a small amount of pilferage, or a few
+pages here and there being charged to the wrong account.
+<p>
+The basic mechanism the ifhp filter uses is to record the page
+counter value at the start and end of each part of a print job. Each
+record has the form:
+<tscreen>
+<verb>
+start -qpagecounter ....
+end  -ppages -qpagecounter -telapasedtime ....
+</verb>
+</tscreen>
+<p>
+When we use the OF filter and/or banners,  we will see the
+individual jobs bracketed by the OF filter records:
+<tscreen>
+<verb>
+start -q100 -Fo -kcfA100taco -uuser -hhost -R...  
+start -q101 -Ff -kcfA100taco -uuser -hhost -R...  
+end  -p1 -q102 -Ff -kcfA100taco -uuser -hhost -R...  
+start -q102 -Ff -kcfA100taco -uuser -hhost -R...
+end  -p3 -q105 -Ff -kcfA100taco -uuser -hhost -R...  
+end  -p5 -q105 -Fo -kcfA100taco -uuser -hhost -R...
+</verb>
+</tscreen>
+<p>
+It should be clear from the above that all we need to do is to add up
+the values for the -Fo (OF) filter lines and we are done.
+<p>
+Unfortunately,  this is too simplistic.  If for some reason the job is
+killed or terminates due to error conditions,  the OF filter may not
+get to finish its work.  Thus,  we may see the following:
+<tscreen>
+<verb>
+start -q100 -Fo -kcfA100taco -uuser -hhost -R...  
+start -q101 -Ff -kcfA100taco -uuser -hhost -R...  
+start -q110 -Fo -kcfA101taco -uuser -hhost -R...
+</verb>
+</tscreen>
+<p>
+This is a clear indication that the user's job has been terminated.  In
+this case we need to use the differences between pagecounters of the start
+records to do accounting.
+<p>
+There is a caveat to all of this;  that is the problem of the last dead
+job in the list.  If the last line in the accounting file is:
+<tscreen>
+<verb>
+start -q110 -Fo -kcfA101taco -uuser -hhost -R...
+</verb>
+</tscreen>
+is the last job finished or did it abort?
+<sect1> You Used 2000 Pages, Out of Quota
+<p>
+Now we move on to the problem of real time accounting.  Due to limited
+budgets, etc., many institutions would like to strictly enforce limits
+on paper use by students. As jobs are printed their accounts should be
+docked for the amount of paper use.  One way to do this is to have an
+external accounting procedure update a shared database.  The
+ifhp
+filter
+has provision for a shell script to be invoked
+at the start and end of print job;
+this is done by both the OF and IF filter.  Thus, we can blithely
+assume that there is a central database carefully getting updates
+from the LPRng software, probably from dozens of different printers,
+and updating the accounting information,
+and that this program can query the database,
+check limits,
+and terminate printing if the limits are exceeded.
+<p>
+The first question to be asked is simple:  is this worth it?
+Perhaps doing accounting as a batch job once an hour/four times
+a day/once a day is cheaper than building an running such a database.
+If it costs $5K/year for the database software, you might just consider
+ignoring the 10,000 pages that get lost in the shuffle and use
+a simple set of awk/sed/perl scripts to update a database once
+an hour.
+<sect1> Bad Jobs - Who Do We Bill?
+<p>
+We inevitably run into an interesting question:
+  what happens if a job does not complete correctly?
+<p>
+If you use the completion of the OF filter as a success status, I have
+to point out that many students... ummm... users soon find ways to send
+jobs to the printer that will cause it to lock up after their output
+has been printed. These jobs require power cycling of the printer and
+restarting the filter; a bit extreme, perhaps, but it has happened.
+<p>
+I suggest that you simply adopt a 'bill to last user of record'
+attitude,  using the pagecount information as follows:
+<tscreen>
+<verb>
+start OF -- starting point for THIS job
+start IF --  nice information, but not useful
+start IF --
+end OF -- ending point for this job - can record information
+
+start OF --
+if no end OF for previous job,  then treat as end OF and
+	  update accounting.
+</verb>
+</tscreen>
+<p>
+Now somebody is sure to complain that they got charged for a bunch of
+pages that they did not use.  This is inevitable;  always carry a
+can of oil for the squeaky wheels.  I might make the observation that
+once is accident, twice is coincidence, but three times is malice;
+be wary of the constant complainer and check out not only him but
+also his co-workers.
+<sect1> How Do We Update The Database
+<p>
+I suggest that database update be done as follows:
+maintain a 'last page reported' record for each printer in the
+database.
+
+When a successful job reports in,  check to see that the recorded pagecount
+for the printer is in agreement with the one that is reported.
+
+If this is not the case then you have had some unsuccessful jobs.
+In this case I strongly recommend that you have a means to request the
+accounting reporting program to go back through the accounting file and
+find the last report for the page counter value and try to backtrack
+through the accounting files.  The accounting file is one of the first
+things to be attacked by students... Ummm...  users.  It should NOT be
+kept on and NFS exported or mounted file system.  It should be
+carefully pruned and copied, perhaps on an hourly basis.
+
+Now some administrators have fallen in love with network based printers;
+do not believe ANYTHING that comes over a network connection without
+some form of authentication;  PGP has some very nice Public Key
+mechanisms for handling this.  This is a major weakness in using a
+database for keeping track of accounting - a weak authentication
+mechanism may lead to denial of service attacks by students flooding
+the database with bogus print usage reports;  suddenly NOBODY can print
+and the administrator is driven to turning off accounting.
+
+Good luck.  I am never surprised when I encounter yet another wrinkle in
+this area.
+<sect1> Accounting Shell Script
+<p>
+The 
+<tscreen>
+<verb>
+accounting=/pathname
+</verb>
+</tscreen>
+specifies a program to run
+at the start and end of the
+<tt/ifhp/ activity.
+For an example of a simple script,
+see the accounting.sh script in the distribution.
+<sect1> Pagecounter Values
+<p>
+The only reliable way to do page counting in the face of
+PostScript,
+PCL,
+and other mystical printer job languages is to query the printer
+and get the current value of a hardware page counter.
+Unfortunately,
+this may not be a trivial matter.
+<enum>
+<item>
+The page counter may not be updated in real time.
+This means that you may need to wait a couple of seconds until you are
+sure that the pages have been recorded.
+Usually this occurs when the pages leave the print engine
+and are put in the output tray.
+<item>
+Printers do job batching,
+and when they report job completion the job is still being printed.
+<item>
+Some printers report
+<it/impressions/,
+i.e.- sides of pages printed,
+rather than pages.
+If you are doing duplex printing then you may find that your
+paper count and your page (impression) count differ.
+<item>
+Some printers simply lack page reporting.
+</enum>
+<p>
+Given these problems,
+it is more than reasonable to reconsider the need for accounting,
+or to work closely with the printer vendor to understand the
+interactions of print jobs and reporting of page counts.
+<sect> Font Download Support
+<p>
+For historical reasons,
+there is support for downloading a font or other file to the
+printer.
+A large amount of the necessary operations are now in the
+<tt/ifhp.conf/
+file.
+<p>
+The
+<tt/font_download/
+built-in option supports downloading as described below.
+<sect1> PCL Font Downloading
+<p>
+The following shows the a typical
+<tt/ifhp.conf/
+file which has PCL font downloading enabled.
+<tscreen>
+<verb>
+#
+# Fonts and Font Downloading
+#  fontid is used to set the current font
+pcl_init=&lsqb; ... font ... &rsqb;
+
+# combination command
+pcl_font=&lsqb; delete_fonts font_id font_download font_primary &rsqb;
+
+# font control
+#
+font_op=0
+pcl_font_op=\033*c\%&lcub;font_op&rcub;F
+pcl_delete_fonts=\033*c0F
+
+font_id=1
+pcl_font_id=\033*c\%&lcub;font_id&rcub;D
+
+# set primary font
+font_primary=1
+pcl_font_primary=\033(\%&lcub;font_primary&rcub;X
+
+# font directory
+pcl_fontdir=/usr/local/lib/fonts
+
+#default font file
+font=c1201b.10
+
+</verb>
+</tscreen>
+<p>
+To allow users to download a font and have it set up for PCL use,
+the 
+<tt/pcl_init/
+option should include the
+<tt/font/
+option in an appropriate position in the initialization sequence.
+As shown above,
+this will get expanded into the
+<tt/pcl_delete_fonts/,
+<tt/pcl_font_id/,
+<tt/pcl_font_download/ (which is has built-in support),
+and the
+<tt/pcl_font_primary/
+options,
+which are expanded in order.
+<p>
+The
+<tt/pcl_font_download/ is supported by the builtin operation which will
+find the
+<tt/pcl_fontdir/
+directory value
+and a value for the
+<tt/font/
+variable,
+using values from the
+<tt/-Z/
+and
+<tt/-T/
+and configuration information in that order.
+If no
+<tt/font/
+value is found,
+no font will be downloaded.
+For example:
+<tscreen>
+<verb>
+lpr -Tfont=font1,font2
+</verb>
+</tscreen>
+<p>
+When the
+<tt/pcl_font_download/
+option is expanded,
+it will generate the pathnames
+<tt>/usr/local/lib/fonts/font1</tt>
+and
+<tt>/usr/local/lib/fonts/font2</tt>,
+open these files,
+and send their contents directly to the printer.
+<sect1> PS Font Downloading
+<p>
+PostScript font downloading is supported in a similar manner to
+PCL font downloading.
+<tscreen>
+<verb>
+#
+# Fonts and Font Downloading
+# 
+ps_init=&lsqb; ... font ... &rsqb;
+
+# combination command
+pcl_font=&lsqb; font_download &rsqb;
+
+# font directory
+ps_fontdir=/usr/local/lib/fonts
+
+#default font file
+font=font.ps.10
+</verb>
+</tscreen>
+<p>
+In a similar manner to the PCL font downloading,
+when the
+<tt/ps_init/
+list is expanded,
+the
+<tt/ps_font/
+entry will be expanded in turn.
+If the <tt/-Zfont=ZapDingbat.ps/ is specified,
+then the
+<tt>/usr/local/lib/fonts/ZapDingbat.sp</tt>
+file will be opened and downloaded to the printer.
+<sect1> PJL File Downloading
+<p>
+In a similar manner to the above font downloading,
+you can specify a configuration or other setup file that should be
+sent to the printer as part of the PJL setups.
+The following configuration shows how to set this up.
+<tscreen>
+<verb>
+#
+# PJL Initialization File Downloading
+#  fontid is used to set the current font
+pjl_init=&lsqb; ... setup  ... &rsqb;
+
+setup=initval
+font=\%s&lcub;setup&rcub;
+# setup directory
+pjl_fontdir=/usr/local/lib/fonts
+pjl_setup=&lsqb; font_download &rsqb;
+</verb>
+</tscreen>
+<p>
+The above configuration will cause the value of the
+<tt/setup/
+<tt/-Z/,
+<tt/-T/
+or configuration option to be used.
+<sect> Debugging and Problem Solving
+<p>
+If you are reading this section,
+then most likely you have had a problem using <tt/ifhp/ with LPRng.
+Before going any further,
+please read 
+<ref id="rfc1179pc"
+name="RFC1179 (BSD or TCP/IP) Job Transfer Printcap Entry">,
+and make sure that your printcap entry has the
+<tt/lpd_bounce/ flag set.
+This is the <it/Most Frequently Asked Question/ and the
+<it/Most Frequently Provided Answer/ on the LPRng mailing list.
+<p>
+The following section outlines a method to debug problems with the
+<tt/ifhp/ filter.
+It will make use of some <tt/diagnostic/ options that are normally
+not used in a printcap entry.
+First,
+let us start with a typical printcap entry and a problem.
+<tscreen>
+<verb>
+lw4:
+  :lp=10.0.0.14%9100
+  :sd=/var/spool/lpd/%P
+  :ifhp=/usr/local/lib/filters/ifhp
+
+Command:
+  lpr -Plw4 -V /etc/motd
+
+LPR output:
+
+sending job 'papowell@h4+223' to lw4@localhost
+connecting to 'localhost', attempt 1
+connected to 'localhost'
+requesting printer lw4@localhost
+sending control file 'cfA223h4.private' to lw4@localhost
+completed sending 'cfA223h4.private' to lw4@localhost
+sending data file 'dfA223h4.private' to lw4@localhost
+completed sending 'dfA223h4.private' to lw4@localhost
+done job 'papowell@h4+223' transfer to lw4@localhost
+Version LPRng-3.6.14
+</verb>
+</tscreen>
+<p>When trying to print to the print queue,
+the user discovers that no output comes out of the printer.
+The immediate suspicion is that the filter is not working.
+You should make sure that the <tt/lpr/ command is actually sending
+the job to the print queue.
+You can then use <tt/lpq/ to discover what happened:
+<tscreen>
+<verb>
+# lpq -llll
+Printer: lw4@h4  'Hp : Laserwriter'
+ Queue: no printable jobs in queue
+ Status: subserver pid 27251 starting at 15:34:09.350
+ Status: accounting at start at 15:34:09.357
+ Status: opening device 'h14.private%9100' at 15:34:09.366
+ Status: printing job 'root@h4+223' at 15:34:09.375
+ Status: printing data file 'dfA223h4.private', size 3, IF filter 'ifhp' at 15:34:09.376
+ Status: IF filter finished at 15:34:35.012
+ Status: printing done 'root@h4+223' at 15:34:35.012
+ Status: accounting at end at 15:34:35.014
+ Status: finished 'root@h4+223', status 'JSUCC' at 15:34:35.014
+ Status: subserver pid 27251 exit status 'JSUCC' at 15:34:35.018
+ Status: lw4@h4.private: job 'root@h4+223' printed at 15:34:35.020
+ Status: job 'root@h4+223' removed at 15:34:35.101
+ Filter_status: accounting at start, pagecount 89696, pages 0 at 15:34:13.304
+ Filter_status: sending job file at 15:34:13.306
+ Filter_status: starting transfer at 15:34:13.306
+ Filter_status: initial job type 'text' at 15:34:13.306
+ Filter_status: job type 'pcl' at 15:34:13.306
+ Filter_status: transferring 3 bytes at 15:34:13.308
+ Filter_status: 100 percent done at 15:34:13.308
+ Filter_status: finished writing file, cleaning up at 15:34:13.308
+ Filter_status: sent job file at 15:34:13.308
+ Filter_status: doing cleanup at 15:34:13.308
+ Filter_status: getting end using 'pjl job/eoj' at 15:34:13.309
+ Filter_status: end of job detected at 15:34:33.219
+ Filter_status: getting pagecount using 'pjl info pagecount' at 15:34:33.219
+ Filter_status: final pagecount 89697 at 15:34:35.009
+ Filter_status: accounting at end, pagecount 89697, pages 1 at 15:34:35.010
+ Filter_status: done at 15:34:35.010
+</verb>
+</tscreen>
+<p>
+As you can see from the <tt/lpq/ output,
+the <tt/Status/ section shows what <tt/lpd/ is doing,
+and the <tt/Filter_status/ section shows what <tt/ifhp/
+is doing.
+This is the first line of defence - make sure that the information
+and errors reported here are for the correct filter.
+<p>
+If this does not help,
+then we will start with the basic filter tests and work our way
+<it/back/ to the print server.
+First,  you will need a couple of test files.
+If you have a PostScript printer,
+find a simple PostScript file - the <tt/ellipse.ps/
+file is included in the <tt/ifhp/ distribution in the
+<tt/testscripts/ directory.
+You will also need a short text file - <tt>/etc/motd</tt>
+is usually handy to use.
+<p>
+Create the <tt>/tmp/send</tt> file with the following contents:
+<tscreen>
+<verb>
+#!/bin/sh
+cp /dev/null /tmp/t
+/usr/local/libexec/filters/ifhp -Tdev=/tmp/t,trace,debug=1 &lt;/etc/motd 2&gt;/tmp/trace
+</verb>
+</tscreen>
+<p>
+This will create the <tt>/tmp/t</tt> file,
+run the <tt/ifhp/ filter,
+and put the trace and debugging information into the <tt>/tmp/trace</tt>
+file.
+Run this command using:
+<tscreen>
+<verb>
+#!/bin/sh
+sh -x /tmp/send
+</verb>
+</tscreen>
+<p>
+Examine the output in <tt>/tmp/trace</tt>.
+It will look like:
+<tscreen>
+<verb>
+ifhp 15:46:14.402 &lsqb;27307&rsqb; main: Debug '1'
+ifhp 15:46:14.403 &lsqb;27307&rsqb; main: dump <NULL>
+ifhp 15:46:14.403 &lsqb;27307&rsqb; main: Model_id '<NULL>'
+ifhp 15:46:14.440 &lsqb;27307&rsqb; main: scanning Raw for default, then model '<NULL>'
+ifhp 15:46:14.441 &lsqb;27307&rsqb; Select_model_info: id 'default', list->count 1940, model->count 0, init 0
+ifhp 15:46:14.448 &lsqb;27307&rsqb; Dump_line_list: main: Model information - count 156, max 204, list 0x806e000
+ifhp 15:46:14.448 &lsqb;27307&rsqb;   &lsqb; 0&rsqb;='T=dev=/tmp/g,trace,debug=1'
+ifhp 15:46:14.448 &lsqb;27307&rsqb;   &lsqb; 1&rsqb;='banner@'
+ifhp 15:46:14.448 &lsqb;27307&rsqb;   &lsqb; 2&rsqb;='banner_file=/usr/local/libexec/filters/psbanner.ps'
+ifhp 15:46:14.448 &lsqb;27307&rsqb;   &lsqb; 3&rsqb;='converter='
+ifhp 15:46:14.448 &lsqb;27307&rsqb;   &lsqb; 4&rsqb;='debug=1'
+ifhp 15:46:14.449 &lsqb;27307&rsqb;   &lsqb; 5&rsqb;='default_language=text'
+ifhp 15:46:14.449 &lsqb;27307&rsqb;   &lsqb; 6&rsqb;='dev=/tmp/g'
+ifhp 15:46:14.449 &lsqb;27307&rsqb;   &lsqb; 7&rsqb;='duplex_select=1'
+</verb>
+</tscreen>
+<p>
+Most of the information with debug level 1 is simply showing the details of
+options,
+command execution, and error status.
+This will,
+however,
+help with the majority of problems.
+<p>
+You can now modify the <tt>/tmp/send</tt> file to better reflect your
+printer.
+<tscreen>
+<verb>
+#!/bin/sh
+cp /dev/null /tmp/t
+# substitute your ifhp options here
+ifhp=model=hp4,status@
+/usr/local/libexec/filters/ifhp -Tdev=/tmp/t,trace,debug=1,$&lcub;ifhp&rcub; &lt;/etc/motd 2&gt;/tmp/trace
+</verb>
+</tscreen>
+Now run this again and examine the trace and output in <tt>/tmp/t</tt>.
+If this looks correct,
+we move on to the interactive tests.
+<p>
+If your printer is a network based printer and you are using RFC1179 transfers,
+then you can use the following <tt/lpr/ command to
+send the <tt>/tmp/t</tt> file
+directly to the printer:
+<tscreen>
+<verb>
+  lpr -Ppr@host /tmp/t
+Example: 
+  print queue 'raw'
+
+  lpr -Praw@10.1.1.1 /tmp/t
+
+</verb>
+</tscreen>
+<p> This form of the command causes <tt/lpr/ to send the job directly
+to the printer.
+If this works correctly then we know that there is no problem with <tt/ifhp/
+formatting the file,
+and that the problem must be with the <tt/lpd/ print spooler.
+<p>
+If your printer is network based and uses a socket connection,
+then you can have <tt/ifhp/ connect to the printer by using the <tt>dev=host%port</tt>
+connection option.
+This is only used for testing or when you want to use the AppSocket protocol.
+<tscreen>
+<verb>
+#!/bin/sh
+# substitute your ifhp options here
+#  this should always work
+#ifhp=model=hp4,status@
+#  this does status checking, no pagecount
+#ifhp=model=hp4,pagecount@
+#  this does status checking and pagecount
+#ifhp=model=hp4
+/usr/local/libexec/filters/ifhp -Tdev=10.1.1.1%9100,trace,debug=1,$&lcub;ifhp&rcub; &lt;/etc/motd 2&gt;/tmp/trace
+</verb>
+</tscreen>
+<p>
+If you have a windowing system, run this command from one window and
+in another window use the <tt>tail -f /tmp/trace</tt> command to view status.
+Most of the time you will discover that the system is failing to print
+because either the
+<tt/sync/,
+<tt/pagecount/,
+or
+<tt/waitidle/
+step of the printing process is not completing correctly.
+If there is insufficient detail for you to decide  the failure mechanism,
+set <tt/debug=3/, or even <tt/debug=4/ and explore what is happening.
+<p>
+If you have a parallel port connected printer on <tt>/dev/lptxx</tt>,
+then you can simply use <tt>cat /tmp/t /dev/lptxx</tt> and see what happens.
+If this works, then use:
+<tscreen>
+<verb>
+#!/bin/sh
+# substitute your ifhp options here
+ifhp=model=hp4,status@
+/usr/local/libexec/filters/ifhp -Tdev=/dev/lptxxx,trace,debug=1,$&lcub;ifhp&rcub; &lt;/etc/motd 2&gt;/tmp/trace
+</verb>
+</tscreen>
+<p>
+If you have a serial port printer,
+then you can use a similar method for setting up a connection.
+You will need to use the undocumented <tt/stty/ option to set the speed and
+other parameters.
+These are identical to those used by LPRng, so you should have no problems.
+<tscreen>
+<verb>
+#!/bin/sh
+# substitute your ifhp options here
+#  this should always work
+#ifhp=model=hp4,status@
+#  this does status checking, no pagecount
+#ifhp=model=hp4,pagecount@
+#  this does status checking and pagecount
+#ifhp="model=hp4,stty= 9600 -parity crtscts raw"
+stty="9600 -parity crtscts raw"
+/usr/local/libexec/filters/ifhp -Tdev=/dev/tty00,trace,debug=1,$&lcub;ifhp&rcub;,stty=\"$&lcub;stty&rcub;\" &lt;/etc/motd 2&gt;/tmp/trace
+</verb>
+</tscreen>
+<p>
+If all this does not help,
+then subscribe to the <tt/LPRng/ mailing list and ask for help.
+<p>
+<sect> HP JetDirect Card Support
+<p>
+The  HPJetDirect  card or external
+JetDirect box can  be configured through the printer front
+panel  or through a set of network files.  Here is a summary
+of  the  methods  used  from  UNIX  systems, or when you are
+desperate, to configure the printer.
+<sect1>TCP/IP Network Address
+<p>
+You can set the network address from the front panel.
+Reset  the printer; use the MENU, +-, SELECT keys as follows:
+<tscreen>
+<verb>
+ MENU  -> MIO MENU (use MENU to display MIO MENU)
+ ITEM  -> CFG NETWORK=NO*
+ +     -> CFG NETWORK=YES
+ ENTER -> CFG NETWORK=YES*
+ ITEM  -> TCP/IP=OFF* (use ITEM to display TCP/IP)
+ +     -> TCP/IP=ON
+ ENTER -> TCP/IP=ON*
+ ITEM  -> CFG TCP/IP=NO* (use ITEM to display TCP/IP)
+ +     -> CFG TCP/IP=YES
+ ENTER -> CFG TCP/IP=YES*
+ ITEM  -> BOOTP=NO*
+	 (Enable BOOTP if you want to - see below)
+ ITEM  -> IP BYTE 1=0*
+	 This is IP address MSB byte.
+	 Use +- keys to change value, and then ENTER to change
+	 Use ITEM keys to get IP BYTE=2,3,4
+ ITEM  -> SM BYTE 1=255*
+	  This is the subnet mask value
+	 Use +- keys to change value, and then ENTER to change
+	 Use ITEM keys to get IP BYTE=2,3,4
+ ITEM  -> LG BYTE 1=255*
+	 This is the Syslog server (LoGger) IP address
+	 Use +- keys to change value, and then ENTER to change
+	 Use ITEM keys to get IP BYTE=2,3,4
+ ITEM  -> GW BYTE 1=255*
+	 This is the subnet gateway (router) IP address
+	 Use +- keys to change value, and then ENTER to change
+	 Use ITEM keys to get IP BYTE=2,3,4
+ ITEM  -> TIMEOUT=90
+	  This is the connection timeout value.  It puts a limit
+	 on time between connections.  A value of 10 is reasonable.
+</verb>
+</tscreen>
+<sect1> BOOTP Information
+<p>
+If  you have a bootp server, you can put this information
+in  the  bootptab  file.   To  use this, you must enable the
+bootp  option  on  the printer.  The T144 option specifies a
+file to be read from the bootp server.  This file is read by
+using  the  TFTP  protocol, and you must have a TFTPD server
+enabled.  Here is a sample bootptab entry.
+<tscreen>
+<verb>
+# Example /etc/bootptab: database for bootp server (/etc/bootpd).
+# Blank lines and lines beginning with '#' are ignored.
+#
+# Legend:
+#
+#       first field -- hostname
+#                       (may be full domain name)
+#
+#       hd -- home directory
+#       bf -- bootfile
+#       cs -- cookie servers
+#       ds -- domain name servers
+#       gw -- gateways
+#       ha -- hardware address
+#       ht -- hardware type
+#       im -- impress servers
+#       ip -- host IP address
+#       lg -- log servers
+#       lp -- LPR servers
+#       ns -- IEN-116 name servers
+#       rl -- resource location protocol servers
+#       sm -- subnet mask
+#       tc -- template host (points to similar host entry)
+#       to -- time offset (seconds)
+#       ts -- time servers
+#
+# Be careful about including backslashes where they're needed.  Weird (bad)
+# things can happen when a backslash is omitted where one is intended.
+#
+peripheral1:
+:hn:ht=ether:vm=rfc1048:
+:ha=08000903212F:
+:ip=190.40.101.22:
+:sm=255.255.255.0:
+:gw=190.40.101.1:
+:lg=190.40.101.3:
+:T144="hpnp/peripheral1.cfg":
+</verb>
+</tscreen>
+<p>
+If  you  are  using the T144 option, you will need to create
+the  configuration file.  The sample configuration file from
+the HP Direct distribution is included below.
+<tscreen>
+<verb>
+#
+# Example HP Network Peripheral Interface configuration file
+# 
+# Comments begin with '#' and end at the end of the line.
+# Blank lines are ignored.  Entries cannot span lines.
+
+# Name is the peripheral (or node) name.  It is displayed on the peripheral's
+# self-test page or configuration plot, and when sysName is obtained through
+# SNMP.  This name can be provided in the BOOTP response or can be specified
+# in the NPI configuration file to prevent the BOOTP response from overflowing
+# the packet.  The domain portion of the name is not necessary because the
+# peripheral does not perform Domain Name System (DNS) searches.  Name is
+# limited to 64 characters.
+
+name: picasso
+
+# Location describes the physical location of the peripheral.  This is the
+# value used by the interface for the MIB-II sysLocation object.  The default
+# location is undefined.  Only printable ASCII characters are allowed.
+# Maximum length is 64 characters.
+
+location: 1st floor, south wall
+
+# Contact is the name of the person who administers or services the peripheral
+# and may include how to contact this person.  It is limited to 64 characters.
+# This is the value used by the interface for the MIB-II sysContact object.
+# The default contact is undefined.  Only printable ASCII characters are
+# allowed.  Maximum length is 64 characters.
+
+contact: Phil, ext 1234
+
+# The host access list contains the list of hosts or networks of hosts
+# that are allowed to connect to the peripheral.  The format is
+# "allow: netnum &lsqb;mask&rsqb;", where netnum is a network number or a host IP
+# address.  Mask is an address mask of bits to apply to the network number
+# and connecting host's IP address to verify access to the peripheral.
+# The mask usually matches the network or subnet mask, but this is not
+# required.  If netnum is a host IP address, the mask 255.255.255.255 can
+# be omitted.  Up to ten access list entries are permitted.
+
+# to allow all of network 10 to access the peripheral:
+allow: 10.0.0.0  255.0.0.0
+
+# to allow a single host without specifying the mask:
+allow: 15.1.2.3
+
+# Idle timeout is the time (in seconds) after which an idle
+# print data connection is closed.  A value of zero disables
+# the timeout mechanism.  The default timeout is 90 seconds.
+
+idle-timeout: 120
+
+# A community name is a password that allows SNMP access to MIB values on
+# the network peripheral.  Community names are not highly secure; they are
+# not encrypted across the network.  The get community name determines which
+# SNMP GetRequests are responded to.  By default, the network peripheral
+# responds to all GetRequests.  The get community name is limited to 32
+# characters.
+#
+# For hpnpstat and hpnpadmin, the community name can be stored in
+# /usr/lib/hpnp/hpnpsnmp.
+
+get-community-name: blue
+
+# The set community name is similar to the get community name.  The set
+# community name determines which SNMP SetRequests are responded to.  In
+# addition, SetRequests are only honored if the sending host is on the
+# host access list.  By default, the network peripheral does not respond
+# to any SetRequests.  The set community name is limited to 32 characters.
+#
+# The set community name can come from /usr/lib/hpnp/hpnpsnmp
+# if it is the same as the get community name.  We recommend that the
+# set community name be different from the get community name though.
+
+set-community-name: yellow
+
+# SNMP traps are asynchronous notifications of some event that has occurred.
+# SNMP traps are useful only with network management software.  Traps are
+# sent to specific hosts and include a trap community name.  Up to four
+# hosts can be sent SNMP traps.   The trap community name is limited to
+# 32 characters.  The default name is public.
+
+trap-community-name: red
+
+# The SNMP trap destination list specifies systems to which SNMP
+# traps are sent.  Up to four IP addresses are allowed.  If no
+# trap destinations are listed, traps are not sent.
+
+trap-dest: 15.1.2.3
+trap-dest: 15.2.3.4
+
+# The SNMP authentication trap parameter enables or disables the sending
+# of SNMP authentication traps.  Authentication traps indicate that an SNMP
+# request was received and the community name check failed.  By default,
+# the parameter is off.
+
+authentication-trap: on
+
+# The syslog-facility parameter sets the source facility identifier that the
+# card uses when issuing syslog messages.  Other facilities, for example,
+# include the kernel (LOG_KERN), the mail system (LOG_MAIL), and the spooling
+# system (LOG_LPR).  The card only allows its syslog facility to be configured
+# to one of the local user values (LOG_LOCAL0 through LOG_LOCAL7).  The
+# selectable option strings, local0 through local7 (configured to LOG_LOCAL0
+# through LOG_LOCAL7, respectively) are case insensitive.  The default
+# syslog-facility for the card is LOG_LPR.
+
+syslog-facility: local2
+
+# This parameter allows the card to treat hosts on other subnets as if the
+# hosts were on the card's subnet.  This parameter determines the TCP
+# Maximum Segment Size (MSS) advertised by the card to hosts on other subnets
+# and affects the card's initial receive-window size.  The card will use a
+# TCP MSS of 1460 bytes for local hosts, and 536 bytes for a non-local host.
+# The default is off, that is, the card will use the maximum packet sizes
+# only on the card's configured subnet.
+#
+# The configuration utility does not allow access to this parameter.  If you
+# want to configure it, you must manually edit the NPI configuration file
+# and add it to the bottom of the entry for the network peripheral.
+
+subnets-local: on
+
+# This parameter affects how the card handles TCP connection requests from
+# the host.  By default, the JetDirect MPS card will accept a TCP connection
+# even if the peripheral is off-line.  If this parameter is set to "on", then
+# the card will only accept a TCP connection when the peripheral is on-line.
+
+old-idle-mode: off
+
+</verb>
+</tscreen>
+<sect1> Timeouts
+<p>
+You should be aware that the
+<tt/idle-timeout/
+value in the configuration file will override the value
+entered on the control panel of the printer.
+<p>
+Also,
+the
+<tt/@PJL SET TIMEOUT = NNN/
+command will override this value as well.
+
+<sect>Index to Options
+<p>
+The following is a list of predefined options. <newline>
+<!-- START OPTIONS -->
+<tt><ref id="appsocket" name="appsocket FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Use Tektronix AppSocket Protocol <newline>
+<tt><ref id="config" name="config=PATHNAMES"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Configuration file pathnames <newline>
+<tt><ref id="crlf" name="crlf FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Do LF to CRLF translation <newline>
+<tt><ref id="debug" name="debug FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Debugging level <newline>
+<tt><ref id="default_language" name="default_language=LANGUAGE"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Default job file language (ps, pcl, raw, text, etc) <newline>
+<tt><ref id="endpage" name="endpage=NNN"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PJL JOB command END = NNN value <newline>
+<tt><ref id="forceconversion" name="forceconversion FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Force conversion using   <newline>
+<tt><ref id="file_output_match" name="file_output_match=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> File type and conversion matching<newline>
+<tt><ref id="file_util_path" name="file_util_path=PATHNAME"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Pathname of the UNIX file(1) utility <newline>
+<tt><ref id="language" name="language=LANGUAGE"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Specify job file language to be used (ps, pcl, raw, text, etc) <newline>
+<tt><ref id="logall" name="logall FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Log all status reports from printer if set <newline>
+<tt><ref id="nullpad" name="nullpad=COUNT"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Send COUNT nulls to force full buffer condition <newline>
+<tt><ref id="model" name="model=NAME"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Specify model name for configuration selection <newline>
+<tt><ref id="model_from_option" name="model_from_option=X"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Specify model name using a command line option value <newline>
+<tt><ref id="no_ps_eoj" name="no_ps_eoj FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> No PostScript EOJ (CTRL-D) at start of job <newline>
+<tt><ref id="no_pcl_eoj" name="no_pcl_eoj FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> No PCL EOJ (CTRL-D) at start of job <newline>
+<tt><ref id="pagecount" name="pagecount=LANGUAGE"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Enable pagecounting using the specified languages (pjl, ps) <newline>
+u<tt><ref id="pagecount_interval" name="pagecount_interval=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;</tt> Send pagecount command at SECONDS interval <newline>
+<tt><ref id="pagecount_ps_code" name="pagecount_ps_code=STRING"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PostScript code to get pagecount information <newline>
+<tt><ref id="pagecount_timeout" name="pagecount_timeout=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Timeout getting pagecount after SECONDS <newline>
+<tt><ref id="pcl" name="pcl FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supports PCL if set <newline>
+<tt><ref id="pcl_user_opts" name="pcl_user_opts=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> User PCL options supported <newline>
+<tt><ref id="pjl" name="pjl FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supports PJL if set <newline>
+<tt><ref id="pjl_console" name="pjl_console FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supports messages on console <newline>
+<tt><ref id="pjl_error_codes" name="pjl_error_codes=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PJL error messages for error codes <newline>
+<tt><ref id="pjl_except" name="pjl_except=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Do not allow these PJL commands <newline>
+<tt><ref id="pjl_init" name="pjl_init=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PJL initializations to be done <newline>
+<tt><ref id="pjl_job" name="pjl_job FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PJL JOB and EOJ supported <newline>
+<tt><ref id="pjl_only" name="pjl_only=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Allow only these PJL commands <newline>
+<tt><ref id="pjl_user_opts" name="pjl_user_opts=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Allow only these user PJL commands or variables to be set <newline>
+<tt><ref id="pjl_vars_except" name="pjl_vars_except=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Do not allow these PJL variables to be set <newline>
+<tt><ref id="pjl_vars_set" name="pjl_vars_set=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Allow these PJL variables to be set <newline>
+<tt><ref id="ps" name="ps FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supports PostScript (ps) <newline>
+<tt><ref id="ps_user_opts" name="ps_user_opts=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Support these PostScript user options <newline>
+<tt><ref id="read_write" name="read_write FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Open a file or device read/write<newline>
+<tt><ref id="remove_ctrl" name="remove_ctrl=LIST"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Remove these characters from PostScript jobs <newline>
+<tt><ref id="startpage" name="startpage=NNN"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> PJL JOB command START = NNN value <newline>
+<tt><ref id="status" name="status FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supplies status information <newline>
+<tt><ref id="statusfile" name="statusfile=PATHNAME"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Status file pathname <newline>
+<tt><ref id="statusfile_max" name="statusfile_max=NNN"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Status file has maximum size of NNN Kbytes <newline>
+<tt><ref id="statusfile_min" name="statusfile_min=NNN"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Status file has truncated size of NNN Kbytes <newline>
+<tt><ref id="summaryfile" name="summaryfile=PATHNAME"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Summary file pathname <newline>
+<tt><ref id="sync" name="sync FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Synchronize printer if set <newline>
+<tt><ref id="sync_interval" name="sync_interval=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Send synchronization request at SECONDS interval <newline>
+<tt><ref id="sync_timeout" name="sync_timeout=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Timeout synchronization request after SECONDS <newline>
+<tt><ref id="tbcp" name="tbcp FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Use Transparent Binary Communications Protocol for PostScript files <newline>
+<tt><ref id="text" name="text FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Printer supports text mode <newline>
+<tt><ref id="trace" name="trace FLAG"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> Put error and trace messages on STDERR if set <newline>
+<tt><ref id="waitend" name="waitend=METHOD"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> How to wait for printer to end printing <newline>
+<tt><ref id="waitend_interval" name="waitend_interval=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> How often to query printer for end of printing <newline>
+<tt><ref id="waitend_ctrl_t_interval" name="waitend_ctrl_t_interval=SECONDS"></tt><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt> How often to send CTRL-T for end of printing status <newline>
+<!-- END OPTIONS -->
+<!-- IFHP-HOWTO SGML format -->
+</article>

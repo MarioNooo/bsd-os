@@ -1,0 +1,8 @@
+The following types of boot blocks are available:
+
+    fd    Floppy Controller
+    wd    IDE/ESDI/MFM/RLL/ST506/etc Controller
+    aha   ISA Adaptec 154x SCSI Controller and compatible Buslogic (bha)
+    eaha  EISA Adaptec 174x SCSI Contoller
+    bios  BIOS (all others including any disk recognized by the BIOS)
+

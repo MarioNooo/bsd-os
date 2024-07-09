@@ -1,0 +1,246 @@
+.\"	BSDI auth.4,v 1.2 1999/06/28 19:53:30 prb Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd May 16, 1997
+.Dt AUTH 4
+.Os
+.Sh NAME
+.Nm auth
+.Nd remote authentication protocol
+.Sh DESCRIPTION
+The
+.Xr authsrv 8
+and
+.Xr login_auth 8
+programs communicate via the remote authentication protocol.
+Data sent between the client and server is always encrypted.
+(See ENCRYPTION below).
+The protocol consists of lines of ASCII text.  Each line of text consists
+of a directive, a single space, the data for the directive, and a
+terminating newline.  For directives which take arbitrary text (indicated
+below), the C function
+.Xr strvisx 3
+is used with the
+.Li VIS_WHITE
+and
+.Li VIS_CSTYLE
+flags to encode the text.
+If a directive is not allowed arbitrary text then all text must be
+within the set of characters defined by the
+.Xr isgraph 3
+function.
+By convention, all directives end with a colon (:).
+.Pp
+The protocol starts by the client sending a series of directives describing
+the request to the server.  These directives are:
+.Bl -tag -width SERVICEXX -offset indent
+.It CLASS:
+The class of the user.  This information is not used by
+.Xr authsrv
+directly.  It is simply passed the the appropriate authentication script.
+.It SERVICE:
+The type of service being requested.  This information is not used by
+.Xr authsrv
+directly.  It is simply passed the the appropriate authentication script
+via the
+.Fl s
+flag.
+.It STYLE:
+The style of authentication.  This is determined by striping the leading
+.Pa login_
+from the name of the client (i.e., if the client was called as
+.Pa login_rpasswd
+then the style would be
+.Pa rpasswd ) .
+The server will call the login script
+.Pa /usr/libexec/login_ Ns Ar style .
+The exception is that the special style of
+.Li auth
+implies the server should use the default style for remote authentication.
+(See
+.Xr authsrv 8 . )
+This directive must be provided before the actual authentication may begin.
+.It USER:
+The user being authenticated.  This information is not used by
+.Xr authsrv
+directly.  It is simply passed the the appropriate authentication script.
+This directive must be provided before the actual authentication may begin.
+.It VARG:
+The data, which may be arbitrary text, is passed to the authentication script
+via the
+.Fl v
+flag.  This directive may be used multiple times to add addition
+.Fl v
+parameters.
+.El
+.Pp
+Once the above information is provided, the client requests the server
+to begin authentication via:
+.Bl -tag -width SERVICEXX -offset indent
+.It START:
+Actually start the authentication.  No further directives describing the request
+may be sent.
+.El
+.Pp
+After requesting the server to begin authentication, the following directives
+are allowed:
+.Bl -tag -width SERVICEXX -offset indent
+.It FD0:
+The data, which may be arbitrary text, should be provided to the
+authentication script as if it had been typed by the user.
+If no data is provided the authentication script should be
+provided an
+.Ev EOF .
+.It FD3:
+The data, which may be arbitrary text, should be provided to the
+authentication script on the back channel (file descriptor 3).
+.El
+.Pp
+Typically these directives simply pass data read from client program.
+.Pp
+The server may send the following directives at any time:
+.Bl -tag -width SERVICEXX -offset indent
+.It ECHO:
+If the data is the string "OFF" then echo should be turned off on
+the users terminal, otherwise echo should be turned on.
+.It EXIT:
+The data should be the decimal representation of a number which is to
+be passed to
+.Xr exit 3 .
+If no data is provided the client will exit with a value of 1.
+In any case, this directive should cause the client to terminate.
+.It FD1:
+The client should write the data, which may be arbitrary text,
+to standard output.
+.It FD2:
+The client should write the data, which may be arbitrary text,
+to standard error.
+.It FD3:
+The client should write the data, which may be arbitrary text,
+to the back channel (file descriptor 3).
+.El
+.Sh ENCRYPTION
+All data between the client and server must be encrypted, with
+the exception that the server will send a single null terminated
+string to the client indicating what encryption type is to be used.
+The shared secret is know to both the client and the server prior
+to the session being established
+(see
+.Xr auth-keyx 8 ) .
+Currently the only form of encryption available is:
+.Bl -tag -width indent -offset indent
+.It DES
+Data Encryption Standard.
+The session is initiated with the following steps:
+.Bl -tag -width xxx
+.It o
+Client generates a random key, which will become the session
+key, encrypts it with the shared secret and sends it to Server.
+.It o
+Server decrypts the session key from Client.
+Server increments the 8th byte of the session key, encrypts
+the result, and sends it back to Client.  (The actual session
+key is not incremented).
+.It o
+Client decrypts the response from Server and verifies it is
+in fact the session key with the 8th byte incremented.
+.It o
+Client generates a random 8 byte vector and sends it to Server.
+.It o
+Server generates a random 8 byte vector and sends it to Client.
+.El
+.Pp
+Once the key exchange is finished and both sides know the others vector,
+session data may be transferred.  This vector is used to generate a
+stream of random data to XOR into the data stream.
+Since each session starts with known clear text, the clear text may
+be infused with random data, increasing its size by up to a factor of 2.
+The NUL character in the clear text stream implies random data follows.
+The byte after the NUL contains the number of random bytes to follow.
+Up to 127 random bytes may be present.
+While the clear text protocol does not allow for a NUL, it may still
+be sent by duplicating it (e.g., NUL NUL).
+.Pp
+The generation of random data is weighted to the start of a block
+of data being sent.  Typically a block of data will start with
+a large amount of random data, followed by a single character,
+followed by a lesser amount of random data, and so on.  Typically
+the tail end of the block will have no random data infused.
+.Pp
+Since the vector is initially sent in the clear, it must be encrypted
+with the session key prior to use.  Each byte of the augmented clear
+text is XOR-ed into the corresponding byte of the vector and then sent.
+Once all 8 bytes of the vector have been used the (modified) vector
+is once again encrypted with the session key to produce a vector for
+the next 8 bytes of data.  This process is repeated as often as needed.
+.Pp
+The authentication mode specific data stored in the
+.Pa /etc/authsrv.keys/...
+file consists of 16 hexadecimal digits which make up the shared DES key.
+.\" .It MD5
+.\" The session is initiated with the following steps:
+.\" .Bl -tag -width xxx
+.\" .It o
+.\" Server generates a random 16 byte noise vector and sends it to Client
+.\" .It o
+.\" Client appends the read noise vector to the
+.\" shared secret, computes a 16 byte MD5 signature, and sends the result to Server.
+.\" .It o
+.\" Client generates a random 16 byte noise vector and sends it to Server
+.\" .It o
+.\" Server appends the read noise vector to the
+.\" shared secret, computes a 16 byte MD5 signature, and sends the result to Client.
+.\" .It o
+.\" Both sides verify the others response.
+.\" .El
+.\" .Pp
+.\" Once this exchange has taken place, the clear text is encoded (and
+.\" augmented) as is done with DES.  The only difference is in the
+.\" computation of the string to XOR with the clear text data.
+.\" Each vector is 16 bytes long.
+.\" The following C code, using MD5 from RSAREF, describes the algorithm
+.\" used to generate the string of data XOR-ed into the clear text:
+.\" .Bd -literal -offset indent
+.\" char *secret;       /* the shared secret */
+.\" u_char vector[16];  /* the random vector */
+.\" MD5_CTX ctx;
+.\" MD5_CTX tmp;
+.\" int c;
+.\" 
+.\" Initialize() {
+.\"     MD5Init(&ctx);
+.\"     MD5Update(&ctx, secret, strlen(secret));
+.\"     MD5Update(&ctx, vector, 16);
+.\"     c = 16;
+.\" }
+.\" 
+.\" Crypt(char b) {
+.\"     if (c == 16) {
+.\" 	MD5Update(&ctx, vector, 16);
+.\" 	tmp = ctx;
+.\" 	MD5Final(vector, &tmp);
+.\" 	c = 0;
+.\"     }
+.\"     return (b ^ vector[c++]);
+.\" }
+.\" .Ed
+.\" .Pp
+.\" The
+.\" .Fn Crypt
+.\" fucntion does encryption for output and decryption for input.
+.\" Of course, each stream (input and output) must have its own
+.\" .Va vector ,
+.\" .Va ctx ,
+.\" .Va tmp ,
+.\" and
+.\" .Va c
+.\" variables.
+.El
+.Sh "SEE ALSO
+.Xr auth-keyx 8 ,
+.Xr authsrv 8 ,
+.Xr login_auth 8

@@ -1,0 +1,16 @@
+#! /bin/sh
+#	BSDI ps,v 2.1 1995/02/03 15:13:03 polk Exp
+
+PATH=/bin:/usr/bin
+
+if /bin/test $# -eq 3 -a "X$1" = X-f -a "X$2" = X-p -a "X$3" = X00000
+then
+	# Wordperfect uses this pointless ps command
+	echo '     UID   PID  PPID  C    STIME TTY      TIME COMD'
+	echo '    root     0     0  0   Aug 13 ?        0:06 sched'
+	exit 0
+fi
+
+# We could translate options here, but nothing needs it yet
+
+exec //bin/ps "$@"

@@ -1,0 +1,34 @@
+#!/usr/bin/perl5
+#
+#	BSDI	relay,v 1.2 1996/08/30 21:10:38 sanders Exp
+#
+# Tony Sanders <sanders@earth.com>, Feb 1996
+#
+# HTTPD-style Configuration:
+#     ScriptAlias /relay /var/www/cgi-private/relay
+# HTML Usage:
+#     <A HREF="/relay/http://www.otherplace.com/">OtherPlace</A>
+#
+# This script allows you track links that point offsite.  When
+# the user selects OtherPlace the real URL will be sent to this
+# script (causing a hit to be logged in the log file) and then
+# the users browser will be automatically redirected to the final
+# destination.
+#
+# You can also uncomment the call to externallog() if you want
+# a handy, seperate log of all the relay requests.
+
+use CGI;    # http://www-genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html
+$query = new CGI;
+$url = $query->path_info;
+$url =~ s,^/*,,;
+print $query->redirect($url);
+# uncomment the following line if you want a quick reference log:
+#externallog("/var/log/httpd/external.log");
+exit(0);
+sub externallog {
+    local $log = $url . " <- " . $ENV{'HTTP_REFERER'} . "\n";
+    open(LOG, ">> $_[0]") || die "$_[0]: $!\n";
+    print LOG $log;
+    close(LOG);
+}

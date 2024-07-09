@@ -1,0 +1,117 @@
+#
+# * Copyright (c) 2003 QUALCOMM Incorporated. All rights reserved.
+# *
+# * File        : mmangle/Makefile.in
+# * Project     : Qpopper Server
+# * Comments    : 
+# *
+# *
+# * Revisions   :
+# *
+# * 02/03/03    [rcg]
+# *       -  Pick up LDFLAGS.
+# *
+# *  06/30/00   [rcg]
+# *        - Updated includes.
+# *        - Moved utils to common.
+# *        - Fixed gperf stuff for systems w/o gperf.
+# *
+# *  12/09/99   [rcg]
+# *        - Modified for SunOS4 stuff.
+# *
+# *  05/05/98   [py]
+# *         - File added.
+# *
+#
+SHELL           =   /bin/sh
+CC              =   @CC@
+GPERF           =   @GPERF@
+GPERFCMD        =   @GPERFCMD@
+MAKEFILE        =   Makefile
+
+@SET_MAKE@
+
+top_srcdir      =   @top_srcdir@
+srcdir          =   @srcdir@
+VPATH           =   @srcdir@
+prefix          =   @prefix@
+exec_prefix     =   @exec_prefix@
+installdir      =   @bindir@
+
+common_srcdir   =   ${top_srcdir}/common
+popper_srcdir   =   ${top_srcdir}/popper
+qd_srcdir       =   ${top_srcdir}/qd
+sievead_srcdir  =   ${top_srcdir}/sievead
+mmangle_srcdir  =   ${top_srcdir}/mmangle
+
+base_dir        =   ..
+common_dir      =   ${base_dir}/common
+popper_dir      =   ${base_dir}/popper
+qd_dir          =   ${base_dir}/qd
+sievead_dir     =   ${base_dir}/sievead
+mmangle_dir     =   ${base_dir}/mmangle
+
+INCLUDES	=   ${srcdir}/mime.h ${srcdir}/mangle.h \
+		    ${srcdir}/enriched.h ${srcdir}/striphtml.h \
+		    ${srcdir}/charmangle.h \
+		    ${popper_srcdir}/popper.h \
+		    ${base_dir}/config.h \
+		    ${top_srcdir}/conf.h \
+		    ${common_dir}/logit.h \
+		    ${common_dir}/string_util.h \
+		    ${common_dir}/utils.h
+
+CFLAGS          =   @CFLAGS@
+CDEFS           =   @CDEFS@
+LDFLAGS         =   @LDFLAGS@
+DEFS            =   @DEFS@
+OS_DEFS         =   @OS_DEFS@
+TARGET          =   @TARGET@
+NETWORK_LIBS    =   @NETWORK_LIBS@
+KERBEROS_LIBS   =   @KERBEROS_LIBS@
+DBM_LIBS        =   @DBM_LIBS@
+LIBS            =   @NETWORK_LIBS@ @KERBEROS_LIBS@ @DBM_LIBS@ @LIBS@
+AR_FLAG         =   @AR_FLAG@
+RANLIB          =   @RANLIB@
+
+OBJS		    = 	mime.o mangle.o enriched.o striphtml.o \
+			        lineend.o etags.o charmangle.o
+
+SRCS		    = 	mime.c mangle.c enriched.c striphtml.c \
+			        lineend.c etags.c charmangle.c
+
+all: libmangle.a
+
+libmangle.a: ${OBJS}
+	ar ${AR_FLAG} $@ ${OBJS} 
+@RANLIB_CMD@
+
+.c.o: 
+	${CC} -c -I${base_dir} -I${srcdir} -I${top_srcdir} -I${popper_srcdir} \
+	    -I${common_srcdir} ${CFLAGS} ${DEFS} ${CDEFS} ${OS_DEFS} $< -o $@
+
+etags.c: etags.gperf
+	${GPERFCMD}
+
+${OBJS}: ${INCLUDES}
+
+${SRCS}:
+
+clean:
+	rm -f core 
+	rm -f ${OBJS} 
+
+realclean: clean
+	rm -f libmangle.a
+	rm -f Makefile
+	rm -f *~
+
+
+
+
+
+
+
+
+
+

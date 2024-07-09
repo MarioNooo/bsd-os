@@ -1,0 +1,266 @@
+Please see the INSTALL file for installation details.
+
+
+COPYRIGHT 1992, 1993, 1994, 1995, 1996, 1997, 1998
+THE REGENTS OF THE UNIVERSITY OF MICHIGAN
+ALL RIGHTS RESERVED
+
+PERMISSION IS GRANTED TO USE, COPY AND REDISTRIBUTE THIS VERSION OF THE MERIT
+BASIC AAA SERVER, SO LONG AS NO FEE IS CHARGED FOR THIS SOFTWARE, AND SO LONG
+AS THE COPYRIGHT NOTICE ABOVE, THIS GRANT OF PERMISSION, AND THE DISCLAIMER
+BELOW APPEAR IN ALL COPIES MADE; AND SO LONG AS THE NAME OF THE UNIVERSITY OF
+MICHIGAN OR MERIT NETWORK IS NOT USED IN ANY ADVERTISING OR PUBLICITY 
+PERTAINING TO THE USE OR DISTRIBUTION OF THIS SOFTWARE WITHOUT SPECIFIC, 
+WRITTEN PRIOR AUTHORIZATION. 
+
+NO RIGHTS ARE GRANTED HEREUNDER FOR ANY RECIPIENT TO MODIFY, DISASSEMBLE,
+DECOMPILE, REVERSE ENGINEER OR OTHERWISE CREATE DERIVATIVE WORKS OF THIS
+SOFTWARE.
+
+THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE UNIVERSITY
+OF MICHIGAN AS TO ITS FITNESS FOR ANY PURPOSE, AND WITHOUT WARRANTY BY THE
+UNIVERSITY OF MICHIGAN OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
+WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE.  THE REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE
+LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OF OR IN
+CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR IS HEREAFTER
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+FOR FURTHER INFORMATION ABOUT THE ENHANCED MERIT AAA SERVER, SEND EMAIL TO:
+aaa.license@merit OR, VISIT THE WWW SITE:  www.merit.edu/aaa/
+
+
+How To Get Help:
+---------------- 
+
+If you have any problems or fixes send them to:  aaa-support@merit.edu
+
+Please place one of the strings "[AAA]" or "[AAA support]" in front of
+the "Subject:" lines of your email message.
+
+
+NOTE: Important changes to be aware of:
+
+  - clients file entries MUST include the "type =" field (see "man 5 clients")
+    please note that this was NOT part of earlier 2.x releases
+
+  - you MUST replace dictionary and vendors with files from the distribution
+    previous versions of these files WILL NOT work with this release
+
+  - under some circumstances it is possible to overrun the server's internal
+    request queue(s) (default size 128) -- a work-around for binary servers
+    would be to place the following lines in a file "engine.config" in the
+    .../raddb configuration directory:
+
+        global_auth_q.limit=200
+        global_acct_q.limit=400
+
+
+NOTE: Known problems not fixed in this release (planned to be fixed later):
+
+  - the compression of logfiles determined by an strftime(3) string (default
+    midnight) may create suspended child processes which never terminate on
+    Linux if the server was built with the older, non-GNU standard C library
+
+  - we have found that certain anomalous mis-configurations may cause looping
+    behaviour in the Merit AAA Server which may lead to server crashes
+
+
+NOTE: What we test:
+
+  - we test build on four platforms: SunOS, SPARC Solaris, Linux and BSDi
+
+  - we run startup tests on all four of the above platforms
+
+  - we run end-node and proxying tests on an N-square mesh of the above four
+
+  - we run some simulated load tests with a pseudo-NAS test setup
+
+  - we run live load on three production servers with light, medium, heavy usage
+
+
+NOTE: What we do not test:
+
+  - we've not fully tested USR and Ascend features, but others have used them
+
+  - we don't test variations like CFLAGS -g versus -O and other permutations
+
+
+Changes in Merit Version 3.5.13
+
+1) Fix major performance bottleneck in setup_logfile() function.
+
+2) More changes to correct the token loss problem.
+
+3) Added BSD Authentication AATV.  BSDi has contributed to the development
+   of the BSD Authentication support in this program.
+
+
+Changes in Merit Version 3.5.12
+
+1) Changes to correct the token loss problem.
+
+2) Fix proxy_forwarding() for bad packet case.
+
+
+Changes in Merit Version 3.5.11
+
+1) Minor fixes to prevent crashes during debugging
+
+2) Changed dictionary to include more Ascend and Cisco VSAs
+
+
+Changes in Merit Version 3.5.10
+
+1) Repair a couple of instances of uninitialized variables
+
+2) Allow for better configuration (tuning) of the DNS process
+
+3) Add support for USR (oddball VSA and dictionary)
+
+
+Changes in Merit Version 3.5.9
+
+1) TACACS support strayed from that in 2.4.23/24 and is now back to health
+
+2) Fix for the broken daily token high-water mark reporting (MichNet only)
+
+
+Changes in Merit Version 3.5.8
+
+1) Fix for the multiples of sixteen character password problem
+
+2) Several minor fixes for problems found at the 12/97 IETF bakeoff
+
+3) Fix for a minor problem in printing the Ascend binary filter rules
+
+4) Fix for a minor problem in printing vendor specific attributes
+
+5) Fix for any potential SNI problems from Livingston derived code
+
+6) Fix for a memory leak caused when session table entries are not freed
+
+
+Changes in Merit Version 3.5.6
+
+1) A few minor fixes for bugs found in 3.5.5
+
+2) Change to copyright wording for basic Merit AAA Server in most files
+
+
+Changes in Merit Version 3.5.5
+
+1) fix handling of CHAP for interoperability with older versions
+
+2) fixes to radbnr problems including patches for the DB 1.86 package
+
+3) fixes to rlmadmin preventing crashing and core dumping behaviour
+
+4) fixes to remove annoying trailing NUL characters from some logfiles
+
+
+Changes in Merit Version 3.5
+
+1) several fixes to enhanced (LAS) code and radbnr (over the 3.3 release)
+
+2) per-client configuration for RFC conformance, debugging, append, etc.
+
+3) client entries tagged with a vendor name affect proxying to those clients
+
+4) fix interaction between session logging and turning debugging on and off
+
+5) correctly implement forwarding of unknown/encapsulated attributes
+
+6) added support for NIS+
+
+7) support for Merit as a "vendor"
+
+8) support for huntgroup querying (MichNet only feature)
+
+9) support for Year 2000 issues available as compile time option (CFLAGS = Y2K)
+
+
+Changes in Merit Version 3.4
+
+1) fix a bug in the way unknown attributes were encapsulated
+
+2) fix a bug in radbnr which caused bus errors with commit and show commands
+
+3) minor documentation changes
+
+
+Changes in Merit Version 3.3
+
+1) essentially the same as 3.2 but with the inclusion of radbnr
+
+2) changed to RFC2138 and RFC2139
+
+3) better printing of vendor specific attributes
+
+
+Changes in Merit Version 3.2
+
+1) essentially the same as 3.1 but lacking radbnr
+
+2) fix a bug in rlmadmin for proper handling of check-items
+
+3) first 3.x release to licensees
+
+
+Changes in Merit Version 3.1
+
+1) Enforce RFC2058 and RFC2059
+
+2) Provide FREPLY type AATV examples and working code
+
+3) More cleanup, more debugging features
+
+4) Faster parsing while reading config files
+
+5) Better protection from/handling of bad packets
+
+6) Added statistics and measuring metrics
+
+7) Allow special characters in user profiles
+
+8) Generalize logfile naming and behaviour
+
+9) Coding AATV modules made easier
+
+10) Kerberos AATV error detection enhanced
+
+11) The rlmadmin(8) utility now handles DEFAULT entry
+
+12) All programs issue copyright upon startup
+
+13) More support for Access-Challenge and response
+
+14) Logging support for TACACS+ style accounting
+
+15) Add process queueing and statistics for forking AATV types
+
+16) Conditional naming of child processes
+
+
+Changes in Merit Version 3.0
+
+1) Support for vendor specific attributes
+
+2) Support for Ascend and US Robotics NAS products
+
+3) Support for RADIUS version two
+
+4) Support for long User-Password strings
+
+5) Support for CHAP-Challenge attribute
+
+6) Streamlined value pair storage and internal performance enhancements
+
+7) The rlmadmin(8) utility supports RCS and has other improvements
+
+8) Now log state names along with state numbers
+
+9) Better session logging
+
+10) May now configure the RADIUS UDP port in the clients file (per entry)

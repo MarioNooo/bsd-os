@@ -1,0 +1,46 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_boottime.3,v 2.1 1997/05/25 15:08:58 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_BOOTTIME 3
+.Os
+.Sh NAME
+.Nm kvm_boottime
+.Nd kernel boot time
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_boottime "kvm_t *kd" "struct timeval *tp"
+.Sh DESCRIPTION
+The
+.Fn kvm_boottime
+function fills in the timeval struct referenced by
+.Fa tp
+with the time at which the kernel was booted measured in
+seconds and microseconds since midnight
+.Pq 0 hour Ns ,
+January 1st, 1970.
+.Sh RETURN VALUES
+The
+.Fn kvm_boottime
+function returns zero on success and -1 on failure.  
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr gettimeofday 2 ,
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

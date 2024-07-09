@@ -1,0 +1,5 @@
+Disksetup has determined there is no BSD/OS root filesystem on any
+of the BSD/OS FDISK partitions.  No BSD/OS boot blocks will
+be written to this disk.
+
+Press return to continue: 

@@ -1,0 +1,6 @@
+
+Once you have installed the MBR for this disk, disksetup will run
+the bootany(8) utility to install the bootany MBR and enable you to
+set up which partitions are bootable.
+
+Press <ENTER> to continue.

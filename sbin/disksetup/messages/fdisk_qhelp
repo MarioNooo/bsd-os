@@ -1,0 +1,8 @@
+At this point you should define, alter, or delete the partitions for
+this disk so that you have enough space reserved for each of your
+operating systems. Press N when you are done or X if you wish to cancel.
+
+If you do not understand this screen, press X and then Y to confirm
+the cancel.  When asked if you want the standard setup, answer YES.
+
+[A]dd [D]elete [E]dit [N]ext [X]Abort [*]Mark Active [?]Help

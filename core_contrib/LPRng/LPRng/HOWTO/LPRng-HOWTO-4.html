@@ -1,0 +1,1734 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Print Spooling Tutorial</TITLE>
+ <LINK HREF="LPRng-HOWTO-5.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-3.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc4" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-5.html">Next</A>
+<A HREF="LPRng-HOWTO-3.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc4">Contents</A>
+<HR>
+<H2><A NAME="overview"></A> <A NAME="s4">4. Print Spooling Tutorial</A></H2>
+
+<P>A print spooler is a program that accepts
+<I>print jobs</I>
+(which are usually one or more files)
+from a program or network interface,
+stores them in a
+<I>spool queue</I>,
+and then sends them to a printer or another
+print spooler.
+Usually there are facilities to submit jobs,
+check on the current job status,
+remove jobs from spool queues,
+and perform administrative functions such as starting or
+stopping printing.
+<P>A print spooler is a client/server application.
+The client programs are used to submit jobs to the print spooler
+program which performs the actual printing operations.
+In order to carry out these operations,
+the server may need to use other programs to convert print job files
+into a format acceptable to a printer,
+or perform various accounting or administrative functions.
+<H2><A NAME="ss4.1">4.1 Overview</A>
+</H2>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
++---------+    +-----+    +-----+     +--------+    +---------+
+| program | -> | lpr | -> | lpd |  -> | filter | -> | printer |
++---------+    +-----+  * +-----+     +--------+    +---------+
+                  *    *     |
+               printcap      V
+                          +-----+     +--------+    +---------+
+                          | lpd |  -> | filter | -> | printer |
+                          +-----+     +--------+    +---------+
+
+                           Figure 1
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Figure 1 shows the flow of data between the individual components of the
+LPRng print spooling system.
+A program (or user) will use the <CODE>lpr</CODE> program to send a file
+to the <CODE>lpd</CODE> server over a TCP/IP connection.
+The <CODE>lpd</CODE> server will store the file temporarily in a
+spool queue directory.
+The information needed by the <CODE>lpr</CODE> and <CODE>lpd</CODE> programs to carry
+out this activity is stored in the
+<CODE>printcap</CODE>  (usually called the <CODE>/etc/printcap</CODE>) database file.
+<P>The <CODE>lpd</CODE> server sorts the queue entries and determines the print order.
+It will select a job to be printed,
+open a connection to the printer,
+and then use a <I>filter</I> program to convert the file contents into a
+format suitable for the printer.
+If the file does not need conversion,
+then the <CODE>lpd</CODE> server will send the file directly to the printer.
+<P>The <CODE>lpd</CODE> server can also <CODE>forward</CODE> jobs to another print server
+over a network connection,
+optionally sending them through a filter as well.
+The destination server can in turn forward the job or send it to a printer.
+<P>The protocol or commands used to do this job forward and transfer are
+specified by
+<A HREF="LPRng-HOWTO-17.html#rfc1179ref">RFC1179</A>.
+This protocol specifies how the <CODE>lpr</CODE> client program sends a job
+to the <CODE>lpd</CODE> server,
+as well as how the <CODE>lpd</CODE> server forwards jobs to another server.
+In addition to job submission,
+RFC1179 specifies commands to obtain queue status,
+to remove jobs from the queue,
+and to start and stop print queues.
+<H2><A NAME="ss4.2">4.2 Sample Printcap Entry</A>
+</H2>
+
+<P>As described in the
+<A HREF="#overview">Print Spooling Overview</A>,
+the information in the <CODE>printcap</CODE> database is used control printing
+operations.
+While there is no RFC specifying its format or content,
+there is a strong <I>de facto</I> standard for its format.
+For a complete description of the <CODE>printcap</CODE> database see
+<A HREF="LPRng-HOWTO-8.html#printcapref">Using the Printcap Database</A>.
+For a list of all of the <CODE>printcap</CODE> and configuration options see
+<A HREF="LPRng-HOWTO-22.html#index">Index To All The Configuration and Printcap Options</A>.
+<P>Here is a sample printcap suitable for use by the LPRng clients:
+<BLOCKQUOTE><CODE>
+<PRE>
+# LPRng
+lp:lp=psqueue@printserver.astart.com
+# Classical BSD
+lp:rp=psqueue:rm=printserver.astart.com
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The printcap information tells the <I>client</I> programs
+that jobs for the <CODE>lp</CODE> printer
+are sent to the
+<CODE>psqueue</CODE> print queue queue on host <CODE>printerserver.astart.com</CODE>.
+The classical BSD printcap is also shown.
+The <CODE>rp</CODE> value is the <I>remote printer</I> (actually a spool queue)
+and the <CODE>rm</CODE> value is the server.
+When both
+<CODE>lp</CODE> and the
+<CODE>rp/rm</CODE> are present the <CODE>lp</CODE> value has precedence.
+<P>On the printserver
+the following is a sample printcap entry
+suitable for the <CODE>lpd</CODE> server:
+<BLOCKQUOTE><CODE>
+<PRE>
+psqueue:server
+  :lp=/dev/lp0
+  :sd=/var/spool/lpd/psqueue
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>sd</CODE> (spool queue directory) entry specifies the directory where
+print jobs received from the <CODE>lpr</CODE> program will be placed.
+The <CODE>lp</CODE> value is the output device
+the <CODE>lpd</CODE> server will use to print the job.
+The <CODE>if</CODE> (input file filter) is a program that
+translates the input file to a format compatible with the printer.
+If there is not need for a conversion filter then
+this entry is left out.
+<H2><A NAME="ss4.3">4.3 Print Server Configuration</A>
+</H2>
+
+<P>The previous sections have given a very high level view of printing
+operations.
+In order to do printing the following programs and information must
+be established:
+<OL>
+<LI>The printer itself,
+and the interface to the printer.</LI>
+<LI>Client programs for use by users or other programs to send jobs
+to the print server and perform administrative functions.</LI>
+<LI>A server program that runs on a host that accepts jobs for printing.</LI>
+<LI>Printcap information to control the printing operations.</LI>
+<LI>Filters that convert print jobs into formats compatible with printers.</LI>
+<LI>System facilities such as spool queues or storage areas for jobs.</LI>
+</OL>
+<P>The following sections will cover each of these topics in turn.
+The initial sections assume that most users are setting up printers
+on small systems and require an extremely simple print capability.
+Later sections explore the various configurations that can be used
+to support large networks of print spoolers as would be found in
+large academic institutions or businesses.
+<H2><A NAME="ss4.4">4.4 Tutorial Configuration</A>
+</H2>
+
+<P>In order to simplify operation and not waste lots of paper,
+we will use a very simple printcap entry during this tutorial.
+During the tutorial we will also show how to modify the printcap
+to add additional capabilities.
+You should run these tests as a nonprivileged (non-ROOT) user
+except where specifically noted.
+<P>By default,
+the LPRng system uses the printcap file in
+<CODE>/etc/printcap</CODE>
+or
+<CODE>/usr/local/etc/printcap</CODE>.
+Save the existing file and then create a new printcap file
+as shown below.
+<BLOCKQUOTE><CODE>
+<PRE>
+#  -- obtain root permissions.  You will need to entry the password
+su
+cd /etc    OR    cd /usr/local/etc
+mv printcap printcap.orig
+vi printcap
+#  -- put the following lines into the printcap file:
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+lp2:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp2
+#  -- save the printcap file and set permissions so programs
+#     can read it
+chmod 644 printcap
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>First,
+we use the <CODE>su</CODE> command to get SuperUser (ROOT) privileges.
+We then save the original printcap  file,
+and create a new simple one.
+<P>This printcap file has two entries: <CODE>lp</CODE> and <CODE>lp2</CODE>.
+Each print queue on the server needs a spool file to hold print jobs,
+jobs,
+and the <CODE>:sd</CODE> value specifies its location.
+The <CODE>%P</CODE> value is replaced with the name of the printer
+when it is used.
+<P>The <CODE>force_localhost</CODE>
+is a very powerful option used by LPRng to provide
+<I>classical BSD</I>
+or
+<I>lightweight</I>
+operation.
+In classical BSD operation
+each host has an <CODE>lpd</CODE> print spooler running on the local host
+(we use localhost in this manual for simplicity).
+Files were copied to spool directories on the localhost and then then
+print spooler would send them to the destination,
+which could be another print spooler.
+This meant that each localhost machine had to have a print spooler
+and spool queue directory structure.
+Management of this becomes very difficult in large organizations.
+<P>The LPRng <I>lightweight</I> operation allows the client programs
+to communicate directly with an <CODE>lpd</CODE> server that is not
+running on the localhost.
+While this would appear to be the most desirable default mode of
+operation,
+it turns out in practice that all existing UNIX documentation
+for print spooler configuration
+assumes the
+<I>classical BSD</I>
+configuration.
+When the behavior of LPRng is different
+new users become extremely frustrated.
+In this tutorial we will show how to use both
+modes and the advantages and disadvantages of both modes.
+<P>The print device (<CODE>:lp=</CODE>) will be a file
+so that we can see what is happening during these tests
+(and also to save trees).
+<BLOCKQUOTE><CODE>
+<PRE>
+#  -- create the dummy printing devices
+cp /dev/null /var/tmp/lp
+cp /dev/null /var/tmp/lp2
+chown daemon /var/tmp/lp /var/tmp/lp2
+chgrp daemon /var/tmp/lp /var/tmp/lp2
+#  we want to read and write the dummy device
+chmod 666  /var/tmp/lp /var/tmp/lp2
+echo hi >/tmp/hi
+echo there >/tmp/there
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next we create the files that will act as our printing devices.
+We give them world read and write permissions so we can observe their
+contents.
+We also create a couple of files containing some information to
+print.
+<BLOCKQUOTE><CODE>
+<PRE>
+#  we modify the lpd.perms to allow an ordinary user to control
+#  the print queues
+mv lpd.perms lpd.perms.orig
+vi lpd.perms
+# put the following into the lpd.perms file:
+DEFAULT ACCEPT
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The next set of commands
+creates a permissions database that will allow all actions by default.
+This is useful for testing,
+but dangerous in a working environment.
+<BLOCKQUOTE><CODE>
+<PRE>
+#  -- checkpc create directories and files for the print queue
+#     as well as make sure permissions are correct
+checkpc -f -V
+# -- output will contain information similar to:
+#  Checking printer 'lp'
+#   Checking directory: '/var/spool/lp'
+#     directory '/var'
+#     directory '/var/spool'
+#     directory '/var/spool/lp'
+#  Warning -   changing ownership '/var/spool/lp' to 1/1
+#    checking 'control.lp' file
+#    checking 'status.lp' file
+#    checking 'status' file
+#    cleaning 'status' file, 0K bytes: no truncation
+#    checking 'log' file
+#    cleaning 'log' file, 0K bytes: no truncation
+#    checking 'acct' file
+#    cleaning 'acct' file, 0K bytes: no truncation
+#  Checking printer 'lp2'
+#   Checking directory: '/var/spool/lp2'
+#     directory '/var'
+#   ....
+
+#  -- signal the lpd server to use the new configuration
+lpc reread
+
+#  -- if no server was running you can start the server
+lpd
+
+#  -- do the next steps as ordinary user
+#     we first exit from su
+exit
+#  -- check to see if the server is active and the queue is
+#     present
+lpq
+#  example of output:
+#  Printer: lp@h4
+#    Queue: no printable jobs in queue
+#  -- check to see that the reread command is accepted
+lpc reread
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The
+<CODE>
+<A HREF="LPRng-HOWTO-9.html#checkpc">checkpc</A></CODE>
+performs consistency checks on the printcap file and spool queue entries.
+The
+<CODE>checkpc -f</CODE> (fix) option will change permissions and create
+directories and can only be executed by ROOT.
+The
+<CODE>
+<A HREF="LPRng-HOWTO-9.html#checkpc">checkpc</A></CODE>
+has other functions as well - you can view printcap information,
+see default configuration values,
+and
+remove junk files from spool queues with it.
+<P>The <CODE>lpc reread</CODE>
+command sends a request to the LPD server to reread the configuration
+and printcap information.
+The <CODE>lpd</CODE> command is added as insurance in case your <CODE>lpd</CODE>
+server is not running.
+The <CODE>exit</CODE> command restores ordinary user privileges,
+and the <CODE>lpq</CODE> command is used to check that the server is running.
+Finally,
+we check to see that the <CODE>lpc reread</CODE> command is accepted
+from an ordinary user.
+<H2><A NAME="ss4.5">4.5 Restoring Original Configuration</A>
+</H2>
+
+<P>To restore the original configuration,
+you simply need to restore the original <CODE>printcap</CODE>
+and <CODE>lpd.perms</CODE> file and then restart the <CODE>lpd</CODE> server.
+<BLOCKQUOTE><CODE>
+<PRE>
+&lt;tscreen>
+&lt;verb>
+#  -- obtain root permissions.  You will need to entry the password
+su
+cd /etc    OR    cd /usr/local/etc
+mv printcap.orig printcap
+mv lpd.perms.orig lpd.perms
+checkpc -f
+lpc reread
+rm -rf /var/spool/lpd/lp /var/spool/lpd/lp2
+rm -f /var/tmp/lp /var/tmp/lp2
+exit
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss4.6">4.6 Printing a File and Checking Status</A>
+</H2>
+
+<P>Try the following commands.  The commands appear after the prompt,
+and sample output that you might see is shown.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {168} % lpr -V /tmp/hi
+Version LPRng-3.6.14
+sending job 'papowell@h4+238' to lp@localhost
+connecting to 'localhost', attempt 1
+connected to 'localhost'
+requesting printer lp@localhost
+sending control file 'cfA238h4.private' to lp@localhost
+completed sending 'cfA238h4.private' to lp@localhost
+sending data file 'dfA238h4.private' to lp@localhost
+completed sending 'dfA238h4.private' to lp@localhost
+done job 'papowell@h4+238' transfer to lp@localhost
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpr -V</CODE> (Verbose) option causes LPR to print
+status output.
+As you can see from the above lines,
+it first tries to connect to the <CODE>lpd</CODE> server on host
+<CODE>localhost</CODE>,
+then sends a print prequest (which is accepted),
+then sends a <I>control</I> file
+containing information about the job
+and a <CODE>data</CODE> file or files which are copies of the files to be
+printed.
+<P>If you check the <CODE>/var/tmp/lp</CODE> file
+and you will find that a copy of <CODE>/tmp/hi</CODE>
+has been written to it.
+By default,
+the <CODE>lpd</CODE> print spooler acts as a store and forward system,
+accepting files to be printed,
+holding them in the print queue,
+and then forwarding them to the destination system or output device.
+<P>You can use the <CODE>lpq</CODE> command to view the status of the print job.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {169} % lpq
+Printer: lp@h4
+ Queue: no printable jobs in queue
+ Status: job 'papowell@h4+238' removed at 09:39:03.256
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you want to see more status information,
+use <CODE>lpq -l</CODE>, <CODE>lpq -ll</CODE>, or even <CODE>lpq -L</CODE>.
+The <CODE>-L</CODE> provides <CODE>alL</CODE> the status.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {170} % lpq -l
+Printer: lp@h4
+ Queue: no printable jobs in queue
+ Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+ Status: job 'papowell@h4+238' removed at 09:39:03.256
+h4: {171} % lpq -ll
+Printer: lp@h4
+ Queue: no printable jobs in queue
+ Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+ Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+ Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+ Status: job 'papowell@h4+238' removed at 09:39:03.256
+h4: {172} % lpq -L
+Printer: lp@h4
+ Queue: no printable jobs in queue
+ Status: subserver pid 8240 starting at 09:39:03.105
+ Status: accounting at start at 09:39:03.105
+ Status: opening device '/var/tmp/lp' at 09:39:03.105
+ Status: printing job 'papowell@h4+238' at 09:39:03.106
+ Status: no banner at 09:39:03.107
+ Status: printing data file 'dfA238h4.private', size 3 at 09:39:03.107
+ Status: printing done 'papowell@h4+238' at 09:39:03.107
+ Status: accounting at end at 09:39:03.108
+ Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+ Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+ Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+ Status: job 'papowell@h4+238' removed at 09:39:03.256
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>There are different status formats available as well.
+The <CODE>lpq -s</CODE> (summary) produces a single line of status per spool queue,
+while the <CODE>lpq -v</CODE> (verbose)
+produces output that is very suitable for processing with
+programs such as <CODE>Perl</CODE> or <CODE>awk</CODE>:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {173} % lpq -s
+lp@h4  0 jobs
+h4: {174} % lpq -v
+Printer: lp@h4
+ Printing: no
+ Aborted: no
+ Spooling: no
+ Queue: no printable jobs in queue
+ SPOOLCONTROL=
+ Status: subserver pid 8240 starting at 09:39:03.105
+ Status: accounting at start at 09:39:03.105
+ Status: opening device '/var/tmp/lp' at 09:39:03.105
+ Status: printing job 'papowell@h4+238' at 09:39:03.106
+ Status: no banner at 09:39:03.107
+ Status: printing data file 'dfA238h4.private', size 3 at 09:39:03.107
+ Status: printing done 'papowell@h4+238' at 09:39:03.107
+ Status: accounting at end at 09:39:03.108
+ Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+ Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+ Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+ Status: job 'papowell@h4+238' removed at 09:39:03.256
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you check the <CODE>/var/tmp/lp</CODE> file
+and you will find that a copy of <CODE>/tmp/hi</CODE>
+has been written to it.
+By default,
+the <CODE>lpd</CODE> print spooler acts as a store and forward system,
+accepting files to be printed,
+holding them in the print queue,
+and then forwarding them to the destination system or output device.
+<H2><A NAME="ss4.7">4.7 Selecting the Print Queue</A>
+</H2>
+
+<P>In the previous section we used the <CODE>default</CODE> print queue.
+How does LPRng determine what print queue to use?
+First,
+you can explicitly specify the printer using the  <CODE>lpq -Pprintqueue</CODE>
+option
+and the <CODE>lpq -a</CODE> or <CODE>lpq -Pall</CODE> to select all print queues:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {160} % lpq -Plp
+Printer: lp@h4
+ Queue: no printable jobs in queue
+h4: {161} % lpq -Plp2
+Printer: lp2@h4
+ Queue: no printable jobs in queue
+h4: {162} % lpq -a
+Printer: lp@h4
+ Queue: no printable jobs in queue
+Printer: lp2@h4
+ Queue: no printable jobs in queue
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You can combine the <CODE>lpq -a</CODE> with the <CODE>lpq -s</CODE> option for a summary listing:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {162} % lpq -a
+Printer: lp@h4
+ Queue: no printable jobs in queue
+Printer: lp2@h4
+ Queue: no printable jobs in queue
+h4: {163} % lpq -s -a
+lp@h4  0 jobs
+lp2@h4  0 jobs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>There is another way to explicitly specify the printqueues
+listed by <CODE>lpq -a</CODE>;
+see the
+<A HREF="LPRng-HOWTO-8.html#allpc">ALL Printcap Entry</A>
+for details.
+<P>Users can set their default printer by using the
+<CODE>PRINTER</CODE> (highest priority),
+<CODE>LPDEST</CODE> (next),
+and
+<CODE>NGPRINTER</CODE> (lowest priority),
+environment variables.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {164} % setenv PRINTER lp2
+h4: {165} % lpq
+Printer: lp2@h4
+ Queue: no printable jobs in queue
+h4: {164} % unsetenv PRINTER
+h4: {165} % lpq
+Printer: lp@h4
+ Queue: no printable jobs in queue
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Finally,
+if you do not use the <CODE>-P printqueue</CODE> or have an environment variable set,
+then the default printer chosen by the system administrator will be used.
+Please see
+<A HREF="LPRng-HOWTO-6.html#printerenv">Printer Name and Server IP Address</A>
+for details.
+<H2><A NAME="ss4.8">4.8 Controlling the Print Queue</A>
+</H2>
+
+<P>You can control the input and output functions of the print queue.
+The
+<CODE>lpc enable</CODE> and
+<CODE>lpc disable</CODE> commands
+control spooling to the print queue and the
+<CODE>lpc stop</CODE> and
+<CODE>lpc start</CODE> commands
+control printing (or transfers) from the print queue.
+There is also a <CODE>lpc status</CODE>
+command that displays administrative status for a print queue.
+<P>Let's look at the status displayed when we use these commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {30} % lpc disable
+Printer: lp@h4
+lp@h4.private: disabled
+h4: {31} % lpq
+Printer: lp@h4  (spooling disabled)
+ Queue: no printable jobs in queue
+h4: {32} % lpc enable
+Printer: lp@h4
+lp@h4.private: enabled
+h4: {33} % lpq
+Printer: lp@h4
+ Queue: no printable jobs in queue
+h4: {34} % lpc stop
+Printer: lp@h4
+lp@h4.private: stopped
+h4: {35} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: no printable jobs in queue
+h4: {36} % lpc start
+Printer: lp@h4
+lp@h4.private: started
+h4: {37} % lpq
+Printer: lp@h4
+ Queue: no printable jobs in queue
+h4: {38} % lpc status
+ Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4               enabled  enabled    0    none    none
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Let's see what happens when we print to a stopped queue:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {79} % lpc stop
+Printer: lp@h4
+lp@h4.private: stopped
+h4: {80} % lpr /tmp/hi
+h4: {81} % lpr /tmp/hi /tmp/there
+h4: {82} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 2 printable jobs
+ Server: no server active
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
+2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30
+h4: {83} % lpc status
+ Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4               disable  enabled    2    none    none
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The status shows that we have two jobs spooled.
+The <CODE>Rank</CODE> field shows the order,
+the <CODE>Owner/ID</CODE> shows the unique job ID that is assigned to the
+job
+and
+the <CODE>Class</CODE> field is the job class (this may be changed with the <CODE>lpr -C class</CODE>
+option).
+The <CODE>Job</CODE> field shows the <I>job number</I> assigned to this job in this
+particular spool queue.
+While the <CODE>ID</CODE> value never changes as a job moves through the LPRng system,
+the <I>job number</I> is specific to a particular spool queue and may change
+if a job is <I>forwarded</I> to another spool queue that has a job with the
+same job number.
+The <CODE>Size</CODE> field is the total number of printable bytes in the job,
+and the <CODE>Time</CODE> field shows the timestamp associated with the job.
+<P>The <CODE>lpq -s</CODE> output is very succinct, and does not show the state of the spool queue:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {51} % lpq -s
+lp@h4  2 jobs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now let's start the print queue and watch what happens.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {83} % lpc start
+Printer: lp@h4
+lp@h4.private: started
+h4: {84} % lpq
+Printer: lp@h4
+ Queue: 2 printable jobs
+ Server: pid 17928 active
+ Unspooler: pid 17929 active
+ Status: opening device '/var/tmp/lp' at 18:14:43.921
+ Rank   Owner/ID                  Class Job Files                 Size Time
+active papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
+2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30
+h4: {85} % lpq -ll
+Printer: lp@h4
+ Queue: 2 printable jobs
+ Server: pid 17928 active
+ Unspooler: pid 17929 active
+ Status: printing job 'papowell@h4+17920' at 18:14:43.921
+ Status: no banner at 18:14:43.921
+ Status: printing data file 'dfA017920h4.private', size 57 at 18:14:43.922
+ Rank   Owner/ID                  Class Job Files                 Size Time
+active papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
+2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>Rank</CODE> value of the first job has been changed to <CODE>active</CODE>
+and there is new <CODE>Status</CODE>
+information.
+If we use <CODE>lpq -ll</CODE>  we can see the times that the various print operations
+are carried out,
+and details of their success or failure.
+<P>We can also use the <CODE>lpq</CODE> command to see the status of a particular job.
+We can select jobs by the user name, the ID, or the job number.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {88} % lpc stop
+Printer: lp@h4
+lp@h4.private: stopped
+h4: {89} % echo hi |lpr
+h4: {90} % echo there | lpr
+h4: {91} % echo test |lpr
+h4: {92} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 3 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
+2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+h4: {93} % lpq 17970
+Printer: lp@h4  (printing disabled)
+ Queue: 3 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+h4: {94} % lpq papowell
+Printer: lp@h4  (printing disabled)
+ Queue: 3 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
+2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+h4: {94} % lpq -s 17970
+lp@h4  1 jobs
+h4: {95} % lpq -s papowell
+lp@h4  3 jobs
+h4: {96} % lpq -s nobody
+lp@h4  0 jobs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Just as we used the <CODE>lpq -Pqueuename</CODE> to select a specific
+print queue,
+and the <CODE>lpq -a</CODE> or <CODE>lpq -Pall</CODE> to select all queues:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {167} % lpc -a stop
+Printer: lp@h4
+lp@h4.private: stopped
+Printer: lp2@h4
+lp2@h4.private: stopped
+h4: {168} % lpc -Pall start
+Printer: lp@h4
+lp@h4.private: started
+Printer: lp2@h4
+lp2@h4.private: started
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Finally,
+you can use the <CODE>lpc</CODE> command in <I>interactive</I> mode:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {170} % lpc
+lpc>status
+ Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4               enabled  enabled    0    none    none
+lpc>status all
+ Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4               enabled  enabled    0    none    none
+lp2@h4              enabled  enabled    0    none    none
+lpc>stop lp
+Printer: lp@h4
+lp@h4.private: stopped
+lpc>start lp
+Printer: lp@h4
+lp@h4.private: started
+lpc>quit
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In the interactive or <I>extended</I> command mode,
+command syntax has the form <B>operation</B> <B>[</B><I>printqueue</I><B>]</B> <I>operands</I>.
+This syntax can also be used on command lines,
+but is less common:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {171} % lpc stop all
+Printer: lp@h4
+lp@h4.private: stopped
+Printer: lp2@h4
+lp2@h4.private: stopped
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss4.9">4.9 Job Removal</A>
+</H2>
+
+<P>Occasionally we print a file
+and then change our mind and want to cancel the job.
+The <CODE>lprm</CODE> command allows us to do this.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {126} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 3 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
+2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+h4: {127} % lprm
+Printer lp@h4:
+  checking perms 'papowell@h4+17959'
+  dequeued 'papowell@h4+17959'
+h4: {128} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 2 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+2      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+h4: {129} % lprm 17970
+Printer lp@h4:
+  checking perms 'papowell@h4+17970'
+  dequeued 'papowell@h4+17970'
+h4: {130} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 1 printable job
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>By default,
+the <CODE>lprm</CODE>
+command removes the first job in the queue that the user has permission to
+remove.
+Also,
+as shown in the example,
+you can remove a job by specifying the job ID or the job number.
+If you specify a user name,
+you remove <B>all</B> of the user's jobs.
+This can be dangerous:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {137} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: 3 printable jobs
+ Server: no server active
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+ Rank   Owner/ID                  Class Job Files                 Size Time
+1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
+2      papowell@h4+18499            A 18499 /tmp/hi                  3 18:56:00
+3      papowell@h4+18501            A 18501 /tmp/there               6 18:56:02
+h4: {138} % lprm papowell
+Printer lp@h4:
+  checking perms 'papowell@h4+17962'
+  dequeued 'papowell@h4+17962'
+  checking perms 'papowell@h4+18499'
+  dequeued 'papowell@h4+18499'
+  checking perms 'papowell@h4+18501'
+  dequeued 'papowell@h4+18501'
+h4: {139} % lpq
+Printer: lp@h4  (printing disabled)
+ Queue: no printable jobs in queue
+ Status: job 'papowell@h4+17922' removed at 18:15:13.981
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The special user <CODE>all</CODE> matches all jobs in a print queue.
+Clearly you should be careful not to specify <CODE>lprm all</CODE> by accident.
+Even more dangerous is the following command:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {139} % lprm -a all
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you might surmise,
+this removes <B>all</B> print jobs in <B>all</B> queues,
+which is an excellent way to purge print queues of all jobs.
+<H2><A NAME="ss4.10">4.10 Basic Filter Configuration</A>
+</H2>
+
+<P>A printer usually understands one or more
+<I>Print Job Languages</I>.
+Files sent to this printer must be in one of these languages
+and have the appropriate
+<I>job format</I>,
+<I>control characters</I>,
+or other information.
+The most common Print Job Languages are
+<A HREF="LPRng-HOWTO-1.html#postscript">PostScript</A>
+and
+<A HREF="LPRng-HOWTO-1.html#pcl">PCL</A>.
+<P>In order for a printer to reliably print a job,
+it needs to be reset to a known configuration.
+This is usually done by sending it a special
+<I>start of job</I>
+and
+<I>end of job</I>
+command.
+These commands differ from printer to printer,
+and even depend on the type of print job language that the print
+job is in.
+Some <I>vintage</I> line printers also have a set of
+proprietary <I>escape sequences</I>
+that are used to set up margins,
+form size,
+and other printing characteristics.
+Usually a
+<I>setup string</I>
+of these escape sequences needs to be sent to the printer before
+the file can be printed.
+<P>In order to handle these problems,
+the LPRng system uses a <CODE>filter</CODE>
+program to provide the set of escape sequences or carry
+out the initialization required for a printer.
+The files in a print job are assigned a
+lower case letter
+<I>format</I>
+using the <CODE>lpr</CODE> format options;
+the de<CODE>f</CODE>ault format is <CODE>f</CODE>.
+The <CODE>l</CODE> (literal or binary) format is used to indicate
+that the file should be passed directly to the printer,
+or have at the most a minimal amount of processing.
+See
+<A HREF="LPRng-HOWTO-13.html#printjobformats">Print Job Formats</A>
+for more information about formats and their use with filters.
+<P>We will set up a very simple filter and use it to demonstrate
+how the <CODE>lpd</CODE> spooler uses it.
+First,
+set up the <CODE>/var/tmp/testf</CODE> file as shown below.
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# /var/tmp/testf - test filter for LPRng
+PATH=/bin:/usr/bin
+echo TESTF $0 "$@" >&amp;2
+while expr "$1" : '-.*' >/dev/null ;  do
+    n=` expr $1 : '-\(.\).*' `;
+    v=` expr $1 : '-.\(.*\)' `;
+    shift;
+    if [ "$n" != 'c' -a -z "$v" ] ; then
+        v=$1;
+        shift;
+    fi
+    eval "$n='$v'";
+done
+echo ENV
+printenv
+echo LEADER
+/bin/cat
+echo TRAILER
+exit 0
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Let us carefully examine the script line by line.
+The first couple of lines are standard <I>boilerplate</I>.
+You should
+<B>always</B>
+set the <CODE>PATH</CODE>
+value in a filter script or use full pathnames.
+This is a good practice
+as it ensures that only the specified directories will be
+searched for commands.
+<P>The next line echos the arguments to file descriptor 2 (STDERR);
+by convention the filter STDERR output is used for error messages
+or important status information.
+We will soon see how this information is displayed by the LPRng software.
+<P>The <CODE>while</CODE> loop is used to extract the option flags and their values.
+All of these but the <CODE>c</CODE> flag have an argument.
+Finally we echo <CODE>LEADER</CODE> to STDOUT,
+then copy STDIN to STDOUT,
+and then echo <CODE>TRAILER</CODE> to STDOUT.
+We then exit with a zero result code.
+<P>Now execute the commands below to test the script:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {50} % chmod 755 /var/tmp/testf
+h4: {51} % echo hi |/var/tmp/testf -a1
+TESTF /var/tmp/testf -a1
+LEADER
+hi
+TRAILER
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Let us put this filter into one of our printcap entries.
+Edit the <CODE>lp</CODE> printcap entry so it has the following form,
+use <CODE>checkpc -f</CODE> to check the printcap,
+and then use <CODE>lpc reread</CODE> to restart the <CODE>lpd</CODE> server
+as we did in previous exercises.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if=/var/tmp/testf
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Execute the following commands
+to print our <CODE>/tmp/hi</CODE> test file file
+and see what changes have occurred in the printing process:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {47} % cp /dev/null /var/tmp/lp
+h4: {48} % lpr /tmp/hi
+h4: {49} % lpq -llll
+Printer: lp@h4
+ Queue: no printable jobs in queue
+ Status: lp@h4.private: job 'papowell@h4+26593' printed at 21:37:21.312
+ Status: job 'papowell@h4+26593' removed at 21:37:21.323
+ Status: subserver pid 26683 starting at 21:39:21.908
+ Status: accounting at start at 21:39:21.908
+ Status: opening device '/var/tmp/lp' at 21:39:21.909
+ Status: printing job 'papowell@h4+26681' at 21:39:21.909
+ Status: no banner at 21:39:21.909
+ Status: printing data file 'dfA026681h4.private', size 3, IF filter 'testf' at
+21:39:21.909
+ Status: IF filter msg - 'TESTF /var/tmp/testf -Apapowell@h4+26681 -CA -D2000-04
+-11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/v
+ar/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 -kcfA026681h
+4.private -l66 -npapowell -sstatus -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct'
+at 21:39:21.914
+ Status: IF filter finished at 21:39:22.070
+ Status: printing done 'papowell@h4+26681' at 21:39:22.070
+ Status: accounting at end at 21:39:22.070
+ Status: finished 'papowell@h4+26681', status 'JSUCC' at 21:39:22.070
+ Status: subserver pid 26683 exit status 'JSUCC' at 21:39:22.072
+ Status: lp@h4.private: job 'papowell@h4+26681' printed at 21:39:22.072
+ Status: job 'papowell@h4+26681' removed at 21:39:22.085
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>cp</CODE> command will clear out the <CODE>/var/tmp/lp</CODE>
+file we are using as a dummy output device.
+Next we use <CODE>lpr</CODE> to print the <CODE>/tmp/hi</CODE> file
+and then use <CODE>lpq -llll</CODE> to see the status information.
+If we look at the status,
+we see that
+the line containing <CODE>IF filter msg</CODE> is the output that
+<CODE>testf</CODE> wrote to STDERR.
+The <CODE>lpd</CODE> server captures filter STDERR
+messages and puts it them in the spool queue status file.
+As we see from the message,
+<CODE>lpd</CODE>
+passes a large number of command line options to our filter.
+These options and their meanings are discussed in detail in
+<A HREF="LPRng-HOWTO-13.html#filtercmd">Filter Command Line Flags</A>,
+but for now we will ignore them.
+<P>Sometimes we want to pass only a small subset of these options,
+or provide them in a specific manner.
+Modify the printcap entry to have the following form:
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if= -$ /var/tmp/testf '$P' $0P -X$-P ${lp} G$%3a
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you redo the previous commands to print our test file
+and examine the status,
+you will discover that the options now are:
+<BLOCKQUOTE><CODE>
+<PRE>
+ Status: IF filter msg - 'TESTF /var/tmp/testf -Plp -P lp -Xlp \
+    -Ylp /var/tmp/lp G:' at 01:20:21.560
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>-$</CODE> suppresses appending the default options to the end
+of the filter command line.
+You can add specific options using the <CODE>$X</CODE> format;
+if the option has a non-null value then it will be expanded in the following
+format:
+<BLOCKQUOTE><CODE>
+<PRE>
+Option    Value Expansion
+$X        -X&lt;value>
+$0X       -X &lt;value>
+$-X          &lt;value>
+${name}   printcap option value
+$%XX      character corresponding to 0xXX
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>You can group options and other values using single
+or double quotes.
+These are used only for grouping and will be removed
+when the command is executed.
+<P>The <CODE>${name}</CODE> format is very handy for passing a filter
+an option value which is set in the printcap.
+For example,
+you may decide to create a new printcap option called <CODE>form</CODE>,
+which will set the form type to be used with this spool queue.
+You can pass it to the filter
+which will then generate the necessary control codes for the printer
+to set the form.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+Example 1:
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if=-$ /var/tmp/testf -F${form},
+  :form=payroll
+....
+ Status: IF filter msg - 'TESTF /var/tmp/testf -Fpayroll, ' at 01:20:21.560
+....
+
+Example 2:
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if=-$ /var/tmp/testf -F '${form}'
+  :form=
+....
+ Status: IF filter msg - 'TESTF /var/tmp/testf -F, ' at 01:20:21.560
+....
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In the second example the <CODE>form</CODE>
+printcap option has a null value,
+which is expanded to a empty string.
+Notice that we have added a comma at the end of the parameter;
+this will protect the parsing of command line options from failure
+if the form value is null.
+Clearly the <CODE>testf</CODE> filter must be ready to deal with
+a comma at the end of the <CODE>-F</CODE> parameter.
+<P>Now lets look at what is in the output file:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {50} % cat /var/tmp/lp
+ENV
+LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
+HOME=/home/daemon
+PRINTCAP_ENTRY=lp
+ :force_localhost
+ :if=/var/tmp/testf
+ :lp=/var/tmp/lp
+ :sd=/var/tmp/LPD/lp
+USER=daemon
+PS1=$ 
+OPTIND=1
+PS2=> 
+SPOOL_DIR=/var/tmp/LPD/lp
+LOGNAME=daemon
+CONTROL=Hh4.private
+ Ppapowell
+ J/tmp/hi
+ CA
+ Lpapowell
+ Apapowell@h4+105
+ D2000-04-12-15:27:26.662
+ Qlp
+ N/tmp/hi
+ fdfA000105h4.private
+ UdfA000105h4.private
+PATH=/bin:/usr/bin:/usr/local/bin
+SHELL=/bin/sh
+LOGDIR=/home/daemon
+PRINTER=lp
+
+LEADER
+hi
+TRAILER
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpd</CODE> server sets the
+<CODE>PRINTER</CODE>,
+<CODE>PRINTCAP_ENTRY</CODE>,
+and
+<CODE>CONTROL</CODE>
+environment variables to the printer name,
+printcap entry, and the control file for the print job.
+This information is very useful to filters that must
+make decisions based on values passed to the print server
+in the control file,
+and which can also use parameters in the printcap entry
+to control their actions.
+We will see how the 
+<CODE>ifhp</CODE> filter makes use of this in a later section.
+<H2><A NAME="ss4.11">4.11 The Jaggies - LF to CR-LF Conversion With lpf</A>
+</H2>
+
+<P>When printing to vintage hard copy devices or to
+printers that support a <I>text</I> mode,
+many UNIX users discover that their output suffers from
+a case of the jaggies.
+<BLOCKQUOTE><CODE>
+<PRE>
+Input file:
+
+  This is
+  a nice day
+
+Output:
+
+  This is
+         a nice day
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>UNIX systems terminate lines with a single <CODE>NL</CODE> (new line) character.
+This causes the printer to move down one line on the printing page
+but does not change its horizontal position
+and print the next character at the left margin.
+This is done by using the <CODE>CR</CODE> (carriage return) character.
+You need to convert the single <CODE>NL</CODE> to a <CODE>CR-LF</CODE>
+combination and the <CODE>lpf</CODE> filter supplied with LPRng does this.
+<P>First,
+locate the <CODE>lpf</CODE> filter.
+It is usually in <CODE>/usr/local/libexec/filters</CODE> directory,
+but this may vary from installation to installation.
+You can find it by using the command:
+<BLOCKQUOTE><CODE>
+<PRE>
+find / -type f -name lpf -print
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>We will first see what the output is like without
+<CODE>lpf</CODE>,
+and then see what it does.
+Modify the <CODE>lp</CODE> printcap entry as shown below
+and then use <CODE>lpc restart</CODE>
+to restart the <CODE>lpd</CODE> server.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Print a file and view the output using the following
+commands.
+If you do not have the <CODE>od</CODE> (octal dump) program,
+try using <CODE>hexdump</CODE> or some other appropriate program
+that displays the numerical contents of the file.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {134} % cp /dev/null /var/tmp/lp
+h4: {135} % lpr /tmp/hi
+h4: {136} % od -bc /var/tmp/lp
+0000000  150 151 012
+           h   i  \n
+0000003
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now we will use the <CODE>lpf</CODE> filter.
+Modify the printcap as shown below
+and use <CODE>lpc lpd</CODE> to restart <CODE>lpd</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  # modify the path to lpf appropriately
+  :if=/usr/local/libexec/filters/lpf
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now reprint the file:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {141} % cp /dev/null /var/tmp/lp
+h4: {142} % lpr /tmp/hi
+h4: {143} % od -bc /var/tmp/lp
+od -bc /var/tmp/lp
+0000000  150 151 015 012
+           h   i  \r  \n
+0000004
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you see,
+<CODE>lpf</CODE> changes the LF to a <CODE>CR-LF</CODE> sequence.
+<H2><A NAME="ss4.12">4.12 Introducing the ifhp filter</A>
+</H2>
+
+<P>The companion
+<CODE>ifhp</CODE> print filter is used with the LPRng to provide
+hardware level support for PostScript, PCL, text, and other printers.
+It provides diagnostic and error information as well as
+accounting information.
+Obtain the latest or stable version of the <CODE>ifhp</CODE> filter source code from a
+<A HREF="LPRng-HOWTO-1.html#secftp">LPRng FTP Site</A>.
+Normally,
+<CODE>ifhp</CODE> is installed together with the LPRng software.
+<P>The
+<A HREF="LPRng-HOWTO-1.html#postscript">PostScript</A>
+and
+<A HREF="LPRng-HOWTO-1.html#pcl">PCL</A>
+printer job languages are supported by most printer manufacturers.
+However,
+in order to have a job printed correctly the following steps must be taken.
+<UL>
+<LI>The printer must be put into a known state by sending it the appropriate
+reset strings.</LI>
+<LI>If accounting is being done,
+then the printer accounting information must be obtained
+and recorded.
+See
+<A HREF="LPRng-HOWTO-15.html#accountingref">Accounting</A>
+for more information on LPRng support for accounting.</LI>
+<LI>The file to be printed must be checked to see if it is
+compatible with the printer,
+and if not,
+a format conversion program invoked to convert it to
+the required format.</LI>
+<LI>If the user selects a set of printer specific options such
+as
+landscape mode,
+duplex printing,
+multiple copies,
+or
+special paper,
+the <CODE>ifhp</CODE> filter sends the appropriate commands to the
+printer to select these options.</LI>
+<LI>The file is transferred to the printer and the printer is monitored
+for any error conditions.</LI>
+<LI>In order to ensure that the job prints,
+the required end of job commands are sent to the printer.</LI>
+<LI>If accounting is being done,
+the printer accounting information must be obtained
+and recorded.</LI>
+</UL>
+<P>The <CODE>ifhp</CODE> filter uses the <CODE>ifhp.conf</CODE> database file
+to determine the actions and commands
+appropriate for various models of printers.
+See the <CODE>ifhp</CODE> documentation for details about the
+format and contents of this file.
+The default printer used by the
+<CODE>ifhp</CODE> filter is the HP LaserJet 4M Plus,
+which supports PostScript,  PCL, and PJL.
+These defaults will also support a very wide variety of printers
+that support both PostScript and PCL.
+<P>Now we will use the <CODE>ifhp</CODE> filter.
+Find the path to the <CODE>ifhp</CODE> filter using the
+<CODE>find</CODE> command as we did in the previous exercise.
+Modify the printcap as shown below
+and use <CODE>lpc lpd</CODE> to restart <CODE>lpd</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  # modify the path to ifhp appropriately
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now reprint the file,
+and then display <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {141} % cp /dev/null /var/tmp/lp
+h4: {142} % lpr /tmp/hi
+h4: {143} % vi /var/tmp/lp
+^[%-12345X@PJL
+@PJL JOB NAME = "PID 405" DISPLAY = "papowell"
+@PJL RDYMSG DISPLAY = "papowell"
+@PJL USTATUSOFF
+@PJL USTATUS JOB = ON
+@PJL USTATUS DEVICE = ON
+@PJL USTATUS PAGE = ON
+@PJL USTATUS TIMED = 10
+@PJL ENTER LANGUAGE = PCL
+^]E^]&amp;^]&amp;k2G^]&amp;s0C^]&amp;l0O^]9^](s0P^](s10.00H^](s4099Thi
+^]E^]%-12345X@PJL
+@PJL RDYMSG DISPLAY = "papowell"
+@PJL EOJ NAME = "PID 405"
+@PJL USTATUSOFF
+@PJL USTATUS JOB = ON
+@PJL USTATUS DEVICE = ON
+@PJL USTATUS PAGE = ON
+@PJL USTATUS TIMED = 10
+@PJL RDYMSG DISPLAY = ""
+^[%-12345X
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The output now contains all of the control sequences and setup
+codes needed to print a text file on the printer.
+For details on the exact meaning of each of these entries,
+see the
+<A HREF="LPRng-HOWTO-1.html#pcl">PCL</A>
+and
+<A HREF="LPRng-HOWTO-1.html#pjl">PJL</A>
+documentation.
+<H2><A NAME="ss4.13">4.13 PostScript Printer and the ifhp filter</A>
+</H2>
+
+<P>There are some printers that only support PostScript.
+We will show how to configure the <CODE>ifhp</CODE>
+filter to recognize this.
+First,
+create the <CODE>/tmp/one.ps</CODE> PostScript file:
+<BLOCKQUOTE><CODE>
+<PRE>
+%!PS-Adobe-3.0
+%% one page (i.e. - a page with a 1 on it)
+/Courier
+findfont 200 scalefont setfont
+72 300 moveto
+(1) show
+showpage
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This PostScript file starts with the standard PostScript
+header -
+<CODE>%!</CODE> or the acceptible alternative
+<CODE>\004%!</CODE>.
+If a PostScript file does not start with either of these
+two character sequences,
+the printer may behave in unexpected ways.
+The <CODE>ifhp</CODE> filter will check to make sure that
+the file starts with these sequences.
+<P>Modify the printcap as shown below
+and use <CODE>lpc lpd</CODE> to restart <CODE>lpd</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  # modify the path to ifhp appropriately
+  :ifhp=model=ps
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now print the file <CODE>/tmp/one.ps</CODE>,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {141} % cp /dev/null /var/tmp/lp
+h4: {142} % lpr /tmp/one.ps
+h4: {143} % vi /var/tmp/lp
+^D%!
+%!PS-Adobe-3.0
+%% one page (i.e. - a page with a 1 on it)
+%%/Times-Roman
+/Courier
+findfont 200 scalefont setfont
+72 300 moveto
+(1) show
+showpage
+^D
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you can see,
+the PostScript
+<CODE>^D</CODE> (Control-D or <CODE>\004</CODE>) End of Job characters have been
+prefixed and appended to the file.
+This will ensure that the job will be handled properly by
+the printer.
+<H2><A NAME="ss4.14">4.14 PCL Printer and the ifhp filter</A>
+</H2>
+
+<P>While PostScript is the most widely support Print Job Language,
+there are large number of printers that support only PCL.
+The <CODE>ifhp</CODE> filter has support for a PCL only printer.
+<P>Modify the printcap as shown below
+and use <CODE>lpc lpd</CODE> to restart <CODE>lpd</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  # modify the path to ifhp appropriately
+  :ifhp=model=pclonly
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now print the file <CODE>/tmp/hi</CODE>,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {141} % cp /dev/null /var/tmp/lp
+h4: {142} % lpr /tmp/hi
+h4: {143} % vi /var/tmp/lp
+^]E^]&amp;^]&amp;k2G^]&amp;s0C^]&amp;l0O^]9^](s0P^](s10.00H^](s4099Thi
+^]E
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The output now contains the necessary PCL
+start of job,
+format setup,
+and 
+end of job sequences
+needed to print on a PCL printer.
+<H2><A NAME="ss4.15">4.15 Using GhostScript for Format Conversion</A>
+</H2>
+
+<P>A major cost in a low end printer printer is the
+microprocessor and memory which converts PCL or PostScript
+to a raster image.
+Most low end printers have the rasterization done on a
+users computer by a <I>print driver</I> program or utility,
+and then the raster image is transferred to the printer.
+The raster image is usually in a proprietary format.
+<P>If you have a PostScript file and want to print it on
+one of these printers then you will need to use
+<A HREF="LPRng-HOWTO-2.html#ghostscript">GhostScript</A>
+or a similar program to do the conversion.
+The following example shows one way to use GhostScript
+with LPRng and is presented for instructional purposes.
+It is <B>not</B> recommended method;
+please consult the <CODE>ifhp</CODE>
+documentation for a more robust method that
+handles text files and other non-PostScript files correctly.
+<P>Suppose that we have an HP DeskJet 660C printer
+and want to print PostScript files.
+Enter the following command to see what devices
+your version of GhostScript is configured for.
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {349} % gs --help
+GNU Ghostscript 5.10 (1998-12-17)
+Copyright (C) 1997 Aladdin Enterprises, Menlo Park, CA.  All rights reserved.
+Usage: gs [switches] [file1.ps file2.ps ...]
+Most frequently used switches: (you can use # in place of =)
+ -dNOPAUSE           no pause after page   | -q       `quiet', fewer messages
+ -g&lt;width>x&lt;height>  page size in pixels   | -r&lt;res>  pixels/inch resolution
+ -sDEVICE=&lt;devname>  select device         | -dBATCH  exit after last file
+ -sOutputFile=&lt;file> select output file: - for stdout, |command for pipe,
+                                         embed %d or %ld for page #
+Input formats: PostScript PostScriptLevel1 PostScriptLevel2 PDF
+Available devices:
+   x11 x11alpha x11cmyk x11mono sxlcrt ap3250 appledmp bj10e bj200 bjc600
+   bjc800 cdeskjet cdjcolor cdjmono cdj500 cdj550 cp50 declj250 deskjet
+   djet500c dnj650c epson eps9mid eps9high epsonc ibmpro imagen iwhi iwlo
+   iwlq jetp3852 laserjet la50 la70 la75 la75plus lbp8 lips3 ln03 lj250
+   ljet2p ljet3 ljet3d ljet4 lj4dith ljetplus lp2563 m8510 necp6 oce9050
+   oki182 paintjet pj pjetxl pjxl pjxl300 r4081 sj48 st800 stcolor t4693d2
+   t4693d4 t4693d8 tek4696 xes dfaxhigh dfaxlow faxg3 faxg32d faxg4 tiffcrle
+   tiffg3 tiffg32d tiffg4 bmpmono bmp16 bmp256 bmp16m cgmmono cgm8 cgm24 cif
+   mgrmono mgrgray2 mgrgray4 mgrgray8 mgr4 mgr8 pcxmono pcxgray pcx16 pcx256
+   pcx24b psmono pbm pbmraw pgm pgmraw pgnm pgnmraw pnm pnmraw ppm ppmraw
+   sgirgb tifflzw tiffpack tiff12nc tiff24nc bit bitrgb bitcmyk pngmono
+   pnggray png16 png256 png16m pdfwrite nullpage
+Search path:
+   . : /usr/share/ghostscript/5.10 :
+   /usr/share/ghostscript/fonts
+For more information, see /usr/share/ghostscript/5.10/doc/use.txt.
+Report bugs to ghost@aladdin.com; use the form in bug-form.txt.
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next we consult the GhostScript printer support documentation
+at 
+<A HREF="http://www.cs.wisc.edu/~ghost/printer.html">http://www.cs.wisc.edu/~ghost/printer.html</A>
+or the documentation shipped with the GhostScript distribution
+and find that the <CODE>cd550</CODE> driver supports
+a wide range of printers:
+<BLOCKQUOTE><CODE>
+<PRE>
+cdj550 
+  HP DeskJet 550C (3.53) 
+  HP DeskJet 560C (3.53) 
+  HP DeskJet 600 (5.10) black (1bit/pixel) and colour (32bit/pixel) 
+  HP DeskJet 660C (3.53) 
+  HP DeskJet 660C (5.10) 
+  HP DeskJet 682C (4.01) Use gamma=0.3 
+  HP DeskJet 683C (3.33, 4.03) 
+  HP DeskJet 693C (4.03) 24bit/pixel Is this a CMY or a CMYK printer?
+    Probably CMYK in which case 32bit/pixel can be used. 
+  HP DeskJet 694C (5.03) Works in colour. 690C, 692C, 693C and 694C
+     are all software variations. 
+  HP DeskJet 695C (5.50) Works in colour. 
+  HP DeskJet 850 (3.53) 300dpi CMYK (32bit/pixel) See also cdj850. 
+  HP DeskJet 870Cse (4.03) (16 or 32 bits/pixel) Use ljet4 device for B/W.
+     See also cdj850. 
+  HP DeskJet 895Cxi (5.03, 5.50) Does not work with cdj850. 
+  HP DeskJet 970 (5.50) Some pages contain small black boxes,
+     lines or missing characters. 
+  HP OfficeJet 590 (5.50) 
+  Olivetti jp450 (5.50) 
+  Xerox XJ6C (5.50) 
+  May work with other HP Colour DeskJet printers that use a CMYK ink cartridge.
+  Any printer that works with this device will probably work in black and white
+    with djet500 and cdjmono. 
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Create the <CODE>/tmp/testgs</CODE> file with the following contents:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# /tmp/testgs - set the path to gs (GhostScript) appropriately
+exec /usr/bin/gs -q -dSAFER -dBATCH -sDEVICE=cdj550 -sOutputFile=- -
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Run the following commands to convert the <CODE>/tmp/one.ps</CODE>
+file
+and view the output with a text editor:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {351} % /tmp/testgs &lt;/tmp/one.ps &gt;/tmp/out.img
+h4: {352} % vi /tmp/out.img
+^[*rbC^[*t300R^[&amp;l2aolE^[*o1d2Q....
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Modify the <CODE>lp</CODE> printcap as shown below,
+and use <CODE>lpc reread</CODE> to restart the server.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if=/tmp/testgs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Print the file <CODE>/tmp/one.ps</CODE>,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {141} % cp /dev/null /var/tmp/lp
+h4: {142} % lpr /tmp/one.ps
+h4: {143} % vi /var/tmp/lp
+^[*rbC^[*t300R^[&amp;l2aolE^[*o1d2Q....
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss4.16">4.16 Using Printcap Options In Filter Scripts</A>
+</H2>
+
+<P>In the previous section we saw how to set up a
+filter shell script
+so that we could convert PostScript files.
+We can modify this script to extract information from the
+<CODE>PRINTCAP</CODE> environment variable,
+and make our script much more powerful.
+<P>Modify the <CODE>/tmp/testgs</CODE> script from the previous
+example so that it contains:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# /tmp/testgs - set the path to gs (GhostScript) appropriately
+device=`echo $PRINTCAP_ENTRY \
+  |/usr/bin/sed -n 's/.*:device=\(.*\)/\1/p' `
+if [ "X$device" = "X" ] ; then device=epson; fi
+# print the device value for status information
+echo DEVICE $device >&amp;2
+exec /usr/bin/gs -q -dSAFER -dBATCH -sDEVICE=$device -sOutputFile=- -
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Modify the <CODE>lp</CODE> printcap as shown below,
+and use <CODE>lpc reread</CODE> to restart the server.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :if=/tmp/testgs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Print the file <CODE>/tmp/one.ps</CODE>,
+display the <CODE>lpq</CODE> status as shown below,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {146} % cp /dev/null /var/tmp/lp
+h4: {147} % lpr /tmp/one.ps
+h4: {148} % lpq
+ ....
+ Status: IF filter msg - 'DEVICE cdj550' at 20:31:34.386
+
+h4: {143} % vi /var/tmp/lp
+^[*rbC^[*t300R^[&amp;l2aolE^[*o1d2Q....
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Using this technique you can use one <CODE>filter script</CODE>
+to handle a wide variety of printers.
+This is essentially the method used by the
+<CODE>ifhp</CODE> filter to determine the printer type.
+<H2><A NAME="ghostscriptconfig"></A> <A NAME="ss4.17">4.17 GhostScript and ifhp</A>
+</H2>
+
+<P>While the previous method is useful when only PostScript files
+are being printed,
+it is not very robust.
+The <CODE>ifhp</CODE> filter provides the
+<CODE>ghostscript</CODE> printer configuration
+which can be used as shown below.
+The <CODE>ifhp</CODE> filter will invoke GhostScript with the
+indicated options
+and handle errors and setup in an appropriate manner.
+The <CODE>a2ps</CODE> program is used to do text to PostScript conversion
+in this configuration.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :ifhp=model=ghostscript,device=epson,resolution=-r240x72
+  # gs ... -sDEVICE=$device $resolution ...
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Modify the <CODE>lp</CODE> printcap as shown below,
+and use <CODE>lpc reread</CODE> to restart the server.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:sd=/var/spool/lpd/%P
+  :force_localhost
+  :lp=/var/tmp/lp
+  :ifhp=model=ghostscript,device=cdj550
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Print the file <CODE>/tmp/one.ps</CODE>,
+display the <CODE>lpq</CODE> status as shown below,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {146} % cp /dev/null /var/tmp/lp
+h4: {147} % lpr /tmp/one.ps
+h4: {148} % lpq
+ ....
+ Filter_status: initial job type 'POSTSCRIPT' at 03:50:38.141
+ Filter_status: job type 'raw', converter '/usr/bin/gs
+   -dSAFER -dBATCH -q -sDEVICE=cdj550 -sOutputFile=- - ' at 03:50:38.141
+ Filter_status: started converter '/usr/bin/gs
+   -dSAFER -dBATCH -q -sDEVICE=cdj550 -sOutputFile=- - ' at 03:50:38.146
+ Filter_status: converter done, output 1251 bytes at 03:50:38.790
+
+h4: {143} % vi /var/tmp/lp
+^[*rbC^[*t300R^[&amp;l2aolE^[*o1d2Q....
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Next, print the file <CODE>/tmp/hi</CODE>,
+display the <CODE>lpq</CODE> status as shown below,
+and then display the output in <CODE>/var/tmp/lp</CODE>
+using a text editor such as <CODE>vi</CODE> or <CODE>emacs</CODE> that shows
+control characters:
+<BLOCKQUOTE><CODE>
+<PRE>
+h4: {146} % cp /dev/null /var/tmp/lp
+h4: {147} % lpr /tmp/hi
+h4: {148} % lpq
+ ....
+ Filter_status: job type 'raw', converter
+  '/usr/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+  | /usr/bin/gs -dSAFER -dBATCH -q
+    -sDEVICE=cdj550 -sOutputFile=- - ' at 03:52:12.423
+ Filter_status: started converter
+  '/usr/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+  | /usr/bin/gs -dSAFER -dBATCH -q
+    -sDEVICE=cdj550 -sOutputFile=- - ' at 03:52:12.426
+ Filter_status: converter done, output 183 bytes at 03:52:13.206
+
+
+h4: {143} % vi /var/tmp/lp
+^[*rbC^[*t300R^[&amp;l2aolE^[*o1d2Q....
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As shown by the <CODE>lpq</CODE> status above,
+the <CODE>a2ps</CODE> program was invoked to convert a text file
+into PostScript,
+which was then rasterized by GhostScript.
+<HR>
+<A HREF="LPRng-HOWTO-5.html">Next</A>
+<A HREF="LPRng-HOWTO-3.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc4">Contents</A>
+</BODY>
+</HTML>

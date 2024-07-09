@@ -1,0 +1,84 @@
+.\"     BSDI    wcscat.3,v 2.1 1997/12/09 21:42:33 prb Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd December 8, 1997
+.Dt WSTRING 3
+.Os
+.Sh NAME
+.Nm wcscat ,
+.Nm wcschr ,
+.Nm wcscmp ,
+.Nm wcscpy ,
+.Nm wcscspn ,
+.Nm wcsftime ,
+.Nm wcslen ,
+.Nm wcsncat ,
+.Nm wcsncmp ,
+.Nm wcsncpy ,
+.Nm wcspbrk ,
+.Nm wcsrchr ,
+.Nm wcsspn ,
+.Nm wcswcs
+.Nd standard string operations on wide-character strings
+.Sh SYNOPSIS
+.Fd #include <wchar.h>
+.Ft wchar_t *
+.Fn wcscat "wchar_t *ws1, wchar_t *ws2"
+.Ft wchar_t *
+.Fn wcschr "wchar_t *ws1, wchar_t wc"
+.Ft int
+.Fn wcscmp "wchar_t *ws1, wchar_t *ws2"
+.Ft wchar_t *
+.Fn wcscpy "wchar_t *ws1, wchar_t *ws2"
+.Ft size_t
+.Fn wcscspn "wchar_t *ws1, wchar_t *ws2"
+.Ft size_t
+.Fn wcsftime "wchar_t *wcs, size_t maxsize, char *format, struct tm *timeptr"
+.Ft size_t
+.Fn wcslen "wchar_t *ws"
+.Ft wchar_t *
+.Fn wcsncat "wchar_t *ws1, wchar_t *ws2, int n"
+.Ft int
+.Fn wcsncmp "wchar_t *ws1, wchar_t *ws2, int n"
+.Ft wchar_t *
+.Fn wcsncpy "wchar_t *ws1, wchar_t *ws2, int n"
+.Ft wchar_t *
+.Fn wcspbrk "wchar_t *ws1, wchar_t *ws2"
+.Ft wchar_t *
+.Fn wcsrchr "wchar_t *ws1, wchar_t wc"
+.Ft size_t
+.Fn wcssspn "wchar_t *ws1, wchar_t *ws2"
+.Ft wchar_t *
+.Fn wcswcs "wchar_t *ws1, wchar_t wc"
+.Sh DESCRIPTION
+These wide-character (wcs) routines are analogous to the narrow-character
+.Dq str
+routines.
+Please see the manual pages for the 
+.Dq str
+routines for a description of these operations.
+The analogous
+.Dq str
+routine name is determined by replacing all occurrences of the string
+.Dq wcs
+with
+.Dq str
+in the name (e.g.,
+.Nm wcschr
+becomes
+.Nm strchr
+and
+.Nm wcswcs
+becomes
+.Nm strstr ) .
+Rather than operating on narrow-character (char *) strings,
+these routines operate on wide-character (wchar_t *) strings.
+When an individual character is passed as an argument it is
+a wide-character (wchar_t) rather than a narrow-character (char).
+All sizes are returned as the number of wide-characters and not
+as the number of bytes.
+.Sh SEE ALSO
+.Xr string 3

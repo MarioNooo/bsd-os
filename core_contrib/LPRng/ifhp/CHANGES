@@ -1,0 +1,699 @@
+Version 3.3.11 Thu Apr 13 01:59:31 PDT 2000
+
+  Model configuration selection:
+    The ifhp.conf information is first scanned for the 'default'
+    model information,  and then for model specific information.
+    This allows you to add new 'default' values to the end of
+    the ifhp.conf file and have them override the supplied
+    ifhp.conf file.
+    For example:
+       #ifhp.conf - default
+       forceconvesion@
+       ...  more default values
+       [ hp3* ]
+        ....  values specific to hp3*
+
+       #--- end of the supplied stuff
+       # user supplies this
+       [ default ]
+       # overrides default forceconversion
+       forceconversion
+       [ hp3* ]
+       # overrides hp3* values
+
+  Makefile:  install -s on some system does now work with
+    with script files,  so Makefile changed to accomodate this.
+
+  You can now use key += value to append.  for example:
+    key = [ this that ]
+    key += [ the other ]
+      ->  [ this that the other ]
+    key = value
+    key += newvalue
+      -> value newvalue
+    key +=
+      on a line
+      -> value newvalue
+        on a line
+
+    You want to you can now add stuff to an existing entry.
+    This makes things like the following possible:
+    [ xx* ]
+    key = [ basic ]
+    [ xx1 ]
+    key += [ morefor1 ]
+    [ xx2 ]
+    key += [ morefor2 ]
+
+  The 'a2ps', 'enscript', and similar programs may exit with bogus
+    error codes if they need to wrap lines, change fonts, etc.
+    The use of a 'wrapper' script is documented in the ifhp.conf
+    file and the HOWTO.
+
+  The -Zstartpage=xxx and -Zendpage=xxx options were not implemented
+    and documented correctly.
+    (Patch by: Ingo Jauer <ij@math.uni-bremen.de>)
+
+  Makefile.in did not have $(SRC)/ifhp.conf.template
+   (Noted by: Bill Kamp <wdkamps@srpnet.com>)
+  Makefile did not remove some files created during configure
+   (Patch by:  George Lindholm <George.Lindholm@ubc.ca>)
+  Fixed a problem with SIGCHLD handler - now sets the SIG_DFL
+  Modified the 'Do_waitend' code to better handle appsocket and
+   other printers that return strange error status.
+  Modified the 'End_ctrl_t' option so that end_ctrl_t@ suppresses
+   the use of CTRL_T to obtain status information.
+  The Process_OF code did not reset the nonblocking mode of the
+   output descriptor after restarting.  This could be a problem
+   for devices that do not return status on time.
+  The amount and size of files printed is now a double, making
+   the progress when printing 2GByte files correctly reported.
+   Amazing,  the size of files that people print...
+  There was a very strange behavior of list variables that caused
+   a memory leak.  If you had:
+     xx=testxx
+     pjl_yy=testyy
+     pjl_nn=[  v\%s{xx}=value v\%s{yy}=value ]
+    then the variable would be set to: 
+       v\%s{xx} -> vtestxx (look up xx first, then pjl_xx)
+       v\%s{yy} -> vtestyy (look up yy first, then pjl_yy)
+    so you get the effect of:
+     pjl_nn=[  vtestxx=value vtestyy=value ]
+   This behavior has been modified to restrict the expansion to
+     keys appearing in a list ( [ ... ]).
+   I don't have the faintest idea why this was in the code,  and
+   it appears to be a development coprolite.
+  Read_write_timeout() code has been Turkey Proofed.  Now
+   will exit with nasty message when called with inconsistent
+   parameters.
+  The Process_OF code was modified in order to make it more readable.
+  A more rigorous check for option appsocket and a missing dev=
+   option was put in.  A malformed printcap file prompted this check.
+  Bad coding with the 'banner' stuff once more revisted.  Arrgghh...
+   history and compatiblity is ugly.  The problem here is trying
+   to be compatible with older releases of LPRng.
+    -- we should have LPRng generate banners
+    -- need to generate banners based on printer type
+    -- thus ifhp needs a 'banner generation' mode
+          bp=/..../ifhp -Tbanner_only
+          bp=/..../banner  -> symlink to ifhp
+  Put the PostScript banner into the code.  This solves a nasty problem
+   of trying to put all of the executables and support files into place
+   on various systems.
+  Added a 'set nonblocking' call at the start of the program
+   to make sure that write will be done correctly.
+  Did not terminate argv[] array with 0, caused execve problems.  Also
+   fixed up '/bin/sh -c' passing of converters
+  The ARGV, ZOPTS, and TOPTS were not being passed to converters correctly.
+   (Discovered by: Johan Claesson <Johan.Claesson@uab.ericsson.se>)
+
+  The lookup code for parameters, etc., was using 'strcasecmp' rather than
+    'strcmp'.  This had the effect of folding options with names such as
+    A4 and a4 to the same entry.  The code has been modified so that
+    we lowercase the -Z and -T stuff, and lowercase strings where they
+    are used to initialize a lookup table.  I wonder where my mind was at
+    when I decided to make name lookup case insensitive.  Never again!
+    Bad BAD idea.  This is OK for user interface options,  but HORRIBLE
+    for internal lookups.
+   (Original discrepancy noted by:  Willi Burmeister <wib@cs.uni-kiel.de>)
+  For some very odd reason I was adding the ARGV arguments to the
+   accounting information.  This caused problems when a -T argument was
+   passed as the first -T argument was the elapsed time.
+  The \%s{name} lookup was not looking in the -Zopts for values.
+  Moved the 'ps_sync' and 'ps_asynch' entries in the ifhp.conf.template
+   to the defaults area so that other models can use them.
+  The close_on_exec() code failed on systems where the number of
+   file descriptors returned by getdtablesize(0 was bogus.  Used the
+   Get_max_fd() code.  Oh, for a 'max open fd' call...
+
+  Removed banner printing ENTIRELY.  Banner printing support is
+   now done by LPRng.  Should have done this LONG ago.  Breaking
+   point reached when 'ld' string was used and this broke banner
+   printing.  Grrr... 
+
+  Added a 'make UPDATE=yes' to allow make to write a new ifhp.conf file.
+
+  Fix up the format conversion program specification so that you can use
+   \%s{name} parameters in the program list:
+
+     file_output_match = [
+       *pcl*        pcl \%s{pcl_converter}
+       *ps*         ps  \%s{ps_converter}
+       *postscript* ps  \%s{ps_converter}
+       *pjl*        pjl \%s{pjl_converter}
+      ]
+
+     device=epson
+     resolution=-r240x72
+	 ps_converter= [ /usr/contrib/bin/gs -dSAFER -dBATCH -q -sDEVICE=\%s{device}
+		\%s{resolution} -sOutputFile=- -
+	  ]
+
+   Added a 'ghostscript' device as well:
+
+	# PRINTER gs_support - Printer with GhostScript conversion
+	[ ghostscript ]
+	pcl@
+	pjl@
+	ps
+	text
+
+	# device=epsonc
+    # resolution=-r240x72
+	ps_converter= [ /usr/contrib/bin/gs -dSAFER -dBATCH -q -sDEVICE=\%s{device}
+	   \%s{resolution} -sOutputFile=- -
+	 ]
+	text_converter= [ /usr/contrib/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+	  | \%s{ps_converter}
+	 ]
+
+	file_output_match = [
+	  *postscript*  raw  \%s{ps_converter}
+	#  if your printer has PCL, use:
+	  *text*  raw  \%s{text_converter}
+	  ]
+   This allows you to use a printcap with:
+
+    lp:
+      :lp=xxxx
+      :ifhp=model=ghostscript,device=epsonc,resolution=-r240x72
+      :if=/usr/local/libexec/filters/ifhp
+
+
+Version 3.3.10 Sun Oct 24 16:05:55 PDT 1999
+
+  Updated 3.3.9 Change information with missing stuff.
+
+  When using appsocket protocol,  the of filter was not opening the
+  status file correctly and was sending junk to the printer.
+  (Spotted by: John McCash <johnmc@rsch.comm.mot.com>)
+
+  HP5SiMx (hp5simx) and similar printers with paper tray selection
+   You should be aware that some HP and other manufacturers
+  have a 'paper size' selection which OVERRIDES the normal tray
+  selection.  If you are printing PostScript,  then by default
+  the paper size is 'letter' and you will get paper fed from the
+  tray with 'letter' paper in it.  If you have a4 or some other
+  size you may get interesting results.  You should experiment with
+  the various selection commands to determine if you need to have
+  upper/lower or letter/ledger (a4/ledger) selection.  Very nasty,
+  this.
+    (Experimental results by:  John McCash <johnmc@rsch.comm.mot.com>)
+   
+  The -c (binary) flag was not setting any values and
+  the RAW file type was not being handled correctly.
+  (Reported by: Pavel Lisy <pali@tmapy.cz>)
+
+  The 'file_output_match' value may now have the form '<pathname';
+  the specified pathname will be opened and the contents used
+  as the value of the match information.
+
+  If the conversion filter specification contains the '|', '<', or
+  '>' meta characters separated by single spaces,  then the filter
+  is invoked using '/bin/sh -c "filter" This change allows us to
+  put a pipe or other item in the filter specification.   Needless
+  to say,  it also opens gaping security holes as well,  so the
+  system adminstrator is warned to be careful.
+
+Example:  (Note: lines have been broken for convenience -
+  all conversion filter specification must be on a single line):
+
+file_output_match = [
+ # invoked via execve
+ *postscript*  raw \
+    gs -sDEVICE=epson \
+        -sOutputFile=- -sPAPERSIZE=letter -q -
+ # invoked via /bin/sh -c
+ *text*  raw \
+    /usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o- | \
+    gs -sDEVICE=epson \
+ 	   -sOutputFile=- -sPAPERSIZE=letter -q -
+]
+
+OR
+file_output_match = </usr/local/etc/ifhp.match
+
+and /usr/local/etc/ifhp.match contains:
+
+ # invoked vi execve
+ *postscript*  raw \
+    gs -sDEVICE=epson \
+        -sOutputFile=- -sPAPERSIZE=letter -q -
+ # invoked via /bin/sh -c
+ *text*  raw \
+    /usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o- | \
+    gs -sDEVICE=epson \
+ 	   -sOutputFile=- -sPAPERSIZE=letter -q -
+
+  Set SO_KEEPALIVE on sockets in order to try to handle defective TCP/IP
+  implementations that do not handle connection RST correctly.
+
+Version 3.3.9 Tue Sep 14 11:59:14 PDT 1999
+
+  ---- Missing information from the Change Log
+  *** WARNING:  configure strikes again
+  ***
+  *** ifhp.conf default location now
+  ***  /usr/local/etc/ifhp.conf
+  *** ifhp default location now
+  ***  /usr/local/libexec/filters/ifhp.conf
+  ***
+
+  Why?  Because when trying to port this to XxxxBSD, BSDI, Solaris,
+  SunOS, HPUX, DGUX,  etc etc etc I have run into so many inconsistencies
+  that I have just given up.
+
+  You might as well assume that the following is true for a default install.
+
+  Updated configuration to be a little more consistent with other packages
+   default installation directories:
+     ${prefix}  is usually /usr/local
+     ${libexecdir} is usually ${prefix}/libexec (/usr/local/libexec)
+     ${sysconfdir} is usually ${prefix}/etc (/usr/local/etc)
+     ${mandir} is usually ${prefix}/man     (/usr/local/man)
+
+   We install the executables in:
+     ${libexecdir}/filters/ifhp
+     ${sysconfdir}/ifhp.conf
+     ${mandir}/ man pages
+
+   Suppose you wanted to put them in /usr/libexec/filters, and /etc:
+     configure --prefix=/usr --sysconfdir=/etc
+
+  ---
+
+
+  Updated 'banner printing checking'
+  There was a strange OF mode interaction between banner printing,
+  leaders,  and flushing buffers.  This is a pain,  but here it is:
+
+  a) if you want to have LPRng or the print spooler generate the banner,
+     then you MUST:
+
+      1. in ifhp.conf set banner@
+         DO NOT examine input string for a 'generate banner line'
+         Note that banner@ is the default.
+      2. You can now generate a leader line (ld=\f\n)
+      3. You can now generate banners using the :bp=/banner/printing/program/path
+
+     THIS IS THE ASSUMED DEFAULT CONFIGURATION FOR LPRng and IFHP
+
+  b)  if you want to use ifhp for banner generation you MUST:
+      1. in ifhp.conf set banner or banner=(ps|pcl|text) - i.e.-
+         examine input string for a 'generate banner line'
+         Note that banner@ is the default
+      2. in printcap set :sh@:sb   - i.e. - turn 'suppress header OFF' and
+         'short_banner' on.  Note that :sh@:sb is the default
+      3. DO NOT GENERATE A LEADER STRING  :ld=    (default)
+      4. DO NOT HAVE A BANNER PRINTER PROGRAM :bp=   (default)
+
+  c)  You can use ifhp to act as a banner printing program by using:
+
+      :bp=/.../ifhp -Tbanner_only                   (uses first available type)
+      :bp=/.../ifhp -Tbanner_only=(ps|pcl|text)     (uses specified type)
+
+      Also,  /..../banner is a symbolic link to /.../ifhp, so you can use
+      :bp=/.../banner                               (uses first avaiable type)
+      :bp=/.../banner -Tbanner_only=(ps|pcl|text)   (uses specified type)
+
+      Note that the effect of invoking ifhp with the name 'banner'
+      is effectively the same as invoking it with the 'banner_only' flag.
+      In fact,  it IS the same :-)
+
+  Added 'no_udp_monitor' for the Appsocket protcol.  This prevents
+   ifhp from using the UDP status port to determine if the print
+   job is done.  This solves a problem with some Appsocket interface
+   printers which do not respond correctly to the '\n\r' query for
+   status.  You need to specify 'sync=ps' for these printers.
+    i.e.:   -Tappsocket,sync=ps,no_udp_monitor,dev=xx.xx.xx.xx%35
+
+  File type (language) detection and file conversion
+  Unified the file type detection and conversion,  at the apparent cost
+  of a bit of complexity.
+
+   forceconversion   - forces file(1) utility to be used
+   forceconversion@  - ifhp detects only PJL, PCL, PostScript,
+         text and unknown
+
+   # set to the default if you want
+   default_language=unknown
+   file_output_match = [
+     *postscript*  ps
+     *pcl*         pcl 
+     *pjl*         pjl
+   # if you need to convert to PostScript
+     *text* ps /usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+   # if you can handle text, then simply change the type to pcl
+     *text* pcl
+   # match for '* gif *'
+     *%20gif%20*  pcl /usr/local/bin/gif2pcl --autosize -x2400 -y3300 -d300 -o-
+   # give up if you can't tell
+     *             unknown
+   # pass through if you can't tell
+     *             raw
+   ]
+
+   # if the file type is TEXT and no converter,  then use the
+   # text_converter and set the output to the text_converter_output value.
+
+   text_converter=/usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+   text_converter_output=ps
+
+
+   Note 1:  you can have spaces in patterns by using %20 (URL escape)
+   Note 2:  if you do not have a converter,  then this simply changes
+     the type.
+   Note 3: you can have ZOPTS, TOPTS, or ARGV as an option, which is
+   replaced by -Zzopts, -Ttopts, or the entire argument list for the filter.
+   You can also use \%{name} to get the name option value.
+
+   Banner printer alias (./banner -Tbanner=xxx) now accepts banner type
+   on command line.
+
+   Removed 'pclbanner' from distribution - really should be in LPRng
+
+Version 3.3.8 Thu Aug 26 20:32:18 PDT 1999
+  If there is a config file (ifhp.conf) missing or unreadable,
+  we termiante with an error.  This will help with the problem
+  of missing or unreadable configuration files.
+
+  Note:  I considered also adding a test for the ps, pjl, flags
+  actually present in the file,  but I thougth this was overkill.
+
+Version 3.3.7 Thu Aug 26 20:32:18 PDT 1999
+  Configure was not installing things in the right places.  We now have:
+   --with-configfile=path     ifhp.conf explicit locations
+   --with-admindir=DIR     directory to install ifhp.conf, default:
+        \${prefix}/etc
+   --with-filterdir=DIR    where to install ifhp executables, default:
+       \${prefix}/lib/filters,
+
+   a. if you specify configfile,  then admindir is not used 
+   b. if you specify admindir, then you get .../etc/ifhp.conf,./ifhp.conf as files
+
+   defaults: prefix = /usr/local
+     configfile would be /usr/local/etc/ifhp.conf
+     filter directory would be /usr/local/lib/filters
+
+   If you set prefix=/usr, you get
+     configfile would be /usr/etc/ifhp.conf, which is
+      probably not what you want
+
+   If you set prefix=/usr, admindir=/etc
+     configfile would be /etc/ifhp.conf
+     filter directory would be /usr/lib/filters
+
+Version 3.3.6 Fri Aug 20 16:14:27 PDT 1999
+  Again,  the Appsocket protocol causes problems.  The Do_waitend
+    code had to be redone.
+  Added some more printer configurations.
+  The end of the ifhp.conf file now has the line #### XXX END XXX #####
+  This allows you to append your local stuff to the end of the standard
+  ifhp.conf file.
+
+  The [default] entry is used to provide overrides for default values.
+  This should appear as your FIRST user addition if you use it at all.
+  For example:
+    .....  distributed ifhp.conf file
+    #### XXX END XXX ####
+    [ default ]
+    xx@
+    [ myprinter]
+    xx
+
+Version 3.3.5 Tue Aug  3 15:22:51 PDT 1999
+  Re-arranged the file type detection code so that if you set
+    forceconvert it will be handled more effectively.
+  When you recognize a PostScript job,  will remove EXTRA ^D's at
+    the beginning of a job.  This appears to be caused by some PostScript
+    drivers gratuitously adding a ^D,  and then the spooling program
+    adding another.  Up to 3 of these have been observed in practice.
+  If you have a conversion of the type:
+        pattern language      {i.e. - two entries}
+    only the language is chosen.  This allows you to do:
+        *postscript*  ps
+        *pcl*         pcl
+        *text*        ps   a2ps .....       
+
+  Some HP5m's have a horrible problem with reporting True End of Job
+    to get pagecount.  To fix this a bit,  the following method is used.
+    1. you need to set waitend=ps,  i.e. - use PostScript to get the
+       end of job.  
+    2. Two additional options have been defined:  end_ctrl_t=busy:idle
+       and waitend_ctrl_t_interval=2
+       When the end_ctrl_t is defined,  then a CTRL-T is sent at the
+       job end to force (ha ha ha... sigh... only if this was true)
+       a ^T type of status message to be sent back from the printer.
+       This status message has the form %%[ status: busy ]%% when then printer
+       is not printing,  although %%[ status: idle ]%% has also been observed.
+       If the status matches one of the values in the end_ctrl_t list,
+       then we assume that the printer is done with the job and we can
+       get the pagecount.  However (sigh),  we need to prod the printer
+       periodically to send this status.  The waitend_ctrl_t_interval 
+       sets how often we do this.  However (sigh sigh),  if we send the CTRL-T
+       BEFORE the job ends,  then they actually get stacked up in the
+       input buffer queue,  we can overflow the input buffer queue, and
+       BAD THINGS happen.  So,  we also send a small PostScript job that
+       will send a message of the form '%%[ echo: done ]%%',  and only
+       when we get this message do we send the CTRL-T,  confident (or
+       fairly confident) that the CTRL-T's will get processed.
+    Testing this was truly an anal irritation experience.
+  Sprinkled holy water on some places where a free() was being done but
+    there was not test for a null value...
+
+
+Version 3.3.4 Tue Aug  3 15:22:51 PDT 1999
+  Added a funny little option to handle options such as staple=on and have
+  some code produced based on the 'on' value.
+    # the %s{key}  inserts the value of key
+    ps_staple=[ staple_%s{staple} ]
+    ps_staple_off=currentpagedevice /Staple known
+       { << /Staple 0 /StapleDetails << /Type 6 /StapleMode 0 >>
+        >> setpagedevice } if
+    ps_staple_front=<< /Staple 1 /StapleDetails << /Type 6 /StapleMode 0 >>
+        >> setpagedevice
+    ps_staple_rear=<< /Staple 1 /StapleDetails << /Type 6 /StapleMode 1 >>
+        >> setpagedevice
+    ps_staple_both=<< /Staple 1 /StapleDetails << /Type 6 /StapleMode 2 >>
+        >> setpagedevice
+    (Patches and idea by: Garrett D'Amore <garrett@yavin.org>)
+
+  Modified ifhp.conf reading code to be more robust and efficient.
+  Added a 'reopen_on_job' option to force appsocket to reopen connection
+    to printer if there is a long delay sending job to printer.
+    (Inspired by comments from: Isaac Hollander <hollande@ms.com>)
+  configure now takes
+      --with-admindir=DIR     where to install ifhp.conf, default: /etc
+      --with-filterdir=DIR    where to install ifhp and other executables 
+  Added FreeBSD ports template to distribution for tracking purposes.
+
+Version 3.3.3 Fri Jun 11 11:44:23 PDT 1999
+  ifhp.conf -
+    added lexmark4039 entry, to do synchronizcation.
+  accounting information - quotes added around options
+
+Version 3.3.2 Mon Jun  7 15:52:55 PDT 1999
+  File descriptor 3 was closed when forking accounting
+   program.
+   (Reported and fix by: Jesper Dangaard Brouer <hawk@diku.dk>)
+  Fixed up minor problems with PostScript banner generation.
+   (Reported by: Reinhard Zierke <zierke@informatik.uni-hamburg.de>)
+  Added a 'forceconversion' flag to force the file utility and
+   the conversion utilities to be used. 
+
+Version 3.3.1
+  BASELINE DISTRIBUTION
+
+Version 3.2.10
+ QMS printer support updated to try and handle appsocket a bit better.
+ You now need a 'qms' flag to identify the printer as a qms printer.
+   (Patches and suggestions by: Johan Claesson <Johan.Claesson@uab.ericsson.se>)
+
+Version 3.2.9
+  Removed '"' from ifhp.conf file that really messed things up.
+
+Version 3.2.8
+  Enabled PCL copies=nnn code
+     (Missing operation reported by: Gerard Kok <kokg@geo.vu.nl>)
+  Fixed pcl_linesperpage=...F instead of E
+     (Reported by: Gerard Kok <kokg@geo.vu.nl>)
+  When you are using the TEXT to XXX translation facility,
+     the .... ZOPTS .... will get replaced with .... -Zzoptions ....
+     and .... TOPTS .... will get replaced with .... -Ttoptions ....
+
+  Updated ifhp.conf file,  added comments,  moved HP5SiMx PostScript
+  to the HP5SiMx section.
+
+  Modified the Pjl_console code to not be 'sticky'.  This was painful.
+	(Suggested by: Olav Kolbu <olav.kolbu@usit.uio.no>)
+
+  After extensive hand to hand combat with QMS printers,
+  discovered that they apparently do NOT return status or PostScript
+  output in a reliable manner.  Added/modified [qms1725] entry
+  to reflect this.  Use appsocket protocol,  but WITHOUT status
+  capability.  Also note that port 35 seems to be used by default,
+  although this can be configured via the TCP/IP telnet interface.
+  (Your milage may vary).
+
+Version 3.2.7
+  Rearranged code in Read_write_timeout() so that a read of status is
+  attempted BEFORE exiting on a write error.
+
+  added pclbanner to the distribution
+
+  IFHP recognizes the PJL 'reset' sequence and treats it as a
+  'raw' or unprocessed job.  This allows you to send PJL jobs to the printer
+  and not have them interpreted as PCL.
+
+Version 3.2.6
+  Added a console message for Lexmark and HP Printers that
+    will be 'sticky' and stay visible after the job has been
+    printed.
+  (Provided by: Jason L Tibbitts III <tibbs@uh.edu>)
+
+  Fixed up 'progress' so that it prints Kbytes correctly... sigh.
+
+
+Version 3.2.5
+  changed the a2ps options in ifhp.conf:
+   -q -B -1 -M Letter --borders=no -o-
+  (Suggested by: Jeff Gostin <jgostin@best.com>)
+
+Version 3.2.5
+  Cleaned up documentation,  made sure the various
+  configuration and installation defaults were consistent.
+  Ummm... and also removed a core dump from the distribution.
+   Sigh...
+
+Version 3.2.4
+  Cleaned up Makefile.in so that running configure in another directory
+   will be possible.  That is,
+		cd ifhp...
+		where=`pwd`
+		mkdir ...
+		cd ...
+		sh $where/configure
+   will now work correctly, and you can do a make install in $where 
+
+  Added README.utilities and updated ifhp.conf file so that it has URL
+    and ftp sites for file, enscript and a2ps tools.
+
+  The phaser support did not work with OF and IF filters.
+    More 'shutdowns' and clean up added.
+
+  Sync and waitend made separate operations.
+    You can now skip 'syncing' at the start,  but you 
+    can force 'waitend'.  This is side effect of phaser
+    operation.  You need to read status back from the printer until it closes
+    the reverse connnection.  If you have appsocket with waitend,
+    you will read status back until the job finishes.  If you do
+    appsocket with waitend@,  you will get no status information for job.
+    This is not good,  but gives you very fast throughput.
+
+Version 3.2.3
+  Updated Makefile.in so that when you do $(path)/configure for
+   building in a separate directory,  the right files are found.
+
+Version 3.2.2
+  Added support for Tektronixs Phaser Printers -  using the appsocket protocol
+
+Version 3.2.1
+
+  Most of the code seems pretty stable,  so we start a new major release.
+  There are mostly minor changes in the code for this release.
+  
+  Added 'PseudoMagicFilter Support' and got text to PS conversion
+  working correctly.
+
+    #
+    # text conversion control
+    #
+    # control text to whatever conversion
+    #
+    # if you cannot find type, then try this file utility
+    #
+    # if the type is text and not supported on your system, do a conversion
+    #  Method 1 - set 'default_language' as text, and run
+    #    the program through a text to known converter
+    #
+    default_language=text
+    text_converter=/usr/local/bin/a2ps -q -B -o-
+    # output of the converter is pcl, ps, or raw
+    text_converter_output=ps
+
+    #
+    #  Method 2 -
+    #    Use the file util and match the output
+    # file reports format information
+    #  glob text_output_format text_converter
+    #  - you do a glob match against pattern and use the converter
+    #
+    default_language=unknown
+    file_util_path=/usr/bin/file -
+    file_output_match = [
+     *text*  ps /usr/local/bin/a2ps -q -B -o-
+     ]
+    # you need a temp file location
+    tempfile=/var/tmp/ifhp
+
+  Added a horrible horrible kludge that allows multiple fonts to be
+  loaded.  You need to use:
+    ifhp -Zfont=this,font=that,...
+  which gets translated into font=this,that and the font handling code
+  then works OK.
+
+  Added a QMS1725 entry that just might work.
+  Fixed up a couple of minor PostScript quirks.
+  Added PJL support for duplex.
+
+Version 3.1.20
+  Documentation.  More Documentation.  More ...
+  Sigh...
+  
+Version 3.1.19
+  Made status messages less verbose.
+  'trace_on_stderr' is now just 'trace' ... Sigh...
+
+Version 3.1.17
+  Changed CRLF back to not effective... Sigh.
+
+Version 3.1.16
+  Fixed a problem with testing short files for file type.
+  (Noted by: Mike Whitson <mwhitson@MIT.EDU>)
+
+  Added ledger paper types.  HP printers are very odd...
+    (John McCash thinks so too)
+
+  Made CRLF the default in ifhp.conf
+
+Version 3.1.15
+   Not distributed
+
+Version 3.1.14
+
+ ifhp.conf:
+  pcl_pagesize \033&l#A - set page size
+    Thu Feb  4 16:52:58 PST 1999
+  remove_control=xyz...
+    if PostScript AND you have a ^x, ^y, ^z, etc., remove it.
+    Suggested use:  remove_control=CT removes CTRL-C, CTRL-T
+    (Suggested by Mike Whitson <mwhitson@MIT.EDU>)
+
+Version 3.1.6 - 3.1.13
+   Lots and lots and lots of changes in ifhp.conf, etc, etc.
+   Stable version approaching.
+
+Version 3.1.5
+   Experiments with various printers showed that the ifhp.conf
+   file needed modification.
+
+   Added a 'banner_only' mode for banner printing only.
+  
+
+Version 3.1.4
+   Sun Dec 27 18:22:44 PST 1998
+   Total rewrite of the ifhp software using a clean room
+   approach.
+      Patrick Powell papowell@astart.com
+
+$Id: CHANGES,v 1.53 2000/04/13 10:56:22 papowell Exp papowell $

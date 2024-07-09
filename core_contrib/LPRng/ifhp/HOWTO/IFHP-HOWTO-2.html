@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Software Installation and Configuration</TITLE>
+ <LINK HREF="IFHP-HOWTO-3.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-1.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc2" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-3.html">Next</A>
+<A HREF="IFHP-HOWTO-1.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc2">Contents</A>
+<HR>
+<H2><A NAME="s2">2. Software Installation and Configuration</A></H2>
+
+<P>Before you do an installation
+please read the following instructions.
+You will need to:
+<OL>
+<LI>Use GNU Make.  You can get it from
+<A HREF="http://www.gnu.org/software/software.html">http://www.gnu.org/software/software.html</A>.
+Don't even think about trying to use another
+make unless you are a Wizard.  And even the Wizards use GNU Make.</LI>
+<LI>Use an ANSI C compiler.
+<CODE>ifhp</CODE> is developed and tested with the GNU C compiler.
+You can get it from
+<A HREF="http://www.gnu.org/software/software.html">http://www.gnu.org/software/software.html</A>.
+Solaris users should consult the excellent 
+<A HREF="http://sunfreeware.com">http://sunfreeware.com</A>
+site for binary distributions.</LI>
+</OL>
+<H2><A NAME="ss2.1">2.1 Additional Recommended Software</A>
+</H2>
+
+<P>The following software is recommended for use with <CODE>ifhp</CODE>.
+If your printer does not support PostScript, PCL, or text printing directly
+you will need to install GhostScript to convert from PostScript to the printer
+format and use a suitable text to PostScript converter.
+<DL>
+<DT><B>Unix File Utility</B><DD><P>
+<A NAME="fileutil"></A> 
+The <CODE>ifhp</CODE> filter will recognize that a file
+is PostScript, PJL, or PCL by examining the first
+couple of bytes of a file and applying a simple set of rules.
+If you require more elaborate file type detection then you can
+configure <CODE>ifhp</CODE> to also use the UNIX <CODE>file</CODE> utility
+if it is unable to determine the file type.
+See 
+<A HREF="ftp://ftp.astron.com/pub/file/">ftp://ftp.astron.com/pub/file/</A>
+to obtain this software.
+<P>
+<DT><B>LPRng Print Spooler</B><DD><P>
+<A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A>
+The <CODE>ifhp</CODE> filter works best with the later versions of this software,
+and the two are developed as an integrated unit.
+<P>
+<DT><B>GhostScript</B><DD><P>
+<A NAME="ghostscript"></A> 
+<A HREF="http://www.cs.wisc.edu/~ghost/index.html">http://www.cs.wisc.edu/~ghost/index.html</A>
+or
+<A HREF="http://www.ghostscript.com/">http://www.ghostscript.com</A>
+If your printer does not handle PostScript and you need to print PostScript,
+GhostScript is used to convert PostScript to a format usable by the printer.
+<P>
+<DT><B>a2ps - Ascii Text To PostScript Converter</B><DD><P>
+<A NAME="a2ps"></A> 
+If your printer is a PostScript only printer or you wish to have enhanced
+formatting capability for documents,  then you will need a text to PostScript converter.
+<A HREF="http://www-inf.enst.fr/~demaille/a2ps/">http://www-inf.enst.fr/~demaille/a2ps/</A>
+This package does a very good job of text to PostScript conversion.
+It also makes use of the
+<A HREF="#fileutil">file utility</A> to determine the required conversions.
+<P>
+<DT><B>enscript - GNU Enscript</B><DD><P>
+<A NAME="enscript"></A> 
+<A HREF="http://www.gnu.org">http://www.gnu.org/</A>
+This package is an alternative to <CODE>a2ps</CODE>,
+but requires careful handling due to the exit codes it produces.
+Please see
+<A HREF="IFHP-HOWTO-6.html#wrappers">Wrappers For Programs</A> for details on how to use
+<CODE>enscript</CODE> with <CODE>ifhp</CODE>.
+<P>
+<DT><B>textps</B><DD><P>
+<A NAME="textps"></A> 
+This program is included with the <CODE>ifhp</CODE> distribution
+and is an extremely primitive text to PostScript filter.
+It generates PostScript compatible with even the most ancient
+of PostScript printers and is useful where
+<CODE>a2ps</CODE> and <CODE>enscript</CODE> are just too modern.
+See
+<A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A>.
+<P>
+<DT><B>psutils</B><DD><P>
+<A NAME="psutils"></A> 
+The <CODE>psutils</CODE> package
+developed by Angus Duggan is available from
+<A HREF="ftp://ftp.dcs.ed.ac.uk/pub/ajcd/">ftp://ftp.dcs.ed.ac.uk/pub/ajcd/</A>.
+These are a collection of programs for manipulation of
+PostScript files,
+and include facilities for doing page selection,
+page reversal, n-up printing,  and watermarking.
+<P>
+<DT><B>netcat</B><DD><P>
+<A NAME="netcat"></A> 
+The <CODE>netcat</CODE> utility is extremely useful when trying to
+send files to a network printer and you need to monitor its
+activity.
+Developed by <CODE>hobbit@avian.org</CODE>, it is available from
+<A HREF="ftp://avian.org/src/hacks/nc110.tgz">ftp://avian.org/src/hacks/nc110.tgz</A>.
+</DL>
+<H2><A NAME="ss2.2">2.2 Installation</A>
+</H2>
+
+<P>The installation procedure uses the <CODE>configure</CODE>
+facility to generate Makefiles.
+By convention,
+these files have the following variables that install
+the <CODE>ifhp</CODE> executables and configuration files
+in the following locations:
+<BLOCKQUOTE><CODE>
+<PRE>
+default installation directories:
+Variable         Value
+${prefix}        /usr/local
+${exec_prefix}   ${prefix}
+${bindir}        ${exec_refix}/bin
+${sbindir}       ${exec_prefix}/sbin
+${libexecdir}    ${exec_prefix}/libexec   
+${sysconfdir}    ${prefix}/etc (/usr/local/etc)
+${mandir}        ${prefix}/man     (/usr/local/man)
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The following files are installed as shown below:
+<BLOCKQUOTE><CODE>
+<PRE>
+Name        Type              Location
+ifhp        executable        ${libexecdir}/filters/ifhp
+ifhp.conf   configuration     ${sysconfdir}/ifhp.conf
+ifhp.1      man pages         ${mandir}/man1/ifhp.1
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>First,  we untar,  configure,  compile, and install the software:
+<BLOCKQUOTE><CODE>
+<PRE>
+gunzip -c ifhp-&lt;release>.tgz |tar xvf -
+cd ifhp-&lt;release>
+
+# for /usr/local/libexec/filters/ifhp,
+#     /usr/local/etc/ifhp.conf
+#     /usr/local/man/man1/ifhp.1
+   ./configure
+  
+OR
+
+# for /usr/libexec/filters/ifhp,
+#     /etc/ifhp.conf
+#     /usr/share/man/man1/ifhp.1
+   ./configure --prefix=/usr --sysconfdir=/etc/ --mandir=/usr/share/man
+
+make clean all
+su root
+make install
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Modify your printcap file to use <CODE>ifhp</CODE>.
+Your printcap usually has the following format;
+older version of <CODE>lpd</CODE> require <CODE>:\</CODE> at the end of each
+line of a printcap entry.
+The <CODE>:if</CODE> and <CODE>:of</CODE> filter entries are usually the ones of interest.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:
+  :lp=xxxx:sd=xxxx:....
+  :if=/usr/local/path_to_old_filters/old_if_filter
+  :of=/usr/local/path_to_old_filters/old_of_filter
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Your new printcap entry will look like the one below.
+The <CODE>MODEL</CODE> information is described in the next section.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:
+  :lp=xxxx:sd=xxxx:....
+  #  see text for details about the next line
+  :ifhp=model=MODEL,status@
+  :if=/usr/local/libexec/filters/ifhp
+  :of=/usr/local/libexec/filters/ofhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The configuration file
+(<CODE>/usr/local/etc/lpd.conf</CODE>
+or
+<CODE>/etc/lpd.conf</CODE>)
+contains a set of entries describing printer
+capabilities and requirements.
+Each of these is described by a model name.
+The following is a partial list of models supported:
+<BLOCKQUOTE><CODE>
+<PRE>
+apple           hp4v            hpdj1200c       hpdj750c
+hp4             hp5             hpdj1600c       hpdj750cplus
+hp4000          hp5l            hpdj200         hpdj755cm
+hp4500          hp5m            hpdj2000cp      hpiiisi
+hp4l            hp5mp           hpdj220         hpljpro
+hp4lc           hp5p            hpdj230         hppjxl300
+hp4m            hp5si           hpdj2500cp      lexmark4039
+hp4ml           hp5simopier     hpdj250c        lj3pclonly
+hp4mp           hp5simx         hpdj330         phaser
+hp4mplus        hp6l            hpdj350c        postscript
+hp4mv           hp6mp           hpdj430         ps
+hp4p            hp6p            hpdj450c        qms1725
+hp4pj           hp8100          hpdj455ca       qms2025
+hp4plus         hpcolorlj       hpdj600         qms2060
+hp4si           hpcolorlj5      hpdj650c        qms860
+hp4simx         hpcolorlj5m     hpdj700         tek
+
+pclonly         pcl_ps_conversion
+ghostscript     gs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you have a PostScript only printer,
+you should use the <CODE>ps</CODE> model.
+If you have a PCL only printer,
+then <CODE>pclonly</CODE> is recommended.
+If you want to process PostScript files,
+then install GhostScript in <CODE>/usr/local/bin/gs</CODE>,
+and use <CODE>pcl_ps_conversion</CODE>.
+<P>The other model entries are used when specific printer
+functionality or features is needed.
+For example,
+if you want to do accounting or use <I>landscape</I> mode,
+then you should check for your specific printer model in the
+configuration file.
+<P>Shut down and restart your print spooler and then send a job to the printer.
+If this works and you do not need any further capabilities of <CODE>ifhp</CODE>
+such as error reporting or printer monitoring,
+then you are finished.
+<P>If you want to use additional capabilities,
+then you should read the detailed instructions in the next couple of sections.
+<HR>
+<A HREF="IFHP-HOWTO-3.html">Next</A>
+<A HREF="IFHP-HOWTO-1.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc2">Contents</A>
+</BODY>
+</HTML>

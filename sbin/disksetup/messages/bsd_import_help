@@ -1,0 +1,6 @@
+At this point you should select an FDISK partition you would like
+to import.  When importing an FDISK partition, you are defining a
+BSD partition which will reside within that FDISK partition.  This
+does not affect the data within the FDISK partition.  You select
+the FDISK partition by pressing the number of the partition you
+wish to import.

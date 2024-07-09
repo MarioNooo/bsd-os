@@ -1,0 +1,71 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI manzip.8,v 1.2 1997/02/05 00:11:57 polk Exp
+.\"
+.Dd February 10, 1995
+.Os
+.Dt MANZIP 8
+.Sh NAME
+.Nm manzip
+.Nd "compress or uncompress man hierarchies"
+.Sh SYNOPSIS
+.Nm manzip
+.Op Fl u 
+.Op Fl m Ar path
+.Op Fl M Ar path
+.Op Fl s Ar subdirs
+.Sh DESCRIPTION
+The
+.Nm manzip
+command compresses or uncompresses the specified (or default) man 
+hierarchies taking care to preserve symbolic and hard links correctly.
+.Pp
+By default, 
+.Nm manzip
+will compress all man pages in the standard man path (listed in 
+the 
+.Em _default
+entry in 
+.Xr man.conf 5 ).
+If the user invoking 
+.Nm manzip
+has a 
+.Em MANPATH
+environment variable set, the default path is overridden by the 
+value of that variable.
+.Pp
+The 
+.Fl M
+and 
+.Fl m
+flags may be used to override or augment the default man path
+(similar to the 
+.Xr man 1
+command usage).  If specified,
+.Ar path
+is a colon separated list of directories.
+.Pp
+By default, all subdirs listed in the 
+.Em _subdir
+line of the 
+.Xr man.conf 5
+file are processed.  The 
+.Fl s
+flag may be used to override the default list.  The specified 
+substitute list may be colon or space separated.
+.Pp
+The 
+.Fl u
+flag indicates the man hierarchies should be uncompressed rather
+than compressed.
+.Sh FILES
+.Pa /etc/man.conf
+.Sh SEE ALSO
+.Xr man 1 ,
+.Xr man.conf 5
+.Sh HISTORY
+.Nm manzip
+was written by Jeff Polk for BSD/OS and is under development.

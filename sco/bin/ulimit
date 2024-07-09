@@ -1,0 +1,5 @@
+#! /bin/sh
+#	BSDI ulimit,v 2.1 1995/02/03 15:13:07 polk Exp
+# We currently ignore ulimit commands from System V sh scripts.
+
+exit 0

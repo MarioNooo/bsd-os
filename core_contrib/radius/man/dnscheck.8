@@ -1,0 +1,94 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH DNSCHECK 8 "4 March 1997"
+.SH NAME
+dnscheck \- checks forward and reverse \s-2DNS\s+2 entries
+.SH SYNOPSIS
+.B dnscheck
+[
+.B \-c
+]
+[
+.B \-h
+]
+[
+.B \-t
+]
+[
+.B \-v
+]
+[
+.B \-x
+]
+[
+.I "host \&..."
+]
+.SH DESCRIPTION
+The
+.B dnscheck
+utility checks the forward and reverse \s-2DNS\s+2 entries for the given
+.IR host (s)
+or for the value returned by
+.BR gethostname (2)
+if the
+.I host
+name or \s-2IP\s+2 address is omitted.
+The
+.I host
+argument may be either a normal domain name such as
+.I myhost.foobah.org
+or an \s-2IP\s+2 address in dotted-quad [123.234.123.234] form
+and there may be more than one such argument given.
+.LP
+The intent of this utility is to run it without any arguments and have it
+tell you if your system's concept of what it's name is matches, or is
+consistent with, what the \s-2DNS\s+2 thinks is the name of your system.
+This is useful in tracking down obscure problems when configuring the
+Merit \s-2AAA\s+2 server's
+.IR clients (5)
+file.
+.LP
+The forward and reverse information is sent to standard output followed by
+any information for multiple address and or multiple \s-2DNS\s+2 names, one
+per line.
+If the
+.I host
+given is a \s-2CNAME\s+2 then both it and the fully qualified \s-2DNS\s+2
+name are printed along with its \s-2IP\s+2 address.  If the
+.I host
+given is a fully qualified \s-2DNS\s+2 name which has aliases (\s-2CNAME\s+2s),
+then
+.B dnscheck
+is not able to retrieve these from the \s-2DNS\s+2.
+.PD
+.SH OPTIONS
+.TP
+.B \-c
+Toggles checking mode.  This option defaults to "on".  If this option is
+toggled to "off" then the
+.B dnscheck
+utility will perform only one of the two checks, either forward or reverse,
+for the given
+.IR host .
+.TP
+.B \-h
+Prints a usage message.
+.TP
+.B \-t
+Turns on terse mode.  This option defaults to "off".
+.TP
+.B \-v
+Shows the \s-2RCS\s+2 version information.
+.TP
+.B \-x
+This option is used to increase the debugging level.  The debugging level
+is initially zero.  Each
+.B \-x
+option adds to the default, thereby enabling more and more debugging
+information to be produced.
+.PD
+.SH SEE ALSO
+.LP
+.BR gethostname (2),
+.BR clients (5)
+.SH BUGS

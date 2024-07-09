@@ -1,0 +1,90 @@
+.\"	BSDI sleep.3,v 2.4 1997/01/15 20:05:32 bostic Exp
+.\"
+.\" Copyright (c) 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd March 25, 1995
+.Dt SLEEP 3
+.Os
+.Sh NAME
+.Nm sleep, usleep
+.Nd suspend process execution
+.Sh SYNOPSIS
+.Fd #include <unistd.h>
+.Ft "unsigned int"
+.Fn sleep "unsigned int seconds"
+.Ft void
+.Fn usleep "unsigned int microseconds"
+.Sh DESCRIPTION
+The
+.Fn sleep
+function suspends execution of the calling process for
+.Fa seconds
+of clock time, or until interrupted by a signal.
+.Pp
+The
+.Fn usleep
+function suspends execution of the calling process for
+.Fa microseconds
+of clock time, or until interrupted by a signal.
+.Pp
+System activity may lengthen the suspension.
+.Sh RETURN VALUES
+The
+.Fn sleep
+function returns 0, or if interrupted before
+.Fa seconds ,
+the amount not slept (the requested time minus the time actually slept)
+in seconds.
+.Sh SEE ALSO
+.Xr select 2 ,
+.Xr setitimer 2
+.Sh COMPATIBILITY
+Previous implementations of
+.Fn sleep
+and
+.Fn usleep
+re-suspended the process if interrupted by a signal.
+This implementation has been changed to return in that case,
+to conform to
+.St -p1003.1-88 .
+.Sh HISTORY
+A
+.Fn usleep
+function appeared in
+.Bx 4.3 .
+.br
+A
+.Fn sleep
+function appeared in
+.At v7 .

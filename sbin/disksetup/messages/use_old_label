@@ -1,0 +1,5 @@
+Although the disklabel is not supposed to be written, no label was found
+at the location it is expected to be.  However, a label at the start of
+the disk was found.  This label will be installed in the new location.
+
+Press <ENTER> to continue.

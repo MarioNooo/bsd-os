@@ -1,0 +1,9 @@
+config.log
+config.h
+config.cache
+config.status
+Makefile
+Makefile.bsd
+lpd.perms
+lpd.conf
+LPD.CONF

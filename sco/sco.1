@@ -1,0 +1,104 @@
+.\"	BSDI sco.1,v 2.3 1998/02/14 01:02:11 donn Exp
+.\"
+.Dd November 1, 1996
+.Dt SCO 1
+.Os
+.Sh NAME
+.Nm sco
+.Nd "access to SCO / iBCS2 emulation
+.Sh SYNOPSIS
+.Nm sco
+.Ar program arguments ...
+.Sh DESCRIPTION
+The
+.Nm sco
+program creates an incomplete, imitation
+SCO environment for execution.
+Its most typical use is to run a shell:
+.Bd -literal -offset indent
+$ sco sh
+$
+.Ed
+.Pp
+The SCO environment is created by loading
+the given program with the SCO emulator
+(see
+.Xr ibcs2 5 ) .
+The emulator maps BSD/OS pathnames to SCO pathnames,
+using the
+.Pa /sco/filemap
+file.
+This feature allows (for example) the BSD/OS
+.Pa /var/tmp
+directory to appear as
+.Pa /usr/tmp
+without adding symlinks or other clutter to the filesystem,
+and it is used to translate a number of standard SCO pathnames.
+The emulator is loaded automatically when
+you execute an iBCS2-format SCO program,
+so it isn't necessary to run such programs directly with
+.Nm sco .
+.Pp
+For users' convenience, the
+.Nm sco
+program also alters a couple of environment variables
+in a way that makes them more useful in the SCO environment.
+The
+.Li PATH
+variable is altered to put
+.Pa /etc
+in root's path,
+and to force
+.Xr sh 1
+to check for built-in commands only after first checking
+for commands of the same name in the user's path.
+The latter change allows
+.Xr sh 1
+to use a SCO-compatible version of
+.Xr echo 1
+instead of the built-in version,
+for example.
+The
+.Nm sco
+program also alters the user's
+.Li DISPLAY
+variable, if set, so that it uses TCP
+to reach a local X server rather than STREAMS;
+STREAMS connections are not currently supported for programs
+that don't use the shared NSL library.
+.Sh FILES
+.Bl -tag -width /sco/emulator\0 -compact
+.It Pa /sco/emulator
+the emulator image
+.It Pa /sco/filemap
+the filename translation table
+.El
+.Sh SEE ALSO
+.Xr ibcs2 5
+.Sh BUGS
+Some shells work better with
+.Nm sco
+than other shells;
+.Nm sco
+is currently optimized for
+.Xr sh 1 .
+.Pp
+Job control characters don't work in the SCO environment.
+However, it is still possible to stop a SCO job with
+.Xr kill 1 .
+.Pp
+It's possible to fall out of the SCO namespace
+using relative pathnames.
+.Pp
+You must resort to a kluge to name
+a BSD file that is concealed by a filename mapping.
+The current convention is to use two slashes at the start of the pathname,
+for example
+.Pa //bin/df .
+This defeats the filename mapping and names the BSD
+.Xr df
+instead of a script that imitates the SCO
+.Xr df .
+.Pp
+For more bugs with emulation, see
+.Xr ibcs2 5 .

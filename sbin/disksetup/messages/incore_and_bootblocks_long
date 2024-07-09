@@ -1,0 +1,5 @@
+Disksetup has been requested to install an MBR and/or boot blocks.
+However, it has also been told to only update the in core label.
+The specified MBR and/or boot blocks will be ignored.
+
+Press <ENTER> to continue.

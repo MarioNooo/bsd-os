@@ -1,0 +1,126 @@
+#
+# * Copyright (c) 2003 QUALCOMM Incorporated.  All rights reserved.
+# *
+# * File:         common/Makefile.in
+# * Project:      Qpopper
+# * Comments:     
+# *
+# *
+# * Revisions:
+# *
+# * 02/03/03    [rcg]
+# *       -  Pick up LDFLAGS.
+# *
+# * 01/23/01    [rcg]
+# *        - Moved genpath.[ch] from common/ to popper/ (since it takes
+# *          POP* parameter now).
+# *
+# * 06/29/00    [rcg]
+# *        - Added utils (moved from mmangle).
+# *
+# *  06/16/00   [rcg]
+# *        - Added check_group and string_util.
+# *
+# *  01/20/00   [rcg]
+# *        - Added snprintf
+# *
+# *  12/10/99   [rcg]
+# *        - Modified for SunOS4 stuff.
+# *
+# *  11/26/99   [rcg]
+# *        - Added logit
+# *
+# *  11/24/99   [rcg]
+# *        - Added genpath
+# *
+# *  11/02/99   [rcg]
+# *        - File added
+# *
+#
+SHELL       =   /bin/sh
+CC          =   @CC@
+GPERF       =   @GPERF@
+MAKEFILE    =   Makefile
+
+@SET_MAKE@
+
+#
+#               Defines are described in the INSTALL document.
+#
+top_srcdir      =   @top_srcdir@
+srcdir          =   @srcdir@
+VPATH           =   @srcdir@
+prefix          =   @prefix@
+exec_prefix     =   @exec_prefix@
+installdir      =   @bindir@
+
+common_srcdir   =   ${top_srcdir}/common
+popper_srcdir   =   ${top_srcdir}/popper
+qd_srcdir       =   ${top_srcdir}/qd
+sievead_srcdir  =   ${top_srcdir}/sievead
+mmangle_srcdir  =   ${top_srcdir}/mmangle
+
+base_dir        =   ..
+common_dir      =   ${base_dir}/common
+popper_dir      =   ${base_dir}/popper
+qd_dir          =   ${base_dir}/qd
+sievead_dir     =   ${base_dir}/sievead
+mmangle_dir     =   ${base_dir}/mmangle
+
+
+OBJS            =   flock.o maillock.o logit.o snprintf.o \
+                    string_util.o check_group.o utils.o
+
+SRCS            =   flock.c maillock.c logit.c snprintf.c \
+                    string_util.c check_group.c utils.c
+
+INCLUDES        =   ${srcdir}/flock.h \
+                    ${srcdir}/maillock.h \
+                    ${srcdir}/logit.h \
+                    ${srcdir}/string_util.h \
+                    ${srcdir}/utils.h \
+                    ${popper_dir}/genpath.h \
+                    ${popper_dir}/popper.h \
+                    ${base_dir}/config.h ${top_srcdir}/conf.h
+
+
+
+CFLAGS          =   @CFLAGS@
+CDEFS           =   @CDEFS@
+LDFLAGS         =   @LDFLAGS@
+OS_DEFS         =   @OS_DEFS@
+DEFS            =   @DEFS@
+pop_target      =   @POPAUTH@
+NETWORK_LIBS    =   @NETWORK_LIBS@
+KERBEROS_LIBS   =   @KERBEROS_LIBS@
+DBM_LIBS        =   @DBM_LIBS@
+LIBS            =   @NETWORK_LIBS@ @KERBEROS_LIBS@ @DBM_LIBS@ @LIBS@
+AR_FLAG         =   @AR_FLAG@
+RANLIB          =   @RANLIB@
+
+
+.SUFFIXES: .c .o
+
+all: libcommon.a
+
+libcommon.a: ${OBJS}
+	ar ${AR_FLAG} libcommon.a ${OBJS} 
+	@RANLIB_CMD@
+
+.c.o:
+	${CC} -c -I${base_dir} -I${srcdir} -I${top_srcdir} -I${popper_srcdir} \
+	    ${CFLAGS} ${DEFS} ${CDEFS} ${OS_DEFS} $< -o $@
+
+${OBJS}: ${INCLUDES}
+
+${SRCS}:
+
+clean:
+	rm -f core
+	rm -f ${OBJS}
+
+realclean: clean
+	rm -f libcommon.a
+	rm -f Makefile
+	rm -f *~
+

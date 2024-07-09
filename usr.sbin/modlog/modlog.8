@@ -1,0 +1,79 @@
+.\"	BSDI modlog.8,v 1.1 1997/04/17 17:04:04 polk Exp
+.\"
+.Dd April 16, 1997
+.Os
+.Dt MODLOG 8
+.Sh NAME
+.Nm modlog
+.Nd "display mod status
+.Sh SYNOPSIS
+.Nm modlog
+.Op Fl p Ar root
+.Op Ar logfile
+.Sh DESCRIPTION
+The
+.Nm
+command displays the current status of mods on the system. Both user and
+kernel mods are displayed (from their default log files). The mod status
+for a particular kernel tree can be displayed by running
+.Nm
+from the top of that kernel tree.
+.Pp
+If
+.Ar logfile
+is specified then mod status will only be reported from the file given.
+.Pp
+If a root directory is specified (via
+.Fl p
+or the environment variable
+.Ev ROOT )
+then the default log file locations used will be relative to that root.
+.Pp
+.Ss OPTIONS
+.Bl -tag -ohang -width xxx
+.It Fl p Ar root
+Use
+.Ar root
+as the root of the directory tree for the purposes of locating the mod log
+files.
+
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width PATCHDIR00 -compact
+.It Ev ROOT
+Use
+.Ev ROOT
+as the root of the directory tree for the purposes of locating the mod log
+files. The
+.Fl p
+flag overrides
+.Ev ROOT.
+.Sh FILES
+The following log files are searched for by default:
+.Bl -tag -width /usr/local/lib/buildpatch00 -compact
+.It Pa /var/db/install.log
+User mod log file.
+.It Pa /usr/src/sys/PATCHLOG
+Kernel mod log file.
+.It Pa ./PATCHLOG
+Kernel mod log file in current directory.
+.El
+.Sh EXAMPLE
+.Bd -literal -shift 5
+# modlog
+
+Kernel mods   [/usr/src/sys/PATCHLOG]
+
+Mod name        Status        Date
+----------      ---------     --------------------
+SK300-001       Applied       Thu Apr 17 10:33:28 MDT 1997
+BK300-001       Applied       Thu Apr 17 10:33:29 MDT 1997
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr patch 1
+.Sh BUGS
+When displaying the PATCHLOG mod log in the current directory, the contents of
+/usr/src/sys/PATCHLOG will still be displayed - this may result in duplicated
+output.
+

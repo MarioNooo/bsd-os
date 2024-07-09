@@ -1,0 +1,18 @@
+Software Package:       
+	perl
+
+Release/Version:
+	4.0 patchlevel 36
+
+Retrieved from:
+	ftp.netlabs.com:pub/outgoing/perl4.0
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and lwall@netlabs.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:

@@ -1,0 +1,5 @@
+Disksetup recommends %dMB be reserved for swap.
+Some users have found that they would like to share a partition for
+BSD/OS's swap partition with an extended DOS partition used for a
+windows temporary swap file.  This typically would be done on a
+system with disk space concerns, such as a laptop.

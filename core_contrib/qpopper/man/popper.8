@@ -1,0 +1,839 @@
+.\" Copyright (c) 2001 QUALCOMM Incorporated. All rights reserved.
+.\" See License.txt file for terms and conditions for modification and
+.\" redistribution.
+.\"
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms are permitted
+.\" provided that this notice is preserved and that due credit is given
+.\" to the University of California at Berkeley. The name of the University
+.\" may not be used to endorse or promote products derived from this
+.\" software without specific prior written permission. This software
+.\" is provided ``as is'' without express or implied warranty.
+.\"
+.\"
+.TH qpopper 8 "19 March 2001" "Local"
+.UC 6
+.ad
+.SH NAME
+qpopper \-\- POP3 server (v4.0)
+.SH SYNOPSIS
+.B /usr/local/lib/popper
+[
+.I [ address ]
+.I [ ":" ]
+.I [ port ]
+]
+.if n .ti +5n
+[
+.BI \-b " buildir"
+] [
+.B \-c
+] [
+.B \-d
+] [
+.BI \-D " drac-host"
+]
+.if n .ti +5n
+[
+.BI \-e " login_delay=nn,expire=nn"
+] [
+.BI \-f " config-file"
+]
+.if n .ti +5n
+[
+.B \-k
+] [
+.BI \-K " service"
+] [
+.BI \-l 0|1|2
+] [
+.BI \-p 0|1|2|3|4
+]
+.if n .ti +5n
+[
+.B \-R
+]
+[
+.B \-s
+] [
+.B \-S
+] [
+.BI \-t " trace-file"
+] [
+.BI \-T " timeout"
+]
+.if n .ti +5n
+[
+.B \-u
+] [
+.B \-U
+] [
+.B \-v
+] [
+.BI \-y " log-facility"
+]
+
+.SH NOTE
+This man page may be out of date.  Please see the
+.I Administrator's Guide
+included in the distribution or on the Qpopper web site at
+.I www.qpopper.org/documentation.html
+
+.SH DESCRIPTION
+.I Qpopper 
+is a POP3 server to enable POP3 clients to read and download mail. This server
+implements the POP protocol defined in RFC 1939 and the RFC 2449 extensions.  This
+implementation runs on a variety of Unix platforms, including Linux. 
+.PP
+The server also enables clients to send mail using XTND XMIT, which is processed 
+via 
+.IR sendmail (8).
+.PP
+
+.SH OPTIONS
+.TP
+.I [address][:][port]
+If compiled as a standalone daemon (instead of being run from
+.I inetd),
+you can can specify the IP
+.I address
+and/or
+.I port
+number to bind to at run-time as
+parameter 1, e.g., 'popper 199.46.50.7:8110 -S' or 'popper 8110 -S -T600'.
+If not specified, the IP
+.I address
+defaults to all available.  The default
+.I port
+is 110 except when _DEBUG (not simply DEBUG) is defined, then it is 8765.
+
+See the Administrator's Guide file for more information on standalone mode.
+.TP
+.BI \-b " bulldir"
+Turns on the bulletin feature and specifies the
+.I bulletin directory
+path.  The command line overrides the compiled value if it is defined.  To enable
+bulletins by default and specify a default bulletin directory during
+compilation, include the --enable-bulletins=bull-directory flag when 
+running ./configure.  The usual bulletin directory is /var/spool/bulls.
+
+A bulletin 
+database can be used to track the bulletins instead of the users' home directory.  
+This feature is enabled by including the --enable-bulldb=bull-directory flag
+when running ./configure.
+.TP
+.B \-c
+Downcases user names.  This permits users to configure their clients with user 
+names in UPPER or MiXeD case, and still login, assuming their actual user name 
+is all lower case.
+.TP 
+.B \-d
+Turns on debug logging if compiled (pass --enable-debugging to ./configure).  
+All debugging information is saved using 
+.IR syslog (8).
+If this option is used, it should be first, so that debug records are
+generated for subsequent options.
+.TP 
+.BI \-D " drac-host"
+If compiled with --enable-drac, specifies the
+.I drac host.
+Defaults to localhost.
+.TP
+.BI "-e " x=value,...
+Sets POP3 extensions.  Sets
+.I x
+to the specified
+.IR value.
+Used to include Login Delay and/or Expire response tags to the CAPA command.
+
+Remember neither Expire nor Login Delay is enforced by qpopper;  Sysadmins have 
+to implement them by some other means.  However, you can enforce EXPIRE 0 (no
+retention at all) by using the --enable-auto-delete flag with ./configure.  This
+causes messages to be automatically deleted after they are downloaded.
+.TP
+.BI \-f " config-file"
+Reads additional run-time options from
+.I config-file.
+See
+.I "Config-File Options"
+for option names and syntax.
+.TP
+.B \-k
+Enables Kerberos authentication when qpopper has been compiled with
+.B --with-kerberos5.
+You must already have libraries that support Kerberos.
+.TP
+.BI "\-K " service
+The specified Kerberos
+.I service
+is used instead of the compiled-in value.  The default is
+.B rcmd,
+but
+.B pop
+is also common.
+.TP
+.B \-l 0|1|2
+Sets TLS/SSL handling.  Must have compiled with OpenSSL or SSL Plus.
+
+.B 0
+is the default.  TLS/SSL is not supported.
+
+.B 1
+enables the STLS command.  This permits a
+client to attempt TLS/SSL negotiation after connecting.
+
+.B 2
+Causes Qpopper to attempt TLS negotiation when a client first connects.
+This is for alternate-port support.
+.TP
+.B \-p 0|1|2|3|4
+Sets plain-text password handling options.  To use this option, you must have an
+alternative to plain-text passwords available, such as APOP.
+
+.B 0
+is the default, which permits plain-text passwords only for those users who are
+not in the APOP database.
+
+.B 1 disables plain-text passwords for all users, even those who are not in the
+APOP database.
+
+.B 2 permits plain-text passwords for all users, even those who are in the APOP
+database (this allows clients to fall back on plain-text authentication if they
+do not support APOP).
+
+.B 3 allows plain-text passwords only for connections on the loop-back (127.*.*.*)
+address.
+
+.B 4 permits plain-text passwords only if
+TLS/SSL has been negotiated for the session (requires an executable compiled
+with OpenSSL or SSL Plus).
+
+.TP
+.B \-R
+Disables reverse lookups on client IP addresses.
+.TP 
+.BI "\-t " trace-file
+Turns on debug logging if compiled (pass --enable-debugging to ./configure) and
+writes the trace information in
+.I trace-file
+using 
+.IR fprintf (3V).
+If this option is used, it should be first, so that debug records are
+generated for subsequent options.
+.TP
+.B \-s
+Turns on statistics logging using 
+.IR syslog (8)
+or
+.I trace-file. 
+At the end of each popper
+session, the following information is logged: username, number of 
+messages deleted, number of bytes deleted, number of message left on server,
+number of bytes left on server.
+.TP
+.B \-S
+Enables server mode.  This mode reduces disk I/O and disk space usage
+when popper is used on a system that serves POP only users exclusively.
+.TP
+.BI "\-T " timeout
+option changes the default compiled value POP_TIMEOUT for terminating a 
+session with a pop client.
+
+When the server is waiting for a command to arrive from the client, it
+times out after the specified number of seconds and terminates the session.
+This avoids having popper processes hang forever waiting for command input
+from clients which have terminated abnormally or are hung.
+
+A small value is ok for small to medium networks where
+the network delay is within a few seconds.  In this case 15-30 seconds is
+not unreasonable.  Networks with large delays in sending packets (e.g., SLIP 
+links) may require a larger value.  In this case 300 seconds (5 minutes) is not
+unreasonable.
+
+Note that RFC 1939 requires a minimum of 600 second (10 minutes).
+.TP
+.B \-u
+After a user authenticates, process options from a file
+called .qpopper-options in the user's home directory.  This
+file can be owned by and writable by the user.
+.TP
+.B \-U
+After a user authenticates, process options from a file
+called .<user>.qpopper-options in the spool directory,
+where <user> is the user name.  This file should not be owned by
+nor writable by the user.
+.TP
+.B \-v
+Report the current version and exit.
+
+.PP
+.B Processing Options
+are described below.
+.SS "Processing Options"
+Here  are some options the values of which are announced to clients.  Syntax of the
+options is:
+.LP
+.RS 15
+.I opt=value,...
+.RE
+.LP
+This sets option
+.I opt
+to be
+.IR value.
+Multiple options can be specified at one instance and are comma separated.
+.LP
+The following are the options supported:
+.RS
+.BI login_delay 
+.br
+.BI expire
+.RE
+.SS "Config-File Options"
+You can set Qpopper run-time options either from
+the command line or in a configuration file.
+
+Configuration files use different option names and a different syntax
+than the command-line (because command-line options are limited
+to one character).
+
+The general syntax of the config file (in ABNF) is:
+.LP
+.HP 1
+    config-line  ::= comment-line / reset-line / set-line
+.RE
+.HP 1
+    comment-line ::= "#" <comment-text to end of line>
+.RE
+.HP 1
+    reset-line   ::= "reset" boolean-option
+.RE
+.HP 1
+    set-line     ::= implicit-set / explicit-set
+.RE
+.HP 1
+    explicit-set ::= "set" option "=" value
+.RE
+.HP 1
+    implicit-set ::= "set" boolean-option
+.RE
+.HP 1
+    option       ::= boolean-option / integer-option / 
+                     string-option / mnemonic-option
+.RE
+.HP 1
+    value        ::= "true" / "false" / integer / name
+.RE
+.HP 1
+    string       ::= <"> 1*255 CHAR <">
+.RE
+.HP 1 22
+    CHAR         ::= <any printable character except space or tab>
+
+.RE
+In other words the line starts with
+.B set
+or
+.B reset,
+then an option name, and either ends there or has an
+.B "="
+followed by a value.
+
+A comment line starts with
+.B #.
+The rest of the line is ignored.  You can also use
+.B "#"
+to end any line.  Everything else on the line is a comment.
+
+Note that 
+.B reset
+can only be used with boolean options.  The
+.B "="
+and the value are omitted when
+.B reset
+is used.  When
+.B set
+is used with a
+boolean option, you can omit the
+.B "="
+and
+.I value
+if you wish (it defaults to
+.B true),
+or you can use any of the four values 
+.B true,
+.B false,
+.B 1,
+or 
+.B 0.
+
+Some options are "restricted", meaning that they can't be used in
+a .qpopper-options file in a user's home directory and/or in
+a <user>.qpopper-options file in the spool directory.
+
+The following are the command line options you can use:
+.TP
+.B announce-login-delay
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-elogin_delay=xx"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B announce-expire
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-e expire=xxx"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B bulldir
+.RS 4
+Type: Name
+.RE
+.RS 4
+Equivalent switch: "-b bulldir"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B bulldb-nonfatal
+.RS 4
+Type: Boolean 
+.RE
+.RS 4
+Equivalent switch: "-B"
+.RE
+.RS 4
+Restricted: no
+
+Only valid if compiled with --enable-bulldb.
+.RE
+.TP
+.B clear-text-password           
+.RS 4
+Type: Mnemonic
+.RE
+.RS 4
+Equivalent switch: "-p0|1|2|3|4"
+.RE
+.RS 4
+Values:
+.TP
+.B default
+Permits clear-text passwords for any user not in the APOP database.
+.TP
+.B never
+Clear-text passwords are never permitted.  Users not in the APOP
+database are unable to use Qpopper.
+.TP
+.B always
+Clear-text passwords are always permitted, even for users in the APOP
+database.
+.TP
+.B local
+Clear-text passwords are permitted only when the client connects through
+the local interface (127.*.*.*).
+.TP
+.B tls
+Clear-text passwords are permitted when TLS/SSL has been negotiated for
+the session.  Available only if compiled with OpenSSL or SSL Plus.
+.TP
+.B ssl
+(Same as tls).
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+.RE
+.TP
+.B config-file
+.RS 4
+Type: Name
+.RE
+.RS 4
+Equivalent switch: "-f config-file"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B debug
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-d debug
+.RE
+.RS 4
+Restricted: no
+
+Only valid if compiled with --enable-debug.
+.RE
+.TP
+.B downcase-user                 
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-c"
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+.RE
+.TP
+.B drac-host
+.RS 4
+Type: Name
+.RE
+.RS 4
+Equivalent switch: "-D drac-host"
+.RE
+.RS 4
+Restricted: no
+
+Only valid if compiled with --enable-drac
+.RE
+.TP
+.B kerberos                      
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-k"
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+
+Only valid if compiled with --enable-kerberos5 or -DKERBEROS
+.RE
+.TP
+.B kerberos-service
+.RS 4
+Type: Name
+.RE
+.RS 4
+Equivalent switch: "-K service-name"
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+
+Only valid if compiled with --enable-kerberos5 or -DKERBEROS
+.RE
+.TP
+.B mail-lock-check
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-L msgs"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B reverse-lookup                
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-R" (Sense reversed!)
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+
+Sense reversed from command-line switch.  Using 
+.B -R
+is the same as 'SET REVERSE-LOOKUP = FALSE'.
+.RE
+.TP
+.B server-mode
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-S"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B statistics 
+.RS 4
+Type: Boolean
+.RE
+.RS 4
+Equivalent switch: "-s"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B timeout
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-T timeout"
+.RE
+.RS 4
+Restricted: no
+.RE
+.TP
+.B tls-support
+.RS 4
+Type: Mnemonic
+.RE
+.RS 4
+Equivalent switch: "-l"
+.RE
+.RS 4
+Values:
+.TP
+.B default
+TLS/SSL not supported.
+.TP
+.B none
+(same as default).
+.TP
+.B stls
+Enables support for the STLS command.
+.TP
+.B alternate-port
+Enables alternate-port TLS/SSL.
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+
+Only valid if compiled with OpenSSL or SSL Plus.
+.RE
+.TP
+.B tracefile
+.RS 4
+Type: Name 
+.RE
+.RS 4
+Equivalent switch: "-t logfile"
+.RE
+.RS 4
+Restricted: no
+
+Only valid if compiled with --enable-debug.
+.RE
+.TP
+.B spool-options
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-U"
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+.RE
+.TP
+.B user-options
+.RS 4
+Type: Integer
+.RE
+.RS 4
+Equivalent switch: "-u"
+.RE
+.RS 4
+Restricted: not valid in a configuration file in the user's home directory
+nor in the spool directory.
+.RE
+.RE
+
+.SH BULLETINS
+.PP
+The bulletin feature gives system administrators a way to send important
+announcements to all POP users without having to do mass mailings.
+.PP
+The bulletin directory contains one file per bulletin. Each file 
+contains a single mail message with a header and body in normal
+mailbox format. The first line of each such bulletin must be a "From " line. 
+The easiest way for sysadmins to create such bulletins is to mail themselves 
+a copy of the bulletin using the account to which they want replies to be sent,
+then use their mail program to save the message to a file in the bulletin 
+directory in mailbox format. The bulletin directory must be world readable.
+.PP
+The name of each bulletin file begins with the bulletin number, and may 
+optionally continue with any other characters. E.g., the file name of 
+bulletin number 23 might be "23.pophost_down_sunday".
+.PP
+Popper creates a file named .popbull 
+in the home directory of each user. 
+This file contains a single line recording the highest numbered bulletin 
+received by the user. 
+.PP
+Each time a POP client connects to the server, any new bulletins which 
+the user has not received previously are automatically appended to the
+user's mail.
+.PP
+When a bulletin is copied, the "To" header line 
+is replaced by "To: username@thishost", and any "Status:" header lines are 
+deleted. Otherwise, the bulletin is copied as is.
+.PP
+When a new user checks for mail the first time, popper creates the .popbull 
+file in the user's home directory and seeds it with the current maximum 
+bulletin number. Thus new users do not get old bulletins.
+.PP
+Bulletins can be enabled by default, and the bulletin directory specified,
+by including the --enable-bulletins=bull-directory flag when running ./configure.
+.PP
+To use a database instead of .popbull files in users' home directories 
+for tracking the highest bulletin seen by a user, include
+the --enable-bulldb=bull-directory flag when running ./configure.  You must also
+create two empty files in the bulletin directory, called bulldb.pag and bulldb.dir.
+When a bulletin database is used, qpopper checks for and uses any .popbull files
+in the user's home directory, to provide continuity.
+.PP
+To specify the maximum number of bulletins sent to new users, include
+the --with-new-bulls flag when running ./configure.  For example, --with-new-bulls=10
+says that new users get at most ten bulletins.
+
+.SH THE POP TRANSACTION CYCLE
+.PP
+The Qpopper server is a single program (called popper) that is
+launched by inetd when it gets a service request on the POP TCP port.
+(The official port number specified in RFC 1939 for POP version 3 is
+port 110.  However, some POP3 clients attempt to contact the server at
+port 109, the POP version 2 port.  Unless you are running both POP2 and
+POP3 servers, you can simply define both ports for use by the POP3
+server.  This is explained in the installation instructions later on.)
+.PP
+The qpopper program initializes and verifies that the peer IP address is
+registered in the local domain (unless the 
+.B \-R 
+command-line option is used), 
+logging a warning message when a
+connection is made with a client whose IP address does not have a
+canonical name.  For systems using BSD 4.3 bind, it also checks to see
+if a canonical name lookup for the client returns the same peer IP
+address, logging a warning message if it does not.  
+.PP
+The server
+enters the authorization state, during which the client must correctly
+identify itself by providing a valid Unix userid and password on the
+server's host machine (or successfully authenticate using 
+.I APOP
+or 
+.I AUTH).
+No other exchanges are allowed during this
+state (other than a request to quit.)  If authentication fails, a
+warning message is logged and the session ends.  
+.PP
+Once the user is
+identified, qpopper changes its user and group ids to match that of the
+user and enters the transaction state.  The server makes a temporary
+copy of the user's maildrop which is
+used for all subsequent transactions (unless running in 
+.I server mode
+).  
+These include the bulk of POP
+commands to retrieve mail, delete mail, undelete mail, and so forth.
+.PP
+When the client quits, the server enters the final update state, during which
+the network connection is terminated and the user's maildrop is updated
+with the (possibly) modified temporary maildrop.
+
+.SH LOGGING
+.PP
+The POP server uses 
+.I syslog 
+to keep a record of its activities.  On
+systems with BSD 4.3 syslogging, the server logs (by default) to the
+"local0" facility at priority "notice" for all messages except
+debugging which is logged at priority "debug".  The default log file is
+/usr/spool/mqueue/POPlog.  These can be changed, if desired.  On
+systems with 4.2 syslogging all messages are logged to the local log
+file, usually /usr/spool/mqueue/syslog.
+
+.SH DEBUGGING
+.PP
+Qpopper logs debugging information when the -d parameter
+is specified after its invocation in the inetd.conf file.  Care should
+be exercised in using this option since it generates considerable
+output in the syslog file.  Alternatively, the "-t <file-name>" option
+places debugging information into file "<file-name>" using fprintf
+instead of syslog.
+.PP
+For SunOS version 3.5, the popper program is launched by inetd from
+/etc/servers.  This file does not allow you to specify command line
+arguments.  Therefore, if you want to enable debugging, you can specify
+a shell script in /etc/servers to be launched instead of popper and in
+this script call popper with the desired arguments.
+.PP
+You can confirm that the POP server is running on Unix by telneting to
+port 110 (or 109 if you set it up that way).  For example:
+.PP
+.nf
+%telnet pop.qualcomm.com 110
+Trying...
+Connected to pop.qualcomm.com.
+Escape character is '^]'.
++OK QPOP (version 3.0) at pop.qualcomm.com starting.
+quit
++OK Pop server at pop.qualcomm.com signing off.
+Connection closed by foreign host.
+.fi
+
+.SH EXTENSIONS
+.PP
+The server implements several extended commands.
+.PP
+XTND XMIT: Sends a mail message using /usr/lib/sendmail.
+.PP
+XTND XLIST header [num]: Extracts and returns the specified header line
+for the specified message number. If the "num" parameter is missing, 
+returns the header line for all the messages which are not currently
+marked for deletion.
+.PP
+XMANGLE: Can be used as a modifier to the TOP, RETR, LIST commands. The result 
+is to condense MIME messages into a single part. For example:
+.PP
+.nf
+.RS
+RETR 10 XMANGLE(text=html;headers=to:,cc:,from:,date:)
+.RE
+.fi
+results in transforming message 10 into a single part of content-type
+text/html with only those headers which were requested.
+
+Qpopper also supports the "-no-mime" user name hack.  As a way to 
+enable MIME-mangling with clients that do not support XMANGLE, add
+"-no-mime" to the user name.  For example, if the userid is
+"mary", enter it in the client as "mary-no-mime".
+
+.SH FILES
+.nf
+/var/mail               mail files
+/etc/inetd.conf         pop program invocation
+/etc/syslog.conf        logging specifications
+/var/spool/bulls        bulletins
+~/.popbull              largest bulletin number seen by user
+.fi
+.SH "SEE ALSO"
+inetd(8), inetd.conf(4), sendmail(8)
+.SH AUTHORS
+Randall Gelles, Praveen Yaramada, Laurence Lundblade, Mark Erickson, Bob Campbell, Edward Moy, 
+Austin Shelton, Marshall T Rose, and cast of thousands at Rand, UDel, UCI, 
+QUALCOMM Incorporated and the Internet user community.

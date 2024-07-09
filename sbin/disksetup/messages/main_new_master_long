@@ -1,0 +1,8 @@
+The master boot record is located at the beginning of the disk with
+the FDISK table.  The master boot record determines which FDISK
+partition to boot from.  You may choose to either use the existing
+master boot record or install a new master boot record.  The master
+boot record provided with BSD/OS enable up to 4 operating systems to
+be booted.  (Some operating systems have been noted to not work with
+this master boot record.)
+

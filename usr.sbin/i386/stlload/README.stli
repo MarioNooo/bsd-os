@@ -1,0 +1,19 @@
+The Stallion prototype file is proto.stli.  As there are no known reasons
+to run stlload early or late in the sequence of setting up hardware
+it is suggested that it be run in the middle. Assigning the first
+digit as a "5" will accomplish this.
+
+To cause a Stallion board to be configured copy the prototype file
+to a file with the name formed as follows:
+
+5.stli.0
+
+This causes all installed stallion boards to be started.
+After changing directory "cd" to /etc/rc.hardware the following
+example could be used to create the appropriate hardware setup file.
+
+cp proto.stli 5.stli.0		# to setup up Stallion boards
+
+This only need be done once, even when using multiple boards. This
+script will download all Stallion boards installed in the system.
+

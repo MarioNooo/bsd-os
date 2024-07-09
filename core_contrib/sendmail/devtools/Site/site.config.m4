@@ -1,0 +1,7 @@
+APPENDDEF(`conf_sendmail_ENVDEF', `-DTCPWRAPPERS')
+APPENDDEF(`conf_sendmail_LIBS', `-lwrap')
+APPENDDEF(`conf_sendmail_ENVDEF', `-DMILTER')
+APPENDDEF(`conf_libmilter_ENVDEF', `-D_FFR_MILTER_ROOT_UNSAFE ')
+APPENDDEF(`confMANROOT', `/usr/share/core_contrib/man/cat')
+APPENDDEF(`conf_sendmail_ENVDEF', `-DSTARTTLS')
+APPENDDEF(`conf_sendmail_LIBS', `-lssl -lcrypto')

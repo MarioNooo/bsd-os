@@ -1,0 +1,352 @@
+#	   user: bostic
+#	machine: forge.BSDI.COM
+#	   tree: /
+
+# .
+/set type=dir gname=wheel uname=root mode=0755
+.
+
+# ./a
+a
+# ./a
+..
+
+
+# ./amd
+amd             mode=0555 ignore
+# ./amd
+..
+
+
+# ./bin
+bin
+# ./bin
+..
+
+
+# ./cdrom
+cdrom
+# ./cdrom
+..
+
+
+# ./dev
+dev
+
+# ./dev/fd
+fd              mode=0555
+# ./dev/fd
+..
+
+# ./dev
+..
+
+
+# ./diag
+diag
+
+# ./diag/bin
+bin
+# ./diag/bin
+..
+
+# ./diag/man
+man
+
+# ./diag/man/cat8
+cat8
+# ./diag/man/cat8
+..
+
+# ./diag/man/man8
+man8
+# ./diag/man/man8
+..
+
+# ./diag/man
+..
+
+# ./diag
+..
+
+
+# ./etc
+etc
+
+# ./etc/ftpd
+ftpd
+# ./etc/ftpd
+..
+
+# ./etc/krb5
+krb5
+# ./etc/krb5
+..
+
+# ./etc/lpdhome
+lpdhome		uname=lpd gname=lpd mode=0500
+# ./etc/lpdhome
+..
+
+# ./etc/mail
+mail
+# ./etc/mail
+..
+
+# ./etc/mtree
+mtree
+# ./etc/mtree
+..
+
+
+# ./etc/namedb
+namedb
+
+# ./etc/namedb/secondaries
+secondaries
+# ./etc/namedb/secondaries
+..
+
+# ./etc/namedb
+..
+
+
+# ./etc/netscripts
+netscripts
+# ./etc/netscripts
+
+# ./etc/netscripts/HOME
+HOME            gname=netdial
+# ./etc/netscripts/HOME
+..
+
+
+# ./etc/netscripts/SKEL
+SKEL            gname=netdial
+# ./etc/netscripts/SKEL
+..
+
+# ./etc/netscripts
+..
+
+# ./etc/raddb
+raddb		uname=radius gname=radius mode=700
+# ./etc/raddb
+..
+
+# ./etc/rc.configure
+rc.configure
+# ./etc/rc.configure
+..
+
+# ./etc/rc.hardware
+rc.hardware
+# ./etc/rc.hardware
+..
+
+# ./etc/sliphome
+sliphome
+# ./etc/sliphome
+..
+
+
+# ./etc/uucp
+uucp            uname=uucp gname=uucp
+
+# ./etc/uucp/params
+params
+# ./etc/uucp/params
+..
+
+# ./etc/uucp
+..
+
+# ./etc
+..
+
+# ./lib
+lib
+# ./lib
+..
+
+
+# ./mnt
+mnt
+# ./mnt
+..
+
+
+# ./root
+root
+# ./root
+..
+
+
+# ./sbin
+sbin
+# ./sbin
+..
+
+
+# ./sco
+sco
+
+# ./sco/bin
+bin
+# ./sco/bin
+..
+
+
+# ./sco/dev
+dev
+# ./sco/dev
+..
+
+
+# ./sco/etc
+etc
+
+# ./sco/etc/perms
+perms
+# ./sco/etc/perms
+..
+
+# ./sco/etc
+..
+
+
+# ./sco/shlib
+shlib
+# ./sco/shlib
+..
+
+
+# ./sco/usr
+usr
+
+# ./sco/usr/include
+include
+
+# ./sco/usr/include/machine
+machine
+# ./sco/usr/include/machine
+..
+
+
+# ./sco/usr/include/net
+net
+# ./sco/usr/include/net
+..
+
+
+# ./sco/usr/include/netinet
+netinet
+# ./sco/usr/include/netinet
+..
+
+
+# ./sco/usr/include/sys
+sys
+# ./sco/usr/include/sys
+..
+
+# ./sco/usr/include
+..
+
+
+# ./sco/usr/lib
+lib
+
+# ./sco/usr/lib/sco
+sco
+# ./sco/usr/lib/sco
+..
+
+
+# ./sco/usr/lib/terminfo
+terminfo
+
+# ./sco/usr/lib/terminfo/i
+i
+# ./sco/usr/lib/terminfo/i
+..
+
+
+# ./sco/usr/lib/terminfo/x
+x
+# ./sco/usr/lib/terminfo/x
+..
+
+# ./sco/usr/lib/terminfo
+..
+
+# ./sco/usr/lib
+..
+
+
+# ./sco/usr/spool
+spool
+
+# ./sco/usr/spool/lp
+lp
+
+# ./sco/usr/spool/lp/admins
+admins
+
+# ./sco/usr/spool/lp/admins/lp
+lp
+
+# ./sco/usr/spool/lp/admins/lp/printers
+printers
+# ./sco/usr/spool/lp/admins/lp/printers
+..
+
+# ./sco/usr/spool/lp/admins/lp
+..
+
+# ./sco/usr/spool/lp/admins
+..
+
+# ./sco/usr/spool/lp
+..
+
+# ./sco/usr/spool
+..
+
+# ./sco/usr
+..
+
+
+# ./sco
+..
+
+
+# ./shlib
+shlib
+# ./shlib
+..
+
+
+# ./tftpboot
+tftpboot
+tftpboot	type=link link=.
+# ./tftpboot
+..
+
+
+# ./tmp
+tmp             mode=01777
+# ./tmp
+..
+
+
+# ./usr
+usr
+# ./usr
+..
+
+
+# ./var
+var
+# ./var
+..

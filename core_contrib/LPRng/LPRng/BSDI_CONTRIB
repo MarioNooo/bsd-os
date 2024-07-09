@@ -1,0 +1,128 @@
+Software Package:       
+	LPRng
+
+Release/Version:
+	LPRng LPRng-3.6.14beta28
+
+Retrieved from:
+	ftp://ftp.astart.com/pub/LPRng/private/LPRng-LPRng-3.6.14beta28.tgz
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and papowell@astart.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Index: lpd.perms.in
+===================================================================
+RCS file: /master/contrib/LPRng/LPRng/lpd.perms.in,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 lpd.perms.in
+*** lpd.perms.in	2000/03/10 19:58:14	1.1.1.1
+--- lpd.perms.in	2000/04/19 13:28:06
+***************
+*** 208,214 ****
+  # allow root on server to control jobs
+  ACCEPT SERVICE=C SERVER REMOTEUSER=root
+  # allow anybody to get server, status, and printcap
+! ACCEPT SERVICE=C LPC=lpd,status,printcap
+  # reject all others
+  REJECT SERVICE=C
+  #
+--- 208,214 ----
+  # allow root on server to control jobs
+  ACCEPT SERVICE=C SERVER REMOTEUSER=root
+  # allow anybody to get server, status, and printcap
+! #ACCEPT SERVICE=C LPC=lpd,status,printcap
+  # reject all others
+  REJECT SERVICE=C
+  #
+***************
+*** 217,221 ****
+  # allow root on server to remove a job
+  ACCEPT SERVICE=M SERVER REMOTEUSER=root
+  REJECT SERVICE=M
+! # all other operations allowed
+! DEFAULT ACCEPT
+--- 217,231 ----
+  # allow root on server to remove a job
+  ACCEPT SERVICE=M SERVER REMOTEUSER=root
+  REJECT SERVICE=M
+! #
+! # allow all other operations from this host
+! ACCEPT SERVER
+! #
+! # List fully qualified hostnames, IP addresses or subnets of hosts you
+! # wish to allow to connect.
+! #ACCEPT SERVICE=* REMOTEHOST=*.mycompany.com
+! #ACCEPT SERVICE=* REMOTEHOST=host1.mycompany.com,host2.mycompany.com
+! #ACCEPT SERVICE=* REMOTEHOST=10.1.1.0/24
+! #
+! # all other operations rejected
+! DEFAULT REJECT
+
+
+Security fixes for CERT Advisory CA-2000-22.
+
+Index: src/common/errormsg.c
+===================================================================
+RCS file: /master/contrib/LPRng/LPRng/src/common/errormsg.c,v
+retrieving revision 1.4
+diff -c -r1.4 errormsg.c
+*** src/common/errormsg.c	2000/04/17 19:31:29	1.4
+--- src/common/errormsg.c	2000/12/22 17:07:28
+***************
+*** 146,156 ****
+  # ifdef HAVE_OPENLOG
+  	/* use the openlog facility */
+  	openlog(Name, LOG_PID | LOG_NOWAIT, SYSLOG_FACILITY );
+! 	syslog(kind, msg);
+  	closelog();
+  
+  # else
+!     (void) syslog(SYSLOG_FACILITY | kind, msg);
+  # endif							/* HAVE_OPENLOG */
+  #endif                          /* HAVE_SYSLOG_H */
+  }
+--- 146,156 ----
+  # ifdef HAVE_OPENLOG
+  	/* use the openlog facility */
+  	openlog(Name, LOG_PID | LOG_NOWAIT, SYSLOG_FACILITY );
+! 	syslog(kind, "%s", msg);
+  	closelog();
+  
+  # else
+!     (void) syslog(SYSLOG_FACILITY | kind, "%s", msg);
+  # endif							/* HAVE_OPENLOG */
+  #endif                          /* HAVE_SYSLOG_H */
+  }
+Index: src/common/initialize.c
+===================================================================
+RCS file: /master/contrib/LPRng/LPRng/src/common/initialize.c,v
+retrieving revision 1.4
+diff -c -r1.4 initialize.c
+*** src/common/initialize.c	2000/04/17 19:31:31	1.4
+--- src/common/initialize.c	2000/12/22 17:07:28
+***************
+*** 44,49 ****
+--- 44,60 ----
+  	char *s;
+  	int fd;
+  
++     if( (getuid() == 0 || geteuid() == 0) && getenv("NLSPATH") ){
++ #if defined(HAVE_UNSETENV)
++ 		unsetenv("NLSPATH");
++ #elif defined(HAVE_SETENV)
++ 		setenv("NLSPATH","",1);
++ #elif defined(HAVE_PUTENV)
++ 		putenv("NLSPATH=");
++ #else
++ #error need to have one of unsetenv(), setenv(), or putenv()
++ #endif
++ 	}
+  	DEBUG1("Initialize: starting");
+  
+      if(DEBUGL3){

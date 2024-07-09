@@ -1,0 +1,9 @@
+Makefile
+deftwmrc.c
+lex.c
+gram.h
+gram.c
+twm
+twm.0
+.depend
+twm._man

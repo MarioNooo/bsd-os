@@ -1,0 +1,38 @@
+#       BSDI filemap,v 2.2 1995/07/10 17:54:16 donn Exp
+#
+# Original		Replacement
+#
+/shlib/libc_s		/sco/shlib/libc_s
+/shlib/libnsl_s		/sco/shlib/libnsl_s
+/shlib/libX11R5_s	/sco/shlib/libX11R5_s
+/usr/tmp		/var/tmp
+/dev/socksys		/sco/dev/socksys
+/dev/rdsk/f0q18dt	/dev/rfd0_1440_3.5
+/dev/rdsk/f0q15dt	/dev/rfd0_1200_5.25
+/dev/rdsk/f1q18dt	/dev/rfd1_1440_3.5
+/dev/rdsk/f1q15dt	/dev/rfd1_1200_5.25
+/usr/lib/X11		/usr/X11/lib/X11
+/usr/lib/tmac		/usr/share/tmac
+/usr/lib/sco		/sco/usr/lib/sco
+/usr/lib/terminfo	/sco/usr/lib/terminfo
+/usr/lib/custom		/sco/usr/lib/custom
+/usr/include		/sco/usr/include
+/usr/spool/lp		/sco/usr/spool/lp
+/etc/custom		/sco/etc/custom
+/etc/fixperm		/sco/etc/fixperm
+/etc/perms		/sco/etc/perms
+/bin/chown		/usr/sbin/chown
+/usr/bin/uname		/sco/bin/uname
+/bin/cpio		/sco/bin/cpio
+/bin/echo		/sco/bin/echo
+/bin/df			/sco/bin/df
+/bin/expr		/sco/bin/expr
+/bin/ps			/sco/bin/ps
+/bin/ulimit		/sco/bin/ulimit
+/bin/uname		/sco/bin/uname
+/bin/unpack		/sco/bin/unpack
+/usr/bin/cc		/sco/bin/cc
+/usr/bin/gcc		/sco/bin/gcc
+/usr/bin/cpp		/sco/bin/cpp
+/lib/cpp		/sco/bin/cpp
+/bin/nawk		/usr/bin/awk

@@ -1,0 +1,5 @@
+Disksetup will use the geometry determined by looking at the FDISK table.
+If this is wrong, please change the BIOS by examining and editing the
+FDISK geometry  when asked about it.
+
+Press <ENTER> to continue.

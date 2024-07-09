@@ -1,0 +1,32 @@
+#!/bin/sh
+#	BSDI Dialin.up,v 2.5 1999/10/07 21:41:49 chrisk Exp
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DEBUGFILE=/var/log/ppp.debug
+
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-debug)	shift; exec >> $DEBUGFILE 2>&1
+		echo $(date): $0 $* ; set -x ;;
+        --)	shift; break ;;
+        -*|+*)	shift ;;
+        *)	break ;;
+        esac
+done
+
+SYSTEM=$1	# System
+INTERFACE=$2	# Interface
+LOCAL=$3	# Local address
+REMOTE=$4	# Remote address
+
+#
+# If we have an IP address and we can discover an ethernet address for
+# the same network, (identified by linkaddr returning a link address in
+# second field), publish an arp entry for the IP address.
+#
+if [ ! X"$REMOTE" = X ] ; then
+	set -- `/usr/libexec/linkaddr $REMOTE`
+	if [ ! X"$2" = X ] ; then
+		arp -s $REMOTE $2 pub
+	fi
+fi
+exit 0

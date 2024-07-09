@@ -1,0 +1,218 @@
+.\"	BSDI lgamma.3,v 1.3 1998/03/04 18:41:31 donn Exp
+.\" Copyright (c) 1985, 1991 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
+.\"	lgamma.3,v 1.3 1998/03/04 18:41:31 donn Exp
+.\"
+.Dd February 17, 1998
+.Dt LGAMMA 3
+.Os BSD 4.3
+.Sh NAME
+.Nm lgamma ,
+.Nm lgammaf ,
+.Nm gamma ,
+.Nm gammaf ,
+.Nm lgamma_r ,
+.Nm lgammaf_r ,
+.Nm gamma_r ,
+.Nm gammaf_r
+.Nd log gamma functions, gamma functions
+.Sh SYNOPSIS
+.Fd #include <math.h>
+.Ft extern int
+.Fa signgam ;
+.sp
+.Ft double
+.Fn lgamma "double x"
+.Ft float
+.Fn lgammaf "float x"
+.Ft double
+.Fn gamma "double x"
+.Ft float
+.Fn gammaf "float x"
+.sp
+.Ft double
+.Fn lgamma_r "double x" "int *sign"
+.Ft float
+.Fn lgammaf_r "float x" "int *sign"
+.Ft double
+.Fn gamma_r "double x" "int *sign"
+.Ft float
+.Fn gammaf_r "float x" "int *sign"
+.Sh DESCRIPTION
+.Fn lgamma x
+and
+.Fn lgammaf x
+.if t \{\
+return ln\||\(*G(x)| where
+.Bd -unfilled -offset indent
+\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
+.br
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
+.Ed
+.\}
+.if n \
+return ln\||\(*G(x)|.
+.Pp
+The external integer
+.Fa signgam
+returns the sign of \(*G(x).
+.Pp
+.Fn gamma x
+and
+.Fn gammaf x
+return \(*G(x), with no effect on
+.Fa signgam .
+.Pp
+The functions
+.Fn lgamma_r ,
+.Fn lgammaf_r ,
+.Fn gamma_r
+and
+.Fn gammaf_r
+are identical to the versions without the
+.Li _r
+suffixes, but instead of setting the global variable
+.Fa signgam ,
+they store the sign indirectly through their
+.Fa sign
+argument.
+This avoids any races between asynchronous threads
+to set a global variable like
+.Fa signgam .
+.Sh IDIOSYNCRASIES
+Do not use the expression
+.Dq Li signgam\(**exp(lgamma(x))
+to compute g := \(*G(x).
+Instead use a program like this (in C):
+.Bd -literal -offset indent
+lg = lgamma(x); g = signgam\(**exp(lg);
+.Ed
+.Pp
+Only after
+.Fn lgamma
+or
+.Fn lgammaf
+has returned can signgam be correct.
+.Pp
+For arguments in its range,
+.Fn gamma
+and
+.Fn gammaf
+is preferred, as for positive arguments
+it can be more accurate.
+Exponentiation of
+.Fn lgamma
+may lose several significant bits.
+.Sh ERRORS
+If the result would overflow, then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li +Inf .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv ERANGE .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv OVERFLOW .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is
+.Dv MAXFLOAT .
+.El
+.Pp
+If
+.Li x
+is a nonpositive integer value, then:
+.Pp
+.Bl -tag -width _POSIX_\0 -compact
+.It Dv _IEEE_
+The return value is
+.Li +Inf .
+.It Dv _POSIX_
+Same as
+.Dv _IEEE_ ,
+but
+.Va errno
+is also set to
+.Dv EDOM .
+.It Dv _XOPEN_
+Same as
+.Dv _POSIX_ ,
+but
+.Va errno
+is only set if
+.Xr matherr 3
+returns 0.
+The exception type is
+.Dv SING .
+.It Dv _SVID_
+Same as
+.Dv _XOPEN_ ,
+but the return value is
+.Dv MAXFLOAT ,
+and a message is printed to
+.Va stderr
+if
+.Va errno
+is set.
+.El
+.Sh SEE ALSO
+.Xr math 3
+.Sh HISTORY
+The
+.Nm lgamma
+function appeared in 
+.Bx 4.3 .
+The
+.Nm gamma
+function appeared in
+.Bx 4.4 .
+The name
+.Fn gamma
+was originally dedicated to the
+.Fn lgamma
+function, so some old code may no longer be compatible.

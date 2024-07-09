@@ -1,0 +1,577 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1996,1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ipfwcmp.8,v 1.14 2002/12/20 17:01:52 prb Exp
+.Dd June 12, 1997
+.Dt IPFWCMP 8
+.Sh NAME
+.Nm ipfwcmp
+.Nd compile a BSD IP Filter
+.Sh SYNOPSIS
+.Nm ipfwcmp
+.Op Fl cpS
+.Op Fl s
+.Op Fl o Ar output
+.Op Fl v Ar version
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm ipfwcmp
+utility compiles the BSD IP Filter program stored in
+.Ar file .
+If
+.Ar output
+is specified by the
+.Fl o
+option, the resulting bpf machine code is written into the file names
+.Ar output .
+If not specified, the machine code is written to
+.Ar file Ns No .filter
+(after stripping any
+.Nm .ipfw
+suffix from
+.Ar file . )
+.Pp
+If the
+.Fl s
+flag is specified, the output written is bpf assembly code (see
+.Xr ipfwasm 8 ) .
+In this case, if the
+.Fl o
+flag is not specified, the output is written to standard output.
+If
+.Fl s
+is not specified, the
+.Xr ipfwasm 8
+assembler will optimize the program.  The optimization may be turned off
+by use of the
+.Fl S
+option.
+In addition, the
+.Fl c
+option may be specified to request
+.Xr ipfwasm 8
+to try and cache memory loads (may take a long time to compute).
+The
+.Fl p
+option is also passed to
+.Xr ipfwasm 8
+to request a profile of possible paths to be displayed.
+The
+.Fl v
+option may be used to set the default IP version to either 4 or 6.
+.Pp
+Before compiling the program,
+.Nm ipfwcmp
+preprocesses the program with
+.Xr cpp 1 .
+Line comments are introduces by the character sequence
+.Nm //
+and extend to the end of the line.  C style comments may also be used.
+.Pp
+Programs may contain lines of bpf assembly code (see
+.Xr ipfwasm 8 ) .
+Because of this,
+.Nm ipfwcmp
+may be used to assemble BSD IP Filter assembly programs as well as compile
+BSD IP Filter programs.
+.Pp
+A BSD IP Fitler  program must follow the following BNF:
+.Bl -tag -width ixx
+.It Ar program
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : Ar statement Nm ...
+list of statements
+.El
+.It Ar statement
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : Ar asm-statement
+any statement accepted by
+.Xr ipfwasm 8
+.It Nm : break ;
+break out of the current case
+.br
+must be the last statement of a case if the case does not end with a
+rejection or acceptance of the packet
+.It Nm : deny ;
+reject the packet.
+The synonym
+.Nm reject
+may be used in place of
+.Nm deny
+in all forms.
+.It Nm : deny [ Ar number ] ;
+reject the packet and report up to
+.Ar number
+bytes of the packet to the user level daemon (see
+.Xr ipfwlog 8 )
+If
+.Ar number
+is 0, report the entire packet.
+.It Nm : deny [ Ar "number : user-defined" ] ;
+Same as above with the addition that the specified user-defined bits
+are also returned to the user level daemon.
+.It Nm : deny icmp ( Ar "type , code" ) ...
+The
+.Nm icmp
+key word, along with a type can code, may be included with any of the above
+deny statements.  This addition causes an ICMP packet to be returned to the
+sender of the specified type and code (as well as denying the packet).
+.It Nm : next ;
+Continue on with the next filter in the chain, or reject the packet
+if this is the last filter in the chain.
+.It Nm : permit ;
+accept the packet for normal processing
+The synonym
+.Nm accept
+may be used in place of
+.Nm permit
+in all forms.
+.It Nm : permit [ Ar number ] ;
+accept the packet for normal processing,
+and report up to
+.Ar number
+bytes of the packet to the user level daemon (see
+.Xr ipfwlog 8 ) .
+If
+.Ar number
+is 0, report the entire packet.
+.It Nm : permit [ Ar "number : user-defined" ] ;
+Same as above with the addition that the specified user-defined bits
+are also returned to the user level daemon.
+.It Nm : return ;
+Return from a
+.Nm call
+or
+.Nm rate
+filter with the value stored in the
+.Nm A
+register .
+.It Nm : implicit deny ;
+.It Nm : return [ Ar value ] ;
+Return from a
+.Nm call
+or
+.Nm rate
+filter with
+.Ar value .
+.It Nm : implicit deny ;
+If the end of the filter is reached, reject the packet
+.It Nm : implicit deny [ Ar number ] ;
+If the end of the filter is reached, reject the packet
+and report up to
+.Ar number
+bytes of the packet to the user level daemon (see
+.Xr ipfwlog 8 ) .
+If
+.Ar number
+is 0, report the entire packet.
+.It Nm : implicit next ;
+If the end of the filter is reached go on to the next filter in the chain
+or reject the packet if this is the last filter in the chain.
+.It Nm : "implicit deny" [ Ar "number : user-defined" ] ;
+Same as above with the addition that the specified user-defined bits
+are also returned to the user level daemon.
+.It Nm : implicit permit ;
+If the end of the filter is reached, accept the packet (the default)
+.It Nm : implicit permit [ Ar number ] ;
+If the end of the filter is reached, accept the packet (the default)
+and report up to
+.Ar number
+bytes of the packet to the user level daemon (see
+.Xr ipfwlog 8 ) .
+If
+.Ar number
+is 0, report the entire packet.
+.It Nm : "implicit permit" [ Ar "number : user-defined" ] ;
+Same as above with the addition that the specified user-defined bits
+are also returned to the user level daemon.
+.It Nm : chain ( Ar tag Nm ) ;
+Chain to the filter from the call chain with the
+specified tag.
+.It Nm : Ar conditional Xo
+.No { Ar program No }
+.Xc
+execute
+.Ar program
+if
+.Ar conditional
+evaluates as true
+.It Nm : Ar conditional Xo
+.No { Ar program No }
+.Nm else
+.No { Ar program No }
+.Xc
+execute the first
+.Ar program
+if
+.Ar conditional
+evaluates as true
+else execute the second
+.Ar program
+.It Nm : filter Ar identifier Xo
+.No { Ar program No }
+.Xc
+store
+.Ar program
+as a filter with the name of
+.Ar identifier
+for later use by
+.Nm bind
+.It Nm : bind Ar identifier ;
+use the filter previously defined with the name of
+.Ar identifier
+.br
+statements following a
+.Nm bind
+will not be reached
+.It Nm : block No { Xo
+.Nm case Ar conditional No : Ar program
+.Op Nm case Ar conditional No : ...
+.Op Nm default No : Ar program
+.No " }"
+.Xc
+execute program associated with first true case
+.br
+if no case evaluates true execute program associated with default
+.It Nm : switch Ar conditional No { Xo
+.Nm case Ar range No : Ar program
+.Op Nm case Ar range No : ...
+.Op Nm default No : Ar program
+.No " }"
+.Xc
+execute program associated with the first case which is in range
+.br
+if no case is in range execute program associated with default
+.br
+a case with no program falls through to the next case with a program
+.br
+.Ar range
+may not contain a list of ranges (i.e., range1 , range2)
+.It Nm : set nexthop ( Xo
+.Ar address Nm ) ;
+.Xc
+request the system to use
+.Ar address
+to compute the routing for this packet rather than the destination address
+(only valid in the pre-output filter)
+.El
+.It Ar conditional
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : ! Ar conditional
+.It Nm : NOT Ar conditional
+reverse meanings of true and false for
+.Ar conditional
+.Pp
+note that
+.Nm !
+binds tighter than either
+.Nm ||
+or
+.Nm && .
+.It Nm : Ar ( conditional )
+grouping of conditionals
+.It Nm : Ar conditional Nm || Ar conditional
+.It Nm : Ar conditional Nm OR Ar conditional
+true if either
+.Ar conditional
+is true
+.It Nm : Ar conditional Nm && Ar conditional
+.It Nm : Ar conditional Nm AND Ar conditional
+true if both
+.Ar conditionals
+are true
+.Pp
+note that
+.Nm &&
+binds tighter than
+.Nm || .
+.It Nm : accumulator Ar ( range )
+evaluate as true if the contents of the accumulator (A) is within
+.Ar range
+.br
+provided for use with embedded bpf assembly instructions
+.It Nm : broadcast
+evaluate as true if this packet is a broadcast packet
+.It Nm : call ( " Ar tag Nm " )
+.It Nm : call ( " Ar tag Nm " : Ar number )
+Call filter with the specified tag from the
+call list.  Evaluate as true if the
+.Li IPFW_ACCEPT
+bit is set in the return value from the filter.
+If
+.Ar number
+is specified then it is passed to the fitler as filter specific data.
+.It Nm : chksrc
+evaluate as true if the input interface and the return interface are the
+same.
+.It Nm : day
+evaluate as true is the current day of the week (with Monday being 0) is within the specified ranges.  The symbolic names for the days of the week are automatically translated to the appropriate numeric values.
+.It Nm : data Xo
+.Ar [ number ] ( range )
+.Xc
+evaluate as true if the byte located
+.Ar number
+bytes into the packet is within
+.Ar range
+.It Nm : data Xo
+.Ar [ number : Ns Ar size ]
+.Ar ( range )
+.Xc
+evaluate as true if the word of
+.Ar size
+(1, 2 or 4)
+bytes located
+.Ar number
+bytes into the packet is within
+.Ar range
+.Pp
+the data will be retrieved from the packet in host byte order
+.It Nm : decapsulated
+evaluate as true if this packed was decapsulated from a tunnel, only
+useful for input and pre-input filters.
+.It Nm : dstaddr ( Ar range )
+evaluate as true if the destination ip address is within
+.Ar range
+.It Nm : dstport ( Ar range )
+evaluate as true if the destination port is within
+.Ar range
+(should only be used on tcp and udp packets)
+.It Nm : established
+evaluate as true if this (tcp) packet is part of an established
+connection (The value of the FIN, SYN, RST, and ACK bits are one of
+ACK, ACK+SYN, ACK_FIN, RST, or ACK+RST).
+.It Nm : forwarding
+evaluate as true if this packet is being forwarded
+.It Nm : icmpcode ( Ar range )
+evaluate as true if the icmp code is within
+.Ar range
+(should only be used on icmp packets)
+.It Nm : icmptype ( Ar range )
+evaluate as true if the icmp type is within
+.Ar range
+(should only be used on icmp packets)
+.It Nm : Ar direction Xo
+.Nm interface ( Ar ifacelist )
+.Xc
+evaluate as true if the 
+.Ar direction
+interface is specified in
+.Ar ifacelist
+.It Nm : ipdata Xo
+.Ar [ number ] ( range )
+.Xc
+evaluate as true if the byte located
+.Ar number
+bytes into the ip data section of the packet is within
+.Ar range
+.It Nm : ipdata Xo
+.Ar [ number : Ns Ar size ]
+.Ar ( range )
+.Xc
+evaluate as true if the word of
+.Ar size
+(1, 2 or 4)
+bytes located
+.Ar number
+bytes into the ip data section of the packet is within
+.Ar range
+.Pp
+the data will be retrieved from the packet in host byte order
+.It Nm : ipdontfrag
+evaluate as true if the don't fragment bit is set
+.It Nm : ipfirstfrag
+evaluate as true if this is the first fragment of a fragmented packet
+.It Nm : ipfrag
+evalute as true if this is a fragment of a packet
+.It Nm : iphlen ( Ar range )
+evalute as true if the ip header length is within
+.Ar range
+.It Nm : ipmorefrag
+evaluate as true if more fragments are to follow
+.It Nm : ipoffset ( Ar range )
+evaluate as true if the ip version number is within
+.Ar range
+.It Nm : ipprotocol ( Ar range )
+evaluate as true if the ip protocol is within
+.Ar range
+.It Nm : Ar ip-protocol
+evalue as true if this packet of the specified ip protocol
+.It Nm : ipv4
+evaluate as true if this is an IP version 4 packet
+.It Nm : ipv6
+evaluate as true if this is an IP version 6 packet
+.It Nm : ipversion ( Ar range )
+evaluate as true if the ip version number is within
+.Ar range
+.It Nm : packetlength ( Ar range )
+evalute as true if the over all packet length is within
+.Ar range
+.It Nm : preheader ( Ar range )
+evaluate as true if the number of bytes in front of this IP header
+is within 
+.Ar range .
+This will only be non-zero for packets which have been decapsulated and
+is only useful for input and pre-input filters.
+.It Nm : srcaddr ( Ar range )
+evaluate as true if the source ip address is within
+.Ar range
+.It Nm : srcport ( Ar range )
+evaluate as true if the source port is within
+.Ar range
+(should only be used on tcp and udp packets)
+.It Nm : tcpflags ( Ar range )
+evaluate as true if any of the specified flags are set
+(should only be used on tcp packets)
+.It Nm : tcp request
+evalute as true if this is a request for a new tcp session (SYN is set and ACK, RST, and FIN are not set)
+(should only be used on tcp packets)
+.It Nm : time ( Ar range )
+evalute as true if the current local time, in seconds since midnight, is
+within the specified range.  Numbers may be represented using standard 24
+hour time syntax using the form HH:MM or HH:MM:SS.
+.It Nm : toobig
+evaluate as true if this fragment would cause the packet to be larger
+than 65535 bytes.
+.El
+.It Ar range
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : Ar number
+evaluate as true if the value is equal to the specified number
+.It Nm : Ar number Nm - Ar number
+evaluate as true if the value is between the specified numbers, inclusive
+.It Nm : Ar number Nm / Ar number
+evaluate as true if the value matches the first number using a netmask
+of the second number of bits
+.br
+dotted quads are treated as networks (ala KA9Q) rather than IP addresses
+.br
+this implies 127.1 is 127.0.0.1 while 127.1/24 is 127.1.0.0 & 0xffffff00
+.It Nm : Ar number Nm & Ar number
+evaluate as true if the value anded with the second number equals the first number
+.It Nm : < Ar number
+evaluate as true if the value is less than number
+.It Nm : <= Ar number
+evaluate as true if the value is less than or equal to number
+.It Nm : > Ar number
+evaluate as true if the value is greater than number
+.It Nm : >= Ar number
+evaluate as true if the value is greater than or equal to number
+.It Nm : Ar range Nm , Ar range
+a series of ranges, any of which may be matched to evaluate as true
+.El
+.It Ar number
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : Ar decimal-number
+a series of digits starting with 1-9
+.It Nm : Ar octal-number
+a series of digit ([0-7]) starting with 0
+.It Nm : Ar hexadecimal-number
+a series of digit ([0-9a-f]) starting with 0x
+.It Nm : Ar dotted-quad
+an ip address in dotted quad format
+.It Nm : service ( Ar name/proto )
+port number returned by 
+.Xr getservbyname 3
+by looking up
+.Ar name
+with
+.Ar proto
+in the
+.Pa /etc/services
+file
+.It Nm : hostname ( Ar name )
+the ip address associated with
+.Ar name
+.It Nm : Ar tcp-flag
+One of the following tcp flags:
+.Nm ack , fin , push ,
+.Nm rst , syn , urg
+.It Nm : Ar ip-protocol
+One of the following IP protocols:
+.Nm ah ,
+.Nm dstopts ,
+.Nm egp ,
+.Nm encap ,
+.Nm eon ,
+.Nm esp ,
+.Nm fragment ,
+.Nm ggp ,
+.Nm icmp ,
+.Nm icmpv6 ,
+.Nm idp ,
+.Nm igmp ,
+.Nm ip ,
+.Nm ipip ,
+.Nm none ,
+.Nm pup ,
+.Nm routing ,
+.Nm tcp ,
+.Nm tp ,
+.Nm udp
+.It Nm : Ar icmp-type
+One of the following ICMP message types:
+.Nm echo , echoreply , ireq ,
+.Nm ireqreply , maskreply , maskreq ,
+.Nm paramprob , redirect , routeradvert ,
+.Nm routersolicit , sourcequench , timxceed ,
+.Nm tstamp , tstampreply , unreach
+.It Nm : Ar icmp-code
+One of the following ICMP message sub-codes:
+.Nm paramprob_optabsent , redirect_host , redirect_net ,
+.Nm redirect_toshost , redirect_tosnet , timxceed_intrans ,
+.Nm timxceed_reass , unreach_host , unreach_host_prohib ,
+.Nm unreach_host_unknown , unreach_isolated , unreach_needfrag ,
+.Nm unreach_net , unreach_net_prohib , unreach_net_unknown ,
+.Nm unreach_port , unreach_protocol , unreach_srcfail ,
+.Nm unreach_toshost , unreach_tosnet
+.El
+.It Ar direction
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : input
+the index of the interface this packet came in on
+.It Nm : output
+the index of the interface this packet is going out on
+.It Nm : return
+the index of the interface to which we would return this packet
+.El
+.It Ar ifacelist
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : Ar interface-name
+the name of a network interface (e.g.,
+.Nm ef0 )
+.It Nm : Ar ifacelist Nm , Ar ifacelist
+a list of interfaces that can be matched
+.El
+.It Ar identifier
+one or more characters, optionally enclosed in double quotes (")
+.br
+the identifier must begin with an alphabetic character or an underscore (_)
+.br
+the following characters may also include digits (0-9), dashes (-),
+at signs (@), slashes (/) and dots (.)
+.br
+if not enclosed in quotes the identifier must not match any key words
+.It Ar user-defined
+.Bl -tag -width bpf-statement-xxxx
+.It Nm : user Ns Ar N Op ...
+User defined value
+.Ar N
+in the range of 0 - 255, inclusive.
+.It Nm : userbt Ns Ar N Op ...
+User defined bit
+.Ar N
+in the range of 0 - 7, inclusive.
+.El
+.El
+.Pp
+.Sh SEE ALSO
+.Xr cpp 1 ,
+.Xr ipfw 8 ,
+.Xr ipfwasm 8 ,
+.Xr ipfwdis 8 ,
+.Xr ipfwlog 8 

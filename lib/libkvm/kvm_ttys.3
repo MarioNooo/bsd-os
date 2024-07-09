@@ -1,0 +1,107 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_ttys.3,v 2.2 1997/06/27 23:07:18 prb Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_TTYS 3
+.Os
+.Sh NAME
+.Nm kvm_ttys ,
+.Nm kvm_ttytotals
+.Nd kernel ttys and statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <sys/tty.h>
+.Fd #include <sys/ttystats.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_ttys "kvm_t *kd" "struct ttydevice_tmp **tdpp" "int *ntdp" "struct ttystat **ttpp" "int *ntpp"
+.Ft int
+.Fn kvm_ttytotals "kvm_t *kd" "struct ttytotals *tp"
+.Sh DESCRIPTION
+The
+.Fn kvm_ttys
+function sets the pointer referenced by
+.Fa tdpp
+to a table of
+.Va struct ttydevice_tmp
+structures, sets the integer referenced by
+.Va ntdp
+to the number of elements in this table,
+sets the pointer referenced by
+.Fa ttp
+to a table of
+.Va struct ttystat
+structures and sets the integer referenced by
+.Va ntpp
+to the number of elements in this table.
+Memory for these tables is obtained via
+.Xr malloc 3
+and should be released via
+.Xr free 3
+if desired.
+.Pp
+The 
+.Va struct ttydevice_tmp
+table describes all tty devices or multiplexors recognized by the
+kernel indicated by
+.Fa kd ,
+including pseudo-devices such as those described in 
+.Xr pty 4 .
+The
+.Va struct ttystat
+table describes the state and statistics of all tty devices in
+the kernel indicated by
+.Fa kd .
+There is a correspondence between the elements of the 
+.Va struct ttydevice_tmp 
+table and the
+.Va struct ttystat
+table.
+But note that a multiplexor entry listed in the 
+.Va struct ttydevice_tmp
+table may define more than one element in the
+.Va struct tty
+table, as specified by the
+.Va tty_count
+field.
+The 
+.Va struct ttystat
+structure is defined in
+.Pa /usr/include/sys/tty.h
+and the
+.Va struct ttydevice_tmp
+structure is defined in
+.Pa /usr/include/sys/ttystats.h .
+.Pp
+The
+.Fn kvm_ttytotals
+function fills in the
+.Va struct ttytotals
+structure referenced by
+.Fa tp .
+This structure contains global statistics on characters sent and
+received on tty devices.
+The
+.Va struct ttytotals
+structure is defined in
+.Pa /usr/include/sys/ttystats.h .
+.Sh RETURN VALUES
+These routines return zero on success and -1 on failure.  
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

@@ -1,0 +1,193 @@
+.\"
+.\" Copyright (c) 1988-1990 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that: (1) source code distributions
+.\" retain the above copyright notice and this paragraph in its entirety, (2)
+.\" distributions including binary code include the above copyright notice and
+.\" this paragraph in its entirety in the documentation or other materials
+.\" provided with the distribution, and (3) all advertising materials mentioning
+.\" features or use of this software display the following acknowledgement:
+.\" ``This product includes software developed by the University of California,
+.\" Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+.\" the University nor the names of its contributors may be used to endorse
+.\" or promote products derived from this software without specific prior
+.\" written permission.
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+.\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+.\" @(#) rarpd.8,v 2.4 1998/06/04 19:03:09 jch Exp
+.\"
+.Dd October 26, 1990
+.Dt RARPD 8
+.Sh NAME
+.Nm rarpd 
+.Nd Reverse ARP Daemon
+.Sh SYNOPSIS
+.Nm rarpd 
+.Op Fl dfA
+.Op Fl t Ar timeout
+.Ar interface Op Ar address
+.Nm rarpd 
+.Fl a
+.Op Fl dfA
+.Op Fl t Ar timeout
+.Ar interface
+.Nm rarpd 
+.Fl a
+.Op Fl dfA
+.Op Fl t Ar timeout
+.Sh DESCRIPTION
+.Nm Rarpd
+services Reverse ARP requests on attached 
+.Tn Ethernet
+networks.
+Upon receiving a request, 
+.Nm rarpd
+translates the target hardware address to a hostname (via
+.Pa /etc/ethers )
+and then to an IP address
+via the nameserver (see
+.Xr gethostbyname 3
+and
+.Xr hostname 7 ).
+If either translation fails, no reply will be sent.
+.Pp
+Additionally, unless the 
+.Fl A
+flag is set, a request is honored only if the server
+(i.e., the host that 
+.Nm rarpd
+is running on)
+can 
+.Dq boot
+the target; that is, if a file starting with 
+.Pa /tftpboot/ Ns Em ipaddr
+exists, where 
+.Em ipaddr
+is the target IP address (in host byte order) expressed in
+hexadecimal.
+.Pp
+In normal operation, 
+.Nm rarpd
+forks a copy of itself and runs in
+the background.  Anomalies and errors are reported via 
+.Xr syslog 3 .
+.Pp
+.Nm Rarpd
+responds to queries on one or more 
+.Tn Ethernet
+networks, as configured.
+Specific
+.Tn Ethernet
+networks are configured by specifying the symbolic
+interface name (e.g.
+.Dq ef0 
+or 
+.Dq de1 
+.Ns ).
+.Tn Ethernet
+networks
+are configured with one or more IP networks (see
+.Xr ifconfig 8 )
+and
+.Nm rarpd
+can be configured to answer requests for IP addresses on one or all of
+these IP networks.
+A specific IP network is selected by it specifying the
+interface address on that network as a Internet hostname
+or dotted quad Internet address.
+.Pp
+In the first synopsis
+.Nm rarpd
+runs only the specified 
+.Ar interface ,
+if an
+.Ar address
+is not specified, the first address on the interface is used.
+In the second synopsis
+.Nm rarpd
+runs on all addresses configured on
+.Ar interface .
+In the third synopsis
+.Nm rarpd
+runs on all addresses on all
+.Tn Ethernet
+networks configured on the system.
+.Pp
+If a combination of the available configuration options is needed,
+multiple copies of the
+.Nm rarpd
+daemon may be started.
+.Pp
+The options recognized by
+.Nm rarpd
+are as follows:
+.Bl -tag -width Xaa
+.It Fl a
+Used with an
+.Ar interface
+specification, requests for addresses on all IP networks configured
+for the specified
+.Tn Ethernet
+network are processed.
+Used with no interface specification, requests for addresses on all IP
+networks configured on all
+.Tn Ethernet
+networks are processed.
+.It Fl d
+Run in debug mode, with debugging output on
+.Pa stderr .
+This option implies the 
+.Fl f
+option.
+.It Fl f
+Run in the foreground.
+.It Fl t Ar timeout
+Specify the time interval at which 
+.Nm rarpd
+should check for changes in
+interface configuration.  Defaults to five minutes.
+.It Fl A
+Do not check for a boot file in /tftpboot
+.El
+.Pp
+.Ss /etc/ethers
+.Pa
+The format of the
+.Pa /etc/ethers
+file is an
+.Tn Ethernet
+address specified as six hexadecimal bytes (one or two digits each)
+followed whitespace and an IP hostname specified as a symbolic
+hostname or dotted quad.
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /etc/ethers
+.It Pa /etc/hosts
+.It Pa /tftpboot
+.El
+.Sh SEE ALSO
+.Xr bpf 4 ,
+.Xr syslog 3 ,
+.Xr ifconfig 8 ,
+.Rs 
+.%R A Reverse Address  Resolution Protocol
+.%N RFC 903
+.%A Finlayson, R.
+.%A Mann, T.
+.%A Mogul, J.C.
+.%A Theimer, M.
+.Re
+.Sh AUTHORS
+Craig Leres (leres@ee.lbl.gov) and Steven McCanne (mccanne@ee.lbl.gov).
+Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
+.Sh BUGS
+The
+.Pa /etc/ethers
+file should be documented separately.
+.Pp
+The use of hexadecimal representation of IP addresses in
+.Pa /tftpboot
+is awkward at best.

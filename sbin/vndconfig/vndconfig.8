@@ -1,0 +1,128 @@
+.\"	BSDI vndconfig.8,v 1.3 2001/03/08 02:24:40 jch Exp
+.\"
+.Dd October 18, 1996
+.Dt VNDCONFIG 8
+.Os BSD 4
+.Sh NAME
+.Nm vndconfig
+.Nd "configure vnode devices"
+.Sh SYNOPSIS
+.Nm vndconfig
+.Op Fl f
+.Op Fl s
+.Op Fl u Ar unit
+.Ar file name
+.Nm vndconfig
+.Op Fl c
+.Op Fl u Ar unit
+.Sh DESCRIPTION
+.Nm Vndconfig
+associates a regular file with a
+.Xr vnd 4
+pseudo disk unit. The regular file provides
+the backing store for the the
+.Xr vnd 4
+pseudo disk.
+The user immutable flag is set on the regular file
+to prevent reallocation of the blocks being used by the
+.Xr vnd 4
+pseudo disk.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+If no partitions on the pseudo disk unit
+are open
+the unit will be cleared.
+The user immutable flag on the regular file which
+was providing backing store for the pseudo disk will also
+be cleared.
+.It Fl f
+If the 
+.Xr vnd 4
+pseudo disk is not cleared before the system reboots the
+user immutable bit will be left set. The option is used
+to force clearing of the user immutable bit before
+configuring the device. This option will likely always
+be required when setting up
+.Xr vnd 4
+pseudo disks as part of normal boot in
+.Xr rc 8 .
+.It Fl u
+Specify the
+.Xr vnd 4
+unit which is being initialized or cleared. This defaults to 0.
+.It Fl s
+This flags is used to indicated that the pseudo disk being
+configured is read-only or is only going to be used as a swap
+device. If a
+.Xr vnd 4
+pseudo disk is going to have a file system built in it
+the mapping of logical blocks within the regular file
+to device blocks must be done at open time to prevent dead
+locks. This pre-mapping need not be done
+for 
+.Xr vnd 4
+pseudo disks which are only going to be used as a swap
+device or will only be mounted read-only
+such as iso9660 CD-ROM images.
+.Sh FILES
+.Bl -tag -width /dev/rvnd*[a-h] -compact
+.It Pa /dev/vnd
+.Xr vnd 4
+configuration device
+.It Pa /dev/vnd*[a-h]
+block 
+.Xr vnd 4
+pseudo disk devices
+.It Pa /dev/rvnd*[a-h]
+raw 
+.Xr vnd 4
+pseudo disk devices
+.El
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It vndconfig -f -s /usr/swapfile
+Create 
+.Xr vnd 4
+pseudo disk unit 0 for use as a swap file
+from regular file /usr/swapfile. This is a typical
+entry found in 
+/etc/rc
+.Xr rc 8
+to set up a 
+.Xr vnd 4
+pseudo disk for use by 
+.Xr swapon 8 .
+.It vndconfig -u 1 /tmp/floppyimage
+Build
+.Xr vnd 4
+pseudo disk
+unit 1 from regular file /tmp/floppyimage. 
+.Xr Vnd 4
+unit one can then be used to mount the
+floppy image as if it were on a floppy disk being
+accessed through
+.Xr fd 4 .
+.It vndconfig -c 
+Clear
+.Xr vnd 4
+unit 0.
+.It vndconfig -c -u 0
+Clear
+.Xr vnd 4
+unit 0.
+.It vndconfig -c -u 1
+Clear
+.Xr vnd 4
+unit 1.
+.El
+.Sh SEE ALSO
+.Xr cd9660 8 ,
+.Xr fd 4 ,
+.Xr mount 8
+.Xr mount_cd9660 8 ,
+.Xr vnd 4 ,
+.Xr rc 8 ,
+.Xr swapon 8 
+

@@ -1,0 +1,5 @@
+Makefile
+.depend
+modedefs
+xf86DefModeSet.c
+perl.core

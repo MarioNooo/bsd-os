@@ -1,0 +1,26 @@
+# Crontab file; see cron(8) for more information.
+#
+#	BSDI	crontab,v 2.8 1998/04/09 00:15:39 jch Exp
+#	@(#)crontab	8.1 (Berkeley) 6/9/93
+
+SHELL=/bin/sh
+
+0,15,30,45 * * * *	root /usr/bin/at
+10 3 * * *	root /bin/sh /etc/daily > /var/log/daily.out 2>&1; /usr/bin/mail -s "$(hostname -s) daily run output" root < /var/log/daily.out
+10 4 * * 6	root /bin/sh /etc/weekly > /var/log/weekly.out 2>&1; /usr/bin/mail -s "$(hostname -s) weekly run output" root < /var/log/weekly.out
+20 4 1 * *	root /bin/sh /etc/monthly > /var/log/monthly.out 2>&1; /usr/bin/mail -s "$(hostname -s) monthly run output" root < /var/log/monthly.out
+
+# INN (netnews) programs
+# (uncomment these to do normal news processing)
+#
+# daily cleanup and expiration
+#0 1 * * *       news /var/news/etc/news.daily
+# process articles posted while server not answering
+#15 3 * * *      news /usr/contrib/lib/news/rnews -U
+# process outgoing feeds every 15 mins...
+#3,18,33,48 * * * * news /usr/contrib/lib/news/bin/nntpsend
+
+# Hylafax programs
+# (uncomment these to do normal fax daemon cleanup)
+#7 * * * *	root /usr/contrib/bin/faxqclean
+#25 23 * * * 	fax  /usr/contrib/bin/faxcron > /var/log/faxcron.out 2>&1; /usr/bin/mail -s "$(hostname -s) fax run output" root < /var/log/faxcron.out

@@ -1,0 +1,4 @@
+By convention, the root filesystem (/) is mounted on the
+``a'' partition.  The root filesystem must start at the beginning
+of a BSD FDISK partition.  The root filesystem as defined does not
+start at the beginning of a BSD FDISK partition.

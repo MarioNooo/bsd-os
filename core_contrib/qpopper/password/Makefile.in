@@ -1,0 +1,111 @@
+#
+# * Copyright (c) 2003 QUALCOMM Incorporated.  All rights reserved.
+# *
+# * File:         password/Makefile.in
+# * Project:      Qpopper
+# * Comments:     
+# *
+# *
+# * Revisions:
+# *
+# * 02/03/03    [rcg]
+# *       -  Pick up LDFLAGS.
+# *
+# *  04/28/01   [rcg]
+# *        - Added patch by Steven Champeon to fix install and lib.
+# *
+# *  03/07/01   [rcg]
+# *        - File added
+# *
+#
+SHELL       =   /bin/sh
+CC          =   @CC@
+GPERF       =   @GPERF@
+MAKEFILE    =   Makefile
+
+@SET_MAKE@
+
+#
+#               Defines are described in the INSTALL document.
+#
+top_srcdir      =   @top_srcdir@
+srcdir          =   @srcdir@
+VPATH           =   @srcdir@
+prefix          =   @prefix@
+exec_prefix     =   @exec_prefix@
+installdir      =   @bindir@
+
+common_srcdir   =   ${top_srcdir}/common
+popper_srcdir   =   ${top_srcdir}/popper
+qd_srcdir       =   ${top_srcdir}/qd
+sievead_srcdir  =   ${top_srcdir}/sievead
+mmangle_srcdir  =   ${top_srcdir}/mmangle
+password_srcdir =   ${top_srcdir}/password
+
+base_dir        =   ..
+common_dir      =   ${base_dir}/common
+popper_dir      =   ${base_dir}/popper
+qd_dir          =   ${base_dir}/qd
+sievead_dir     =   ${base_dir}/sievead
+mmangle_dir     =   ${base_dir}/mmangle
+password_dir    =   ${base_dir}/password
+
+
+OBJS            =   auth_user.o poppassd.o
+
+SRCS            =   auth_user.c poppassd.c
+
+INCLUDES        =   ${common_srcdir}/logit.h \
+                    ${common_srcdir}/string_util.h \
+                    ${common_srcdir}/utils.h \
+                    ${common_srcdir}/snprintf.h \
+                    ${popper_dir}/popper.h \
+                    ${base_dir}/config.h ${top_srcdir}/conf.h
+
+
+
+CFLAGS          =   @CFLAGS@
+CDEFS           =   @CDEFS@
+LDFLAGS         =   @LDFLAGS@
+OS_DEFS         =   @OS_DEFS@
+DEFS            =   @DEFS@
+NETWORK_LIBS    =   @NETWORK_LIBS@
+KERBEROS_LIBS   =   @KERBEROS_LIBS@
+DBM_LIBS        =   @DBM_LIBS@
+LIBS            =   @NETWORK_LIBS@ @LIBS@
+AR_FLAG         =   @AR_FLAG@
+RANLIB          =   @RANLIB@
+poppassd        =   @POPPASSD@
+INSTALL         =   @INSTALL@
+
+
+.SUFFIXES: .c .o
+
+all: ${poppassd}
+
+install:
+	${INSTALL} -m 4755 -o root -g 0 poppassd ${installdir}/poppassd; \
+	echo "Installed poppassd as ${installdir}/poppassd" 
+
+poppassd: ${OBJS} ${common_dir}/libcommon.a
+	${CC}  -o poppassd ${OBJS} ${LIBS} ${LDFLAGS}\
+		   ${common_dir}/libcommon.a
+
+.c.o:
+	${CC} -c -I${base_dir} -I${srcdir} -I${top_srcdir} \
+	         -I${popper_srcdir} -I${common_srcdir}  \
+	    ${CFLAGS} ${DEFS} ${CDEFS} ${OS_DEFS} $< -o $@
+
+${OBJS}: ${INCLUDES}
+
+${SRCS}:
+
+clean:
+	rm -f core
+	rm -f ${OBJS}
+	rm -f poppassd
+
+realclean: clean
+	rm -f Makefile
+	rm -f *~
+

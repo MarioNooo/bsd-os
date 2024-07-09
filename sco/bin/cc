@@ -1,0 +1,4 @@
+#! /bin/sh
+
+exec //usr/bin/gcc2 -funsigned-char -fwritable-strings \
+	-Ubsdi -U__bsdi__ -DSCO -DSYSV386 "$@"

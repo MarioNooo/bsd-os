@@ -1,0 +1,157 @@
+#! /usr/bin/make -f
+#
+# Last updated: Thu Apr 26 22:00:00 CDT 1995 by david.
+#
+# To make the binary distribution package, the ``Debianized'' source package
+# and the context diff to the original package, type `./debian.rules dist'.
+# Make sure that `debian.rules' is executable before the final distribution
+# is made.
+#
+# Invoke each target with `./debian.rules <target>'.  All targets should be
+# invoked with the package root as the current directory.
+#
+# The `binary' target must be run as root, as it needs to install files with
+# specific ownerships.  The `diff' target assumes that you have the original
+# source package available, unpacked, in ../$(p)-$(v).orig, or that you have
+# the previous revision of the ``Debianized'' source package and context diff
+# in the parent directory.
+
+include Version.mk
+v = $(VERSION)
+vm = $(VMAJOR)
+arch = $(shell dpkg --print-architecture)
+ifeq ($(arch),i386)
+archx = i486
+else
+archx = $(arch)
+endif
+
+build:
+# Builds the binary package.
+	make ARCH=$(arch) clean
+	make ARCH=$(arch)
+	touch build
+
+clean:
+# Undoes the effect of `make -f debian.rules build'.
+	make ARCH=$(arch) clean
+	rm -f build
+	rm -rf debian/tmp debian/files
+
+binary-indep:   checkroot build
+        $(checkdir)
+
+binary-arch:    checkroot build
+	$(checkdir)
+	#
+	##############################
+	# build the ldso package
+	rm -rf debian/tmp
+	install -d -m 755 debian/tmp
+	chmod g-s debian/tmp
+	#
+	install -d -m 755 debian/tmp/lib
+	if [ -f ld-so/ld.so ]; then \
+		install -s -m 755 ld-so/ld.so debian/tmp/lib/ld.so.$(v); \
+	fi
+	install -m 755 d-link/ld-linux.so debian/tmp/lib/ld-linux.so.$(v)
+	strip -g -K _dl_debug_state debian/tmp/lib/ld-linux.so.$(v)
+	ln -sf ld-linux.so.$(v) debian/tmp/lib/ld-linux.so.$(vm)
+	install -s -m 755 d-link/libdl/libdl.so debian/tmp/lib/libdl.so.$(v)
+	ln -sf libdl.so.$(v) debian/tmp/lib/libdl.so.$(vm)
+	install -d -m 755 debian/tmp/sbin
+	install -s -m 755 util/ldconfig debian/tmp/sbin/ldconfig.new
+	#
+	install -d -m 755 debian/tmp/usr/bin
+	install -s -m 755 util/ldd debian/tmp/usr/bin/ldd
+	install -d -m 755 debian/tmp/usr/lib
+	install -s -m 755 util/lddstub debian/tmp/usr/lib/lddstub
+	#
+	install -d -m 755 debian/tmp/usr/man/man1
+	install -m 644 man/ldd.1 debian/tmp/usr/man/man1/ldd.1
+	install -d -m 755 debian/tmp/usr/man/man8
+	install -m 644 man/ldconfig.8 debian/tmp/usr/man/man8/ldconfig.8
+	install -m 644 man/ld.so.8 debian/tmp/usr/man/man8/ld.so.8
+	gzip -9 debian/tmp/usr/man/man*/*
+	install -d -m 755 debian/tmp/usr/info
+	install -m 644 man/ld.so.info debian/tmp/usr/info
+	gzip -9 debian/tmp/usr/info/*
+	#
+	install -d -m 755 debian/tmp/usr/doc/ld.so
+	install -m 644 debian/copyright debian/tmp/usr/doc/ld.so/copyright
+	install -m 644 README debian/tmp/usr/doc/ld.so/README
+	gzip -9f debian/tmp/usr/doc/ld.so/README
+	install -m 644 debian/changelog debian/tmp/usr/doc/ld.so/changelog
+	gzip -9f debian/tmp/usr/doc/ld.so/changelog
+	#
+	install -d -m 755 debian/tmp/DEBIAN
+	install -m 644 debian/shlibs debian/tmp/DEBIAN/shlibs
+	uuencode util/elf-ok elf-ok > /tmp/elf-ok.uue
+	sed -e '/^__END__/r /tmp/elf-ok.uue' debian/preinst \
+		> debian/tmp/DEBIAN/preinst
+	chmod 755 debian/tmp/DEBIAN/preinst
+	rm -f /tmp/elf-ok.uue
+	sed -e 's/VERSION/$(v)/g' -e 's/VMAJOR/$(vm)/g' debian/postinst \
+		> debian/tmp/DEBIAN/postinst
+	chmod 755 debian/tmp/DEBIAN/postinst
+	install -m 755 debian/prerm debian/tmp/DEBIAN/prerm
+	#
+	dpkg-gencontrol -pldso
+	chmod -R g-w debian/tmp
+	chown -R root.root debian/tmp
+	dpkg --build debian/tmp ..
+	#
+	##############################
+	# build the libdl1-dev package
+	rm -rf debian/tmp
+	install -d -m 755 debian/tmp
+	chmod g-s debian/tmp
+	#
+	install -d -m 755 debian/tmp/usr/lib
+	ln -sf /lib/libdl.so.$(v) debian/tmp/usr/lib/libdl.so
+	install -d -m 755 debian/tmp/usr/include
+	install -m 644 d-link/libdl/dlfcn.h debian/tmp/usr/include/dlfcn.h
+	#
+	install -d -m 755 debian/tmp/usr/man/man3
+	install -m 644 man/dlopen.3 debian/tmp/usr/man/man3/dlopen.3
+	gzip -9 debian/tmp/usr/man/man*/*
+	ln -sf dlopen.3.gz debian/tmp/usr/man/man3/dlsym.3.gz
+	ln -sf dlopen.3.gz debian/tmp/usr/man/man3/dlerror.3.gz
+	ln -sf dlopen.3.gz debian/tmp/usr/man/man3/dlclose.3.gz
+	install -d -m 755 debian/tmp/usr/doc
+	ln -sf ld.so debian/tmp/usr/doc/libdl1-dev
+	#
+	install -d -m 755 debian/tmp/DEBIAN
+	dpkg-gencontrol -plibdl1-dev
+	chmod -R g-w debian/tmp
+	chown -R root.root debian/tmp
+	dpkg --build debian/tmp ..
+	#
+	##############################
+	# build the libdl1-altdev package
+	rm -rf debian/tmp
+	install -d -m 755 debian/tmp
+	chmod g-s debian/tmp
+	#
+	install -d -m 755 debian/tmp/usr/$(archx)-linuxlibc1/lib
+	ln -sf /lib/libdl.so.$(v) \
+	  debian/tmp/usr/$(archx)-linuxlibc1/lib/libdl.so
+	install -d -m 755 debian/tmp/usr/$(archx)-linuxlibc1/include
+	install -m 644 d-link/libdl/dlfcn.h \
+	  debian/tmp/usr/$(archx)-linuxlibc1/include/dlfcn.h
+	#
+	install -d -m 755 debian/tmp/usr/doc
+	ln -sf ld.so debian/tmp/usr/doc/libdl1-altdev
+	#
+	install -d -m 755 debian/tmp/DEBIAN
+	dpkg-gencontrol -plibdl1-altdev
+	chmod -R g-w debian/tmp
+	chown -R root.root debian/tmp
+	dpkg --build debian/tmp ..
+
+binary: binary-indep binary-arch
+
+checkroot:
+	test root = "`whoami`"
+
+.PHONY: binary binary-arch binary-indep clean checkroot

@@ -1,0 +1,160 @@
+.\"	BSDI pccard.conf.5,v 2.3 1997/12/09 20:56:05 prb Exp
+.\"
+.\" Portions or all of this file are Copyright(c) 1994,1995,1996
+.\" Yoichi Shinoda, Yoshitaka Tokugawa, WIDE Project, Wildboar Project
+.\" and Foretune.  All rights reserved.
+.\"
+.\" This code has been contributed to Berkeley Software Design, Inc.
+.\" by the Wildboar Project and its contributors.
+.\"
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE WILDBOAR PROJECT AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+.\" WILDBOAR PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 18, 1997
+.Dt PCCARD.CONF 5
+.Os
+.Sh NAME
+.Nm /etc/pccard.conf
+.Nd
+.Xr csctl 8
+configuration file
+.Sh DESCRIPTION
+The
+.Pa /etc/pccard.conf
+file is the configuration file for the
+.Xr csctl 8
+program.
+.Pp
+Lines that begin with a hash (``#'') are ignored. Lines begin with TAB
+or SPACE are continuation line of last line. The following configuration
+commands are available:
+.Bl -tag -width Ds
+.It Xo
+.Ic .include Pa filename
+.Xc
+Include
+.Pa filename .
+Note that the scope of definitions are global. This means they can be
+referenced at any point after a file is included.
+.It Xo
+.Ic .define NAME VALUE
+.Xc
+Define a constant. The NAME and the VALUE are separated by
+whitespace (TAB or SPACE).
+For example:
+
+.Bd -literal -offset indent
+\&.define	+12V	0x0010
+\&.define	-12V	(+12V<<16)
+.Ed
+.It Xo
+.Ic dname
+.Ar vstr
+.Op Ar vstr ...
+.Op Ar param1 Op Ar param2 ...
+.Op Ar @insert cmd
+.Op Ar @remove cmd
+.Xc
+Define a configuration entry.
+.Bl -tag -width indent
+.It Ic dname
+Name of the driver (e.g. com, ef, mz, ...)
+
+.It Ar vstr
+Version string. Each appears inside double quotes (``"'') and may
+contain escapes from the C language such as \\n, \\t, or \\033.
+.Pp
+If only one version string is specified, it is compared as a substring;
+if there is more than one, the last is compared as a substring and
+the rest are compared as complete strings.
+Syntactically, 
+"ABC" "DEF"
+is the same as
+"ABC\&\\0DEF".
+Finally, the substring comparison may be suppressed by
+making the last version string be empty ("")
+or by placing a "\&\\0" at the end of the version string.
+.It Ar param1 Op Ar param2 ...
+Specify up to five optional parameters to pass to the driver. Each is a
+simple expression that has the same precedence as in the C language.
+You may use constants, arithmetic operations (plus, minus, multiply,
+divide, mod), bit mask and shift operations and parentheses.
+All macro expansions occur before the expression is evaluated.
+.Pp
+.It Ar @insert Ic cmd
+.It Ar @remove Ic cmd
+Execute the command
+.Ic cmd
+upon card insertion or removal.
+Note that the remove action is deferred on suspend; it does not occur
+until resume and then is immediately followed by the insert action.
+Finally, these entries are stored only in the daemon, not in the kernel.
+.El
+.It Xo
+.Ic dname Ns Op ,dname
+.Op Ar
+.Op Ar @insert cmd
+.Op Ar @remove cmd
+.Xc
+This syntax allows you to define insert and remove commands for
+specific drivers. Each driver name is separated by commas.
+Note that defining either an insert or remove command overrides the
+default configuration for the specified driver.
+The device name, unit number and slot number may be indicated by
+using the special sequences
+.Dq %D ,
+.Dq %U ,
+and
+.Dq %S ,
+respectively.
+.It Xo
+.Ic DEFAULT
+.Op Ar @insert cmd
+.Op Ar @remove cmd
+.Xc
+Define a default command for card insertion or removal.
+.El
+.Sh GETTYD INTERACTION
+The @insert and @remove feature can be used to make
+.Xr gettyd 8
+aware of
+the insertion and removal of a PC Card modem.  An example usage is
+to add the following lines to
+.Pa /etc/pccard.conf :
+.Bd -literal -offset indent
+com     @insert "/etc/netscripts/modem.up tty0%U"
+com     @remove "/etc/netscripts/modem.down tty0%U"
+.Ed
+The
+.Pa /etc/netscripts/modem.up
+and
+.Pa /etc/netscripts/modem.down
+scripts can be links to the same file which contain the following shell
+commands:
+.Bd -literal -offset indent
+#!/bin/sh
+sleep 1
+gettystat -r $1
+.Ed
+This will request that
+.Xr gettyd 8
+re-query the device 1 second after it is removed or inserted.
+.Sh SEE ALSO
+.Xr csctl 8 ,
+.Xr gettyd 8 ,
+.Xr gettystat 8
+.Sh AUTHOR
+Atsushi Onoe <onoe@sm.sony.co.jp>

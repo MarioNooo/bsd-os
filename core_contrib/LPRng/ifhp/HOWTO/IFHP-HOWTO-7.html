@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Banners and OF Mode Operation</TITLE>
+ <LINK HREF="IFHP-HOWTO-8.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-6.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc7" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-8.html">Next</A>
+<A HREF="IFHP-HOWTO-6.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc7">Contents</A>
+<HR>
+<H2><A NAME="s7">7. Banners and OF Mode Operation</A></H2>
+
+<P>One of the more difficult administrative issues is whether to print
+banners (job separators) or to save the large amount of wasted
+paper, time and effort.
+The LPRng and
+<CODE>ifhp</CODE>
+combination provide a rather esoteric set of methods to generate banners,
+at least one of which should be suitable for your application.
+<P>You should be aware that some printers have the obnoxious habit of
+generating their own banner pages when jobs are transferred via
+the RFC1179 protocol.
+You should consult the manufacturers documentation and take the
+necessary steps to turn printer banner page generation off.
+It may turn out that this is impossible to do,
+and in that case the only option is to use the Socket or Appsocket
+connection methods.
+<P>By the original BSD print spooler,
+the <CODE>:of</CODE> print filter was responsible for
+banner generation.
+The print server would send it a
+<I>magic string</I> that the filter would recognize
+as a <I>print a banner</I> request,
+and it would then generate a banner.
+After this,
+another special <CODE>magic cookie</CODE> string,
+the character sequence <CODE>0x19,0x01</CODE>,
+was sent to cause the <CODE>:of</CODE> filter to suspend itself.
+This allowed the print spooler to hold the connection to the printer
+open while it started another filter to transfer a file.
+Finally,
+after all the jobs were sent the <CODE>:of</CODE> filter was
+sent a <CODE>SIGCONT</CODE> signal to wake up and perform whatever
+closing operations were necessary.
+<P>This mixing of functionality causes horrible problems when
+special setup strings must be sent to printers in order to
+configure them for various operation.
+In order to avoid these problems,
+the banner printing and filter functions have been separated in
+the <CODE>ifhp</CODE> filter.
+If a banner is needed,
+then <CODE>LPRng</CODE> will use a special banner generating program
+to generate the banner.
+The output of this program is then sent to the
+<CODE>:of</CODE> filter, or directly to the printer if there is no
+<CODE>:of</CODE> filter.
+<H2><A NAME="ss7.1">7.1 No Banner</A>
+</H2>
+
+<P>Here is a typical printcap entry when banner printing
+is not wanted:
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:
+  :sh
+  :if=/.../ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>:sh</CODE> (suppress headers or banners) explicitly disables
+banner printing,
+and the <CODE>lpd</CODE> server will not even attempt to print a banner.
+<H2><A NAME="ss7.2">7.2 Banner Printing and No OF Filter</A>
+</H2>
+
+<P>This printcap entry specifies a banner generator program and
+and banner generation.
+There is no <CODE>:of</CODE> filter specified, so the banner is sent
+directly to the printer.
+In such a case the banner printing program should make sure that
+it generates output with the appropriate set of initialization
+strings.
+The <CODE>pclbanner</CODE>,
+<CODE>psbanner</CODE>,
+and
+<CODE>lpbanner</CODE>
+programs produce PCL,
+PostScript,
+and text banners suitable for a wide range of printers.
+The code for these banner generators is part of the LPRng distribution.
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:
+  :bp=/.../pclbanner
+   # or
+  :bp=/.../psbanner
+   # or
+  :bp=/.../lpbanner
+  :if=/.../ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss7.3">7.3 Banner Printing With OF Filter</A>
+</H2>
+
+<P>Finally,
+we may want banner printing together with the <CODE>:of</CODE> filter.
+This is usually the case when we need to perform special printer
+setups or require the <CODE>ifhp</CODE> filter to do accounting.
+In this case we need to make sure that the banner page is counted
+as part of the job:
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:
+  :bp=/.../pclbanner
+   # or
+  :bp=/.../psbanner
+   # or
+  :bp=/.../lpbanner
+  :of=/.../ifhp
+  :if=/.../ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When invoked as an <CODE>:of</CODE> filter, the <CODE>lpd</CODE>
+server passes a <CODE>-Fo</CODE> option on the command line,
+so that the <CODE>ifhp</CODE> filter knows what mode it is operating in.
+<H2><A NAME="ss7.4">7.4 LPRng Options Controlling Banner Printing</A>
+</H2>
+
+<P>There are several other options available to control banner printing.
+If the user has specifically requested that one
+<I>not</I>
+be generated using the <CODE>lpr -h</CODE> (no header or banner) option,
+then the LPRng <CODE>lpd</CODE> printcap option <I>force_banner</I>
+overrides the user option.
+In addition,
+the <CODE>bs</CODE> (banner at start)
+and
+the <CODE>be</CODE> (banner at end)
+can be used to control where the banner is placed.
+<HR>
+<A HREF="IFHP-HOWTO-8.html">Next</A>
+<A HREF="IFHP-HOWTO-6.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc7">Contents</A>
+</BODY>
+</HTML>

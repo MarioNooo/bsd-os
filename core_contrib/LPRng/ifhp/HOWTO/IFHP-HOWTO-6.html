@@ -1,0 +1,1168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Filter Operation Details</TITLE>
+ <LINK HREF="IFHP-HOWTO-7.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-5.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc6" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-7.html">Next</A>
+<A HREF="IFHP-HOWTO-5.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc6">Contents</A>
+<HR>
+<H2><A NAME="details"></A> <A NAME="read_write"></A> <A NAME="s6">6. Filter Operation Details</A></H2>
+
+<P>The
+<CODE>ifhp</CODE>
+filter operates by first reading a configuration file
+to determine the type of printer it is working with,
+and then proceeds to carry out operations requested by the values of
+option variables passed on the command line or found in the configuration
+files.
+In normal operation,
+input is read from 
+<CODE>STDIN</CODE>
+(file descriptor 0)
+and results written to
+<CODE>STDOUT</CODE> (file descriptor 1).
+Status reports are written to
+a status file or optionally to
+<CODE>STDERR</CODE> (file descriptor 2),
+together with any error messages or diagnostics.
+<P>In addition to normal operation
+the filter can run in the
+<B>OF</B> mode and act as a printer initializer and job terminator.
+This is discussed in detail in the LPRng documentation.
+When in the OF mode
+the two character sequence <CODE>"\031\001"</CODE>
+will cause the filter to suspend itself by sending itself a <CODE>SIGSUSP</CODE>
+signal.
+The print spooler will detect this and then
+send job files to the same output device.
+After the files have been transferred the
+the filter will be restarted with a SIGCONT signal.
+<H2><A NAME="ss6.1">6.1 Filter Pseudo-Code</A>
+</H2>
+
+<P>The details of the filter operations are 
+described in the following
+<EM>pseudo-code</EM>.
+The sections marked with <CODE>###</CODE> are discussed later in this document
+in detail.
+<P><CODE>///</CODE> See: 
+<A HREF="#setup">Options, Initialization and Setup</A>
+<BLOCKQUOTE><CODE>
+<PRE>
+###+++ Initialization and Setup
+// get ifhp information from PRINTCAP_ENTRY environment variable
+if( PRINTCAP_ENTRY environment variable has a value ){
+        split printcap information into printcap fields
+        if( :ifhp=options,options is present in printcap ){
+                split the options list and place in the Toptions list
+        }
+}
+Add the -T command line options to the Toptions list
+Add the -Z command line options to the Zoptions list
+foreach option in -Toptions do
+    if( option = "debug=level" ){
+        set Debuglevel = level;
+    }
+    if( option = "trace" ){
+        output error and trace on STDERR
+    }
+    if( option = "config=pathlist" ){
+        set configuration pathlist = pathlist;
+    }
+    if( option = "model=name" and model not set ){
+        set model = name;
+    }
+}
+Read the configuration files from the config file list
+Prepend each file with a [ default ] header
+
+Scan the configuration files for [ default ] entries;
+  later entry values will override earlier ones.
+
+Repeat the scan, but this time search for [ model ] entries
+  matching the specified model.
+
+Put the command line options and -T options into configuration
+  information, effectively overriding the information from the
+  configuration files.
+
+// open a connection to the printer if required
+// usually only done when appsocket protocol is used
+if( device specified using -Tdev=device ){
+        // if device is host%port, we open TCP/IP connection
+        fd = open(device);
+        // Note - option read_write will open the device or file read write
+        dup fd to 1; close fd;
+}
+
+###---
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<CODE>///</CODE> See: 
+<A HREF="#syncpage">Synchronization and Pagecount</A>
+<BLOCKQUOTE><CODE>
+<PRE>
+###+++ Synchronization and Pagecount
+if( status returned by printer and sync requested ){
+        do{
+                send command and wait for timeout;
+    } while( no response );
+        if( appsocket ){
+                close and reopen TCP/IP connection;
+        }
+}
+
+
+if( status and pagecount requested ){
+    // pagecount has the form pagecount@ (none),
+    //   pagecount=ps, pagecount=pjl, ...
+    if( pagecount=language has value ) do {
+                if( pagecount TRUE ){
+                        set pagecount= pjl or ps depending on availability
+                }
+        if( pagecount = pjl and PJL INFO available ){
+           send PJL INFO PAGECOUNT command to printer
+                } else if( pagecount = ps ){
+           send PS program to printer
+                } else {
+                        terminate with error;
+                }
+    } while( no pagecount response );
+        if( appsocket ){
+                close and reopen TCP/IP connection;
+        }
+}
+###---
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<CODE>///</CODE> See: 
+<A HREF="#pjlinit">PJL Initialization</A>
+<BLOCKQUOTE><CODE>
+<PRE>
+### PJL INITIALIZATION
+if( PJL enabled ){
+    language = "pjl_"
+    foreach option in pjl_init=[...] {
+       expand the option using the language value
+       #+++ PJL OPTION ACTIONS +++
+       if( option in pjl_vars_set=[ ... ]
+         and option not in pjl_vars_except
+         expand "@PJL SET OPTION=\%{option}"
+         output = expanded string value
+       } else {
+         if( option value is a string ){
+           output = expanded string value;
+         }
+       }
+       // output has the form @PJL COMMAND ....
+       if( COMMAND is in pjl_only=[ ... ]
+           and not in pjl_except=[ ... ] ){
+           send output to printer
+       }
+       #--- end PJL OPTION ACTIONS
+    }
+    if( !OF_mode ){
+         foreach option in -Toption=value {
+            if( option in pjl_user_opts ){
+                #+++ USER PJL OPTIONS
+                // join 'pjl_' and the option name
+                expand 'pjl_' . option
+                // perform PJL actions as above
+                    #+++ PJL OPTION ACTIONS +++
+                    ....
+                    #-- PJL OPTION ACTIONS +++
+                #--- USER PJL OPTIONS
+            }
+         }
+         foreach option in -Zoption=value {
+            if( option in pjl_user_opts ){
+                // perform USER PJL actions as above
+                #+++ USER PJL OPTIONS
+                #--- USER PJL OPTIONS
+            }
+         }
+    }
+}
+
+###--- PJL INITIALIZATION
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<CODE>///</CODE> See: 
+<A HREF="#textfile">File Conversion Support</A>
+<BLOCKQUOTE><CODE>
+<PRE>
+// language is set to the type of job language
+// - PS, PCL, TEXT, RAW, UNKNOWN
+//  the first part of the job file is read and the filter takes
+//  a (wimpy) guess at the job file based only on the first couple
+//  of characters;  language is  be PJL, PS, or TEXT, or RAW
+//  This is the same algorithm as the UNIX FILE utility
+
+language = default_language (from configuration);
+if( command line -c (binary) option present ){
+    language = RAW;
+} else if( -Zlanguage=xxx option present ){
+    language=xxx
+} else if( forceconversion set ){
+    use UNIX file utility to get file type
+} else if( file is PS file ){
+    language=PS
+        if( file starts with PS EOJ (CTRL-D)
+                and no_ps_eoj is set ){
+                remove the PS EOJ
+        } else {
+                send a PS EOJ first
+        }
+} else if( file is PCL file ){
+    language=PCL
+        if( file starts with PCL EOJ (ESC E)
+                and no_pcl_eoj is set ){
+                remove the PCL EOJ
+        }
+}
+if( file conversion table specified then ){
+        look up file type in conversion table;
+        if( conversion program specified ){
+        run input through conversion program
+        }
+        set file type to output type
+}
+
+
+if( language = TEXT and PCL allowed ){
+    language = PCL;
+}
+
+if( language not recognized by printer ){
+    exit with error;
+}
+
+if( PJL ENTER supported ){
+        use PJL ENTER command to select language;
+        send nullpad NULLS to force full buffer condition
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<CODE>///</CODE> See: 
+<A HREF="#languageinit">Language Specific Initialization</A>
+<A NAME="pcl_user_opts"></A> 
+<A NAME="ps_user_opts"></A> 
+<BLOCKQUOTE><CODE>
+<PRE>
+// LANGUAGE SPECIFIC INITIALIZATIONS
+if( language = PCL ){
+    foreach option in pcl_init {
+        ###+++ expansion 
+        do expansion similar to PJL OPTION actions
+            using "pcl_" prefix for option lookup;
+        ###---
+    }
+    if( not in OF_MODE ){
+        foreach option in -Toption do {
+            if( option in pcl_user_vars=[ ... ] ){
+            ###+++ expansion as above
+            ###---
+        }
+        foreach option in -Zoption do {
+            if( option in pcl_user_opts=[ ... ] ){
+            ###+++ expansion as above
+            ###---
+        }
+    }
+    remove whitespace and expand string results;
+} else if( language = PS ){
+    ###+++ language specific actions as above,
+      using the ps_ prefix for lookup 
+      allow only user option in the ps_user_opts list
+    expand string results but do not remove whitespace
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<CODE>///</CODE> See: 
+<A HREF="#filetransfer">File Transfer and Error Status Monitoring</A>
+<BLOCKQUOTE><CODE>
+<PRE>
+Transfer job to printer, reading error and other information
+  back from the printer if enabled
+
+if( language = PCL ){
+    send PCL End of Job
+} else if( language = PS ){
+    send PS End of Job
+}
+
+
+// job termination
+
+###+++ Synchronization and Pagecount as above
+finished = 0
+while( waitend and not finished ){
+        // timeouts and retries are done here
+        if( time taken is too long ){
+                give up and report an error
+        }
+        if( appsocket ){
+                send \r\n to get status reply
+        } else if( waitend with PJL ){
+                wait for end of job using UINFO;
+        } else if( waitend with PS ){
+                send PostScript echo program to printer
+                if end_ctrl_t then add ^T
+        }
+        wait for response
+        if( response has end of job indication ) {
+                finished = 1;
+        }
+}
+if( pagecount ){
+        if( appsocket ){
+                close and reopen connection;
+        }
+        get pagecount using previously described algorithm
+}
+
+###---
+
+exit
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="setup"></A> <A NAME="ss6.2">6.2 Options, Initialization and Setup</A>
+</H2>
+
+<P>During the setup step,
+the <CODE>ifhp</CODE> system will extract command line options
+and scan configuration files for printer entries.
+These operations are covered in detail in other sections.
+<P>
+<H2><A NAME="text"></A> <A NAME="ps"></A> <A NAME="pcl"></A> <A NAME="pjl"></A> <A NAME="ss6.3">6.3 Languages Supported- pjl, pcl, ps, and text</A>
+</H2>
+
+<P>These flags set the languages that are recognized or processed by
+the filter.
+<H3><A NAME="pjl_job"></A> pjl_job FLAG</H3>
+
+<P>If PJL is enabled and this flag is SET,
+a PJL JOB and PJL EOJ command will be generated
+and sent to the printer.
+The JOB command has the form:
+<BLOCKQUOTE><CODE>
+&commat;PJL JOB NAME = "..." [ START = nnn ] [ END = mmm ]
+</CODE></BLOCKQUOTE>
+
+The START and END values can be specified by
+<CODE>-Zstartpage=nnn</CODE>
+and
+<CODE>-Zendpage=mmm</CODE>
+command line options.
+The EOJ command has must match the JOB command.
+<BLOCKQUOTE><CODE>
+&commat;PJL EOJ NAME = "..." [ START = nnn ] [ END = nnn ]
+</CODE></BLOCKQUOTE>
+<H3><A NAME="pjl_enter"></A> pjl_enter FLAG</H3>
+
+<P>If PJL is enabled and this flag is SET,
+a PJL ENTER LANGUAGE = xx command will be generated
+when PCL or PS files are sent to the printer.
+<BLOCKQUOTE><CODE>
+<PRE>
+@PJL ENTER LANGUAGE = PCL
+@PJL ENTER LANGUAGE = POSTSCRIPT
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3><A NAME="nullpad"></A> nullpad STRING</H3>
+
+<P>Some older model HP printers required sending a large number of
+NULL (0) characters to force commands in the input buffer to be read.
+This can be done using the
+<CODE>nullpad</CODE> option.
+<P>In practice,
+this has turned out to be largely historical,
+as most printers do not have this problem.
+<H3><A NAME="pjl_console"></A> pjl_console FLAG</H3>
+
+<P>When this flag is set,
+PJL is available,
+and the PJL
+<CODE>RDYMSG</CODE>
+command is supported,
+then a short message will be put on the console.
+<H3><A NAME="remove_ctrl"></A> remove_ctrl STRING</H3>
+
+<P>The
+<CODE>remove_ctrl</CODE> string option species a list of (control) characters
+that will be removed from PostScript jobs.
+This solves the problem of jobs with embedded Control-T or Control-C
+characters causing abnormal printer operation.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+remove_ctrl=CT
+</PRE>
+</CODE></BLOCKQUOTE>
+
+would cause Control-C and Control-T characters to be removed.
+<H3><A NAME="tbcp"></A> tbcp FLAG</H3>
+
+<P>The
+<CODE>tbcp</CODE>
+flag can be specified as a user option as well as a
+configuration file option.
+If the file type is PostScript and this flag is set,
+then the file is transferred using the Transparent Binary Communication
+Protocol.
+(See the Adobe PostScript Language Reference Manual for details on
+the protocol.)
+<P>At the start of the PostScript job,
+the sequence <CODE>\001</CODE> <CODE>M</CODE> is sent.
+Afterwards,  all control characters in the set
+<CODE>0x01, 0x03, 0x04, 0x05,
+0x11, 0x13, 0x14, 0x1C,</CODE>
+are replaced by the two character sequence <CODE>\001</CODE>
+<CODE>X+'@'</CODE> or
+<CODE>X+'\100'</CODE> or
+is sent.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+C\001\003   ->  \001\115\103\001\101\001\103 or \001MC\001A\001C
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="sync_timeout"></A> <A NAME="sync_interval"></A> <A NAME="sync"></A> <A NAME="pagecount_ps_code"></A> <A NAME="pagecount_timeout"></A> <A NAME="pagecount_interval"></A> <A NAME="pagecount"></A> <A NAME="syncpage"></A> <A NAME="ss6.4">6.4 Synchronization and Pagecounts</A>
+</H2>
+
+<P>Many printers are able to provide status information back to the
+filter.
+It is assumed that in these circumstances file descriptor 1
+(FD1)
+is
+<EM>bidirectional</EM>
+and status information can be read from it.
+When the
+<CODE>status</CODE>
+option is TRUE,
+then the filter assumes that it can read FD1.
+In order to simplify configuration,
+the
+<CODE>ifhp</CODE>
+filter will test FD1, and if it is not
+a serial port or a network socket, will set
+<CODE>status@</CODE>
+or OFF.
+<P>Synchronization is usually done in order to ensure that a previously
+spooled job or printer action has completed correctly,
+and the printer is ready to accept a new job.
+It is usually carried out by sending a request to the printer to
+echo a string back to the filter.
+Clearly,
+if the printer cannot provide status or echo values back,
+then synchronization is impossible.
+<P>The value of the
+<CODE>sync</CODE> option determines if a PJL ECHO command or simple PostScript 
+program is used.
+The PostScript program has the form:
+<BLOCKQUOTE><CODE>
+\004%!PS-Adobe-2.0<BR>
+( %%[ echo: <EM>TODSTR</EM> ]%% ) print () = flush<BR>
+\004
+</CODE></BLOCKQUOTE>
+<P>where <EM>TODSTR</EM> is replaced with the current Time of Day.
+<P>To control obtaining synchronization,
+the
+and
+<CODE>sync_timeout=nnn</CODE>
+options are used.
+The PJL or PS command is repeated at
+<CODE>sync_interval=nnn</CODE>
+second intervals; if nnn is 0, then it is sent only once.
+If synchronization is not obtained within
+<CODE>sync_timeout=nnn</CODE>
+seconds, then the filter exits with an error status.
+A 0 value or
+<CODE>sync_timeout@</CODE>
+disables timeouts.
+<P>Pagecounts are used to do accounting and report the number of pages
+used for a job.
+Most printer have a hardware based pagecounter mechanism whose value
+can be read by the appropriate PJL command or PostScript program.
+For example, if the PJL INFO command
+<BLOCKQUOTE><CODE>
+<PRE>
+@PJL INFO PAGECOUNT
+</PRE>
+</CODE></BLOCKQUOTE>
+
+is supported by a printer,
+the printer will return a status message containing the current pagecounter
+value.
+Printers that support PostScript may also be able to access the pagecounter
+value using a PostScript program.
+The exact details of the PostScript program vary from vendor to vendor and
+the
+<CODE>pagecount_ps_code=...</CODE>
+option specifies the PostScript program to use.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+pagecount_ps_code=
+  /p {print} def ( %%[ pagecount: ) p
+  statusdict begin pagecount end 20 string cvs p
+  ( ]%% ) p () = flush
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Pagecounting is supported by the
+<CODE>pagecount=</CODE><I>language</I>,
+<CODE>pagecount_interval=nnn</CODE>,
+and
+<CODE>pagecount_timeout=nnn</CODE>
+options.
+The
+<CODE>pagecount=</CODE><I>language</I>
+option enables pagecounting, and sets the language to be used.
+Currently
+<CODE>ps</CODE> (PostScript)
+and
+<CODE>pjl</CODE> (PJL)
+are supported.
+The pagecount request is repeated every
+<CODE>pagecount_interval=nnn</CODE>
+second intervals; if nnn is 0, then it is sent only once.
+If no pagecount value is obtained within
+<CODE>pagecount_timeout=nnn</CODE>
+seconds, then the filter exits with an error.
+A 0 value or
+<CODE>sync_timeout@</CODE>
+disables timeouts.
+<P>Some printers do not correctly report end of job and must be polled
+until the pagecount information stabilizes.
+The PJL TEOJ (True End Of Job) PJL has been tried with limited success
+on various printers to force End of Job reporting only when the
+job has finished.
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_init=[ ... teoj ... ]
+pjl_teoj=&commat;PJL TEOJ=ON
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="pjl_init"></A> <A NAME="pjl_user_opts"></A> <A NAME="pjl_vars_except"></A> <A NAME="pjl_vars_set"></A> <A NAME="pjl_except"></A> <A NAME="pjl_only"></A> <A NAME="startpage"></A> <A NAME="endpage"></A> <A NAME="pjlinit"></A> <A NAME="ss6.5">6.5 PJL Initialization</A>
+</H2>
+
+<P>If a printer supports PJL,
+the many printer operations can be initiated and controlled using
+PJL commands.
+Unfortunately,
+not all printers support the same set of commands.
+In addition,
+not all printers support the same set of operations or options.
+A PJL command has the form:
+<BLOCKQUOTE><CODE>
+@PJL COMMAND OPTION OPTION ...
+</CODE></BLOCKQUOTE>
+
+A PJL variable is set using:
+<BLOCKQUOTE><CODE>
+@PJL SET <I>var</I> = <I>value</I> ...
+</CODE></BLOCKQUOTE>
+
+The
+<CODE>pjl_only=[ ... ]</CODE>,
+<CODE>pjl_except=[ ... ]</CODE>,
+<CODE>pjl_vars_set=[ ... ]</CODE>,
+and
+<CODE>pjl_vars_except=[ ... ]</CODE>
+options are used to control which PJL commands and which PJL variables
+can be set.
+The 
+<CODE>pjl_only</CODE>
+variable lists the commands supported by the printer,
+and the
+<CODE>pjl_except</CODE>
+lists commands <EM>not</EM>
+supported by the printer.
+Before sending a PJL command,
+the
+<CODE>ifhp</CODE>
+filter checks to make sure that the command name is in
+<CODE>pjl_only</CODE>
+and not in
+<CODE>pjl_except</CODE>.
+If the tests fail, then tne command is not sent.
+<P>Similarly,
+when sending a command to set a PJL variable,
+the
+<CODE>pjl_vars_set</CODE>
+and
+<CODE>pjl_vars_except</CODE>
+lists are checked to determine if the variable name is in
+<CODE>pjl_vars_set</CODE>
+and not in
+<CODE>pjl_except</CODE>
+list.
+If the tests fail, then tne command is not sent.
+<P>If PJL is enabled,
+then the following actions are taken.
+<OL>
+<LI> PJL Universal Exit Language (UEL) <CODE>\033%-12345X</CODE> is sent to the printer.
+<P>This is required to ensure that the following PJL commands are
+accepted.
+</LI>
+<LI> PJL JOB command is sent at the start of job.
+The JOB command can be used to select pages or impressions to be printed.
+If the
+<CODE>-Zstartpage=nnn</CODE>
+or
+<CODE>-Zendpage=mmm</CODE>
+option is present, then the PJL JOB command has the form:
+<BLOCKQUOTE><CODE>
+@PJL JOB START=nnn END=mmm
+</CODE></BLOCKQUOTE>
+</LI>
+<LI> The
+<CODE>pjl_init=[ ... ]</CODE>
+value option is expanded using the PJL
+(<CODE>"pjl_"</CODE>) language context as described above.</LI>
+<LI> The
+<CODE>-Toption=value</CODE>s
+and
+<CODE>-Zoption=value</CODE>s
+are scanned for matching option names in the 
+<CODE>pjl_user_opts=[ ... ]</CODE> 
+list.
+If they are found,
+then the options are recursively evaluated in the PJL language context.
+The expansion algorithm will cause the option value to be used to set PJL
+variables.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+Configuration:
+  pjl_vars_set=[ OUTBIN AUTOSELECT JAM=YES ]
+
+Command
+  ifhp -Zoutbin=upper,autoselect,jam
+
+PJL command generated:
+  @PJL SET OUTBIN=UPPER
+  @PJL SET AUTOSELECT=ON
+  @PJL SET JAM=YES
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+</OL>
+<H2><A NAME="default_language"></A> <A NAME="textfile"></A> <A NAME="fileconversion"></A> <A NAME="ss6.6">6.6 File Conversion Support</A>
+</H2>
+
+<P>The <CODE>lpr -l</CODE> or <CODE>lp -b</CODE> flags indicate that the spooled files
+are not to be processed by an output file.
+The LPRng spooler recognizes this option and passes the <CODE>-c</CODE>
+command line option to suppress any language specific processing for files.
+<P>However,
+many PostScript printers cannot handle text files,
+and produce many hundreds of pages of garbage
+output if they are sent to the printer without being translated
+into PostScript,
+and some printers require language specific setup in order to print
+PCL, PostScript or text files correctly.
+<P>The <CODE>ifhp</CODE> filter has builtin tests for PJL,
+PCL, and PostScript files.
+These tests are almost identical to those used
+by many printers which do
+<EM>autodetection</EM>.
+If you need to recognize a wider range of file types,
+you can configure <CODE>ifhp</CODE> to use the
+UNIX <CODE>file</CODE>(1) program.
+<P>Finally,
+some printers have a very specialized job format that requires
+conversion to by a
+<CODE>rasterizer</CODE>
+program.
+This is handled as detailed in the following sections.
+<H3><A NAME="forceconversion"></A> <A NAME="file_util_path"></A> Using the File Utility</H3>
+
+<P>By default,
+the builtin tests are first used to determine the file type.
+These tests are very successful in determining if a file is
+PJL, PostScript,
+and PCL, and text
+with language types
+<CODE>pjl</CODE>,
+<CODE>ps</CODE>,
+<CODE>pcl</CODE>,
+and
+<CODE>text</CODE> respectively.
+If it cannot determine the language type, it is set to the
+<CODE>default_language</CODE> value, usually <CODE>text</CODE>.
+<P>If this simple method is not satisfactory or is too limited,
+then setting the
+<CODE>forceconversion</CODE>
+option will cause <CODE>ifhp</CODE> to use the UNIX
+<A HREF="IFHP-HOWTO-2.html#fileutil">file utility</A>
+utility to determine the file and produce a text description on
+its <CODE>STDOUT</CODE>.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+## default
+default_language=text
+## force use of file program
+force_conversion
+##  file utility path
+file_util_path=/usr/bin/file -
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The output of the file utility is converted to lower case and
+used as the language type for further processing.
+<H3><A NAME="language"></A> <A NAME="wrappers"></A> <A NAME="pjl_converter"></A> <A NAME="pcl_converter"></A> <A NAME="ps_converter"></A> <A NAME="text_converter"></A> <A NAME="file_output_match"></A> Conversion</H3>
+
+<P>Once the language type has been determined,
+the <CODE>ifhp</CODE> filter then decides if a conversion program
+needs to be run and will convert the input file to a required file type.
+This activity is  controlled by the <CODE>file_output_match</CODE>
+table.
+<BLOCKQUOTE><CODE>
+<PRE>
+file_output_match = [
+  *postscript*  ps  \%s{ps_converter}
+  *pcl*         pcl  \%s{pcl_converter}
+  *pjl*         pjl  \%s{pjl_converter}
+  *printer*job*language* pjl
+#  if your printer has PCL, use:
+  *text*  pcl  \%s{pcl_converter}
+#  if your printer does not have PCL, use:
+#  *text*  pcl  \%s{text_converter}
+  ]
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Each line of the
+<CODE>file_output_match</CODE>
+table contains
+a (URL encoded) <I>glob</I> pattern,
+the language type (<CODE>ps</CODE>, <CODE>pcl</CODE>, etc.) produced by the conversion program,
+and the (optional) conversion program.
+<P>The format:
+<BLOCKQUOTE><CODE>
+<PRE>
+file_output_match = &lt;/pathname
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>will cause <CODE>ifhp</CODE> to open and read the specified file
+for the <CODE>file_output_match</CODE> table.
+The file's contents must have the same format as the
+<CODE>file_output_match</CODE> table but without the <CODE>[</CODE> or <CODE>]</CODE> delimiters.
+<P>The <CODE>file_match_table</CODE> is scanned from first to last entry
+for a <CODE>glob</CODE> pattern that
+matches the file type determined by the <CODE>ifhp</CODE> program or the output of the
+<CODE>file_util_path</CODE> program.
+If no match is found,
+then the language is set to the
+<CODE>default_language</CODE> value.
+<P>The output language of the conversion program is set to the second entry.
+The conversion program will be run with its STDIN set to the input file
+and its STDOUT used as the converted output.
+If there is no conversion program then the original file is used
+and only the language type is modified.
+The following shows how you can use the
+<BLOCKQUOTE><CODE>
+<PRE>
+# device=epsonc
+# resolution=-r1440
+# gs=/usr/bin/gs
+# ps_converter= \%s{gs} -dBATCH -q -sDEVICE=\%s{device} \
+#   \%s{resolution} -sOutputFile=- -
+ps_converter=
+pcl_converter=
+pjl_converter=
+text_converter=/usr/bin/a2ps -q -B -1 -M Letter
+  --borders=no -o- \%s{ps_converter}
+text_converter_output=ps
+</PRE>
+</CODE></BLOCKQUOTE>
+
+There are a few details that should be observed when using this facility.
+<OL>
+<LI>If <CODE>file_output_match@</CODE> is specified
+then the <CODE>file_output_match</CODE> table will not be used.</LI>
+<LI>The glob pattern is URL encoded in order to allow spaces and other items
+to be put into it.
+In the example above,
+the pattern <CODE>'*%20gif%20*'</CODE> is  used as <CODE>'* gif *'</CODE>.</LI>
+<LI>The conversion program must exit with a 0 error code.</LI>
+<LI>If the conversion program contains a shell meta character such as
+<CODE>|</CODE>,
+<CODE>;</CODE>,
+<CODE>&gt;</CODE>,
+<CODE>&lt;</CODE>,
+etc,
+then it will be executed using
+<CODE>/bin/sh -c 'command'</CODE>.
+This allows a pipe of conversion commands to be constructed.
+This is discussed in detail below.</LI>
+<LI>If the converted file type is
+<CODE>unknown</CODE> or not supported by the printer then the file is not printed. </LI>
+<LI>The most commonly used conversion programs are
+<A HREF="IFHP-HOWTO-2.html#ghostscript">GhostScript</A>,
+used to convert PostScript to a format compatible with a non-PostScript
+printer,
+and the 
+<A HREF="IFHP-HOWTO-2.html#a2ps">a2ps</A>,
+<A HREF="IFHP-HOWTO-2.html#enscript">enscript</A>, and 
+<A HREF="IFHP-HOWTO-2.html#textps">textps</A>
+Text to PostScript conversion programs which
+convert text into PostScript for a non-text supporting printer.
+The use of a <CODE>wrapper</CODE> program with these utilities is discussed below.</LI>
+<LI>The entire list of -Z and -T options will be substituted for the word ZOPTS and TOPTS
+respectively.</LI>
+<LI>The argument list to the filter will be substituted for the work ARGV.
+This allows access to the entire argument list passed to the <CODE>ifhp</CODE> filter.</LI>
+</OL>
+<P>The conversion program must exit with a 0 (success) error code.
+Unfortunately,
+the <CODE>enscript</CODE> program
+will exit with a non-zero error codes even for successful conversions.
+We need to use a
+<CODE>wrapper</CODE> script that will run them and then return the correct
+error code as shown below.
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# /usr.../wrapper path [options]
+# wrapper script for a2ps, enscript and others
+#   path is the path to the program and options are the
+#   options to pass.  The program is run and then the exit
+#   code is corrected
+"$@"
+status=$?
+case "$status" in
+        1 ) exit $status ;;
+esac
+exit 0
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If the conversion program specification contains one or more of the
+shell meta-characters
+<CODE>|</CODE>, <CODE>&lt;</CODE>, or <CODE>&lt;</CODE>, etc,
+then it will be invoked using the <CODE>/bin/sh -c filterprogram</CODE>.
+This allows users to specify some rather bizarre conversion
+programs and to chain together conversion programs.
+For example,
+You can print a <CODE>gif</CODE> file by first converging it <CODE>ppm</CODE> and then
+to PostScript:
+then to a 
+<BLOCKQUOTE><CODE>
+<PRE>
+ # gif to ppm
+ *ppm*  ps  ppm2ps
+ *gif*  ps  gif2ppm | ppm2ps
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<A NAME="rasterizer"></A> 
+A more important use of this feature is when there is a need to
+<EM>rasterize</EM> a file by converting it from a standard format to
+a specialized printer raster format.
+You can set this up by using the following method.
+<BLOCKQUOTE><CODE>
+<PRE>
+rasterizer= /usr/bin/gs -sDEVICE=epson -dBATCH \
+        -sOutputFile=- -sPAPERSIZE=letter -q -
+text_converter=/usr/bin/a2ps -q -B -1 -M Letter
+  --borders=no -o- 
+file_output_match = [
+ *postscript*  ps  \%s{rasterizer}
+ *text*        ps  \%s{text_converter} | \%s{rasterizer}
+ *             unknown
+ ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>rasterizer</CODE> option in the configuration program
+is expanded to produce the necessary pipeline to do conversion.
+<H3><A NAME="crlf"></A> LF to CR/LF Conversion</H3>
+
+<P>When processing <CODE>text</CODE> or <CODE>pcl</CODE> files,
+the <CODE>crlf</CODE> option will enable translation of
+LF (<CODE>\n</CODE>) to CR/LF (<CODE>\r\n</CODE>) sequences.
+If you are using <CODE>ifhp</CODE> to simply do LF to CR/LF translation,
+then you can use:
+<BLOCKQUOTE><CODE>
+<PRE>
+ifhp -Tcrlf
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>Text Treated Like PCL</H3>
+
+<P>Text is simply PCL with no special formatting codes.
+However, you will still need to send the PCL initialization
+strings to the printer.
+You can do this by using the following entry in the
+<CODE>file_output_match</CODE> table:
+<BLOCKQUOTE><CODE>
+<PRE>
+file_output_match = [
+ *text*  pcl
+ ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>Default to Passthrough</H3>
+
+<P>Your printer may be capable of handling a wide variety of job
+formats.  If you want to simply pass through files of
+unknown type or language then use the following entry in the
+<CODE>file_output_match</CODE> table:
+<BLOCKQUOTE><CODE>
+<PRE>
+file_output_match = [
+ *  raw
+ ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ghostscriptconfig"></A> <A NAME="ss6.7">6.7 GhostScript and ifhp</A>
+</H2>
+
+<P>Generating a raster image from a PostScript or PCL file in
+a timely manner requires a high speed processor and substantial amounts
+of memory.
+Many of the low cost printers require the user's system to do the raster
+conversion,
+and a raster file is then transferred to the printer.
+These files are usually in a proprietary format.
+<P>The 
+<A HREF="IFHP-HOWTO-2.html#ghostscript">GhostScript</A>
+program can process PostScript files and produce raster output for a
+wide range of devices.
+See the GhostScript documentation for details.
+The <CODE>ghostscript</CODE> printer configuration is intended to be used
+with these printers.
+<BLOCKQUOTE><CODE>
+<PRE>
+# PRINTER ghostscript - Printer with GhostScript conversion to raster files
+[ ghostscript gs ]
+pcl@
+pjl@
+ps
+text
+# device=epsonc
+# resolution=-r240x72
+ps_converter= [ /usr/bin/gs -dSAFER -dBATCH -q -sDEVICE=\%s{device}
+   \%s{resolution} -sOutputFile=- -
+ ]
+text_converter= [ /usr/bin/a2ps -q -B -1 -M Letter --borders=no -o-
+  | \%s{ps_converter}
+ ]
+file_output_match = [
+# PostScript to Raster
+  *postscript*  raw  \%s{ps_converter}
+# text to PostScript to Raster conversion
+  *text*  raw  \%s{text_converter}
+  ]   
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>\%s{device}</CODE> and <CODE>\%s{resolution}</CODE> parameters can now be
+specified in the printcap.
+The following shows a typical printcap entry for use with this entry.
+<BLOCKQUOTE><CODE>
+#  force clients (lpr, lpq, to use server)<BR>
+lp:lp=lp@serverhost <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I> <BR>
+&nbsp;&nbsp;:lp=/dev/lpt0     <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;:ifhp=model=gs,device=epson,resolution=-r240x72 <BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>ifhp</CODE> configuration entry uses GhostScript to do the
+rasterization of the PostScript file,
+and the <CODE>a2ps</CODE> program to do a text to PostScript conversion.
+<H2><A NAME="languageinit"></A> <A NAME="ss6.8">6.8 Language Specific Initialization</A>
+</H2>
+
+<P>After determining the output file language type,
+language specific operations are then carried out by
+expanding the
+<I>language_</I><CODE>_init=[ ... ]</CODE>
+options in the language context,
+and then the options in the
+<CODE>-Toption=value</CODE>
+and
+<CODE>-Zoption=value</CODE>
+command line options.
+The 
+<CODE>-T</CODE>
+options are expanded before the
+<CODE>-Z</CODE>,
+allowing the 
+<CODE>-Z</CODE> actions to override any set by the
+<CODE>-T</CODE> actions.
+<P>As mentioned elsewhere,
+the reason for the language specific processing is to allow
+different actions for the same command line option,
+depending on the file type that is being processed.
+For example,  when processing a PCL file it might be necessary to send
+PCL command strings and when processing a PostScript file,
+you would need to send PostScript commands.
+<H2><A NAME="pjl_quiet_codes"></A> <A NAME="pjl_error_codes"></A> <A NAME="logall"></A> <A NAME="filetransfer"></A> <A NAME="ss6.9">6.9 File Transfer and Error Status Monitoring</A>
+</H2>
+
+<P>If the printer can return status, i.e., the
+<CODE>status</CODE> option is on,
+the filter will read status information from the printer.
+<P>If the
+<CODE>logall</CODE>
+flag is SET,
+then all error messages will be written to the status or log file.
+<P>If the printer is returning PJL status information,
+then this has a specific format:
+<BLOCKQUOTE><CODE>
+<PRE>
+@PJL UINFO DEVICE
+CODE=nnnn
+DISPLAY="value"
+...
+
+@PJL UINFO JOB
+START
+...
+
+@PJL UINFO JOB
+END
+...
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The
+<CODE>ifhp</CODE> program will extract the
+<CODE>CODE</CODE>
+and job start and end flags,
+and log these as appropriate.
+<P>Unfortunately,
+some PJL based printers are extremely verbose in their generation of status
+messages.
+In order to reduce the amount of logging of redundant information,
+<CODE>ifhp</CODE>
+will only record when a device status has
+<B>changed</B>,
+rather than when it has been reported.
+<P>The
+pjl_quiet_codes=[ code code code ]
+value is used to suppress reporting of selected error codes.
+If the error code is in the pjl_quiet_codes list,  then the error status
+will not be reported to the user unless the
+<CODE>logall</CODE>
+option is set.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+  pjl_quiet_codes=[ 10000 10001 10003 10023 10024 35078 ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Also, there may be error codes which does not have a builtin error
+message available.  New messages can be added using the
+<CODE>pjl_error_codes</CODE>
+option.
+Its value is a list of lines, each line consisting of an error code
+followed by the corresponding error message:
+<BLOCKQUOTE><CODE>
+<PRE>
+pjl_error_codes=[
+   code=msg
+   code=msg
+   ...
+]
+
+Example:
+  pjl_error_codes=[
+     10000=powersave mode
+     10001=Ready Online
+     10002=Ready Offline
+     10003=Warming Up
+     10004=Self Test
+     10005=Reset
+  ]
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="end_ctrl_t"></A> <A NAME="waitend_ctrl_t_interval"></A> <A NAME="waitend_interval"></A> <A NAME="waitend"></A> <A NAME="ss6.10">6.10 End of Job</A>
+</H2>
+
+<P>The <CODE>waitend</CODE> option controls the job termination sequence.
+By default,
+this will do the same work as the
+<CODE>sync</CODE> operation,
+and the option takes the same set of values.
+<P>If <CODE>waitend</CODE>
+is suppressed using <CODE>waitend@</CODE>,
+then as soon as a job has been transferred,
+the next step,
+<CODE>pagecount</CODE>,
+will be attempted.
+If the print job has not finished at this point,
+then erroneous page counts will be reported.
+<P>When using the <CODE>appsocket</CODE> protocol,
+then suppressing <CODE>waitend</CODE> will cause no error messages from the printer to
+be reported.
+<P>Some printers do not have a True End Of Job reporting capability
+using PJL.
+This means that the job will be reported as done,
+but paper is still moving through the print engine.
+If you try to get pagecounts at this point you will get the wrong value.
+An alternative method is to set
+<CODE>waitend=ps</CODE>
+and
+The <CODE>end_ctrl_t=word:word:...</CODE>
+This will cause a CONTROL-T to be sent to the printer,
+a PostScript convention that will cause the PostScript interpreter to return
+the actual printing status.
+In most printers this will be
+<CODE>printing</CODE> or something other
+than
+<CODE>idle</CODE> or <CODE>busy</CODE>
+as long as paper is moving in the print engine.
+When status is returned,
+the words in the
+<CODE>end_ctrl_t=word:word:...</CODE>
+list value are examined for a match.
+If the status word is present then the end of job condition is assumed.
+<P>The <CODE>waitend_interval</CODE>
+value controls how often the waitend operation is repeated.
+This is usually set to a fairly large value,
+as it is normally used only to recover from printer failures
+such as users turning the printer on and off.
+<P>The <CODE>waitend_ctrl_t_interval</CODE>
+controls how often the printer is queried for status using CTRL-T
+and is usually set to a short (2 or 3 second) value.
+<P>
+<H2><A NAME="appsocket"></A> <A NAME="ss6.11">6.11 Tektronix Phaser, QMS and AppSocket Support</A>
+</H2>
+
+<P>The <CODE>appsocket</CODE> flag is used to specify that data transfer will
+be done using the
+<A HREF="IFHP-HOWTO-3.html#appsocketpc">AppSocket</A>
+protocol.
+The <CODE>ifhp</CODE> filter will open a connection to the ip address and
+port specified by the <CODE>dev=host%port</CODE> option
+and carry out the various operations that it needs to do.
+<P>Rather than closing a connection,
+<CODE>ifhp</CODE> will <CODE>half-close</CODE> it,
+that is the <CODE>shutdown()</CODE> system call is used to
+to close the connection for transmission but leave it open for receiving.
+The printer will send status information until the job is completed,
+and then close the connection.
+<P>If page count information is needed,
+the <CODE>ifhp</CODE> filter will then reopen the connection and get the page count information.
+<HR>
+<A HREF="IFHP-HOWTO-7.html">Next</A>
+<A HREF="IFHP-HOWTO-5.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc6">Contents</A>
+</BODY>
+</HTML>

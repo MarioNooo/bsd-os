@@ -1,0 +1,8 @@
+.warning
+Makefile
+config.cache
+config.h
+config.log
+config.status
+ntp.0
+stamp-h

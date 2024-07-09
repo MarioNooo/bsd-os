@@ -1,0 +1,29 @@
+.\"
+.\"     iopro_dload.8,v 1.1 1995/10/24 21:05:22 cp Exp
+.\"
+.Dd 29 July 93
+.Dt IOPRO_DLOAD 8
+.Os BSD/OS
+.Sh NAME
+.Nm iopro_dload
+.Nd Downloader for Chase Research IOPRO firmware
+.Sh SYNOPSIS
+.Nm iopro_dload file device
+.Sh DESCRIPTION
+.Nm Iopro_dload
+is a program used to install firmware in the Chase Research IOPRO
+external units once they have been powered up.
+.Pp
+.Nm Iopro_dload
+is normally invoked from the IOPRO power monitoring and configuration
+daemon
+.Xr ioprod 8
+and will fail if the unit is not powered.
+.Pp
+Once firmware has been downloaded successfully the units processor is released
+and two seconds should be allowed for the firmware to perform diagnostics
+and setup.
+.Sh DIAGNOSTICS
+Should be self explanatory.
+.Sh SEE ALSO
+.Xr ioprod 8

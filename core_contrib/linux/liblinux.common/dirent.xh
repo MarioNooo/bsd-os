@@ -1,0 +1,28 @@
+/*	BSDI dirent.xh,v 1.2 2000/12/08 04:11:29 donn Exp	*/
+
+/*
+ * Transformation for the dirent structure.
+ */
+
+%{
+#define readdir __bsdi_header_readdir
+#include <dirent.h>
+#undef readdir
+%}
+
+struct dirent {
+	long d_fileno;
+	off_t linux_d_off;
+	unsigned short linux_d_reclen;
+%{ #ifndef LIBC5 %}
+	unsigned char linux_d_type;
+%{ #endif /* !LIBC5 */ %}
+	char d_name[256];
+
+	out(n, f, len) {
+		f->linux_d_reclen = len;
+#ifndef LIBC5
+		f->linux_d_type = n->d_type;
+#endif /* !LIBC5 */
+	}
+};

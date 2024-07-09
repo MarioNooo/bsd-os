@@ -1,0 +1,34 @@
+#	BSDI	Makefile.inc,v 1.7 2002/01/09 16:27:10 polk Exp
+
+WWWOWN=		www
+WWWGRP=		www
+WWWMODE=	0664
+
+CONFOWN=	root
+CONFGRP=	wheel
+CONFMODE=	0644
+
+PREFIX		= /var/www
+EXEC-PREFIX	= /usr
+BINDIR		= ${EXEC-PREFIX}/bin
+SBINDIR		= ${EXEC-PREFIX}/sbin
+LIBEXECDIR	= ${EXEC-PREFIX}/lib/apache
+MANDIR		= ${EXEC-PREFIX}/share/man
+SYSCONFDIR	= ${PREFIX}/conf
+DATADIR		= ${PREFIX}
+INCLUDEDIR	= ${EXEC-PREFIX}/include/apache
+LOCALSTATEDIR	= /var
+RUNTIMEDIR	= ${LOCALSTATEDIR}/run
+LOGFILEDIR	= ${LOCALSTATEDIR}/log/httpd
+PROXYCACHEDIR	= ${PREFIX}/proxy
+
+WWWDOCSDIR=	${PREFIX}/docs
+WWWPRIVATE=	${PREFIX}/cgi-private
+WWWCGIBIN=	${PREFIX}/cgi-bin
+WWWCGIDIR=	${PREFIX}/cgi-disabled
+
+BINOWN=		root
+BINGRP=		wheel
+BINMODE=	0555
+
+.include "../Makefile.inc"

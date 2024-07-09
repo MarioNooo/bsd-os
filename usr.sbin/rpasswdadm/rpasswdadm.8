@@ -1,0 +1,51 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI rpasswdadm.8,v 1.4 1997/10/09 17:26:30 tks Exp
+.Dd August 23, 1996
+.Dt RPASSWDADM 8
+.Os BSD 4
+.Sh NAME
+.Nm rpasswdadm
+.Nd manage the /etc/rpasswd.db database
+.Sh SYNOPSIS
+.Nm rpasswdadm
+.Op Fl a Ar user:encrypted-password
+.Op Fl d Ar user
+.Sh DESCRIPTION
+The
+.Nm rpasswdadm
+utility is used to add or delete users from the
+.Pa /etc/rpasswd.db
+database.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+Add (or modify) an entry for
+.Ar user
+whose encrypted password is
+.Ar encrypted-password .
+If
+.Ar encrypted-password
+is the empty string, then
+.Ar user
+does not require a password.
+.It Fl r
+Remove the entry associated with
+.Ar user
+from the database.
+.El
+.Pp
+If called with no arguments,
+.Nm rpasswdadm
+will dump out the entire database, one user per line, in the form of:
+.Pp
+.Dl user:encrypted-password
+.Sh SEE ALSO
+.Xr rpasswd 1 ,
+.Xr login.conf 5 ,
+.Xr login 8 ,
+.Xr login_rchpass 8 ,
+.Xr login_rpasswd 8

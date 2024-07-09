@@ -1,0 +1,6 @@
+Disksetup can find no place to label this disk.  This implies that
+there is an FDISK table, but not partitions marked for use by BSD/OS,
+but a BSD/OS label is still required.  Disksetup can still label the
+disk, but this will destroy any information on sector 1 of the disk.
+Disksetup will not write any BSD/OS boot blocks to this disk.
+

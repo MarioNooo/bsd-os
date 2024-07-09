@@ -1,0 +1,119 @@
+.\"	BSDI setcons.8,v 1.1 1997/01/02 17:38:38 pjd Exp
+.Dd August 21, 1996
+.Dt SETCONS 8
+.Os
+.Sh NAME
+.Nm setcons
+.Nd set console parameters
+.Sh SYNOPSIS
+.Nm setcons
+.Op Fl h
+.Op Fl f Ar device-file
+.Op category Op command
+.Sh DESCRIPTION
+Called without options, categories or commands, the
+.Nm setcons
+utility displays the current console parameters for the audible bell
+and keyboard repeat. The addition of options, categories and commands
+allows certain console parameters to be set.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl f
+Specify an alternate console file.
+If no alternate console file is specified,
+the file
+.Dq /dev/conskbd0
+is used.
+If no alternate console file is specified and the file
+.Dq /dev/conskbd0
+cannot be opened for any reason,
+the file
+.Dq /dev/console
+is used.
+.It Fl h
+Display help information for all categories.
+.El
+.Pp
+The following categories,
+and commands within categories,
+are available:
+.Bl -tag -width indent
+.It bell
+Set the audible bell parameters.
+.Bl -tag -width indent
+.It audible
+Enable the audible bell.
+.It none
+Disable the audible bell.
+.It freq Ar value
+Set the bell frequency to
+.Ar value
+hertz.
+.It duration Ar value
+Set the bell duration to
+.Ar value
+milliseconds.
+.El
+.It repeat
+Set the keyboard repeat parameters.
+.Bl -tag -width indent
+.It rate Ar value
+Set the keyboard rate to
+.Ar value
+characters per second, where
+.Ar value
+is a floating point number between 2.0 and 30.0.
+.It delay Ar value
+Set the keyboard delay to
+.Ar value
+seconds, where
+.Ar value
+is a floating point number between 0.25 and 1.00.
+.El
+.It keymap
+Set the console keyboard map.
+.Bl -tag -width indent
+.It reset
+reset to the compiled in default keyboard map table.
+.It filename
+set the keyboard map table with the contents of filename.
+.El
+.Pp
+A variety of mappings are available to
+support different national variants of PC style keyboards.
+After some syntax checks, the table will be installed in the kernel
+as the new mapping between keyboard scan codes and characters.
+.El
+.Pp
+Usually,
+.Nm setcons
+is run during the system startup process from
+.Dq Pa /etc/rc.configure .
+.Sh WARNING
+You can easily make your keyboard unusable by installing wrong
+tables.
+If this happens, the easiest way out is to login over the network
+and reset the keyboard (using the
+reset option).
+.Pp
+The
+.Nm setcons
+utility exits 0 on success, and >0 if an error occurs.
+.Sh FILES
+.Bl -tag -width /usr/share/vgafont -compact
+.It Pa /dev/conskbd0
+First choice for default console device.
+.It Pa /dev/console
+Second choice for default console device.
+.It Pa /usr/libdata/keyboard
+Default directory for keyboard mapping tables.
+.It Pa /etc/keyboard.map
+Copy of currently loaded keyboard mapping table. The placement and update
+of this file is not automatic. Scripts or configuration files which call
+setcons to set the keyboard mapping tables should reference this file or
+copy the new keyboard mapping table to it.
+.El 
+.Sh SEE ALSO
+.Xr vgafont 1
+.Xr mkct 8

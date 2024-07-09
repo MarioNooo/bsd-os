@@ -1,0 +1,7 @@
+You have aborted the FDISK editor.  Any modifications made to
+the FDISK table have been forgotten.  You now have the option
+of either exiting disksetup or restarting the editing of the FDISK
+table for this disk.  If you aborted the editor because the
+label originally displayed was what you wanted, re-edit the
+FDISK label and use <N> to go on to the next phase.
+

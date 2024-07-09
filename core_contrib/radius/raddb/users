@@ -1,0 +1,133 @@
+# Copyright [C] The Regents of the University of Michigan and Merit Network,
+# Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+
+# RCSID:	$Id: users,v 1.4 1998/01/30 17:03:16 web Exp $
+
+#	This file contains security and configuration information
+#	for each user.  The first field is the user's name (and for UNIX)
+#	should be no more than eight (8) characters in length.  This is
+#	followed (on the same line) by a list of authentication requirements
+#	for that user.  This list may include password, comm server name,
+#	comm server port number, and an expiration date of the user's
+#	password.  When an authentication request is received from
+#	the comm server, these values are tested.  
+
+#	Upon lookup of the user name in this file, the current protocol 
+#	(i.e., PPP, SLIP, login user) is compared to any Framed-Protocol
+#	authentication requirement.  If the name matches and no Framed-Protocol
+#	requirement is present or the specified Framed-Protocol requirement is
+#	equal to the protocol argument, then the matching entry is used.  
+#	If the name matches, but the specified Framed-Protocol does not match
+#	the protocol being used, the match fails and subsequent entries will
+#	be checked.  This allows protocol specific user file entries to be
+#	specified, which allows the same user id to _not_ imply a specific 
+#	connection protocol.  Note, however, that this feature is not yet
+#	available when the "DBM" user file feature is being used.
+
+#	A special DEFAULT entry (or protocol specific DEFAULT entries) may be
+#	included anywhere in the file to indicate how to handle names that
+#	do not explicitly match any other entries in this file.
+
+#	Instead of a "Password" check-item for a given user name, an
+#	"Authentication-Type" item can be used to indicate special
+#	authentication is to be performed.  Valid authentication types are:
+
+#	Unix-PW - Indicates the local UNIX /etc/passwd file is to be used.
+#	Realm   - Use "authfile" to map user specified realm (<id>@<realm>)
+#		  to server.  If no realm is specified, authentication fails.
+#	AFS-Krb - For AFS Kerberos authentication at the default Kerberos realm.
+#	MIT-Krb - For MIT Kerberos authentication at the default Kerberos realm.
+#	RADIUS  - Request is to be relayed to another RADIUS server
+#		  (name specified as DEFAULT_RADIUS_SERVER at compile time).
+#	TACACS  - Make extended (and encrypted) request to TACACS server
+#		  (name specified as DEFAULT_TACACS_SERVER at compile time).
+#	TACPLUS - Make extended (and encrypted) request to TACACS+ server
+#		  (name specified as DEFAULT_TACACS_SERVER at compile time).
+#	None    - This entry is not to be used for authentication.
+#	KCHAP   - Kerberos CHAP database lookup to be done in this machine.
+#	MNET    - Strange and archaic Merit authentiation.
+
+#	Lines indented with the tab character following the first line
+#	indicate the configuration values (reply-items) to be passed back
+#	to the comm server to allow the initiation of a user session.
+#	This can include things like the PPP configuration values
+#	or the host onto which to log the user.  Vendor specific attributes
+#	may be specified as "<vendor>:<attribute>" (e.g., Ascend:Ascend-Metric).
+
+# Only define anonymous for PPP or SLIP users.
+# This will make "Authenticate-Only" requests for anonymous fail, since
+# there are no unqualified entries for user name "anonymous".
+
+#anonymous Password = "guest", Framed-Protocol = PPP
+#	Filter-Id = "anonymous"
+
+#anonymous Password = "guest", Framed-Protocol = SLIP
+#	Filter-Id = "anonymous"
+
+#	A few simple examples:
+
+#fred	Password = "indaklear"
+#	Filter-Id = "unlim"
+
+#guest@abc.xyz	Password = "hi", Comment = "group accnt", Simultaneous-Use = 10
+#	Session-Timeout = 7200,
+#	Filter-Id = "anonymous"
+
+#sam	Authentication-Type = Unix-PW,
+#	Filter-Id = "unlim"
+
+#judy	Authentication-Type = Realm,
+#	Ascend:Ascend-Idle-Limit = 30,
+#	Filter-Id = "noway"
+
+#	An authentication type of "Realm" indicates authentication is to
+#	be done according to the realm name a user has appended to his/her
+#	user name (i.e., <userid>@<realm>).  The authfile is used to indicate
+#	how to perform authentication for all the valid realm names which
+#	may appear.  A special DEFAULT entry may be placed in the authfile
+#	to indicate the proper action to take with realm names which do not
+#	explicitly appear in the authfile.  The DEFAULT entry will not,
+#	however, match a null realm name (i.e., just <userid> is provided).
+#	In this case, a special NULL entry may be placed in the authfile to
+#	specify what to do with such requests.
+
+DEFAULT	Authentication-Type = BSD-Auth,
+	Filter-Id = "unlim"
+
+# These "canonical" user entries are searched for after matching a user
+# from one of the above user entries (including the DEFAULT entry), but
+# only if that first entry did not specify a "Service-Type" attribute.
+# The server does this by matching the "hint" supplied by the client in
+# the "Service-Type" attribute found in the request.
+#
+# This feature allows the same user name to be used for either PPP, SLIP,
+# dumb-terminal or other access.  Note: the "Authentication-Type = None"
+# check item on each of the following entries prevents it from ever being
+# treated as a normal user id.
+#
+# The server checks for eight "Service-Type" values (Login, <<Framed>>,
+# Callback-Login, Callback-Framed, Outbound-User, Administrative-User,
+# Exec-User and Authenticate-Only) and equates them with the "dumbuser",
+# <<"pppuser", "slipuser",>> "cblogin", "cbframed", "obuser", "admin",
+# "execuser" and "authonly" entries.  The first three "users" are shown:
+
+dumbuser Authentication-Type = None,
+	Service-Type = Login,
+	Login-Service = Telnet,
+	Login-IP-Host = 255.255.255.255
+
+pppuser Authentication-Type = None,
+	Service-Type = Framed,
+	Framed-Protocol = PPP,
+	Framed-IP-Netmask = 255.255.255.0,
+	Framed-Routing = None,
+	Framed-MTU = 1500,
+	Framed-Compression = Van-Jacobson-TCP-IP
+
+slipuser Authentication-Type = None,
+	Service-Type = Framed,
+	Framed-Protocol = SLIP,
+	Framed-IP-Netmask = 255.255.255.0,
+	Framed-Routing = None,
+	Framed-MTU = 1500,
+	Framed-Compression = Van-Jacobson-TCP-IP

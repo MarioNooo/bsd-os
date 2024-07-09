@@ -1,0 +1,55 @@
+Date: Tue, 30 Sep 1997 17:43:36 -0700
+To: lgl@island-resort.com
+From: Laurence Lundblade <lgl@qualcomm.com>
+Subject: test: lost of nested excerpts
+
+unquoted text...
+
+>>>>
+At 10:01 AM 9/30/97 -0700, Laurence Lundblade wrote:
+>>>> 
+At 8:19 AM -0700 9/30/97, Steve Sprigg wrote:
+>>>>
+Looks like the Pilot could be dropping all of the compressed Acks.  Sorry if these are redundant questions, but here goes...
+
+- Am I correct in assuming this does NOT happen without VJ compression?  If this is a serial driver issue, then it probably should happen regardless of the use of VJ header compression. 
+<<<<
+It does not happen without VJ compression, BUT there is an explanation. I believe there are two problems - one is the loss of compressed packets, the other is the fact that the timeouts get longer and longer.
+<<<<
+
+They don't always seem to get longer and longer.  Maybe the timeouts are just totally broken.
+
+
+>>>>
+
+The really odd thing about the above sequence is the timing.  The numbers I've listed in the first column were the seconds column from the timestamps in the trace (as in "Thu Sep 18 16:37:29").  Often the initial retransmitted data packet is one second behind the first in-sequence transmission of that packet (as in the above illustration), but sometimes it is four or five seconds, sometimes ten.  The second and third consecutive retransmit delays are just as weird (see attached file).
+<<<<
+Yes, I've seen very weird retransmission timings from the Pilot too. I wonder if there some integer arithmatic that's overflowing when they get really large.
+
+<<<<
+
+>>>>
+
+>>>>
+
+>So, should a successful transmission and ack reset the retransmission
+>timer? It appears not to for the NT 4.0 stack.
+
+Isn't it the Pilot's retransmission timing that's in question?  NT is just sending ACKs for each packet it gets.
+
+<<<<
+The issue is when does the ACK compressor decide to send an uncompressed packet, because that's what causes recovery.
+  At first I thought it was the NT box's problem, but then I saw ack's that should be passed through uncompressed were not.
+<<<<
+
+An uncompressed packet will be forced by any retransmitted packet, and in some other cases (negative seq & ack deltas, I think).  This is what I observed, and looking back over it now, it seems that each Pilot retransmit is in fact followed by an uncompressed PC ack (or no ACK at all...).
+
+>>>>
+ The subscriber folks have some code that throws out over-eager acks which may be responsible for this problem.
+<<<<
+
+This is interesting...where do they do this? how do they know what's over-eager?  There were periods during which the PC side was strangely silent.  Whereever they do this, it's certainly not between the PPP endpoints so it shouldn't break VJ, and any retransmits which go over that link should be uncompressed.
+
+-bhk
+<<<<
+

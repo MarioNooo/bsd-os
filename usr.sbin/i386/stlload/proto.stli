@@ -1,0 +1,36 @@
+#
+# Copyright (c) 1996 Stallion Technologies Pty Ltd.
+# All rights reserved.
+#
+
+imagedir="/usr/libdata/stallion"
+
+#
+#	Cycle around for each possible installed board, check if it
+#	is present, and then do configuration as required.
+#
+
+for unit in 0 1 2 3 4 5 6 7
+do
+	if [ -c /dev/stliomem${unit} ]
+	then
+		state=`stlstats -c /dev/stliomem${unit} -b ${unit} -i`
+		if [ "$?" = 0 ]
+		then
+			set $state
+			case "$6" in
+			1|2|3|4|5|6|7|8|9|10|11)	image="2681.sys" ;;
+			23|24|25)			image="cdk.sys" ;;
+			*)				image="" ;;
+			esac
+			if [ "$8" -gt 0 -a "$image" != "" ]
+			then
+				echo -n " stli${unit}"
+				stlload -i ${imagedir}/${image} -b ${unit}
+			fi
+		fi
+	fi
+done
+
+echo
+exit 0

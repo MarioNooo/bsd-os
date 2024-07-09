@@ -1,0 +1,64 @@
+.\"     BSDI    isfdtype.3,v 2.2 1997/10/31 23:28:19 dab Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd October 31, 1997
+.Dt ISFDTYPE 3
+.Sh NAME
+.Nm isfdtype
+.Nd test if a "file descriptor" is of a specified type
+.Sh SYNOPSIS
+.Fd #include <sys/stat.h>
+.Ft int
+.Fn isfdtype "int fd" "int fdtype"
+.Sh DESCRIPTION
+The
+.Fn isfdtype
+call determines whether the file descriptor
+.Fa fd
+refers to a file or object of the type identified by
+.Fa fdtype .
+The following values of
+.Fa fdtype
+are supported:
+.Bl -tag -width XXXS_IFSOCK
+.It S_IFSOCK
+Returns true if the descriptor refers to a socket or fifo.
+.It S_IFIFO
+Returns true if the descriptor refers to a fifo or socket.
+.It S_IFCHR
+Returns true if the descriptor refers to a character special device.
+.It S_IFDIR
+Returns true if the descriptor refers to a directory.
+.It S_IFBLK
+Returns true if the descriptor refers to a block special device.
+.It S_IFREG
+Returns true if the descriptor refers to a regular file.
+.It S_IFTTY
+Returns true if the descriptor refers to a character special
+device for a terminal (see
+.Xr tty 4 ) .
+.Sh DIAGNOSTICS
+The function returns 0 if the descriptor is not of the specified type,
+and a 1 if the descriptor is of that type.
+It returns -1 if an error is detected.
+.Sh ERRORS
+The call succeeds unless:
+.Bl -tag -width ENOTTYAA
+.It Bq Er EBADF
+.Fa fd
+is not a valid descriptor.
+.Sh SEE ALSO
+.Xr stat 2 ,
+.Xr isatty 3 ,
+.Xr tty 4
+.Sh STANDARDS
+The
+.Fn isatty
+function conforms to draft 6.6 of
+.\".St P1003.1g .
+IEEE Std 1003.1g when
+.Fa fdtype
+is S_IFSOCK.
+The other types are provided as extensions.

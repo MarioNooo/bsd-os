@@ -1,0 +1,164 @@
+.\"	BSDI	ftp-proxy.8,v 1.4 1999/11/19 15:49:12 prb Exp
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd September 10, 1999
+.Dt FTP-PROXY 8
+.Sh NAME
+.Nm ftp-proxy
+.Nd install/remove transparent ftp proxy
+.Sh SYNOPSIS
+.Nm ftp-proxy
+.Op Fl cvN
+.Op Fl h Ar host
+.Op Fl n Ar ticks
+.Op Fl o Ar priority
+.Op Fl p Ar priority
+.Op Fl P Ar port
+.Op Fl t Ar tickrate
+.Op Ar proxyport
+.br
+.Nm ftp-proxy
+.Fl r
+.Sh DESCRIPTION
+The
+.Nm ftp-proxy
+utility installs a transparent FTP proxy for FTP sessions going into
+and out of a firewall box.  There are two independent reasons for
+running the transparent FTP proxy.  The first is that the firewall
+has restrictive rules that do not allow outgoing active FTP or incoming
+passive FTP (see
+.Xr ipfw 8 . )
+The transparent FTP proxy watches FTP sessions and installs
+a circuit cache which allows only the requested DATA sessions to be opened.
+The second reason is because the network is hidden behind a NAT box
+(see
+.Xr ipfwnat 8 . )
+.Pp
+The NAT functionality of
+.Nm ftp-proxy
+is automatically engaged if the FTP session is going through a NAT box.
+If the FTP session is not going through a NAT box the NAT functionality of
+.Nm ftp-proxy
+will not engage for that session.
+.Pp
+The firewall functionality is controlled by the use of the
+.Fl c
+flag.  If
+.Fl c
+is not specified then only the NAT functionality will be available.
+.Pp
+Only a single ftp-proxy may be running at any given time on any given machine.
+The proxy handles all FTP sessions going through the box.
+.Pp
+The available options are:
+.Bl -tag -width indent
+.It Fl c
+Install circuit caches on the forward filter chain.
+.It Fl h Ar host
+Only respond to sessions going to the specified host.
+.It Fl N
+Do not check to see if the sessions are going through NAT boxes.
+Not checking for NAT boxes lowers the overhead of
+.Nm ftp-proxy
+slightly and is appropriate for busy firewalls that are not also
+doing NAT.
+The
+.Fl N
+option should \fIonly\fP be used when there are no NAT boxes on the machine.
+.It Fl n Ar ticks
+The number of
+.Ar ticks
+a data session may be idle before it is removed.  This
+defaults to the maximum value of 128 ticks.  The value of
+.Ar ticks
+must be a power of 2 between 1 and 128.
+.It Fl o Ar priority
+Specify the priority of the pre-output filter, if used.
+By default the priority is 1536.
+The pre-output filter is only used when
+.Ar proxyport
+is specified as a different value than
+.Ar port .
+The priority should be above any NAT box (see
+.Xr ipfwnat 8 )
+and any standard pre-output filters on the machine.
+.Nm Ftp-proxy
+will refuse to run if it detects a NAT box with a higher priority.
+See
+.Xr ipfw 8 .
+.It Fl p Ar priority
+Specify the priority of the pre-input filter.  By default the priority is 512.
+The priority should be below any NAT box (see
+.Xr ipfwnat 8 )
+and any standard pre-input filters on the machine.
+.Nm Ftp-proxy
+will refuse to run if it detects a NAT box with a lower priority.
+See
+.Xr ipfw 8 .
+.It Fl P Ar port
+Specify the port to watch, by default this is the FTP control port (21).
+.It Fl r
+De-install the transparent FTP proxy.
+.It Fl t Ar tickrate
+The number of seconds in a tick.  This defaults to 1 seconds.
+The
+.Ar tickrate
+multiplied by
+.Ar ticks
+gives the timeout, in seconds, for an unused data session.
+.It Fl v
+Be verbose about what is happening.
+.El
+.Pp
+If
+.Ar proxyport
+is specified then the internal proxy will actually run on this port.
+The IPFW filters installed will automatically route non-local requests for
+the FTP port to this port.  This allows the running of a local ftp daemon
+on the machine running
+.Nm ftp-proxy .
+This is not encouraged, the local FTP servers receive not benefit from
+.Nm ftp-proxy .
+.Pp
+The two most common invocations are for NAT only and for restrictive
+filtering (with or without NAT).
+The typical invocation for NAT only is:
+.Bd -literal -offset indent
+daemon ftp-proxy 4021
+.Ed
+.Pp
+The typical restrictive filtering invocation is:
+.Bd -literal -offset indent
+daemon ftp-proxy -c 4021
+.Ed
+.Pp
+Note the use of the
+.Xr daemon 8
+command.  This makes the ftp-proxy run detached from the terminal and
+in the background.
+In both cases we use port 4021 as the internal proxy port so that an
+FTP server may run on the local machine.
+.Sh IMPORTANT NOTE
+If the
+.Fl c
+option is used, it is very important that a forward filter be installed
+with a lower priority that allows desired traffic through.  If not, only
+FTP traffic will be allowed through on the machine.
+Use of the
+.Fl c
+option without a forward filter installed probably indicates that use of
+this proxy is not fully understood.  Please re-read this manual page
+and the
+.Xr ipfw 8
+and
+.Xr ipfwnat 8
+manual pages if you really think you want to run with
+.Fl c
+and no other forward filter.
+.Sh SEE ALSO
+.Xr ipfw 8 ,
+.Xr ipfwnat 8

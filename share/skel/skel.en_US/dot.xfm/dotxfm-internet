@@ -1,0 +1,18 @@
+#
+# xfm applications file
+# written by xfm  Thu Aug 15 10:49:41 1996
+#
+##########################################
+
+Main Apps::.xfm/xfm-apps:xfm_appmgr.xpm:LOAD:
+netscape:::netscape.xpm:netscape:netscape $*
+ftp:::ftp.xpm:exec xterm -e ftp:
+xarchie:::xarchie.xpm:xarchie:
+Finger:::hpoint_right.xpm:exec xterm -title Finger -e /bin/sh -c "/usr/ucb/finger %Finger who?% | less":
+Whois:::xman.xpm:exec xterm -title whois -e /bin/sh -c "whois %Who is?% | less":
+IRC:::talk.xpm:exec xterm -e irc:
+Gopher:::gopher.xpm:exec xgopher:
+Talk:::talk.xpm:exec xterm -title talk -e /bin/sh -c "talk %Talk to?%":
+Net News:::newspaper.xpm:exec xterm -e tin -r:
+nslookup:::xman.xpm:exec xterm -e nslookup:
+Ping::::xterm -e ping %ping host?%:

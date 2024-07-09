@@ -1,0 +1,10 @@
+PREFIX=/usr
+SYSCONFDIR=/etc
+BINDIR=/usr/bin
+SBINDIR=/usr/sbin
+LIBDATADIR=/usr/libdata
+LIBEXECDIR=/usr/libexec/lpr
+FONTDIR=/usr/libdata/lpr/fonts
+MANDIR=/usr/share/man/cat
+MANSRCDIR=/usr/share/man/man
+DOC_INSTALL_DIR=/usr/share/doc/LPRng

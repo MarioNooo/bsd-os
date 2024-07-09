@@ -1,0 +1,2601 @@
+#
+# Copyright [C] The Regents of the University of Michigan and Merit Network,
+# Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+#
+
+#
+# RCSID:	$Id: dictionary,v 1.51 1998/05/15 16:02:46 web Exp $
+#
+
+%DICTID 1.11
+
+#	This file contains dictionary translations for parsing
+#	requests and generating responses.  All transactions are
+#	composed of Attribute/Value Pairs.  The value of each attribute
+#	is specified as one of four data types.  Valid data types are:
+#
+#	string - 0-253 octets
+#	vendor - octet #0 is zero, then three octets IANA #, then the rest
+#	octets - 0-253 undistinguished octets
+#	abinary - 0-254 Ascend binary filter octets
+#	ipaddr - 4 octets in network byte order
+#	integer - 32 bit value in big endian order (high byte first)
+#	octet   - 8 bit unsigned integer value
+#	short   - 16 bit unsigned integer value
+#	date - 32 bit value in big endian order - seconds since
+#					00:00:00 GMT,  Jan.  1,  1970
+#
+#	Note: integer, short and octet types may have VALUEs in the dictionary.
+#
+#	Enumerated values are stored in the users file with dictionary
+#	VALUE translations for easy administration.
+#
+#	Example:
+#
+#	ATTRIBUTE	  VALUE
+#	---------------   -----
+#	Framed-Protocol = PPP
+#	7		= 1	(integer encoding)
+#
+#	Attribute lines may contain an optional parenthesized expression
+#	at the end of the line which controls two features:
+#
+#		a) whether the attribute is ever sent to the NAS
+#		b) how the NAS reacts to a reply which contains the attribute
+#
+#	The syntax of this expressions is as folows:
+#
+#	[ ( [<ack>] [ [ [,] [<nak>] ] [ [,] [ MAY | MUST | CONFIG ] ] ] ) ]
+#	    \______________________/        \_____________________/
+#		feature "a" above		feature "b" above
+#
+#	In "a" above, <ack> and <nak> are one of '0', '1' or '*'.  The <ack>
+#	and <nak> values affect Access-Accept and Access-Reject replies,
+#	respectively.  These values represent:
+#
+#		"0"	-	no attributes of this kind are part of
+#					the final reply (DEFAULT)
+#		"1"	-	at most, one attribute of this kind may
+#					be part of the final reply
+#		"*"	-	any number of attributes of this kind may
+#					be part of the final reply
+#
+#	The default values for both <ack> and <nak> are '0'!  Keep this in
+#	mind when adding vendor specific attributes since they will not be
+#	returned to the NAS in any replies unless this expression exists.
+#
+#	In "b" above, the keywords define how the NAS reacts to the attribute:
+#
+#		"MUST"	 -	the NAS must reject the request if it does
+#					not recognize this attribute
+#		"MAY"	 -	the NAS may ignore the attribute if not
+#					recognized (DEFAULT)
+#		"CONFIG" -	the attribute is a configuration item
+#
+#	CONFIG is only for the internal use of this RADIUS server and must be
+#	given by itself (i.e., "(config)" at the end of line).
+#
+#	The keywords MAY and MUST only are meaningful for RADIUS Version Two.
+#
+#	If the whole expression is omitted, the defaults are assumed.
+#	If any value is omitted, but the comma is present for that value,
+#	then just that omitted value takes on the default.
+#
+#	A new syntax for handling vendor specific attributes is supported:
+#
+#		<vendor>:<attribute-string>
+#
+#	where <vendor> is the vendor's name and <attribute-string> is a
+#	unique string (for that vendor).  There is an alternate syntax
+#	available for specifying vendor specific attributes and values.
+#	Vendor specific attribute and value identifier strings may be
+#	defined in the vendors file which may be used in place of the
+#	default strings ATTRIBUTE and VALUE.
+#
+ATTRIBUTE	User-Name		1	string # comment
+ATTRIBUTE	User-Password		2	string
+ATTRIBUTE	CHAP-Password		3	string
+ATTRIBUTE	NAS-IP-Address		4	ipaddr
+ATTRIBUTE	NAS-Port		5	integer
+ATTRIBUTE	Service-Type		6	integer	(1, 0)
+ATTRIBUTE	Framed-Protocol		7	integer	(1, 0)
+ATTRIBUTE	Framed-IP-Address	8	ipaddr	(1, 0)
+ATTRIBUTE	Framed-IP-Netmask	9	ipaddr	(1, 0)
+ATTRIBUTE	Framed-Routing		10	integer	(1, 0)
+ATTRIBUTE	Filter-Id		11	string	(*, 0)
+ATTRIBUTE	Framed-MTU		12	integer	(1, 0)
+ATTRIBUTE	Framed-Compression	13	integer	(*, 0)
+ATTRIBUTE	Login-IP-Host		14	ipaddr	(*, 0)
+ATTRIBUTE	Login-Service		15	integer	(1, 0)
+ATTRIBUTE	Login-TCP-Port		16	integer	(1, 0)
+ATTRIBUTE	Old-Password		17	string  ### deprecated
+ATTRIBUTE	Reply-Message		18	string	(*, *)
+ATTRIBUTE	Callback-Number		19	string	(1, 0)
+ATTRIBUTE	Callback-Id		20	string	(1, 0)
+#ATTRIBUTE	Expiration		21	date    ### deprecated
+ATTRIBUTE	Framed-Route		22	string	(*, 0)
+ATTRIBUTE	Framed-IPX-Network	23	integer	(0, 0)
+ATTRIBUTE	State			24	string	(1, 0)
+ATTRIBUTE	Class			25	string	(*, 0)
+ATTRIBUTE	Vendor-Specific		26	vendor  ### Send as needed
+ATTRIBUTE	Session-Timeout		27	integer	(1, 0)
+ATTRIBUTE	Idle-Timeout		28	integer	(1, 0)
+ATTRIBUTE	Termination-Action	29	integer	(1, 0)
+ATTRIBUTE	Called-Station-Id	30	string
+ATTRIBUTE	Calling-Station-Id	31	string
+ATTRIBUTE	NAS-Identifier		32	string
+ATTRIBUTE	Proxy-State		33	string	(*, *)
+ATTRIBUTE	Login-LAT-Service	34	string	(1, 0)
+ATTRIBUTE	Login-LAT-Node 		35	string	(1, 0)
+ATTRIBUTE	Login-LAT-Group		36	string	(1, 0)
+ATTRIBUTE	Framed-AppleTalk-Link	37	integer	(1, 0)
+ATTRIBUTE	Framed-AppleTalk-Network 38	integer	(*, 0)
+ATTRIBUTE	Framed-AppleTalk-Zone	39	string	(1, 0)
+ATTRIBUTE	CHAP-Challenge		60	string
+ATTRIBUTE	NAS-Port-Type		61	integer
+ATTRIBUTE	Port-Limit		62	integer	(1, 0)
+ATTRIBUTE	Login-LAT-Port		63	string	(1, 0)
+ATTRIBUTE	Tunnel-Type		64	octets	(*, 0)
+ATTRIBUTE	Tunnel-Medium-Type	65	octets	(*, 0)
+ATTRIBUTE	Tunnel-Client-Endpoint	66	octets	(*, 0)
+ATTRIBUTE	Tunnel-Server-Endpoint	67	octets	(*, 0)
+ATTRIBUTE	Acct-Tunnel-Connection	68	string	(1, 0)
+ATTRIBUTE	Tunnel-Password		69	octets	(*, 0)
+ATTRIBUTE	ARAP-Password		70	string
+ATTRIBUTE	ARAP-Features		71	string	(1, 0)
+ATTRIBUTE	ARAP-Zone-Access	72	integer	(1, 0)
+ATTRIBUTE	ARAP-Security		73	integer
+ATTRIBUTE	ARAP-Security-Data	74	string
+ATTRIBUTE	Password-Retry		75	integer	(0, 1)
+ATTRIBUTE	Prompt			76	integer
+ATTRIBUTE	Connect-Info		77	string
+ATTRIBUTE	Configuration-Token	78	string	(*, 0)
+ATTRIBUTE	EAP-Message		79	string	(*, *)
+ATTRIBUTE	Signature		80	string
+ATTRIBUTE	Tunnel-Private-Group-ID	81	octets	(*, 0)
+ATTRIBUTE	Tunnel-Assignment-ID	82	octets	(*, 0)
+ATTRIBUTE	Tunnel-Preference	83	octets	(*, 0)
+ATTRIBUTE	ARAP-Challenge-Response	84	string
+ATTRIBUTE	Acct-Interim-Interval	85	string
+#
+#	Accounting Extensions
+#
+ATTRIBUTE	Acct-Status-Type	40	integer
+ATTRIBUTE	Acct-Delay-Time		41	integer
+ATTRIBUTE	Acct-Input-Octets	42	integer
+ATTRIBUTE	Acct-Output-Octets	43	integer
+ATTRIBUTE	Acct-Session-Id		44	string
+ATTRIBUTE	Acct-Authentic		45	integer
+ATTRIBUTE	Acct-Session-Time	46	integer
+ATTRIBUTE	Acct-Input-Packets	47	integer
+ATTRIBUTE	Acct-Output-Packets	48	integer
+ATTRIBUTE	Acct-Terminate-Cause	49	integer
+ATTRIBUTE	Acct-Multi-Session-Id	50	string
+ATTRIBUTE	Acct-Link-Count		51	integer
+ATTRIBUTE	Acct-Input-Gigawords	52	integer
+ATTRIBUTE	Acct-Output-Gigawords	53	integer
+#ATTRIBUTE	Unused			54	integer
+ATTRIBUTE	Event-Time		55	date
+#
+#	Merit Vendor Specific Extensions
+#
+Merit.ATTRIBUTE	Encapsulated		141	octets
+Merit.ATTRIBUTE	Reply-If-Ack-Message	144	string	(*, 0)
+Merit.ATTRIBUTE	LAS-Start-Time		145	integer
+Merit.ATTRIBUTE	LAS-Code		146	integer
+Merit.ATTRIBUTE	LAS-Duration		147	integer
+Merit.ATTRIBUTE	Local-Duration		148	integer
+Merit.ATTRIBUTE	Huntgroup-Service	149	string
+Merit.ATTRIBUTE	Port-Entry		150	octets
+Merit.ATTRIBUTE	Proxy-Action		211	string
+Merit.ATTRIBUTE	Token			213	string
+Merit.ATTRIBUTE	Ownership		219	integer
+Merit.ATTRIBUTE	Subgroup		220	string
+Merit.ATTRIBUTE	Huntgroup-Name		221	string
+Merit.ATTRIBUTE	User-Id			222	string
+Merit.ATTRIBUTE	User-Realm		223	string
+#
+#	Configuration Only Attributes (for check-items)
+#
+ATTRIBUTE	Comment			1024	string	(Config)
+ATTRIBUTE	Xvalue			1025	integer	(Config)
+ATTRIBUTE	Xstring			1026	string	(Config)
+ATTRIBUTE	Authentication-Type	1027	integer	(Config)
+ATTRIBUTE	Prohibit		1028	integer	(Config)
+ATTRIBUTE	User-Category		1029	string	(Config)
+ATTRIBUTE	Group-Name		1030	string	(Config)
+ATTRIBUTE	Encrypted-Password	1031	string	(Config)
+ATTRIBUTE	Expiration		1032	date	(Config)
+ATTRIBUTE	Password		1033	string	(Config)
+ATTRIBUTE	Simultaneous-Use	1034	integer	(Config)
+# A synonym for USR
+ATTRIBUTE	Session-Limit		1034	integer	(Config)
+ATTRIBUTE	Server-Name		1035	string	(Config)
+ATTRIBUTE	Framed-IP-Address-Pool-Name	1036	string	(Config)
+ATTRIBUTE	Service-Class		1037	string	(Config)
+ATTRIBUTE	Deny-Message		1038	string	(Config)
+
+#
+#	Examples of Vendor Syntax
+#
+ATTRIBUTE	Merit:Blow-Up		42	integer	(1, 0)
+
+VALUE		MERIT:BLOW-UP		IMMEDIATELY 	1	
+Value		Merit:Blow-Up		Tomorrow	2
+
+Attribute	Usr:Crash		42	integer	(0, 1)
+
+Value		USR:Crash		Immediately 	1	
+Value		USR:Crash		Later		2
+
+#
+#	Integer Translations
+#
+
+#	Service Types
+
+VALUE		Service-Type		Login			1
+VALUE		Service-Type		Framed			2
+VALUE		Service-Type		Callback-Login		3
+VALUE		Service-Type		Callback-Framed		4
+VALUE		Service-Type		Outbound		5
+VALUE		Service-Type		Administrative		6
+VALUE		Service-Type		NAS-Prompt		7
+VALUE		Service-Type		Authenticate-Only	8
+VALUE		Service-Type		Callback-NAS-Prompt	9
+VALUE		Service-Type		Call-Check-User		129
+#VALUE		Service-Type		Annex-Authorize-Only	0x06300001
+#VALUE		Service-Type		Annex-Framed-Tunnel	0x06300002
+
+#	Framed Protocols
+
+VALUE		Framed-Protocol		PPP			1
+VALUE		Framed-Protocol		SLIP			2
+VALUE		Framed-Protocol		ARA			3
+VALUE		Framed-Protocol		Gandalf			4
+VALUE		Framed-Protocol		Xylogics		5
+
+#	ASCEND extensions
+VALUE		Framed-Protocol		Ascend-ARA		255
+VALUE		Framed-Protocol		MPP			256
+VALUE		Framed-Protocol		EURAW			257
+VALUE		Framed-Protocol		EUUI			258
+VALUE		Framed-Protocol		X25			259
+VALUE		Framed-Protocol		COMB			260
+VALUE		Framed-Protocol		FR			261
+
+
+#	Framed Routing Values
+
+VALUE		Framed-Routing		None			0
+VALUE		Framed-Routing		Broadcast		1
+VALUE		Framed-Routing		Listen			2
+VALUE		Framed-Routing		Broadcast-Listen	3
+
+#	Framed Compression Types
+
+VALUE		Framed-Compression	None			0
+VALUE		Framed-Compression	Van-Jacobson-TCP-IP	1
+VALUE		Framed-Compression	IPX-Header-Compression	2
+
+#	Login Services
+
+VALUE		Login-Service		Telnet			0
+VALUE		Login-Service		Rlogin			1
+VALUE		Login-Service		TCP-Clear		2
+VALUE		Login-Service		PortMaster		3
+VALUE		Login-Service		LAT			4
+VALUE		Login-Service		X25-PAD			5
+VALUE		Login-Service		X25-T3POS		6
+
+#	Termination Actions
+
+VALUE		Termination-Action	Default			0
+VALUE		Termination-Action	RADIUS-Request		1
+
+#	Accounting Status Types (Alive is meant to be used for checkpointing)
+
+VALUE		Acct-Status-Type	Start			1
+VALUE		Acct-Status-Type	Stop			2
+VALUE		Acct-Status-Type	Alive			3
+VALUE		Acct-Status-Type	Modem-Start		4
+VALUE		Acct-Status-Type	Modem-Stop		5
+VALUE		Acct-Status-Type	Cancel			6
+VALUE		Acct-Status-Type	Accounting-On		7
+VALUE		Acct-Status-Type	Accounting-Off		8
+#VALUE		Acct-Status-Type	Annex-User-Reject	0x06300001
+#VALUE		Acct-Status-Type	Annex-Call-Reject	0x06300002
+#VALUE		Acct-Status-Type	Annex-IPCP-Start	0x06300003
+#VALUE		Acct-Status-Type	Annex-IPXCP-Start	0x06300004
+#VALUE		Acct-Status-Type	Annex-ATCP-Start	0x06300005
+#VALUE		Acct-Status-Type	Annex-Acct-Restart	0x06300006
+#VALUE		Acct-Status-Type	Annex-Acct-Shutoff	0x06300007
+#VALUE		Acct-Status-Type	Annex-Tunnel-Start	0x06300008
+#VALUE		Acct-Status-Type	Annex-Tunnel-Stop	0x06300009
+#VALUE		Acct-Status-Type	Annex-Tunnel-Reject	0x0630000a
+#VALUE		Acct-Status-Type	Annex-Tunnel-Link-Start	0x0630000b
+#VALUE		Acct-Status-Type	Annex-Tunnel-Link-Stop	0x0630000c
+#VALUE		Acct-Status-Type	Annex-MP-Start		0x0630000d
+#VALUE		Acct-Status-Type	Annex-MP-Stop		0x0630000e
+
+#	Accounting Termination Cause
+
+VALUE		Acct-Terminate-Cause	User-Request		1
+VALUE		Acct-Terminate-Cause	Lost-Carrier		2
+VALUE		Acct-Terminate-Cause	Lost-Service		3
+VALUE		Acct-Terminate-Cause	Idle-Timeout		4
+VALUE		Acct-Terminate-Cause	Session-Timeout		5
+VALUE		Acct-Terminate-Cause	Admin-Reset		6
+VALUE		Acct-Terminate-Cause	Admin-Reboot		7
+VALUE		Acct-Terminate-Cause	Port-Error		8
+VALUE		Acct-Terminate-Cause	NAS-Error		9
+VALUE		Acct-Terminate-Cause	NAS-Request		10
+VALUE		Acct-Terminate-Cause	NAS-Reboot		11
+VALUE		Acct-Terminate-Cause	Port-Unneeded		12
+VALUE		Acct-Terminate-Cause	Port-Preempted		13
+VALUE		Acct-Terminate-Cause	Port-Suspended		14
+VALUE		Acct-Terminate-Cause	Service-Unavailable	15
+VALUE		Acct-Terminate-Cause	Callback		16
+VALUE		Acct-Terminate-Cause	User-Error		17
+VALUE		Acct-Terminate-Cause	Host-Request		18
+
+#	NAS Port Types
+
+VALUE		NAS-Port-Type		Async			0
+VALUE		NAS-Port-Type		Sync			1
+VALUE		NAS-Port-Type		ISDN-Sync		2
+VALUE		NAS-Port-Type		ISDN-Async-V120		3
+VALUE		NAS-Port-Type		ISDN-Async-V110		4
+VALUE		NAS-Port-Type		Virtual			5
+VALUE		NAS-Port-Type		PIAFS			6
+VALUE		NAS-Port-Type		HDLC-Clear-Channel	7
+VALUE		NAS-Port-Type		X25			8
+VALUE		NAS-Port-Type		X75			9
+
+#	Accounting Authentic Values
+
+VALUE		Acct-Authentic		None			0
+VALUE		Acct-Authentic		RADIUS			1
+VALUE		Acct-Authentic		Local			2
+
+#	Authentication Types
+
+VALUE		Authentication-Type	None			0
+VALUE		Authentication-Type	Unix-PW			1
+VALUE		Authentication-Type	Passwd			1
+VALUE		Authentication-Type	AFS-Krb			2
+VALUE		Authentication-Type	MIT-Krb			3
+VALUE		Authentication-Type	RADIUS			4
+VALUE		Authentication-Type	KCHAP			5
+VALUE		Authentication-Type	TACACS			6
+VALUE		Authentication-Type	Realm			7
+VALUE		Authentication-Type	Local			8
+VALUE		Authentication-Type	File			9
+VALUE		Authentication-Type	TACPLUS			10
+VALUE		Authentication-Type	ARA-DES			11
+VALUE		Authentication-Type	ACE			12
+VALUE		Authentication-Type	DEFENDER		13
+VALUE		Authentication-Type	SKEY			14
+VALUE		Authentication-Type	ODBC			15
+VALUE		Authentication-Type	Oracle			16
+VALUE		Authentication-Type	Allow			17
+VALUE		Authentication-Type	Deny			18
+VALUE		Authentication-Type	Blackhole		19
+VALUE		Authentication-Type	Slow			20
+VALUE		Authentication-Type	LDAP			21
+VALUE		Authentication-Type	Local-VPN		22
+VALUE		Authentication-Type	BSD-Auth		23
+VALUE		Authentication-Type	Unassigned		24
+
+#	Prohibit Types
+
+VALUE		Prohibit		Dumb			0
+VALUE		Prohibit		PPP			1
+VALUE		Prohibit		SLIP			2
+VALUE		Prohibit		Auth-Only		3
+VALUE		Prohibit		All			255
+
+#	Framed-IP-Address
+
+VALUE		Framed-IP-Address	Assigned		255.255.255.255
+
+#	Configuration Values
+
+VALUE		Server-Config		Password-Expiration	30
+VALUE		Server-Config		Password-Warning	5
+
+#       LAS Session termination codes
+
+Merit.VALUE	LAS-Code		LAS-Normal		0
+Merit.VALUE	LAS-Code		LAS-Reject		1
+Merit.VALUE	LAS-Code		LAS-Cancel		2
+Merit.VALUE	LAS-Code		LAS-Noconfirm		3
+Merit.VALUE	LAS-Code		LAS-Overtime		4
+Merit.VALUE	LAS-Code		LAS-Unknown		5
+Merit.VALUE	LAS-Code		LAS-Notoken		6
+Merit.VALUE	LAS-Code		LAS-Notlocal		7
+Merit.VALUE	LAS-Code		LAS-Suspend		8
+Merit.VALUE	LAS-Code		LAS-Failed		9
+Merit.VALUE	LAS-Code		LAS-Authorized		10
+Merit.VALUE	LAS-Code		LAS-NASreboot		11
+Merit.VALUE	LAS-Code		LAS-Remote		12
+Merit.VALUE	LAS-Code		LAS-Duplicate		13
+Merit.VALUE	LAS-Code		LAS-Collision		14
+Merit.VALUE	LAS-Code		LAS-Stop		15
+
+#	Ownership Values
+
+Merit.VALUE	Ownership		Idle			0
+Merit.VALUE	Ownership		Owner			1
+Merit.VALUE	Ownership		Guest			2
+Merit.VALUE	Ownership		Unknown			3
+
+#	Prompt Values
+
+VALUE		Prompt			No-Echo			0
+VALUE		Prompt			Echo			1
+
+#	ARAP-Zone-Access Values
+
+VALUE		ARAP-Zone-Access	Default-Zone		1
+VALUE		ARAP-Zone-Access	Inclusive-Filter	2
+VALUE		ARAP-Zone-Access	Exclusive-Filter	4
+
+#
+#	USR Extensions
+#
+#	( 2304 decimal == 0x0900 hexadecimal)
+#	(36864 decimal == 0x9000 hexadecimal)
+#	(38912 decimal == 0x9800 hexadecimal)
+#	(61440 decimal == 0xF000 hexadecimal)
+#
+
+USR.attr	USR-DTE-Data-Idle-Timout	72	integer (1, 0)
+USR.attr	USR-Default-DTE-Data-Rate	94	integer (1, 0)
+
+USR.attr	USR-Last-Number-Dialed-Out	102	string	(1, 0)
+USR.attr	USR-Sync-Async-Mode		103	integer (1, 0)
+USR.attr	USR-Originate-Answer-Mode	104	integer (1, 0)
+USR.attr	USR-Failure-To-Connect-Reason	105	integer (1, 0)
+USR.attr	USR-Initial-Tx-Link-Data-Rate	106	integer (1, 0)
+USR.attr	USR-Final-Tx-Link-Data-Rate	107	integer (1, 0)
+USR.attr	USR-Modulation-Type		108	integer (1, 0)
+
+USR.attr	USR-Equalization-Type		111	integer (1, 0)
+USR.attr	USR-Fallback-Enabled		112	integer (1, 0)
+USR.attr	USR-Characters-Sent		113	integer	(1, 0)
+USR.attr	USR-Characters-Received		114	integer	(1, 0)
+USR.attr	USR-Blocks-Sent			117	integer	(1, 0)
+USR.attr	USR-Blocks-Received		118	integer	(1, 0)
+USR.attr	USR-Blocks-Resent		119	integer	(1, 0)
+USR.attr	USR-Retrains-Requested		120	integer	(1, 0)
+USR.attr	USR-Retrains-Granted		121	integer	(1, 0)
+USR.attr	USR-Line-Reversals		122	integer	(1, 0)
+USR.attr	USR-Number-Of-Characters-Lost	123	integer	(1, 0)
+USR.attr	USR-Back-Channel-Data-Rate	124	integer	(1, 0)
+USR.attr	USR-Number-Of-Blers		125	integer	(1, 0)
+USR.attr	USR-Number-Of-Link-Timeouts	126	integer	(1, 0)
+USR.attr	USR-Number-Of-Fallbacks		127	integer	(1, 0)
+USR.attr	USR-Number-Of-Upshifts		128	integer	(1, 0)
+USR.attr	USR-Number-Of-Link-NAKs		129	integer	(1, 0)
+
+USR.attr	USR-Simplified-MNP-Levels	153	integer	(1, 0)
+USR.attr	USR-Connect-Term-Reason		155	integer	(1, 0)
+
+USR.attr	USR-DTR-False-Timeout		190	integer	(1, 0)
+USR.attr	USR-Fallback-Limit		191	integer	(1, 0)
+USR.attr	USR-Block-Error-Count-Limit	192	integer	(1, 0)
+USR.attr	USR-Simplified-V42bis-Usage	199	integer	(1, 0)
+
+USR.attr	USR-DTR-True-Timeout		218	integer	(1, 0)
+
+############ Security Only ##############################
+####
+####	These have been added by US Robotics for dial security
+####
+####	Used by the NMC Card
+
+USR.attr	USR-User-Group-Name		223	string	(1, 0)
+USR.attr	USR-Dial-In-Sec-Mode		224	integer	(1, 0)
+USR.attr	USR-Req-Db-Mdm-Sel		225	integer	(1, 0)
+USR.attr	USR-Req-Db-Login-Valid		226	integer	(1, 0)
+USR.attr	USR-Dialback-Group-Names	227	string	(1, 0)
+USR.attr	USR-Dial-In-Call-Rest		228	string	(1, 0)
+USR.attr	USR-Dial-Out-Call-Rest		229	string	(1, 0)
+USR.attr	USR-Logins-Before-Blacklist	230	integer	(1, 0)
+USR.attr	USR-Failed-Logins		231	integer	(1, 0)
+##USR.attr	USR-Allowed-Db-Modems		233	string	(1, 0) ???
+
+####
+############ Security Only ##############################
+
+USR.attr	USR-Last-Number-Dialed-In-DNIS	232	string	(1, 0)
+USR.attr	USR-Last-Callers-Number-ANI	233	string	(1, 0)
+
+USR.attr	USR-Char-Noecho			250	integer (1, 0)
+
+USR.attr	USR-Mbi-Ct-PRI-Card-Slot	388	integer	(1, 0)
+USR.attr	USR-Mbi-Ct-TDM-Time-Slot	389	integer	(1, 0)
+USR.attr	USR-Mbi-Ct-PRI-Card-Span-Line	390	integer	(1, 0)
+USR.attr	USR-Mbi-Ct-BChannel-Used	391	integer	(1, 0)
+
+USR.attr	USR-RMMIE-Status		461	integer	(1, 0)
+USR.attr	USR-RMMIE-Num-Of-Updates	462	integer	(1, 0)
+
+USR.attr	USR-RMMIE-Manufacutere-ID	479	integer	(1, 0)
+
+USR.attr	USR-RMMIE-Product-Code		480	string	(1, 0)
+USR.attr	USR-RMMIE-Serial-Number		481	string	(1, 0)
+USR.attr	USR-RMMIE-Firmware-Version	482	string	(1, 0)
+USR.attr	USR-RMMIE-Firmware-Build-Date	483	string	(1, 0)
+
+USR.attr	USR-RMMIE-Last-Update-Time	2304	integer	(1, 0)
+USR.attr	USR-RMMIE-Last-Update-Event	2305	integer	(1, 0)
+USR.attr	USR-RMMIE-Rcv-Tot-PwrLvl	2306	integer	(1, 0)
+USR.attr	USR-RMMIE-Rcv-PwrLvl-3300Hz	2307	integer	(1, 0)
+USR.attr	USR-RMMIE-Rcv-PwrLvl-3750Hz	2308	integer	(1, 0)
+USR.attr	USR-RMMIE-PwrLvl-NearEcho-Canc	2309	integer	(1, 0)
+USR.attr	USR-RMMIE-PwrLvl-FarEcho-Canc	2310	integer	(1, 0)
+USR.attr	USR-RMMIE-PwrLvl-Noise-Lvl	2311	integer	(1, 0)
+USR.attr	USR-RMMIE-PwrLvl-Xmit-Lvl	2312	integer	(1, 0)
+USR.attr	USR-RMMIE-X2-Status		2313	integer	(1, 0)
+USR.attr	USR-RMMIE-Planned-Disconnect	2314	integer	(1, 0)
+
+USR.attr	USR-IP-Input-Filter		36864	string	(*, 0)
+USR.attr	USR-IPX-Input-Filter		36865	string	(*, 0)
+USR.attr	USR-SAP-Input-Filter		36866	string	(*, 0)
+USR.attr	USR-IP-Output-Filter		36867	string	(*, 0)
+USR.attr	USR-IPX-Output-Filter		36868	string	(*, 0)
+USR.attr	USR-SAP-Output-Filter		36869	string	(*, 0)
+USR.attr	USR-VPN-Id			36870	integer	(*, 0)
+USR.attr	USR-VPN-Name			36871	string	(*, 0)
+USR.attr	USR-VPN-Neighbor		36872	ipaddr	(*, 0)
+USR.attr	USR-Framed-Routing-V2		36873	integer	(*, 0)
+USR.attr	USR-VPN-Gateway			36874	string	(*, 0)
+USR.attr	USR-Tunnel-Authenticator	36875	string	(*, 0)
+USR.attr	USR-Packet-Index		36876	integer	(*, 0)
+#USR.attr	USR-Unused			36877	???
+USR.attr	USR-Access-Accept-Packet	36878	string	(*, 0)
+USR.attr	USR-Primary-DNS-Server		36879	ipaddr	(*, 0)
+USR.attr	USR-Secondary-DNS-Server	36880	ipaddr	(*, 0)
+USR.attr	USR-Primary-NBNS-Server		36881	ipaddr	(*, 0)
+USR.attr	USR-Secondary-NBNS-Server	36882	ipaddr	(*, 0)
+USR.attr	USR-Syslog-Tap			36883	integer	(*, 0)
+USR.attr	USR-Message-Integrity-Check	36884	string	(*, 0)
+#USR.attr	USR-Unused			36885	???
+#USR.attr	USR-Unused			36886	???
+USR.attr	USR-Log-Filter-Packet		36887	integer	(*, 0)
+#USR.attr	USR-Unused			36888	???
+USR.attr	USR-Chassis-Call-Slot		36889	integer	(*, 0)
+USR.attr	USR-Chassis-Call-Span		36890	integer	(*, 0)
+USR.attr	USR-Chassis-Call-Channel	36891	integer	(*, 0)
+USR.attr	USR-Keypress-Timeout		36892	integer	(*, 0)
+USR.attr	USR-Unauthenticated-Time	36893	integer	(*, 0)
+USR.attr	USR-VPN-Encrypter		36894	string	(*, 0)
+USR.attr	USR-Acct-VPN-Gateway		36895	string	(*, 0)
+USR.attr	USR-Re-CHAP-Timeout		36896	integer	(*, 0)
+USR.attr	USR-CCP-Algorithm		36897	integer	(*, 0)
+USR.attr	USR-ACCM-Type			36898	integer	(*, 0)
+USR.attr	USR-Connect-Speed		36899	integer	(*, 0)
+USR.attr	USR-Framed-IP-Address-Pool-Name	36900	string	(*, 0)
+USR.attr	USR-MP-EDO			36901	string	(*, 0)
+USR.attr	USR-Local-Framed-IP-Addr	36902	integer	(*, 0)
+
+#
+#	HiPer attributes
+#
+USR.attr	USR-Bearer-Capabilities		38912	integer	(1, 0)
+USR.attr	USR-Speed-Of-Connection		38913	integer	(1, 0)
+USR.attr	USR-Max-Channels		38914	integer	(1, 0)
+USR.attr	USR-Channel-Expansion		38915	integer	(1, 0)
+USR.attr	USR-Channel-Decrement		38916	integer	(1, 0)
+USR.attr	USR-Expansion-Algorithm		38917	integer	(1, 0)
+USR.attr	USR-Compression-Algorithm	38918	integer	(1, 0)
+USR.attr	USR-Receive-Acc-Map		38919	integer	(1, 0)
+USR.attr	USR-Transmit-Acc-Map		38920	integer	(1, 0)
+
+USR.attr	USR-Compression-Reset-Mode	38922	integer	(1, 0)
+USR.attr	USR-Min-Compression-Size	38923	integer	(1, 0)
+
+USR.attr	USR-Filter-Zones		38926	integer	(1, 0)
+USR.attr	USR-Appletalk			38927	integer	(1, 0)
+USR.attr	USR-Bridging			38928	integer	(1, 0)
+USR.attr	USR-Spoofing			38929	integer	(1, 0)
+USR.attr	USR-Host-Type			38930	integer	(1, 0)
+USR.attr	USR-Send-Name			38931	string	(1, 0)
+USR.attr	USR-Send-Password		38932	string	(1, 0)
+USR.attr	USR-Start-Time			38933	integer	(1, 0)
+USR.attr	USR-End-Time			38934	integer	(1, 0)
+USR.attr	USR-Send-Script1		38935	string	(1, 0)
+USR.attr	USR-Reply-Script1		38936	string	(1, 0)
+USR.attr	USR-Send-Script2		38937	string	(1, 0)
+USR.attr	USR-Reply-Script2		38938	string	(1, 0)
+USR.attr	USR-Send-Script3		38939	string	(1, 0)
+USR.attr	USR-Reply-Script3		38940	string	(1, 0)
+USR.attr	USR-Send-Script4		38941	string	(1, 0)
+USR.attr	USR-Reply-Script4		38942	string	(1, 0)
+USR.attr	USR-Send-Script5		38943	string	(1, 0)
+USR.attr	USR-Reply-Script5		38944	string	(1, 0)
+USR.attr	USR-Send-Script6		38945	string	(1, 0)
+USR.attr	USR-Reply-Script6		38946	string	(1, 0)
+USR.attr	USR-Terminal-Type		38947	string	(1, 0)
+USR.attr	USR-Appletalk-Network-Range	38948	integer	(1, 0)
+USR.attr	USR-Local-IP-Address		38949	string	(1, 0)
+USR.attr	USR-Routing-Protocol		38950	integer	(1, 0)
+USR.attr	USR-Modem-Group			38951	integer	(1, 0)
+USR.attr	USR-IPX-Routing			38952	integer	(1, 0)
+USR.attr	USR-IPX-WAN			38953	integer	(1, 0)
+USR.attr	USR-IP-RIP-Policies		38954	integer	(1, 0)
+USR.attr	USR-IP-RIP-Simple-Auth-Password	38955	string	(1, 0)
+USR.attr	USR-IP-RIP-Input-Filter		38956	string	(1, 0)
+USR.attr	USR-IP-Call-Input-Filter	38957	string	(1, 0)
+USR.attr	USR-IPX-RIP-Input-Filter	38958	string	(1, 0)
+USR.attr	USR-MP-MRRU			38959	integer	(1, 0)
+USR.attr	USR-IPX-Call-Input-Filter	38960	string	(1, 0)
+USR.attr	USR-AT-Input-Filter		38961	string	(1, 0)
+USR.attr	USR-AT-RTMP-Input-Filter	38962	string	(1, 0)
+USR.attr	USR-AT-Zip-Input-Filter		38963	string	(1, 0)
+USR.attr	USR-AT-Call-Input-Filter	38964	string	(1, 0)
+USR.attr	USR-ET-Bridge-Input-Filter	38965	string	(1, 0)
+USR.attr	USR-IP-RIP-Output-Filter	38966	string	(1, 0)
+USR.attr	USR-IP-Call-Output-Filter	38967	string	(1, 0)
+USR.attr	USR-IPX-RIP-Output-Filter	38968	string	(1, 0)
+USR.attr	USR-IPX-Call-Output-Filter	38969	string	(1, 0)
+USR.attr	USR-AT-Output-Filter		38970	string	(1, 0)
+USR.attr	USR-AT-RTMP-Output-Filter	38971	string	(1, 0)
+USR.attr	USR-AT-Zip-Output-Filter	38972	string	(1, 0)
+USR.attr	USR-AT-Call-Output-Filter	38973	string	(1, 0)
+USR.attr	USR-ET-Bridge-Output-Filter	38974	string	(1, 0)
+USR.attr	USR-ET-Bridge-Call-Output-Filter 38975	string	(1, 0)
+USR.attr	USR-IP-Default-Route-Option	38976	integer	(1, 0)
+USR.attr	USR-MP-EDO-HIPER		38977	string	(1, 0)
+
+USR.attr	USR-IDS0-Call-Type		48719	integer	(1, 0)
+USR.attr	USR-Call-Terminate-In-GMT	48720	date	(1, 0)
+USR.attr	USR-Call-Connect-In-GMT		48721	date	(1, 0)
+USR.attr	USR-Call-Arrival-In-GMT		48722	date	(1, 0)
+
+USR.attr	USR-Channel-Connected-To	48733	integer	(1, 0)
+USR.attr	USR-Slot-Connected-To		48734	integer	(1, 0)
+USR.attr	USR-Device-Connected-To		48735	integer	(1, 0)
+USR.attr	USR-NFAS-ID			48736	integer	(1, 0)
+USR.attr	USR-Q931-Call-Reference-Value	48737	integer	(1, 0)
+USR.attr	USR-Call-Event-Code		48738	integer	(1, 0)
+USR.attr	USR-DS0				48739	integer	(1, 0)
+USR.attr	USR-DS0s			48740	string	(1, 0)
+
+USR.attr	USR-Gateway-IP-Address		48742	ipaddr	(1, 0)
+
+USR.attr	USR-Physical-State		48759	integer	(1, 0)
+
+USR.attr	USR-Call-Reference-Number	48765	integer	(1, 0)
+
+USR.attr	USR-Chassis-Temp-Threshold	48772	integer	(1, 0)
+USR.attr	USR-Card-Type			48773	integer	(1, 0)
+
+USR.attr	USR-Security-Login-Limit	48862	integer	(1, 0)
+
+USR.attr	USR-Security-Resp-Limit		48890	integer	(1, 0)
+
+USR.attr	USR-Packet-Bus-Session		48916	integer	(1, 0)
+
+USR.attr	USR-DTE-Ring-No-Answer-Limit	48919	integer	(1, 0)
+
+USR.attr	USR-Final-Rx-Link-Data-Rate	48940	integer	(1, 0)
+USR.attr	USR-Initial-Rx-Link-Data-Rate	48941	integer	(1, 0)
+
+USR.attr	USR-Event-Date-Time		48943	date	(1, 0)
+
+USR.attr	USR-Chassis-Temperature		48945	integer	(1, 0)
+USR.attr	USR-Actual-Voltage		48946	integer	(1, 0)
+USR.attr	USR-Expected-Voltage		48947	integer	(1, 0)
+USR.attr	USR-Power-Supply-Number		48948	integer	(1, 0)
+
+USR.attr	USR-Channel			48952	integer	(1, 0)
+USR.attr	USR-Chassis-Slot		48953	integer	(1, 0)
+
+USR.attr	USR-Event-Id			49086	integer	(1, 0)
+
+USR.attr	USR-Number-Of-Rings-Limit	49126	integer	(1, 0)
+USR.attr	USR-Connect-Time-Limit		49127	integer	(1, 0)
+
+USR.attr	USR-Call-End-Date-Time		49142	date	(1, 0)
+USR.attr	USR-Call-Start-Date-Time	49143	date	(1, 0)
+
+USR.attr	USR-Server-Time			61440	date	(1, 0)
+USR.attr	USR-Request-Type		61441	integer	(1, 0)
+
+#	USR-Framed-Routing-V2 Values
+
+USR.value	USR-Framed-Routing-V2		RIP-V2-Off	0
+USR.value	USR-Framed-Routing-V2		RIP-V2-On	1
+
+#	USR-Syslog-Tap Values
+
+USR.value	USR-Syslog-Tap			Off		0
+USR.value	USR-Syslog-Tap			Raw		1
+USR.value	USR-Syslog-Tap			Framed		2
+
+#
+#	USR-Log-Filter-Packet Values
+
+USR.value	USR-Log-Filter-Packet		Log-Disable	0
+USR.value	USR-Log-Filter-Packet		Log-Enable	1
+
+#
+#	USR-CCP-Algorithm Values
+
+USR.value	USR-CCP-Algorithm	NONE	1
+USR.value	USR-CCP-Algorithm	Stac	2
+USR.value	USR-CCP-Algorithm	MS	3
+USR.value	USR-CCP-Algorithm	Any	4
+
+#
+#	USR-Connect-Speed Values
+
+USR.value	USR-Connect-Speed	NONE		1
+USR.value	USR-Connect-Speed	300-BPS		2
+USR.value	USR-Connect-Speed	1200-BPS	3
+USR.value	USR-Connect-Speed	2400-BPS	4
+USR.value	USR-Connect-Speed	4800-BPS	5
+USR.value	USR-Connect-Speed	7200-BPS	6
+USR.value	USR-Connect-Speed	9600-BPS	7
+USR.value	USR-Connect-Speed	12000-BPS	8
+USR.value	USR-Connect-Speed	14400-BPS	9
+USR.value	USR-Connect-Speed	16800-BPS	10
+USR.value	USR-Connect-Speed	19200-BPS	11
+USR.value	USR-Connect-Speed	21600-BPS	12
+USR.value	USR-Connect-Speed	28800-BPS	13
+USR.value	USR-Connect-Speed	38400-BPS	14
+USR.value	USR-Connect-Speed	57600-BPS	15
+USR.value	USR-Connect-Speed	115200-BPS	16
+USR.value	USR-Connect-Speed	288000-BPS	17
+USR.value	USR-Connect-Speed	75-1200-BPS	18
+USR.value	USR-Connect-Speed	1200-75-BPS	19
+USR.value	USR-Connect-Speed	24000-BPS	20
+USR.value	USR-Connect-Speed	26400-BPS	21
+USR.value	USR-Connect-Speed	31200-BPS	22
+USR.value	USR-Connect-Speed	33600-BPS	23
+USR.value	USR-Connect-Speed	33333-BPS	24
+USR.value	USR-Connect-Speed	37333-BPS	25
+USR.value	USR-Connect-Speed	41333-BPS	26
+USR.value	USR-Connect-Speed	42666-BPS	27
+USR.value	USR-Connect-Speed	44000-BPS	28
+USR.value	USR-Connect-Speed	45333-BPS	29
+USR.value	USR-Connect-Speed	46666-BPS	30
+USR.value	USR-Connect-Speed	48000-BPS	31
+USR.value	USR-Connect-Speed	49333-BPS	32
+USR.value	USR-Connect-Speed	50666-BPS	33
+USR.value	USR-Connect-Speed	52000-BPS	34
+USR.value	USR-Connect-Speed	53333-BPS	35
+USR.value	USR-Connect-Speed	54666-BPS	36
+USR.value	USR-Connect-Speed	56000-BPS	37
+USR.value	USR-Connect-Speed	57333-BPS	38
+USR.value	USR-Connect-Speed	64000-BPS	39
+USR.value	USR-Connect-Speed	25333-BPS	40
+USR.value	USR-Connect-Speed	26666-BPS	41
+USR.value	USR-Connect-Speed	28000-BPS	42
+USR.value	USR-Connect-Speed	29333-BPS	43
+USR.value	USR-Connect-Speed	30666-BPS	44
+USR.value	USR-Connect-Speed	32000-BPS	45
+USR.value	USR-Connect-Speed	34666-BPS	46
+USR.value	USR-Connect-Speed	36000-BPS	47
+USR.value	USR-Connect-Speed	38666-BPS	48
+USR.value	USR-Connect-Speed	40000-BPS	49
+USR.value	USR-Connect-Speed	58666-BPS	50
+USR.value	USR-Connect-Speed	60000-BPS	51
+USR.value	USR-Connect-Speed	61333-BPS	52
+USR.value	USR-Connect-Speed	62666-BPS	53
+
+#
+#	USR-Event-Id Values
+
+USR.value	USR-Event-Id	Module-Inserted			6
+USR.value	USR-Event-Id	Module-Removed			7
+USR.value	USR-Event-Id	PSU-Voltage-Alarm		8
+USR.value	USR-Event-Id	PSU-Failed			9
+USR.value	USR-Event-Id	HUB-Temp-Out-Of-Range		10
+USR.value	USR-Event-Id	Fan-Failed			11
+USR.value	USR-Event-Id	Watchdog-Timeout		12
+USR.value	USR-Event-Id	Mgmt-Bus-Failure		13
+USR.value	USR-Event-Id	In-Connection-Est		14
+USR.value	USR-Event-Id	Out-Connection-Est		15
+USR.value	USR-Event-Id	In-Connection-Term		16
+USR.value	USR-Event-Id	Out-Connection-Term		17
+USR.value	USR-Event-Id	Connection-Failed		18
+USR.value	USR-Event-Id	Connection-Timeout		19
+USR.value	USR-Event-Id	DTE-Transmit-Idle		20
+USR.value	USR-Event-Id	DTR-True			21
+USR.value	USR-Event-Id	DTR-False			22
+USR.value	USR-Event-Id	Block-Error-At-Threshold	23
+USR.value	USR-Event-Id	Fallbacks-At-Threshold		24
+USR.value	USR-Event-Id	No-Dial-Tone-Detected		25
+USR.value	USR-Event-Id	No-Loop-Current-Detected	26
+USR.value	USR-Event-Id	Yellow-Alarm			27
+USR.value	USR-Event-Id	Red-Alarm			28
+USR.value	USR-Event-Id	Loss-Of-Signal			29
+USR.value	USR-Event-Id	Rcv-Alrm-Ind-Signal		30
+USR.value	USR-Event-Id	Timing-Source-Switch		31
+USR.value	USR-Event-Id	Modem-Reset-By-DTE		32
+USR.value	USR-Event-Id	Modem-Ring-No-Answer		33
+USR.value	USR-Event-Id	DTE-Ring-No-Answer		34
+USR.value	USR-Event-Id	Pkt-Bus-Session-Active		35
+USR.value	USR-Event-Id	Pkt-Bus-Session-Congestion	36
+USR.value	USR-Event-Id	Pkt-Bus-Session-Lost		37
+USR.value	USR-Event-Id	Pkt-Bus-Session-Inactive	38
+USR.value	USR-Event-Id	User-Interface-Reset		39
+USR.value	USR-Event-Id	Gateway-Port-Out-Of-Service	40
+USR.value	USR-Event-Id	Gateway-Port-Link-Active	41
+USR.value	USR-Event-Id	Dial-Out-Login-Failure		42
+USR.value	USR-Event-Id	Dial-In-Login-Failure		43
+USR.value	USR-Event-Id	Dial-Out-Restricted-Number	44
+USR.value	USR-Event-Id	Dial-Back-Restricted-Number	45
+USR.value	USR-Event-Id	User-Blacklisted		46
+USR.value	USR-Event-Id	Attempted-Login-Blacklisted	47
+USR.value	USR-Event-Id	Response-Attempt-Limit-Exceeded	48
+USR.value	USR-Event-Id	Login-Attempt-Limit-Exceeded	49
+USR.value	USR-Event-Id	Dial-Out-Call-Duration		50
+USR.value	USR-Event-Id	Dial-In-Call-Duration		51
+USR.value	USR-Event-Id	Pkt-Bus-Session-Err-Status	52
+USR.value	USR-Event-Id	NMC-AutoRespnse-Trap		53
+USR.value	USR-Event-Id	Acct-Server-Contact-Loss	54
+USR.value	USR-Event-Id	Yellow-Alarm-Clear		55
+USR.value	USR-Event-Id	Red-Alarm-Clear			56
+USR.value	USR-Event-Id	Loss-Of-Signal-Clear		57
+USR.value	USR-Event-Id	Rcv-Alrm-Ind-Signal-Clear	58
+USR.value	USR-Event-Id	Incoming-Connection-Established	59
+USR.value	USR-Event-Id	Outgoing-Connection-Established	60
+USR.value	USR-Event-Id	Incoming-Connection-Terminated	61
+USR.value	USR-Event-Id	Outgoing-Connection-Terminated	62
+USR.value	USR-Event-Id	Connection-Attempt-Failure	63
+USR.value	USR-Event-Id	Continuous-CRC-Alarm		64
+USR.value	USR-Event-Id	Continuous-CRC-Alarm-Clear	65
+USR.value	USR-Event-Id	Physical-State-Change		66
+USR.value	USR-Event-Id	Gateway-Network-Failed		71
+USR.value	USR-Event-Id	Gateway-Network-Restored	72
+USR.value	USR-Event-Id	Packet-Bus-Clock-Lost		73
+USR.value	USR-Event-Id	Packet-Bus-Clock-Restored	74
+USR.value	USR-Event-Id	D-Channel-In-Service		75
+USR.value	USR-Event-Id	D-Channel-Out-Of-Service	76
+USR.value	USR-Event-Id	DS0s-In-Service			77
+USR.value	USR-Event-Id	DS0s-Out-Of-Service		78
+USR.value	USR-Event-Id	T1/T1PRI/E1PRI-Call-Event	79
+USR.value	USR-Event-Id	Psu-Incompatible		80
+USR.value	USR-Event-Id	T1,T1-E1/PRI-Call-Arrive-Event	81
+USR.value	USR-Event-Id	T1,T1-E1/PRI-Call-Connect-Event	82
+USR.value	USR-Event-Id	T1,T1-E1/PRI-Call-Termina-Event	83
+USR.value	USR-Event-Id	T1,T1-E1/PRI-Call-Failed-Event	84
+USR.value	USR-Event-Id	DNS-Contact-Lost		85
+USR.value	USR-Event-Id	NTP-Contact-Lost		86
+USR.value	USR-Event-Id	NTP-Contact-Restored		87
+USR.value	USR-Event-Id	IPGW-Link-Up			88
+USR.value	USR-Event-Id	IPGW-Link-Down			89
+USR.value	USR-Event-Id	NTP-Contact-Degraded		90
+USR.value	USR-Event-Id	In-Connection-Failed		91
+USR.value	USR-Event-Id	Out-Connection-Failed		92
+USR.value	USR-Event-Id	Application-ProcessorReset	93
+USR.value	USR-Event-Id	DSP-Reset			94
+USR.value	USR-Event-Id	Changed-To-Maint-Srvs-State	95
+USR.value	USR-Event-Id	Loop-Back-Cleared-On-Channel	96
+USR.value	USR-Event-Id	Loop-Back-On-Channel		97
+USR.value	USR-Event-Id	Telco-Abnormal-Response		98
+USR.value	USR-Event-Id	DNS-Contact-Restored		99
+USR.value	USR-Event-Id	DNS-Contact-Degraded		100
+USR.value	USR-Event-Id	RADIUS-Accounting-Restored	101
+USR.value	USR-Event-Id	RADIUS-Accounting-Group-Restore	102
+USR.value	USR-Event-Id	RADIUS-Accounting-Group-Degrade	103
+USR.value	USR-Event-Id	RADIUS-Accounting-Group-NonOper	104
+USR.value	USR-Event-Id	T1/T1-E1/PRI-InCall-Fail-Event	119
+USR.value	USR-Event-Id	T1/T1-E1/PRI-OutCall-Fail-Event	120
+USR.value	USR-Event-Id	RMMIE-Retrain-Event		121
+USR.value	USR-Event-Id	RMMIE-Speed-Shift-Event		122
+
+#
+#	USR-Card-Type Values
+
+USR.value	USR-Card-Type	SlotEmpty			1
+USR.value	USR-Card-Type	SlotUnknown			2
+USR.value	USR-Card-Type	NetwMgtCard			3
+USR.value	USR-Card-Type	DualT1NAC			4
+USR.value	USR-Card-Type	DualModemNAC			5
+USR.value	USR-Card-Type	QuadModemNAC			6
+USR.value	USR-Card-Type	TrGatewayNAC			7
+USR.value	USR-Card-Type	X25GatewayNAC			8
+USR.value	USR-Card-Type	DualV34ModemNAC			9
+USR.value	USR-Card-Type	QuadV32DigitalModemNAC		10
+USR.value	USR-Card-Type	QuadV32AnalogModemNAC		11
+USR.value	USR-Card-Type	QuadV32DigAnlModemNAC		12
+USR.value	USR-Card-Type	QuadV34DigModemNAC		13
+USR.value	USR-Card-Type	QuadV34AnlModemNAC		14
+USR.value	USR-Card-Type	QuadV34DigAnlModemNAC		15
+USR.value	USR-Card-Type	SingleT1NAC			16
+USR.value	USR-Card-Type	EthernetGatewayNAC		17
+USR.value	USR-Card-Type	AccessServer			18
+USR.value	USR-Card-Type	486TrGatewayNAC			19
+USR.value	USR-Card-Type	486EthernetGatewayNAC		20
+USR.value	USR-Card-Type	DualRS232NAC			22
+USR.value	USR-Card-Type	486X25GatewayNAC		23
+USR.value	USR-Card-Type	ApplicationServerNAC		25
+USR.value	USR-Card-Type	ISDNGatewayNAC			26
+USR.value	USR-Card-Type	ISDNpriT1NAC			27
+USR.value	USR-Card-Type	ClkedNetMgtCard			28
+USR.value	USR-Card-Type	ModemPoolManagementNAC		29
+USR.value	USR-Card-Type	ModemPoolNetserverNAC		30
+USR.value	USR-Card-Type	ModemPoolV34ModemNAC		31
+USR.value	USR-Card-Type	ModemPoolISDNNAC		32
+USR.value	USR-Card-Type	NTServerNAC			33
+USR.value	USR-Card-Type	QuadV34DigitalG2NAC		34
+USR.value	USR-Card-Type	QuadV34AnalogG2NAC		35
+USR.value	USR-Card-Type	QuadV34DigAnlgG2NAC		36
+USR.value	USR-Card-Type	NETServerFrameRelayNAC		37
+USR.value	USR-Card-Type	NETServerTokenRingNAC		38
+USR.value	USR-Card-Type	X2524ChannelNAC			39
+USR.value	USR-Card-Type	WirelessGatewayNac		42
+USR.value	USR-Card-Type	EnhancedAccessServer		44
+USR.value	USR-Card-Type	EnhancedISDNGatewayNAC		45
+USR.value	USR-Card-Type	DualT1NIC			1001
+USR.value	USR-Card-Type	DualAlogMdmNIC			1002
+USR.value	USR-Card-Type	QuadDgtlMdmNIC			1003
+USR.value	USR-Card-Type	QuadAlogDgtlMdmNIC		1004
+USR.value	USR-Card-Type	TokenRingNIC			1005
+USR.value	USR-Card-Type	SingleT1NIC			1006
+USR.value	USR-Card-Type	EthernetNIC			1007
+USR.value	USR-Card-Type	ShortHaulDualT1NIC		1008
+USR.value	USR-Card-Type	DualAlogMgdIntlMdmNIC		1009
+USR.value	USR-Card-Type	X25NIC				1010
+USR.value	USR-Card-Type	QuadAlogNonMgdMdmNIC		1011
+USR.value	USR-Card-Type	QuadAlogMgdIntlMdmNIC		1012
+USR.value	USR-Card-Type	QuadAlogNonMgdIntlMdmNIC	1013
+USR.value	USR-Card-Type	QuadLsdLiMgdMdmNIC		1014
+USR.value	USR-Card-Type	QuadLsdLiNonMgdMdmNIC		1015
+USR.value	USR-Card-Type	QuadLsdLiMgdIntlMdmNIC		1016
+USR.value	USR-Card-Type	QuadLsdLiNonMgdIntlMdmNIC	1017
+USR.value	USR-Card-Type	HSEthernetWithV35NIC		1018
+USR.value	USR-Card-Type	HSEthernetWithoutV35NIC		1019
+USR.value	USR-Card-Type	DualHighSpeedV35NIC		1020
+USR.value	USR-Card-Type	QuadV35RS232LowSpeedNIC		1021
+USR.value	USR-Card-Type	DualE1NIC			1022
+USR.value	USR-Card-Type	ShortHaulDualE1NIC		1023
+USR.value	USR-Card-Type	BellcoreLongHaulDualT1NIC	1025
+USR.value	USR-Card-Type	BellcoreShrtHaulDualT1NIC	1026
+USR.value	USR-Card-Type	SCSIEdgeServerNIC		1027
+
+#
+#	USR-Default-DTE-Data-Rate Values
+
+USR.value	USR-Default-DTE-Data-Rate	110-BPS		1
+USR.value	USR-Default-DTE-Data-Rate	300-BPS		2
+USR.value	USR-Default-DTE-Data-Rate	600-BPS		3
+USR.value	USR-Default-DTE-Data-Rate	1200-BPS	4
+USR.value	USR-Default-DTE-Data-Rate	2400-BPS	5
+USR.value	USR-Default-DTE-Data-Rate	4800-BPS	6
+USR.value	USR-Default-DTE-Data-Rate	7200-BPS	7
+USR.value	USR-Default-DTE-Data-Rate	9600-BPS	8
+USR.value	USR-Default-DTE-Data-Rate	12K-BPS		9
+USR.value	USR-Default-DTE-Data-Rate	14.4K-BPS	10
+USR.value	USR-Default-DTE-Data-Rate	16.8-BPS	11
+USR.value	USR-Default-DTE-Data-Rate	19.2K-BPS	12
+USR.value	USR-Default-DTE-Data-Rate	38.4K-BPS	13
+USR.value	USR-Default-DTE-Data-Rate	75-BPS		14
+USR.value	USR-Default-DTE-Data-Rate	450-BPS		15
+USR.value	USR-Default-DTE-Data-Rate	UNKNOWN-BPS	16
+USR.value	USR-Default-DTE-Data-Rate	57.6K-BPS	17
+USR.value	USR-Default-DTE-Data-Rate	21.6K-BPS	18
+USR.value	USR-Default-DTE-Data-Rate	24K-BPS		19
+USR.value	USR-Default-DTE-Data-Rate	26K-BPS		20
+USR.value	USR-Default-DTE-Data-Rate	28K-BPS		21
+USR.value	USR-Default-DTE-Data-Rate	115K-BPS	22
+
+#
+#	USR-Initial-Rx-Link-Data-Rate Values
+
+USR.value	USR-Initial-Rx-Link-Data-Rate	110-BPS		1
+USR.value	USR-Initial-Rx-Link-Data-Rate	300-BPS		2
+USR.value	USR-Initial-Rx-Link-Data-Rate	600-BPS		3
+USR.value	USR-Initial-Rx-Link-Data-Rate	1200-BPS	4
+USR.value	USR-Initial-Rx-Link-Data-Rate	2400-XBPS	5
+USR.value	USR-Initial-Rx-Link-Data-Rate	4800-BPS	6
+USR.value	USR-Initial-Rx-Link-Data-Rate	7200-BPS	7
+USR.value	USR-Initial-Rx-Link-Data-Rate	9600-BPS	8
+USR.value	USR-Initial-Rx-Link-Data-Rate	12K-BPS		9
+USR.value	USR-Initial-Rx-Link-Data-Rate	14.4K-BPS	10
+USR.value	USR-Initial-Rx-Link-Data-Rate	16.8-BPS	11
+USR.value	USR-Initial-Rx-Link-Data-Rate	19.2K-BPS	12
+USR.value	USR-Initial-Rx-Link-Data-Rate	38.4K-BPS	13
+USR.value	USR-Initial-Rx-Link-Data-Rate	75-BPS		14
+USR.value	USR-Initial-Rx-Link-Data-Rate	450-BPS		15
+USR.value	USR-Initial-Rx-Link-Data-Rate	UNKNOWN-BPS	16
+USR.value	USR-Initial-Rx-Link-Data-Rate	57.6K-BPS	17
+USR.value	USR-Initial-Rx-Link-Data-Rate	21.6K-BPS	18
+USR.value	USR-Initial-Rx-Link-Data-Rate	24K-BPS		19
+USR.value	USR-Initial-Rx-Link-Data-Rate	26K-BPS		20
+USR.value	USR-Initial-Rx-Link-Data-Rate	28K-BPS		21
+USR.value	USR-Initial-Rx-Link-Data-Rate	115K-BPS	22
+USR.value	USR-Initial-Rx-Link-Data-Rate	31K-BPS		23
+USR.value	USR-Initial-Rx-Link-Data-Rate	33K-BPS		24
+USR.value	USR-Initial-Rx-Link-Data-Rate	25333-BPS	25
+USR.value	USR-Initial-Rx-Link-Data-Rate	26666-BPS	26
+USR.value	USR-Initial-Rx-Link-Data-Rate	28000-BPS	27
+USR.value	USR-Initial-Rx-Link-Data-Rate	29333-BPS	28
+USR.value	USR-Initial-Rx-Link-Data-Rate	30666-BPS	29
+USR.value	USR-Initial-Rx-Link-Data-Rate	32000-BPS	30
+USR.value	USR-Initial-Rx-Link-Data-Rate	33333-BPS	31
+USR.value	USR-Initial-Rx-Link-Data-Rate	34666-BPS	32
+USR.value	USR-Initial-Rx-Link-Data-Rate	36000-BPS	33
+USR.value	USR-Initial-Rx-Link-Data-Rate	37333-BPS	34
+USR.value	USR-Initial-Rx-Link-Data-Rate	38666-BPS	35
+USR.value	USR-Initial-Rx-Link-Data-Rate	40000-BPS	36
+USR.value	USR-Initial-Rx-Link-Data-Rate	41333-BPS	37
+USR.value	USR-Initial-Rx-Link-Data-Rate	42666-BPS	38
+USR.value	USR-Initial-Rx-Link-Data-Rate	44000-BPS	39
+USR.value	USR-Initial-Rx-Link-Data-Rate	45333-BPS	40
+USR.value	USR-Initial-Rx-Link-Data-Rate	46666-BPS	41
+USR.value	USR-Initial-Rx-Link-Data-Rate	48000-BPS	42
+USR.value	USR-Initial-Rx-Link-Data-Rate	49333-BPS	43
+USR.value	USR-Initial-Rx-Link-Data-Rate	50666-BPS	44
+USR.value	USR-Initial-Rx-Link-Data-Rate	52000-BPS	45
+USR.value	USR-Initial-Rx-Link-Data-Rate	53333-BPS	46
+USR.value	USR-Initial-Rx-Link-Data-Rate	54666-BPS	47
+USR.value	USR-Initial-Rx-Link-Data-Rate	56000-BPS	48
+USR.value	USR-Initial-Rx-Link-Data-Rate	57333-BPS	49
+USR.value	USR-Initial-Rx-Link-Data-Rate	58666-BPS	50
+USR.value	USR-Initial-Rx-Link-Data-Rate	60000-BPS	51
+USR.value	USR-Initial-Rx-Link-Data-Rate	61333-BPS	52
+USR.value	USR-Initial-Rx-Link-Data-Rate	62666-BPS	53
+USR.value	USR-Initial-Rx-Link-Data-Rate	64000-BPS	54
+
+#
+#	USR-Final-Rx-Link-Data-Rate Values
+
+USR.value	USR-Final-Rx-Link-Data-Rate	110-BPS		1
+USR.value	USR-Final-Rx-Link-Data-Rate	300-BPS		2
+USR.value	USR-Final-Rx-Link-Data-Rate	600-BPS		3
+USR.value	USR-Final-Rx-Link-Data-Rate	1200-BPS	4
+USR.value	USR-Final-Rx-Link-Data-Rate	2400-BPS	5
+USR.value	USR-Final-Rx-Link-Data-Rate	4800-BPS	6
+USR.value	USR-Final-Rx-Link-Data-Rate	7200-BPS	7
+USR.value	USR-Final-Rx-Link-Data-Rate	9600-BPS	8
+USR.value	USR-Final-Rx-Link-Data-Rate	12K-BPS		9
+USR.value	USR-Final-Rx-Link-Data-Rate	14.4K-BPS	10
+USR.value	USR-Final-Rx-Link-Data-Rate	16.8-BPS	11
+USR.value	USR-Final-Rx-Link-Data-Rate	19.2K-BPS	12
+USR.value	USR-Final-Rx-Link-Data-Rate	38.4K-BPS	13
+USR.value	USR-Final-Rx-Link-Data-Rate	75-BPS		14
+USR.value	USR-Final-Rx-Link-Data-Rate	450-BPS		15
+USR.value	USR-Final-Rx-Link-Data-Rate	UNKNOWN-BPS	16
+USR.value	USR-Final-Rx-Link-Data-Rate	57.6K-BPS	17
+USR.value	USR-Final-Rx-Link-Data-Rate	21.6K-BPS	18
+USR.value	USR-Final-Rx-Link-Data-Rate	24K-BPS		19
+USR.value	USR-Final-Rx-Link-Data-Rate	26K-BPS		20
+USR.value	USR-Final-Rx-Link-Data-Rate	28K-BPS		21
+USR.value	USR-Final-Rx-Link-Data-Rate	115K-BPS	22
+USR.value	USR-Final-Rx-Link-Data-Rate	31K-BPS		23
+USR.value	USR-Final-Rx-Link-Data-Rate	33K-BPS		24
+USR.value	USR-Final-Rx-Link-Data-Rate	25333-BPS	25
+USR.value	USR-Final-Rx-Link-Data-Rate	26666-BPS	26
+USR.value	USR-Final-Rx-Link-Data-Rate	28000-BPS	27
+USR.value	USR-Final-Rx-Link-Data-Rate	29333-BPS	28
+USR.value	USR-Final-Rx-Link-Data-Rate	30666-BPS	29
+USR.value	USR-Final-Rx-Link-Data-Rate	32000-BPS	30
+USR.value	USR-Final-Rx-Link-Data-Rate	33333-BPS	31
+USR.value	USR-Final-Rx-Link-Data-Rate	34666-BPS	32
+USR.value	USR-Final-Rx-Link-Data-Rate	36000-BPS	33
+USR.value	USR-Final-Rx-Link-Data-Rate	37333-BPS	34
+USR.value	USR-Final-Rx-Link-Data-Rate	38666-BPS	35
+USR.value	USR-Final-Rx-Link-Data-Rate	40000-BPS	36
+USR.value	USR-Final-Rx-Link-Data-Rate	41333-BPS	37
+USR.value	USR-Final-Rx-Link-Data-Rate	42666-BPS	38
+USR.value	USR-Final-Rx-Link-Data-Rate	44000-BPS	39
+USR.value	USR-Final-Rx-Link-Data-Rate	45333-BPS	40
+USR.value	USR-Final-Rx-Link-Data-Rate	46666-BPS	41
+USR.value	USR-Final-Rx-Link-Data-Rate	48000-BPS	42
+USR.value	USR-Final-Rx-Link-Data-Rate	49333-BPS	43
+USR.value	USR-Final-Rx-Link-Data-Rate	50666-BPS	44
+USR.value	USR-Final-Rx-Link-Data-Rate	52000-BPS	45
+USR.value	USR-Final-Rx-Link-Data-Rate	53333-BPS	46
+USR.value	USR-Final-Rx-Link-Data-Rate	54666-BPS	47
+USR.value	USR-Final-Rx-Link-Data-Rate	56000-BPS	48
+USR.value	USR-Final-Rx-Link-Data-Rate	57333-BPS	49
+USR.value	USR-Final-Rx-Link-Data-Rate	58666-BPS	50
+USR.value	USR-Final-Rx-Link-Data-Rate	60000-BPS	51
+USR.value	USR-Final-Rx-Link-Data-Rate	61333-BPS	52
+USR.value	USR-Final-Rx-Link-Data-Rate	62666-BPS	53
+USR.value	USR-Final-Rx-Link-Data-Rate	64000-BPS	54
+
+#
+#	USR-Initial-Tx-Link-Data-Rate Values
+
+USR.value	USR-Initial-Tx-Link-Data-Rate	110-BPS		1
+USR.value	USR-Initial-Tx-Link-Data-Rate	300-BPS		2
+USR.value	USR-Initial-Tx-Link-Data-Rate	600-BPS		3
+USR.value	USR-Initial-Tx-Link-Data-Rate	1200-BPS	4
+USR.value	USR-Initial-Tx-Link-Data-Rate	2400-BPS	5
+USR.value	USR-Initial-Tx-Link-Data-Rate	4800-BPS	6
+USR.value	USR-Initial-Tx-Link-Data-Rate	7200-BPS	7
+USR.value	USR-Initial-Tx-Link-Data-Rate	9600-BPS	8
+USR.value	USR-Initial-Tx-Link-Data-Rate	12K-BPS		9
+USR.value	USR-Initial-Tx-Link-Data-Rate	14.4K-BPS	10
+USR.value	USR-Initial-Tx-Link-Data-Rate	16.8-BPS	11
+USR.value	USR-Initial-Tx-Link-Data-Rate	19.2K-BPS	12
+USR.value	USR-Initial-Tx-Link-Data-Rate	38.4K-BPS	13
+USR.value	USR-Initial-Tx-Link-Data-Rate	75-BPS		14
+USR.value	USR-Initial-Tx-Link-Data-Rate	450-BPS		15
+USR.value	USR-Initial-Tx-Link-Data-Rate	UNKNOWN-BPS	16
+USR.value	USR-Initial-Tx-Link-Data-Rate	57.6K-BPS	17
+USR.value	USR-Initial-Tx-Link-Data-Rate	21.6K-BPS	18
+USR.value	USR-Initial-Tx-Link-Data-Rate	24K-BPS		19
+USR.value	USR-Initial-Tx-Link-Data-Rate	26K-BPS		20
+USR.value	USR-Initial-Tx-Link-Data-Rate	28K-BPS		21
+USR.value	USR-Initial-Tx-Link-Data-Rate	115K-BPS	22
+USR.value	USR-Initial-Tx-Link-Data-Rate	31K-BPS		23
+USR.value	USR-Initial-Tx-Link-Data-Rate	33K-BPS		24
+USR.value	USR-Initial-Tx-Link-Data-Rate	25333-BPS	25
+USR.value	USR-Initial-Tx-Link-Data-Rate	26666-BPS	26
+USR.value	USR-Initial-Tx-Link-Data-Rate	28000-BPS	27
+USR.value	USR-Initial-Tx-Link-Data-Rate	29333-BPS	28
+USR.value	USR-Initial-Tx-Link-Data-Rate	30666-BPS	29
+USR.value	USR-Initial-Tx-Link-Data-Rate	32000-BPS	30
+USR.value	USR-Initial-Tx-Link-Data-Rate	33333-BPS	31
+USR.value	USR-Initial-Tx-Link-Data-Rate	34666-BPS	32
+USR.value	USR-Initial-Tx-Link-Data-Rate	36000-BPS	33
+USR.value	USR-Initial-Tx-Link-Data-Rate	37333-BPS	34
+USR.value	USR-Initial-Tx-Link-Data-Rate	38666-BPS	35
+USR.value	USR-Initial-Tx-Link-Data-Rate	40000-BPS	36
+USR.value	USR-Initial-Tx-Link-Data-Rate	41333-BPS	37
+USR.value	USR-Initial-Tx-Link-Data-Rate	42666-BPS	38
+USR.value	USR-Initial-Tx-Link-Data-Rate	44000-BPS	39
+USR.value	USR-Initial-Tx-Link-Data-Rate	45333-BPS	40
+USR.value	USR-Initial-Tx-Link-Data-Rate	46666-BPS	41
+USR.value	USR-Initial-Tx-Link-Data-Rate	48000-BPS	42
+USR.value	USR-Initial-Tx-Link-Data-Rate	49333-BPS	43
+USR.value	USR-Initial-Tx-Link-Data-Rate	50666-BPS	44
+USR.value	USR-Initial-Tx-Link-Data-Rate	52000-BPS	45
+USR.value	USR-Initial-Tx-Link-Data-Rate	53333-BPS	46
+USR.value	USR-Initial-Tx-Link-Data-Rate	54666-BPS	47
+USR.value	USR-Initial-Tx-Link-Data-Rate	56000-BPS	48
+USR.value	USR-Initial-Tx-Link-Data-Rate	57333-BPS	49
+USR.value	USR-Initial-Tx-Link-Data-Rate	58666-BPS	50
+USR.value	USR-Initial-Tx-Link-Data-Rate	60000-BPS	51
+USR.value	USR-Initial-Tx-Link-Data-Rate	61333-BPS	52
+USR.value	USR-Initial-Tx-Link-Data-Rate	62666-BPS	53
+USR.value	USR-Initial-Tx-Link-Data-Rate	64000-BPS	54
+
+#
+#	USR-Final-Tx-Link-Data-Rate Values
+
+USR.value	USR-Final-Tx-Link-Data-Rate	110-BPS		1
+USR.value	USR-Final-Tx-Link-Data-Rate	300-BPS		2
+USR.value	USR-Final-Tx-Link-Data-Rate	600-BPS		3
+USR.value	USR-Final-Tx-Link-Data-Rate	1200-BPS	4
+USR.value	USR-Final-Tx-Link-Data-Rate	2400-BPS	5
+USR.value	USR-Final-Tx-Link-Data-Rate	4800-BPS	6
+USR.value	USR-Final-Tx-Link-Data-Rate	7200-BPS	7
+USR.value	USR-Final-Tx-Link-Data-Rate	9600-BPS	8
+USR.value	USR-Final-Tx-Link-Data-Rate	12K-BPS		9
+USR.value	USR-Final-Tx-Link-Data-Rate	14.4K-BPS	10
+USR.value	USR-Final-Tx-Link-Data-Rate	16.8-BPS	11
+USR.value	USR-Final-Tx-Link-Data-Rate	19.2K-BPS	12
+USR.value	USR-Final-Tx-Link-Data-Rate	38.4K-BPS	13
+USR.value	USR-Final-Tx-Link-Data-Rate	75-BPS		14
+USR.value	USR-Final-Tx-Link-Data-Rate	450-BPS		15
+USR.value	USR-Final-Tx-Link-Data-Rate	UNKNOWN-BPS	16
+USR.value	USR-Final-Tx-Link-Data-Rate	57.6K-BPS	17
+USR.value	USR-Final-Tx-Link-Data-Rate	21.6K-BPS	18
+USR.value	USR-Final-Tx-Link-Data-Rate	24K-BPS		19
+USR.value	USR-Final-Tx-Link-Data-Rate	26K-BPS		20
+USR.value	USR-Final-Tx-Link-Data-Rate	28K-BPS		21
+USR.value	USR-Final-Tx-Link-Data-Rate	115K-BPS	22
+USR.value	USR-Final-Tx-Link-Data-Rate	31K-BPS		23
+USR.value	USR-Final-Tx-Link-Data-Rate	33K-BPS		24
+USR.value	USR-Final-Tx-Link-Data-Rate	25333-BPS	25
+USR.value	USR-Final-Tx-Link-Data-Rate	26666-BPS	26
+USR.value	USR-Final-Tx-Link-Data-Rate	28000-BPS	27
+USR.value	USR-Final-Tx-Link-Data-Rate	29333-BPS	28
+USR.value	USR-Final-Tx-Link-Data-Rate	30666-BPS	29
+USR.value	USR-Final-Tx-Link-Data-Rate	32000-BPS	30
+USR.value	USR-Final-Tx-Link-Data-Rate	33333-BPS	31
+USR.value	USR-Final-Tx-Link-Data-Rate	34666-BPS	32
+USR.value	USR-Final-Tx-Link-Data-Rate	36000-BPS	33
+USR.value	USR-Final-Tx-Link-Data-Rate	37333-BPS	34
+USR.value	USR-Final-Tx-Link-Data-Rate	38666-BPS	35
+USR.value	USR-Final-Tx-Link-Data-Rate	40000-BPS	36
+USR.value	USR-Final-Tx-Link-Data-Rate	41333-BPS	37
+USR.value	USR-Final-Tx-Link-Data-Rate	42666-BPS	38
+USR.value	USR-Final-Tx-Link-Data-Rate	44000-BPS	39
+USR.value	USR-Final-Tx-Link-Data-Rate	45333-BPS	40
+USR.value	USR-Final-Tx-Link-Data-Rate	46666-BPS	41
+USR.value	USR-Final-Tx-Link-Data-Rate	48000-BPS	42
+USR.value	USR-Final-Tx-Link-Data-Rate	49333-BPS	43
+USR.value	USR-Final-Tx-Link-Data-Rate	50666-BPS	44
+USR.value	USR-Final-Tx-Link-Data-Rate	52000-BPS	45
+USR.value	USR-Final-Tx-Link-Data-Rate	53333-BPS	46
+USR.value	USR-Final-Tx-Link-Data-Rate	54666-BPS	47
+USR.value	USR-Final-Tx-Link-Data-Rate	56000-BPS	48
+USR.value	USR-Final-Tx-Link-Data-Rate	57333-BPS	49
+USR.value	USR-Final-Tx-Link-Data-Rate	58666-BPS	50
+USR.value	USR-Final-Tx-Link-Data-Rate	60000-BPS	51
+USR.value	USR-Final-Tx-Link-Data-Rate	61333-BPS	52
+USR.value	USR-Final-Tx-Link-Data-Rate	62666-BPS	53
+USR.value	USR-Final-Tx-Link-Data-Rate	64000-BPS	54
+
+#
+#	USR-Sync-Async-Mode Values
+
+USR.value	USR-Sync-Async-Mode	Asynchronous	1
+USR.value	USR-Sync-Async-Mode	Synchronous	2
+
+#
+#	USR-Originate-Answer-Mode Values
+
+USR.value	USR-Originate-Answer-Mode Originate-In-Originate-Mode	1
+USR.value	USR-Originate-Answer-Mode Originate-In-Answer-Mode	2
+USR.value	USR-Originate-Answer-Mode Answer-In-Originate-Mode	3
+USR.value	USR-Originate-Answer-Mode Answer-In-Answer-Mode		4
+
+#
+#	USR-Modulation-Type Values
+
+USR.value	USR-Modulation-Type	usRoboticsHST		1
+USR.value	USR-Modulation-Type	ccittV32		2
+USR.value	USR-Modulation-Type	ccittV22bis		3
+USR.value	USR-Modulation-Type	bell103			4
+USR.value	USR-Modulation-Type	ccittV21		5
+USR.value	USR-Modulation-Type	bell212			6
+USR.value	USR-Modulation-Type	ccittV32bis		7
+USR.value	USR-Modulation-Type	ccittV23		8
+USR.value	USR-Modulation-Type	negotiationFailed	9
+USR.value	USR-Modulation-Type	bell208b		10
+USR.value	USR-Modulation-Type	v21FaxClass1		11
+USR.value	USR-Modulation-Type	v27FaxClass1		12
+USR.value	USR-Modulation-Type	v29FaxClass1		13
+USR.value	USR-Modulation-Type	v17FaxClass1		14
+USR.value	USR-Modulation-Type	v21FaxClass2		15
+USR.value	USR-Modulation-Type	v27FaxClass2		16
+USR.value	USR-Modulation-Type	v29FaxClass2		17
+USR.value	USR-Modulation-Type	v17FaxClass2		18
+USR.value	USR-Modulation-Type	v32Terbo		19
+USR.value	USR-Modulation-Type	v34			20
+USR.value	USR-Modulation-Type	vFC			21
+USR.value	USR-Modulation-Type	v34plus			22
+USR.value	USR-Modulation-Type	x2			23
+USR.value	USR-Modulation-Type	v110			24
+USR.value	USR-Modulation-Type	v120			25
+USR.value	USR-Modulation-Type	x75			26
+USR.value	USR-Modulation-Type	ayncSyncPPP		27
+USR.value	USR-Modulation-Type	clearChannel		28
+USR.value	USR-Modulation-Type	x2client		29
+USR.value	USR-Modulation-Type	x2symmetric		30
+USR.value	USR-Modulation-Type	piafs			31
+
+#
+#	USR-Connect-Term-Reason Values
+
+USR.value	USR-Connect-Term-Reason	dtrDrop				1
+USR.value	USR-Connect-Term-Reason	escapeSequence			2
+USR.value	USR-Connect-Term-Reason	athCommand			3
+USR.value	USR-Connect-Term-Reason	carrierLoss			4
+USR.value	USR-Connect-Term-Reason	inactivityTimout		5
+USR.value	USR-Connect-Term-Reason	mnpIncompatible			6
+USR.value	USR-Connect-Term-Reason	undefined			7
+USR.value	USR-Connect-Term-Reason	remotePassword			8
+USR.value	USR-Connect-Term-Reason	linkPassword			9
+USR.value	USR-Connect-Term-Reason	retransmitLimit			10
+USR.value	USR-Connect-Term-Reason	linkDisconnectMsgReceived	11
+USR.value	USR-Connect-Term-Reason	noLoopCurrent			12
+USR.value	USR-Connect-Term-Reason	invalidSpeed			13
+USR.value	USR-Connect-Term-Reason	unableToRetrain			14
+USR.value	USR-Connect-Term-Reason	managementCommand		15
+USR.value	USR-Connect-Term-Reason	noDialTone			16
+USR.value	USR-Connect-Term-Reason	keyAbort			17
+USR.value	USR-Connect-Term-Reason	lineBusy			18
+USR.value	USR-Connect-Term-Reason	noAnswer			19
+USR.value	USR-Connect-Term-Reason	voice				20
+USR.value	USR-Connect-Term-Reason	noAnswerTone			21
+USR.value	USR-Connect-Term-Reason	noCarrier			22
+USR.value	USR-Connect-Term-Reason	undetermined			23
+USR.value	USR-Connect-Term-Reason	v42SabmeTimeout			24
+USR.value	USR-Connect-Term-Reason	v42BreakTimeout			25
+USR.value	USR-Connect-Term-Reason	v42DisconnectCmd		26
+USR.value	USR-Connect-Term-Reason	v42IdExchangeFail		27
+USR.value	USR-Connect-Term-Reason	v42BadSetup			28
+USR.value	USR-Connect-Term-Reason	v42InvalidCodeWord		29
+USR.value	USR-Connect-Term-Reason	v42StringToLong			30
+USR.value	USR-Connect-Term-Reason	v42InvalidCommand		31
+USR.value	USR-Connect-Term-Reason	none				32
+USR.value	USR-Connect-Term-Reason	v32Cleardown			33
+USR.value	USR-Connect-Term-Reason	dialSecurity			34
+USR.value	USR-Connect-Term-Reason	remoteAccessDenied		35
+USR.value	USR-Connect-Term-Reason	loopLoss			36
+USR.value	USR-Connect-Term-Reason	ds0Teardown			37
+USR.value	USR-Connect-Term-Reason	promptNotEnabled		38
+USR.value	USR-Connect-Term-Reason	noPromptingInSync		39
+USR.value	USR-Connect-Term-Reason	nonArqMode			40
+USR.value	USR-Connect-Term-Reason	modeIncompatible		41
+USR.value	USR-Connect-Term-Reason	noPromptInNonARQ		42
+USR.value	USR-Connect-Term-Reason	dialBackLink			43
+USR.value	USR-Connect-Term-Reason	linkAbort			44
+USR.value	USR-Connect-Term-Reason	autopassFailed			45
+USR.value	USR-Connect-Term-Reason	pbGenericError			46
+USR.value	USR-Connect-Term-Reason	pbLinkErrTxPreAck		47
+USR.value	USR-Connect-Term-Reason	pbLinkErrTxTardyACK		48
+USR.value	USR-Connect-Term-Reason	pbTransmitBusTimeout		49
+USR.value	USR-Connect-Term-Reason	pbReceiveBusTimeout		50
+USR.value	USR-Connect-Term-Reason	pbLinkErrTxTAL			51
+USR.value	USR-Connect-Term-Reason	pbLinkErrRxTAL			52
+USR.value	USR-Connect-Term-Reason	pbTransmitMasterTimeout		53
+USR.value	USR-Connect-Term-Reason	pbClockMissing			54
+USR.value	USR-Connect-Term-Reason	pbReceivedLsWhileLinkUp		55
+USR.value	USR-Connect-Term-Reason	pbOutOfSequenceFrame		56
+USR.value	USR-Connect-Term-Reason	pbBadFrame			57
+USR.value	USR-Connect-Term-Reason	pbAckWaitTimeout		58
+USR.value	USR-Connect-Term-Reason	pbReceivedAckSeqErr		59
+USR.value	USR-Connect-Term-Reason	pbReceiveOvrflwRNRFail		60
+USR.value	USR-Connect-Term-Reason	pbReceiveMsgBufOvrflw		61
+USR.value	USR-Connect-Term-Reason	rcvdGatewayDiscCmd		62
+USR.value	USR-Connect-Term-Reason	tokenPassingTimeout		63
+USR.value	USR-Connect-Term-Reason	dspInterruptTimeout		64
+USR.value	USR-Connect-Term-Reason	mnpProtocolViolation		65
+USR.value	USR-Connect-Term-Reason	class2FaxHangupCmd		66
+USR.value	USR-Connect-Term-Reason	hstSpeedSwitchTimeout		67
+USR.value	USR-Connect-Term-Reason	tooManyUnacked			68
+USR.value	USR-Connect-Term-Reason	timerExpired			69
+USR.value	USR-Connect-Term-Reason	t1Glare				70
+USR.value	USR-Connect-Term-Reason	priDialoutRqTimeout		71
+USR.value	USR-Connect-Term-Reason	abortAnlgDstOvrIsdn		72
+USR.value	USR-Connect-Term-Reason	normalUserCallClear		73
+USR.value	USR-Connect-Term-Reason	normalUnspecified		74
+USR.value	USR-Connect-Term-Reason	bearerIncompatibility		75
+USR.value	USR-Connect-Term-Reason	protocolErrorEvent		76
+USR.value	USR-Connect-Term-Reason	abnormalDisconnect		77
+USR.value	USR-Connect-Term-Reason	invalidCauseValue		78
+
+#
+#	USR-Failure-To-Connect-Reason Values
+
+USR.value	USR-Failure-To-Connect-Reason	dtrDrop			1
+USR.value	USR-Failure-To-Connect-Reason	escapeSequence		2
+USR.value	USR-Failure-To-Connect-Reason	athCommand		3
+USR.value	USR-Failure-To-Connect-Reason	carrierLoss		4
+USR.value	USR-Failure-To-Connect-Reason	inactivityTimout	5
+USR.value	USR-Failure-To-Connect-Reason	mnpIncompatible		6
+USR.value	USR-Failure-To-Connect-Reason	undefined		7
+USR.value	USR-Failure-To-Connect-Reason	remotePassword		8
+USR.value	USR-Failure-To-Connect-Reason	linkPassword		9
+USR.value	USR-Failure-To-Connect-Reason	retransmitLimit		10
+USR.value	USR-Failure-To-Connect-Reason	linkDisconnectMsgRec	11
+USR.value	USR-Failure-To-Connect-Reason	noLoopCurrent		12
+USR.value	USR-Failure-To-Connect-Reason	invalidSpeed		13
+USR.value	USR-Failure-To-Connect-Reason	unableToRetrain		14
+USR.value	USR-Failure-To-Connect-Reason	managementCommand	15
+USR.value	USR-Failure-To-Connect-Reason	noDialTone		16
+USR.value	USR-Failure-To-Connect-Reason	keyAbort		17
+USR.value	USR-Failure-To-Connect-Reason	lineBusy		18
+USR.value	USR-Failure-To-Connect-Reason	noAnswer		19
+USR.value	USR-Failure-To-Connect-Reason	voice			20
+USR.value	USR-Failure-To-Connect-Reason	noAnswerTone		21
+USR.value	USR-Failure-To-Connect-Reason	noCarrier		22
+USR.value	USR-Failure-To-Connect-Reason	undetermined		23
+USR.value	USR-Failure-To-Connect-Reason	v42SabmeTimeout		24
+USR.value	USR-Failure-To-Connect-Reason	v42BreakTimeout		25
+USR.value	USR-Failure-To-Connect-Reason	v42DisconnectCmd	26
+USR.value	USR-Failure-To-Connect-Reason	v42IdExchangeFail	27
+USR.value	USR-Failure-To-Connect-Reason	v42BadSetup		28
+USR.value	USR-Failure-To-Connect-Reason	v42InvalidCodeWord	29
+USR.value	USR-Failure-To-Connect-Reason	v42StringToLong		30
+USR.value	USR-Failure-To-Connect-Reason	v42InvalidCommand	31
+USR.value	USR-Failure-To-Connect-Reason	none			32
+USR.value	USR-Failure-To-Connect-Reason	v32Cleardown		33
+USR.value	USR-Failure-To-Connect-Reason	dialSecurity		34
+USR.value	USR-Failure-To-Connect-Reason	remoteAccessDenied	35
+USR.value	USR-Failure-To-Connect-Reason	loopLoss		36
+USR.value	USR-Failure-To-Connect-Reason	ds0Teardown		37
+USR.value	USR-Failure-To-Connect-Reason	promptNotEnabled	38
+USR.value	USR-Failure-To-Connect-Reason	noPromptingInSync	39
+USR.value	USR-Failure-To-Connect-Reason	nonArqMode		40
+USR.value	USR-Failure-To-Connect-Reason	modeIncompatible	41
+USR.value	USR-Failure-To-Connect-Reason	noPromptInNonARQ	42
+USR.value	USR-Failure-To-Connect-Reason	dialBackLink		43
+USR.value	USR-Failure-To-Connect-Reason	linkAbort		44
+USR.value	USR-Failure-To-Connect-Reason	autopassFailed		45
+USR.value	USR-Failure-To-Connect-Reason	pbGenericError		46
+USR.value	USR-Failure-To-Connect-Reason	pbLinkErrTxPreAck	47
+USR.value	USR-Failure-To-Connect-Reason	pbLinkErrTxTardyACK	48
+USR.value	USR-Failure-To-Connect-Reason	pbTransmitBusTimeout	49
+USR.value	USR-Failure-To-Connect-Reason	pbReceiveBusTimeout	50
+USR.value	USR-Failure-To-Connect-Reason	pbLinkErrTxTAL		51
+USR.value	USR-Failure-To-Connect-Reason	pbLinkErrRxTAL		52
+USR.value	USR-Failure-To-Connect-Reason	pbTransmitMasterTimeout	53
+USR.value	USR-Failure-To-Connect-Reason	pbClockMissing		54
+USR.value	USR-Failure-To-Connect-Reason	pbReceivedLsWhileLinkUp	55
+USR.value	USR-Failure-To-Connect-Reason	pbOutOfSequenceFrame	56
+USR.value	USR-Failure-To-Connect-Reason	pbBadFrame		57
+USR.value	USR-Failure-To-Connect-Reason	pbAckWaitTimeout	58
+USR.value	USR-Failure-To-Connect-Reason	pbReceivedAckSeqErr	59
+USR.value	USR-Failure-To-Connect-Reason	pbReceiveOvrflwRNRFail	60
+USR.value	USR-Failure-To-Connect-Reason	pbReceiveMsgBufOvrflw	61
+USR.value	USR-Failure-To-Connect-Reason	rcvdGatewayDiscCmd	62
+USR.value	USR-Failure-To-Connect-Reason	tokenPassingTimeout	63
+USR.value	USR-Failure-To-Connect-Reason	dspInterruptTimeout	64
+USR.value	USR-Failure-To-Connect-Reason	mnpProtocolViolation	65
+USR.value	USR-Failure-To-Connect-Reason	class2FaxHangupCmd	66
+USR.value	USR-Failure-To-Connect-Reason	hstSpeedSwitchTimeout	67
+USR.value	USR-Failure-To-Connect-Reason	tooManyUnacked		68
+USR.value	USR-Failure-To-Connect-Reason	timerExpired		69
+USR.value	USR-Failure-To-Connect-Reason	t1Glare			70
+USR.value	USR-Failure-To-Connect-Reason	priDialoutRqTimeout	71
+USR.value	USR-Failure-To-Connect-Reason	abortAnlgDstOvrIsdn	72
+USR.value	USR-Failure-To-Connect-Reason	normalUserCallClear	73
+USR.value	USR-Failure-To-Connect-Reason	normalUnspecified	74
+USR.value	USR-Failure-To-Connect-Reason	bearerIncompatibility	75
+USR.value	USR-Failure-To-Connect-Reason	protocolErrorEvent	76
+USR.value	USR-Failure-To-Connect-Reason	abnormalDisconnect	77
+USR.value	USR-Failure-To-Connect-Reason	invalidCauseValue	78
+
+#
+#	USR-Simplified-MNP-Levels Values
+
+USR.value	USR-Simplified-MNP-Levels	none		1
+USR.value	USR-Simplified-MNP-Levels	mnpLevel3	2
+USR.value	USR-Simplified-MNP-Levels	mnpLevel4	3
+USR.value	USR-Simplified-MNP-Levels	ccittV42	4
+USR.value	USR-Simplified-MNP-Levels	usRoboticsHST	5
+USR.value	USR-Simplified-MNP-Levels	synchronousNone	6
+USR.value	USR-Simplified-MNP-Levels	mnpLevel2	7
+USR.value	USR-Simplified-MNP-Levels	mnp10		8
+USR.value	USR-Simplified-MNP-Levels	v42Etc		9
+USR.value	USR-Simplified-MNP-Levels	mnp10Ec		10
+USR.value	USR-Simplified-MNP-Levels	lapmEc		11
+USR.value	USR-Simplified-MNP-Levels	v42Etc2		12
+USR.value	USR-Simplified-MNP-Levels	ccittV42SREJ	13
+USR.value	USR-Simplified-MNP-Levels	piafs		14
+
+#
+#	USR-Simplified-V42bis-Usage Values
+
+USR.value	USR-Simplified-V42bis-Usage	none		1
+USR.value	USR-Simplified-V42bis-Usage	ccittV42bis	2
+USR.value	USR-Simplified-V42bis-Usage	mnpLevel5	3
+
+#
+#	USR-Equalization-Type Values
+
+USR.value	USR-Equalization-Type	Long	1
+USR.value	USR-Equalization-Type	Short	2
+
+#
+#	USR-Fallback-Enabled Values
+
+USR.value	USR-Fallback-Enabled	Disabled	1
+USR.value	USR-Fallback-Enabled	Enabled		2
+
+#
+#	USR-Back-Channel-Data-Rate Values
+
+USR.value	USR-Back-Channel-Data-Rate	450BPS	1
+USR.value	USR-Back-Channel-Data-Rate	300BPS	2
+USR.value	USR-Back-Channel-Data-Rate	None	3
+
+#
+#	USR-Device-Connected-To Values
+
+USR.value	USR-Device-Connected-To	None		1
+USR.value	USR-Device-Connected-To	isdnGateway	2
+USR.value	USR-Device-Connected-To	quadModem	3
+
+#
+#	USR-Call-Event-Code Values
+
+USR.value	USR-Call-Event-Code	notSupported		1
+USR.value	USR-Call-Event-Code	setup			2
+USR.value	USR-Call-Event-Code	usrSetup		3
+USR.value	USR-Call-Event-Code	telcoDisconnect		4
+USR.value	USR-Call-Event-Code	usrDisconnect		5
+USR.value	USR-Call-Event-Code	noFreeModem		6
+USR.value	USR-Call-Event-Code	modemsNotAllowed	7
+USR.value	USR-Call-Event-Code	modemsRejectCall	8
+USR.value	USR-Call-Event-Code	modemSetupTimeout	9
+USR.value	USR-Call-Event-Code	noFreeIGW		10
+USR.value	USR-Call-Event-Code	igwRejectCall		11
+USR.value	USR-Call-Event-Code	igwSetupTimeout		12
+USR.value	USR-Call-Event-Code	noFreeTdmts		13
+USR.value	USR-Call-Event-Code	bcReject		14
+USR.value	USR-Call-Event-Code	ieReject		15
+USR.value	USR-Call-Event-Code	chidReject		16
+USR.value	USR-Call-Event-Code	progReject		17
+USR.value	USR-Call-Event-Code	callingPartyReject	18
+USR.value	USR-Call-Event-Code	calledPartyReject	19
+USR.value	USR-Call-Event-Code	blocked			20
+USR.value	USR-Call-Event-Code	analogBlocked		21
+USR.value	USR-Call-Event-Code	digitalBlocked		22
+USR.value	USR-Call-Event-Code	outOfService		23
+USR.value	USR-Call-Event-Code	busy			24
+USR.value	USR-Call-Event-Code	congestion		25
+USR.value	USR-Call-Event-Code	protocolError		26
+USR.value	USR-Call-Event-Code	noFreeBchannel		27
+USR.value	USR-Call-Event-Code	inOutCallCollision	28
+USR.value	USR-Call-Event-Code	inCallArrival		29
+USR.value	USR-Call-Event-Code	outCallArrival		30
+USR.value	USR-Call-Event-Code	inCallConnect		31
+USR.value	USR-Call-Event-Code	outCallConnect		32
+
+#
+#	USR-RMMIE-Status Values
+
+USR.value	USR-RMMIE-Status	notEnabledInLocalModem		1
+USR.value	USR-RMMIE-Status	notDetectedInRemoteModem	2
+USR.value	USR-RMMIE-Status	ok				3
+
+#
+#	USR-RMMIE-X2-Status Values
+
+USR.value	USR-RMMIE-X2-Status	notOperational			1
+USR.value	USR-RMMIE-X2-Status	operational			2
+USR.value	USR-RMMIE-X2-Status	x2Disabled			3
+USR.value	USR-RMMIE-X2-Status	v8Disabled			4
+USR.value	USR-RMMIE-X2-Status	remote3200Disabled		5
+USR.value	USR-RMMIE-X2-Status	invalidSpeedSetting		6
+USR.value	USR-RMMIE-X2-Status	v8NotDetected			7
+USR.value	USR-RMMIE-X2-Status	x2NotDetected			8
+USR.value	USR-RMMIE-X2-Status	incompatibleVersion		9
+USR.value	USR-RMMIE-X2-Status	incompatibleModes		10
+USR.value	USR-RMMIE-X2-Status	local3200Disabled		11
+USR.value	USR-RMMIE-X2-Status	excessHighFrequencyAtten	12
+USR.value	USR-RMMIE-X2-Status	connectNotSupport3200		13
+USR.value	USR-RMMIE-X2-Status	retrainBeforeConnection		14
+
+#
+#	USR-RMMIE-X2-Status Values
+
+USR.value	USR-RMMIE-Planned-Disconnect	none			1
+USR.value	USR-RMMIE-Planned-Disconnect	dteNotReady		2
+USR.value	USR-RMMIE-Planned-Disconnect	dteInterfaceError	3
+USR.value	USR-RMMIE-Planned-Disconnect	dteRequest		4
+USR.value	USR-RMMIE-Planned-Disconnect	escapeToOnlineCommandMode 5
+USR.value	USR-RMMIE-Planned-Disconnect	athCommand		6
+USR.value	USR-RMMIE-Planned-Disconnect	inactivityTimeout	7
+USR.value	USR-RMMIE-Planned-Disconnect	arqProtocolError	8
+USR.value	USR-RMMIE-Planned-Disconnect	arqProtocolRetransmitLim 9
+USR.value	USR-RMMIE-Planned-Disconnect	invalidComprDataCodeword 10
+USR.value	USR-RMMIE-Planned-Disconnect	invalidComprDataStringLen 11
+USR.value	USR-RMMIE-Planned-Disconnect	invalidComprDataCommand	12
+
+#
+#	USR-RMMIE-Last-Update-Event Values
+
+USR.value	USR-RMMIE-Last-Update-Event	none			1
+USR.value	USR-RMMIE-Last-Update-Event	initialConnection	2
+USR.value	USR-RMMIE-Last-Update-Event	retrain			3
+USR.value	USR-RMMIE-Last-Update-Event	speedShift		4
+USR.value	USR-RMMIE-Last-Update-Event	plannedDisconnect	5
+
+#########################################################
+#
+#	Pseudo attributes used by the script based
+#	Security/Accounting Server to identify RADIUS packet types.
+#
+
+#
+#	USR-Request-Type Values
+
+USR.value	USR-Request-Type	Access-Request		1
+USR.value	USR-Request-Type	Access-Accept		2
+USR.value	USR-Request-Type	Access-Reject		3
+USR.value	USR-Request-Type	Accounting-Request	4
+USR.value	USR-Request-Type	Accounting-Response	5
+#	The next three non-standard packet types are used by
+#	US Robotics Security/Accounting Server
+USR.value	USR-Request-Type	Access-Password-Change	7
+USR.value	USR-Request-Type	Access-Password-Ack	8
+USR.value	USR-Request-Type	Access-Password-Reject	9
+USR.value	USR-Request-Type	Access-Challenge	11
+USR.value	USR-Request-Type	Status-Server		12
+USR.value	USR-Request-Type	Status-Client		13
+#	Non-standard packet types used by NetServer to
+#	implement resource management and NAS reboot conditions
+USR.value	USR-Request-Type	Resource-Free-Request	21
+USR.value	USR-Request-Type	Resource-Free-Response	22
+USR.value	USR-Request-Type	Resource-Query-Request	23
+USR.value	USR-Request-Type	Resource-Query-Response	24
+USR.value	USR-Request-Type	Disconnect-User		25
+USR.value	USR-Request-Type	NAS-Reboot-Request	26
+USR.value	USR-Request-Type	NAS-Reboot-Response	27
+#	This value is used for TACACS+ translation
+USR.value	USR-Request-Type	TACACS-Message		253
+USR.value	USR-Request-Type	Reserved		255
+
+#
+#	USR-Req-Db-Mdm-Sel Values
+
+USR.value	USR-Req-Db-Mdm-Sel	No	0
+USR.value	USR-Req-Db-Mdm-Sel	Yes	1
+
+#
+#	USR-Req-Db-Login-Valid Values
+
+USR.value	USR-Req-Db-Login-Valid	No	0
+USR.value	USR-Req-Db-Login-Valid	Yes	1
+
+#
+#	USR-Dial-In-Sec-Mode Values
+
+USR.value	USR-Dial-In-Sec-Mode	Pass-Through		0
+USR.value	USR-Dial-In-Sec-Mode	Dialback-Entered	1
+USR.value	USR-Dial-In-Sec-Mode	Dialback-Stored		2
+
+#######################################################################
+#
+#	HiPer Integer Translations
+#
+#
+
+#
+#	USR-Speed-Of-Connection Values
+
+USR.value	USR-Speed-Of-Connection	Auto	0
+USR.value	USR-Speed-Of-Connection	56	1
+USR.value	USR-Speed-Of-Connection	64	2
+USR.value	USR-Speed-Of-Connection	Voice	3
+
+#
+#	USR-Expansion-Algorithm Values
+
+USR.value	USR-Expansion-Algorithm	Constant	1
+USR.value	USR-Expansion-Algorithm	Linear		2
+
+#
+#	USR-Compression-Algorithm Values
+
+USR.value	USR-Compression-Algorithm	None		0
+USR.value	USR-Compression-Algorithm	Stac		1
+USR.value	USR-Compression-Algorithm	Ascend		2
+USR.value	USR-Compression-Algorithm	Microsoft	3
+USR.value	USR-Compression-Algorithm	Auto		4
+
+#
+#	USR-Compression-Reset-Mode Values
+
+USR.value	USR-Compression-Reset-Mode	Auto			0
+USR.value	USR-Compression-Reset-Mode	Reset-Every-Packet	1
+USR.value	USR-Compression-Reset-Mode	Reset-On-Error		2
+
+#
+#	USR-Filter-Zones Values
+
+USR.value	USR-Filter-Zones	enabled		1
+USR.value	USR-Filter-Zones	disabled	2
+
+#
+#	USR-Bridging Values
+
+USR.value	USR-Bridging	enabled		1
+USR.value	USR-Bridging	disabled	2
+
+#
+#	USR-Appletalk Values
+
+USR.value	USR-Appletalk	enabled		1
+USR.value	USR-Appletalk	disabled	2
+
+#
+#	USR-Spoofing Values
+
+USR.value	USR-Spoofing	enabled		1
+USR.value	USR-Spoofing	disabled	2
+
+#
+#	USR-Routing-Protocol Values
+
+USR.value	USR-Routing-Protocol	Rip1	1
+USR.value	USR-Routing-Protocol	Rip2	2
+
+#
+#	USR-IPX-Routing Values
+
+USR.value	USR-IPX-Routing	none	0
+USR.value	USR-IPX-Routing	send	1
+USR.value	USR-IPX-Routing	listen	2
+USR.value	USR-IPX-Routing	respond	3
+USR.value	USR-IPX-Routing	all	4
+
+#
+#	USR-IPX-WAN Values
+
+USR.value	USR-IPX-WAN	enabled		1
+USR.value	USR-IPX-WAN	disabled	2
+
+#
+#	USR-IP-Default-Route-Option Values
+
+USR.value	USR-IP-Default-Route-Option	enabled		1
+USR.value	USR-IP-Default-Route-Option	disabled	2
+
+#
+#	USR-IP-RIP-Policies Values
+
+USR.value	USR-IP-RIP-Policies	SendDefault	0
+USR.value	USR-IP-RIP-Policies	SendRoutes	2
+USR.value	USR-IP-RIP-Policies	SendSubnets	4
+USR.value	USR-IP-RIP-Policies	AcceptDefault	8
+USR.value	USR-IP-RIP-Policies	SplitHorizon	16
+USR.value	USR-IP-RIP-Policies	PoisonReserve	32
+USR.value	USR-IP-RIP-Policies	FlashUpdate	64
+USR.value	USR-IP-RIP-Policies	SimpleAuth	128
+USR.value	USR-IP-RIP-Policies	V1Send		256
+USR.value	USR-IP-RIP-Policies	V1Receive	512
+USR.value	USR-IP-RIP-Policies	V2Receive	1024
+##USR.value	USR-IP-RIP-Policies	Silent		0x80000000 ??? too big
+
+#
+#	Ascend Extensions
+#	used for MAX/Pipeline configuration
+#
+
+#      Ascend Virtual Router Name
+#
+Ascend.attr	Ascend-VRouter-Name		102	string	(1, 0)
+
+#      Source Auth information (in connection of "authcode-" user profile)
+#
+Ascend.attr	Ascend-Source-Auth		103	string	(*, 0)
+
+#       Private Route (in connection profile)
+#
+Ascend.attr	Ascend-Private-Route		104	string	(*, 0)
+
+#       PRI Numbering Plan ID        
+#
+Ascend.attr	Ascend-Numbering-Plan-ID	105	integer	(1, 0)
+
+#       Ascend Frame Relay Link Status DLCI value
+#
+Ascend.attr	Ascend-FR-Link-Status-DLCI	106	integer	(1, 0)
+
+# 	Ascend Q.931 ISDN Calling Party Subaddress
+#	(for use as a check-item in a connection profile)
+#
+Ascend.attr	Ascend-Calling-Subaddress	107	string	(Config)
+
+#       Ascend Callback Delay, seconds to delay before initiating dialback
+#
+Ascend.attr	Ascend-Callback-Delay		108	integer	(1, 0)
+
+#       Ascend Alias for LCP Endpoint Discriminator
+#
+Ascend.attr	Ascend-Endpoint-Disc		109	string	(1, 0)
+
+#       Ascend Firewall Control Manager (FCM) Remote FireWall (FW) name
+#
+Ascend.attr	Ascend-Remote-FW		110	string	(1, 0)
+
+#               Multicast Group Leave Delay time in seconds
+#
+Ascend.attr	Ascend-Multicast-GLeave-Delay	111	integer	(*, 0)
+
+#       Ascend Microsoft Callback Control Protocol Parameters
+#
+Ascend.attr	Ascend-CBCP-Enable		112	integer	(*, 0)
+Ascend.attr	Ascend-CBCP-Mode		113	integer	(*, 0)
+Ascend.attr	Ascend-CBCP-Delay		114	integer	(*, 0)
+Ascend.attr	Ascend-CBCP-Trunk-Group		115	integer	(*, 0)
+
+#       Ascend Appletalk PPP Parameters
+#
+Ascend.attr	Ascend-Appletalk-Route		116	string	(*, 0)
+Ascend.attr	Ascend-Appletalk-Peer-Mode	117	integer	(*, 0)
+Ascend.attr	Ascend-Route-Appletalk		118	integer	(*, 0)
+
+#	Ascend Firewall Control Protocol (FCP) Parameter
+#
+Ascend.attr	Ascend-FCP-Parameter		119	string	(*, 0)
+
+#	Ascend Modem Port, Slot, and Shelf numbers.
+#	Used only in RADIUS Accounting messages from Ascend products.
+#	For Ascend products other than the MAX/TNT, the ShelfNo is always 0)
+#
+Ascend.attr	Ascend-Modem-PortNo		120	integer	(*, 0)
+Ascend.attr	Ascend-Modem-SlotNo		121	integer	(*, 0)
+Ascend.attr	Ascend-Modem-ShelfNo		122	integer	(*, 0)
+
+#	Ascend NAS-controlled Call Block Limit & Duration Parameters
+#
+Ascend.attr	Ascend-Call-Attempt-Limit	123	integer	(*, 0)
+Ascend.attr	Ascend-Call-Block-Duration	124	integer	(*, 0)
+
+#	Ascend Maximum call duration in minutes
+#
+Ascend.attr	Ascend-Maximum-Call-Duration	125	integer	(*, 0)
+
+#	Ascend route-preference specifier for connection profiles
+#
+Ascend.attr	Ascend-Route-Preference		126	integer	(*, 0)
+
+#	Ascend defined attribute used for MAX configuration to use
+#	different Tunneling protocol.
+#
+Ascend.attr	Ascend-Tunneling-Protocol	127	integer	(*, 0)
+
+#	Enable Shared Profile per Connection Profile.
+#	This has no effect if "Ethernet->Mod Config->Shared Prof=Yes"
+#
+Ascend.attr	Ascend-Shared-Profile-Enable	128	integer	(*, 0)
+
+#
+Ascend.attr	Ascend-Primary-Home-Agent	129	string	(*, 0)
+Ascend.attr	Ascend-Secondary-Home-Agent	130	string	(*, 0)
+
+#	Dialout allowed (in connection profile)
+#
+Ascend.attr	Ascend-Dialout-Allowed		131	integer	(*, 0)
+
+#	The default gateway to be used for traffic from this user.
+# 	(If not used or defined as zero the NAS's default route will
+#	be used.)
+#
+Ascend.attr	Ascend-Client-Gateway		132	ipaddr	(*, 0)
+
+#
+#		Connection Profile items
+#
+
+#ATTRIBUTE	Ascend-Station			see	User-Name
+#ATTRIBUTE	Ascend-Encaps			see	Framed-Protocol
+#ATTRIBUTE	Ascend-IP-Address		see	Framed-Address
+#ATTRIBUTE	Ascend-Netmask			see	Framed-Netmask
+#ATTRIBUTE	Ascend-IPX-Network		see	Framed-IPX-Network
+
+#	Enables support for the IETF Bandwidth Allocation Control Protocol
+#
+Ascend.attr	Ascend-BACP-Enable		133	integer	(*, 0)
+
+#	Maximum number of leases per session for NAT_LAN
+#
+Ascend.attr	Ascend-DHCP-Maximum-Leases	134	integer	(*, 0)
+
+#	Support DNS server addresses per user 
+#
+Ascend.attr	Ascend-Client-Primary-DNS	135	ipaddr	(*, 0)
+Ascend.attr	Ascend-Client-Secondary-DNS	136	ipaddr	(*, 0)
+Ascend.attr	Ascend-Client-Assign-DNS	137	integer	(*, 0)
+
+#		Per user RADIUS Accounting Server
+#
+Ascend.attr	Ascend-User-Acct-Type		138	integer	(*, 0)
+Ascend.attr	Ascend-User-Acct-Host		139	ipaddr	(*, 0)
+Ascend.attr	Ascend-User-Acct-Port		140	integer	(*, 0)
+Ascend.attr	Ascend-User-Acct-Key		141	string	(*, 0)
+Ascend.attr	Ascend-User-Acct-Base		142	integer	(*, 0)
+Ascend.attr	Ascend-User-Acct-Time		143	integer	(*, 0)
+
+#	Support ip address allocation from global pools
+#
+Ascend.attr	Ascend-Assign-IP-Client		144	ipaddr	(*, 0)
+Ascend.attr	Ascend-Assign-IP-Server		145	ipaddr	(*, 0)
+Ascend.attr	Ascend-Assign-IP-Global-Pool	146	string	(0, 0)
+
+#     DHCP Server Functions
+#
+Ascend.attr	Ascend-DHCP-Reply		147	integer	(*, 0)
+Ascend.attr	Ascend-DHCP-Pool-Number		148	integer	(*, 0)
+
+# 	Connection Profile/Telco option
+#
+Ascend.attr	Ascend-Expect-Callback		149	integer	(*, 0)
+
+#	THe Event type for an Ascend-Event packet
+Ascend.attr	Ascend-Event-Type		150	integer	(*, 0)
+
+#		RADIUS Server Session key
+Ascend.attr	Ascend-Session-Svr-Key		151	string	(*, 0)
+
+#		Multicast Rate Limit per client
+Ascend.attr	Ascend-Multicast-Rate-Limit	152	integer	(*, 0)
+
+#	Connection Profile fields to support interface-based routing
+#ATTRIBUTE	Ascend-IF-Addr			see	Ascend-PPP-Address
+Ascend.attr	Ascend-IF-Netmask		153	ipaddr	(*, 0)
+Ascend.attr	Ascend-Remote-Addr		154	ipaddr	(*, 0)
+
+#	Multicast Support
+Ascend.attr	Ascend-Multicast-Client		155	integer	(*, 0)
+
+#	Frame Datalink profiles
+Ascend.attr	Ascend-FR-Circuit-Name		156	string	(*, 0)
+# * IMPORTANT * Ascend-FR-LinkUp has been deprecated
+#		Ascend MAX has been changed to ignore this attribute
+Ascend.attr	Ascend-FR-LinkUp		157	integer	(*, 0)
+Ascend.attr	Ascend-FR-Nailed-Grp		158	integer	(*, 0)
+Ascend.attr	Ascend-FR-Type			159	integer	(*, 0)
+Ascend.attr	Ascend-FR-Link-Mgt		160	integer	(*, 0)
+Ascend.attr	Ascend-FR-N391			161	integer	(*, 0)
+Ascend.attr	Ascend-FR-DCE-N392		162	integer	(*, 0)
+Ascend.attr	Ascend-FR-DTE-N392		163	integer	(*, 0)
+Ascend.attr	Ascend-FR-DCE-N393		164	integer	(*, 0)
+Ascend.attr	Ascend-FR-DTE-N393		165	integer	(*, 0)
+Ascend.attr	Ascend-FR-T391			166	integer	(*, 0)
+Ascend.attr	Ascend-FR-T392			167	integer	(*, 0)
+
+Ascend.attr	Ascend-Bridge-Address		168	string	(*, 0)
+
+Ascend.attr	Ascend-TS-Idle-Limit		169     integer	(*, 0)
+Ascend.attr	Ascend-TS-Idle-Mode		170     integer	(*, 0)
+Ascend.attr	Ascend-DBA-Monitor 		171	integer	(*, 0)
+Ascend.attr	Ascend-Base-Channel-Count 	172	integer	(*, 0)
+Ascend.attr	Ascend-Minimum-Channels		173	integer	(*, 0)
+
+#
+#		IPX Static Routes
+#
+
+Ascend.attr	Ascend-IPX-Route		174	string	(*, 0)
+
+Ascend.attr	Ascend-FT1-Caller		175	integer	(*, 0)
+Ascend.attr	Ascend-Backup			176	string	(*, 0)
+Ascend.attr	Ascend-Call-Type		177	integer	(*, 0)
+Ascend.attr	Ascend-Group			178	string	(*, 0)
+Ascend.attr	Ascend-FR-DLCI			179	integer	(*, 0)
+Ascend.attr	Ascend-FR-Profile-Name		180	string	(*, 0)
+Ascend.attr	Ascend-Ara-PW			181	string	(0, 0)
+Ascend.attr	Ascend-IPX-Node-Addr		182	string	(*, 0)
+Ascend.attr	Ascend-Home-Agent-IP-Addr	183	ipaddr	(*, 0)
+Ascend.attr	Ascend-Home-Agent-Password	184	string	(*, 0)
+Ascend.attr	Ascend-Home-Network-Name	185	string	(*, 0)
+Ascend.attr	Ascend-Home-Agent-UDP-Port	186	integer	(*, 0)
+Ascend.attr	Ascend-Multilink-ID		187	integer	(*, 0)
+Ascend.attr	Ascend-Num-In-Multilink		188	integer	(*, 0)
+Ascend.attr	Ascend-First-Dest		189	ipaddr	(*, 0)
+Ascend.attr	Ascend-Pre-Input-Octets		190	integer	(*, 0)
+Ascend.attr	Ascend-Pre-Output-Octets	191	integer	(*, 0)
+Ascend.attr	Ascend-Pre-Input-Packets	192	integer	(*, 0)
+Ascend.attr	Ascend-Pre-Output-Packets	193	integer	(*, 0)
+Ascend.attr	Ascend-Maximum-Time		194	integer	(*, 0)
+Ascend.attr	Ascend-Disconnect-Cause		195	integer	(*, 0)
+Ascend.attr	Ascend-Connect-Progress		196	integer	(*, 0)
+Ascend.attr	Ascend-Data-Rate		197	integer	(*, 0)
+Ascend.attr	Ascend-PreSession-Time		198	integer	(*, 0)
+Ascend.attr	Ascend-Token-Idle		199	integer	(Config)
+Ascend.attr	Ascend-Token-Immediate		200	integer	(Config)
+Ascend.attr	Ascend-Require-Auth		201	integer	(*, 0)
+Ascend.attr	Ascend-Number-Sessions		202	string	(*, 0)
+Ascend.attr	Ascend-Authen-Alias		203	string	(*, 0)
+Ascend.attr	Ascend-Token-Expiry		204	integer	(Config)
+Ascend.attr	Ascend-Menu-Selector		205	string	(*, 0)
+Ascend.attr	Ascend-Menu-Item		206	string	(*, 0)
+#
+#		Ascend Radius Password Expiration Options
+#
+Ascend.attr	Ascend-PW-Warntime		207	integer	(Config)
+Ascend.attr	Ascend-PW-Lifetime		208	integer	(Config)
+Ascend.attr	Ascend-IP-Direct		209	ipaddr	(*, 0)
+Ascend.attr	Ascend-PPP-VJ-Slot-Comp		210	integer	(*, 0)
+Ascend.attr	Ascend-PPP-VJ-1172		211	integer	(*, 0)
+Ascend.attr	Ascend-PPP-Async-Map		212	integer	(*, 0)
+Ascend.attr	Ascend-Third-Prompt		213	string	(*, 0)
+#
+#
+Ascend.attr	Ascend-Send-Secret		214	string	(*, 0)
+Ascend.attr	Ascend-Receive-Secret		215	string	(*, 0)
+Ascend.attr	Ascend-IPX-Peer-Mode		216	integer	(*, 0)
+Ascend.attr	Ascend-IP-Pool-Definition	217	string	(*, 0)
+Ascend.attr	Ascend-Assign-IP-Pool		218	integer	(*, 0)
+Ascend.attr	Ascend-FR-Direct		219	integer	(*, 0)
+Ascend.attr	Ascend-FR-Direct-Profile	220	string	(*, 0)
+Ascend.attr	Ascend-FR-Direct-DLCI		221	integer	(*, 0)
+Ascend.attr	Ascend-Handle-IPX		222	integer	(*, 0)
+Ascend.attr	Ascend-Netware-Timeout		223	integer	(*, 0)
+#
+#
+Ascend.attr	Ascend-IPX-Alias		224	integer	(*, 0)
+Ascend.attr	Ascend-Metric			225	integer	(*, 0)
+Ascend.attr	Ascend-PRI-Number-Type		226	integer	(*, 0)
+Ascend.attr	Ascend-Dial-Number		227	string	(*, 0)
+#
+#		Ascend Connection Profile/PPP options
+#
+Ascend.attr	Ascend-Route-IP			228	integer	(*, 0)
+Ascend.attr	Ascend-Route-IPX		229	integer	(*, 0)
+Ascend.attr	Ascend-Bridge			230	integer	(*, 0)
+Ascend.attr	Ascend-Send-Auth		231	integer	(*, 0)
+Ascend.attr	Ascend-Send-Passwd		232	string	(*, 0)
+#
+#ATTRIBUTE	Ascend-MRU			see	Framed-MTU
+#
+Ascend.attr	Ascend-Link-Compression		233	integer	(*, 0)
+#
+#ATTRIBUTE	Ascend-VJ-Compression		see	Framed-Compression
+#
+Ascend.attr	Ascend-Target-Util		234	integer	(*, 0)
+Ascend.attr	Ascend-Maximum-Channels		235	integer	(*, 0)
+Ascend.attr	Ascend-Inc-Channel-Count	236	integer	(*, 0)
+Ascend.attr	Ascend-Dec-Channel-Count	237	integer	(*, 0)
+Ascend.attr	Ascend-Seconds-Of-History	238	integer	(*, 0)
+Ascend.attr	Ascend-History-Weigh-Type	239	integer	(*, 0)
+Ascend.attr	Ascend-Add-Seconds		240	integer	(*, 0)
+Ascend.attr	Ascend-Remove-Seconds		241	integer	(*, 0)
+#
+#		Ascend Connection Profile/Session options
+#
+#ATTRIBUTE	Ascend-RIP			see Framed-Routing
+#
+Ascend.attr	Ascend-Data-Filter		242	abinary	(*, 0)
+Ascend.attr	Ascend-Call-Filter		243	abinary	(*, 0)
+Ascend.attr	Ascend-Idle-Limit		244	integer	(*, 0)
+Ascend.attr	Ascend-Preempt-Limit		245	integer	(*, 0)
+#
+#		Ascend Connection Profile/Telco options
+#
+Ascend.attr	Ascend-Callback			246	integer	(*, 0)
+Ascend.attr	Ascend-Data-Svc			247	integer	(*, 0)
+Ascend.attr	Ascend-Force-56			248	integer	(*, 0)
+Ascend.attr	Ascend-Billing-Number		249	string	(*, 0)
+Ascend.attr	Ascend-Call-By-Call		250	integer	(*, 0)
+Ascend.attr	Ascend-Transit-Number		251	string	(*, 0)
+#
+#		Ascend Terminal Server Attributes
+#
+#ATTRIBUTE	Ascend-Terminal-Banner		see	Reply-Message
+#
+Ascend.attr	Ascend-Host-Info		252	string	(*, 0)
+#
+#		Ascend PPP local address Attribute
+#
+Ascend.attr	Ascend-PPP-Address		253	ipaddr	(*, 0)
+#
+#		Ascend MPP percent idle Attribute
+#
+Ascend.attr	Ascend-MPP-Idle-Percent		254	integer	(*, 0)
+#
+#	The transmit rate to complement the receive rate Ascend-Data-Rate
+#
+Ascend.attr	Ascend-Xmit-Rate		255	integer	(*, 0)
+
+#	Ascend FR Direct values
+
+Ascend.value	Ascend-FR-Direct	FR-Direct-No		0
+Ascend.value	Ascend-FR-Direct	FR-Direct-Yes		1
+#
+#	Ascend IPX Handling
+#
+Ascend.value	Ascend-Handle-IPX	Handle-IPX-None		0
+Ascend.value	Ascend-Handle-IPX	Handle-IPX-Client	1
+Ascend.value	Ascend-Handle-IPX	Handle-IPX-Server	2
+#
+#	Ascend IPX Routing Peer Mode
+
+Ascend.value	Ascend-IPX-Peer-Mode	IPX-Peer-Router		0
+Ascend.value	Ascend-IPX-Peer-Mode	IPX-Peer-Dialin		1
+
+#	Ascend Call Type Values
+
+Ascend.value	Ascend-Call-Type	Nailed			1
+Ascend.value	Ascend-Call-Type	Nailed/Mpp		2
+Ascend.value	Ascend-Call-Type	Perm/Switched		3
+
+#	Ascend FT1 Caller Values
+
+Ascend.value	Ascend-FT1-Caller	FT1-No			0
+Ascend.value	Ascend-FT1-Caller	FT1-Yes			1
+
+#	Ascend PRI Number Type Values
+
+Ascend.value	Ascend-PRI-Number-Type	Unknown-Number		0
+Ascend.value	Ascend-PRI-Number-Type	Intl-Number		1
+Ascend.value	Ascend-PRI-Number-Type	National-Number		2
+Ascend.value	Ascend-PRI-Number-Type	Net-Specific-Number	3
+Ascend.value	Ascend-PRI-Number-Type	Local-Number		4
+Ascend.value	Ascend-PRI-Number-Type	Abbrev-Number		6
+
+#	Ascend Route IP Type Values
+
+Ascend.value	Ascend-Route-IP		Route-IP-No		0
+Ascend.value	Ascend-Route-IP		Route-IP-Yes		1
+
+#	Ascend Route IPX Type Values
+
+Ascend.value	Ascend-Route-IPX	Route-IPX-No		0
+Ascend.value	Ascend-Route-IPX	Route-IPX-Yes		1
+
+#	Ascend Bridge Type Values
+
+Ascend.value	Ascend-Bridge		Bridge-No		0
+Ascend.value	Ascend-Bridge		Bridge-Yes		1
+
+#	Ascend Send Auth Values
+
+Ascend.value	Ascend-Send-Auth	Send-Auth-None		0
+Ascend.value	Ascend-Send-Auth	Send-Auth-PAP		1
+Ascend.value	Ascend-Send-Auth	Send-Auth-CHAP		2
+Ascend.value	Ascend-Send-Auth	Send-Auth-MS-CHAP	3
+
+#	Ascend Link Compression Values
+
+Ascend.value	Ascend-Link-Compression	Link-Comp-None		0
+Ascend.value	Ascend-Link-Compression	Link-Comp-Stac		1
+#VALUE		Ascend-Link-Compression	Link-Comp-Stac-Draft-5	2
+Ascend.value	Ascend-Link-Compression	Link-Comp-Stac-Draft-9	2
+Ascend.value	Ascend-Link-Compression	Link-Comp-MS-Stac	3
+
+#	Ascend History Weigh Type Values
+
+Ascend.value	Ascend-History-Weigh-Type	History-Constant	0
+Ascend.value	Ascend-History-Weigh-Type	History-Linear		1
+Ascend.value	Ascend-History-Weigh-Type	History-Quadratic	2
+
+#	Ascend Callback Values
+
+Ascend.value	Ascend-Callback		Callback-No		0
+Ascend.value	Ascend-Callback		Callback-Yes		1
+
+#	Ascend Data Svc Values
+
+Ascend.value	Ascend-Data-Svc		Switched-Voice-Bearer	0
+Ascend.value	Ascend-Data-Svc		Switched-56KR		1
+Ascend.value	Ascend-Data-Svc		Switched-64K		2
+Ascend.value	Ascend-Data-Svc		Switched-64KR		3
+Ascend.value	Ascend-Data-Svc		Switched-56K		4
+Ascend.value	Ascend-Data-Svc		Switched-384KR		5
+Ascend.value	Ascend-Data-Svc		Switched-384K		6
+Ascend.value	Ascend-Data-Svc		Switched-1536K		7
+Ascend.value	Ascend-Data-Svc		Switched-1536KR		8
+Ascend.value	Ascend-Data-Svc		Switched-128K		9
+Ascend.value	Ascend-Data-Svc		Switched-192K		10
+Ascend.value	Ascend-Data-Svc		Switched-256K		11
+Ascend.value	Ascend-Data-Svc		Switched-320K		12
+Ascend.value	Ascend-Data-Svc		Switched-384K-MR	13
+Ascend.value	Ascend-Data-Svc		Switched-448K		14
+Ascend.value	Ascend-Data-Svc		Switched-512K		15
+Ascend.value	Ascend-Data-Svc		Switched-576K		16
+Ascend.value	Ascend-Data-Svc		Switched-640K		17
+Ascend.value	Ascend-Data-Svc		Switched-704K		18
+Ascend.value	Ascend-Data-Svc		Switched-768K		19
+Ascend.value	Ascend-Data-Svc		Switched-832K		20
+Ascend.value	Ascend-Data-Svc		Switched-896K		21
+Ascend.value	Ascend-Data-Svc		Switched-960K		22
+Ascend.value	Ascend-Data-Svc		Switched-1024K		23
+Ascend.value	Ascend-Data-Svc		Switched-1088K		24
+Ascend.value	Ascend-Data-Svc		Switched-1152K		25
+Ascend.value	Ascend-Data-Svc		Switched-1216K		26
+Ascend.value	Ascend-Data-Svc		Switched-1280K		27
+Ascend.value	Ascend-Data-Svc		Switched-1344K		28
+Ascend.value	Ascend-Data-Svc		Switched-1408K		29
+Ascend.value	Ascend-Data-Svc		Switched-1472K		30
+Ascend.value	Ascend-Data-Svc		Switched-1600K		31
+Ascend.value	Ascend-Data-Svc		Switched-1664K		32
+Ascend.value	Ascend-Data-Svc		Switched-1728K		33
+Ascend.value	Ascend-Data-Svc		Switched-1792K		34
+Ascend.value	Ascend-Data-Svc		Switched-1856K		35
+Ascend.value	Ascend-Data-Svc		Switched-1920K		36
+
+Ascend.value	Ascend-Data-Svc		Switched-Inherited		37
+Ascend.value	Ascend-Data-Svc		Switched-Restricted-Bearer-X30  38
+Ascend.value	Ascend-Data-Svc		Switched-Clear-Bearer-V110	39
+Ascend.value	Ascend-Data-Svc		Switched-Restricted-64-X30	40
+Ascend.value	Ascend-Data-Svc		Switched-Clear-56-V110		41
+Ascend.value	Ascend-Data-Svc		Switched-Modem			42
+Ascend.value	Ascend-Data-Svc		Switched-Atmodem		43
+
+#	Ascend Force 56 Values
+
+Ascend.value	Ascend-Force-56		Force-56-No		0
+Ascend.value	Ascend-Force-56		Force-56-Yes		1
+
+#	Password Expiration
+# Use Password-Expiration to set global default value for Lifetime
+# Use Password-Warning to set global default value for Warntime
+# 
+#Ascend.value	Ascend-PW-Lifetime	Lifetime-In-Days	0
+#Ascend.value	Ascend-PW-Warntime	Days-Of-Warning		0
+
+#
+#	Ascend PPP VJ 1172
+
+Ascend.value	Ascend-PPP-VJ-1172	PPP-VJ-1172		1
+#
+#	Ascend PPP VJ Slot compression
+
+Ascend.value	Ascend-PPP-VJ-Slot-Comp	VJ-Slot-Comp-No		1
+
+#	Addition authentication
+
+Ascend.value	Ascend-Require-Auth	Not-Require-Auth	0
+Ascend.value	Ascend-Require-Auth	Require-Auth		1
+
+Ascend.value	Ascend-Token-Immediate	Tok-Imm-No		0
+Ascend.value	Ascend-Token-Immediate	Tok-Imm-Yes		1
+
+Ascend.value	Ascend-Route-Appletalk	Route-Appletalk-No	0
+Ascend.value	Ascend-Route-Appletalk	Route-Appletalk-Yes	1
+
+#       Ascend TS Idle Modes
+
+Ascend.value	Ascend-TS-Idle-Mode	TS-Idle-None		0
+Ascend.value	Ascend-TS-Idle-Mode	TS-Idle-Input		1
+Ascend.value	Ascend-TS-Idle-Mode	TS-Idle-Input-Output	2
+
+#	Ascend Dynamic Bandwidth Allocation Monitor
+
+Ascend.value	Ascend-DBA-Monitor	DBA-Transmit		0
+Ascend.value	Ascend-DBA-Monitor	DBA-Transmit-Recv	1
+Ascend.value	Ascend-DBA-Monitor	DBA-None		2
+
+#	Ascend Frame Relay Datalink Types
+
+Ascend.value	Ascend-FR-Type		Ascend-FR-DTE		0
+Ascend.value	Ascend-FR-Type		Ascend-FR-DCE		1
+Ascend.value	Ascend-FR-Type		Ascend-FR-NNI		2
+
+Ascend.value	Ascend-FR-Link-Mgt	Ascend-FR-No-Link-Mgt	0
+Ascend.value	Ascend-FR-Link-Mgt	Ascend-FR-T1-617D	1
+Ascend.value	Ascend-FR-Link-Mgt	Ascend-FR-Q-933A	2
+
+#
+# * IMPORTANT * Ascend-FR-LinkUp has been deprecated
+#               Ascend MAX has been changed to ignore this attribute
+Ascend.value	Ascend-FR-LinkUp	Ascend-LinkUp-Default	0	
+Ascend.value	Ascend-FR-LinkUp	Ascend-LinkUp-AlwaysUp	1	
+
+#	Ascend Multicast support Values
+
+Ascend.value	Ascend-Multicast-Client Multicast-No		0
+Ascend.value	Ascend-Multicast-Client Multicast-Yes		1
+
+#	Ascend User define Accounting types
+
+Ascend.value	Ascend-User-Acct-Type	Ascend-User-Acct-None	0
+Ascend.value	Ascend-User-Acct-Type	Ascend-User-Acct-User	1
+Ascend.value	Ascend-User-Acct-Type	Ascend-User-Acct-User-Default	2
+
+#	Ascend User define Accounting Base value
+
+Ascend.value	Ascend-User-Acct-Base	Base-10			0
+Ascend.value	Ascend-User-Acct-Base	Base-16			1
+
+#	Ascend DHCP Server Functions
+
+Ascend.value	Ascend-DHCP-Reply	DHCP-Reply-No		0
+Ascend.value	Ascend-DHCP-Reply	DHCP-Reply-Yes		1
+
+#	Support DNS server addresses per user 
+
+Ascend.value	Ascend-Client-Assign-DNS	DNS-Assign-No	0
+Ascend.value	Ascend-Client-Assign-DNS	DNS-Assign-Yes	1
+
+#	Ascend Expect Callback Values
+
+Ascend.value	Ascend-Expect-Callback	Expect-Callback-No	0
+Ascend.value	Ascend-Expect-Callback	Expect-Callback-Yes	1
+
+#	Ascend Event Types
+
+Ascend.value	Ascend-Event-Type	Ascend-ColdStart	1
+Ascend.value	Ascend-Event-Type	Ascend-Session-Event	2
+
+#	Ascend BACP Functions
+
+Ascend.value	Ascend-BACP-Enable	BACP-No			0
+Ascend.value	Ascend-BACP-Enable	BACP-Yes		1
+
+#	Ascend Dialout-Allowed values.
+
+Ascend.value	Ascend-Dialout-Allowed	Dialout-Not-Allowed	0
+Ascend.value	Ascend-Dialout-Allowed	Dialout-Allowed		1
+
+#	Support Shared Profile per Connection Profile
+
+Ascend.value	Ascend-Shared-Profile-Enable	Shared-Profile-No	0
+Ascend.value	Ascend-Shared-Profile-Enable	Shared-Profile-Yes	1
+
+#	Ascend Tunneling Protocol values
+
+Ascend.value	Ascend-Tunneling-Protocol	ATMP		0
+Ascend.value	Ascend-Tunneling-Protocol	VTP		1
+
+#       Ascend Appletalk Routing Peer Mode
+
+Ascend.value	Ascend-Appletalk-Peer-Mode	Appletalk-Peer-Router	0
+Ascend.value	Ascend-Appletalk-Peer-Mode	Appletalk-Peer-Dialin	1
+
+#       Ascend Microsoft Callback Control Protocol values
+
+Ascend.value	Ascend-CBCP-Enable	CBCP-Not-Enabled	0
+Ascend.value	Ascend-CBCP-Enable	CBCP-Enabled		1
+
+Ascend.value	Ascend-CBCP-Mode	CBCP-No-Callback	1
+Ascend.value	Ascend-CBCP-Mode	CBCP-User-Callback	2
+Ascend.value	Ascend-CBCP-Mode	CBCP-Profile-Callback	3
+Ascend.value	Ascend-CBCP-Mode	CBCP-Any-Or-No		7
+# Note - CBCP-Off has been removed in 6.0 - use CBCP-No-Callback instead
+# Ascend.value	Ascend-CBCP-Mode	CBCP-Off		8
+
+#	Ascend PRI Numbering Plan ID values
+
+Ascend.value	Ascend-Numbering-Plan-ID	Unknown-Numbering-Plan	0
+Ascend.value	Ascend-Numbering-Plan-ID	ISDN-Numbering-Plan	1
+Ascend.value	Ascend-Numbering-Plan-ID	Private-Numbering-Plan	9
+
+#	Ascend-Disconnect-Cause Values
+
+Ascend.value	Ascend-Disconnect-Cause	No-Reason			0
+Ascend.value	Ascend-Disconnect-Cause	Not-Applicable			1
+#Ascend.value	Ascend-Disconnect-Cause	Unknown				2
+Ascend.value	Ascend-Disconnect-Cause	Call-Disconnected 		3
+Ascend.value	Ascend-Disconnect-Cause	CLID-Authentication-Failed 	4
+Ascend.value	Ascend-Disconnect-Cause	CLID-RADIUS-Timeout		5
+
+Ascend.value	Ascend-Disconnect-Cause	Modem-No-DCD			10
+Ascend.value	Ascend-Disconnect-Cause	DCD-Detected-Then-Inactive	11
+Ascend.value	Ascend-Disconnect-Cause Modem-Invalid-Result-Codes	12
+
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-User-Quit		20
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Idle-Timeout		21
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Exit-Telnet		22
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-No-IPaddr		23
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Exit-Raw-TCP		24
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Exit-Login-Failed	25
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Exit-Raw-TCP-Disabled	26
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-CTRL-C-In-Login		27
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Destroyed		28
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-User-Closed-VCon	29
+
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-VCon-Destroyed		30
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Exit-Rlogin		31
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Bad-Rlogin-Option	32
+Ascend.value	Ascend-Disconnect-Cause	TermSrv-Not-Enough-Resources	33
+
+Ascend.value	Ascend-Disconnect-Cause	MPP-No-NULL-Msg-Timeout		35
+
+Ascend.value	Ascend-Disconnect-Cause	PPP-LCP-Timeout			40
+Ascend.value	Ascend-Disconnect-Cause	PPP-LCP-Negotion-Failed		41
+Ascend.value	Ascend-Disconnect-Cause	PPP-PAP-Auth-Failed		42
+Ascend.value	Ascend-Disconnect-Cause	PPP-CHAP-Auth-Failed		43
+Ascend.value	Ascend-Disconnect-Cause	PPP-Rmt-Auth-Failed		44
+Ascend.value	Ascend-Disconnect-Cause	PPP-Rcv-Terminate-Req		45
+Ascend.value	Ascend-Disconnect-Cause	PPP-Rcv-Close-Event		46
+Ascend.value	Ascend-Disconnect-Cause	PPP-No-NCPs-Open		47
+Ascend.value	Ascend-Disconnect-Cause	PPP-MP-Bundle-Unknown		48
+Ascend.value	Ascend-Disconnect-Cause	PPP-LCP-Close-MP-Add-Fail	49
+
+Ascend.value	Ascend-Disconnect-Cause	Session-Table-Full		50
+Ascend.value	Ascend-Disconnect-Cause	Out-Of-Resources		51
+Ascend.value	Ascend-Disconnect-Cause Invalid-IP-Address		52
+Ascend.value	Ascend-Disconnect-Cause Hostname-Resolution-Failed	53
+Ascend.value	Ascend-Disconnect-Cause Bad-Or-Missing-Port-Number	54
+
+Ascend.value	Ascend-Disconnect-Cause Host-Reset			60
+Ascend.value	Ascend-Disconnect-Cause Connection-Refused		61
+Ascend.value	Ascend-Disconnect-Cause Connection-Timeout		62
+Ascend.value	Ascend-Disconnect-Cause Connection-Closed		63
+Ascend.value	Ascend-Disconnect-Cause Network-Unreachable		64
+Ascend.value	Ascend-Disconnect-Cause Host-Unreachable		65
+Ascend.value	Ascend-Disconnect-Cause Network-Unreachable-Admin	66
+Ascend.value	Ascend-Disconnect-Cause Host-Unreachable-Admin		67
+Ascend.value	Ascend-Disconnect-Cause Port-Unreachable		68
+
+Ascend.value	Ascend-Disconnect-Cause Session-Timeout			100
+Ascend.value	Ascend-Disconnect-Cause Invalid-Incoming-User		101
+Ascend.value	Ascend-Disconnect-Cause Disconnect-Due-To-Callback	102
+
+Ascend.value	Ascend-Disconnect-Cause Protocol-Disabled-Or-Unsupported 120
+
+Ascend.value	Ascend-Disconnect-Cause Disconnect-Req-By-RADIUS	150
+Ascend.value	Ascend-Disconnect-Cause Disconnect-Req-By-Local-Admin	151
+
+Ascend.value	Ascend-Disconnect-Cause V110-Timeout-Or-Sync-Retry-Exceed 160
+
+Ascend.value	Ascend-Disconnect-Cause PPP-Auth-Timeout-Exceeded	170
+
+Ascend.value	Ascend-Disconnect-Cause User-Executed-Do-Hangup		180
+
+Ascend.value	Ascend-Disconnect-Cause Remote-End-Hung-Up		185
+
+Ascend.value	Ascend-Disconnect-Cause Resource-Has-Been-Quiesced	190
+
+Ascend.value	Ascend-Disconnect-Cause Max-Call-Duration-Reached	195
+
+#	Ascend-Connect-Progress Values
+
+Ascend.value	Ascend-Connect-Progress	No-Progress			0
+#Ascend.value	Ascend-Connect-Progress	unknown#1			1
+#Ascend.value	Ascend-Connect-Progress unknown#2			2
+
+Ascend.value	Ascend-Connect-Progress	Call-Up				10
+
+Ascend.value	Ascend-Connect-Progress	Modem-Up			30
+Ascend.value	Ascend-Connect-Progress	Modem-Awaiting-DCD		31
+Ascend.value	Ascend-Connect-Progress	Modem-Awaiting-Codes		32
+
+Ascend.value	Ascend-Connect-Progress	TermSrv-Started			40
+Ascend.value	Ascend-Connect-Progress	TermSrv-Raw-TCP-Started		41
+Ascend.value	Ascend-Connect-Progress	TermSrv-Telnet-Started		42
+Ascend.value	Ascend-Connect-Progress	TermSrv-Raw-TCP-Connected	43
+Ascend.value	Ascend-Connect-Progress	TermSrv-Telnet-Connected	44
+Ascend.value	Ascend-Connect-Progress	TermSrv-Rlogin-Started		45
+Ascend.value	Ascend-Connect-Progress	TermSrv-Rlogin-Connected	46
+
+Ascend.value	Ascend-Connect-Progress	Modem-Outdial-Call-Up		50
+
+Ascend.value	Ascend-Connect-Progress	LAN-Session-Up			60
+Ascend.value	Ascend-Connect-Progress	LCP-Opening			61
+Ascend.value	Ascend-Connect-Progress	CCP-Opening			62
+Ascend.value	Ascend-Connect-Progress	IPNCP-Opening			63
+Ascend.value	Ascend-Connect-Progress	BNCP-Opening			64
+Ascend.value	Ascend-Connect-Progress	LCP-Opened			65
+Ascend.value	Ascend-Connect-Progress	CCP-Opened			66
+Ascend.value	Ascend-Connect-Progress	IPNCP-Opened			67
+Ascend.value	Ascend-Connect-Progress	BNCP-Opened			68
+Ascend.value	Ascend-Connect-Progress	LCP-State-Initial		69
+
+Ascend.value	Ascend-Connect-Progress	LCP-State-Starting		70
+Ascend.value	Ascend-Connect-Progress	LCP-State-Closed		71
+Ascend.value	Ascend-Connect-Progress	LCP-State-Stopped		72
+Ascend.value	Ascend-Connect-Progress	LCP-State-Closing		73
+Ascend.value	Ascend-Connect-Progress	LCP-State-Stopping		74
+Ascend.value	Ascend-Connect-Progress	LCP-State-Request-Sent		75
+Ascend.value	Ascend-Connect-Progress	LCP-State-Ack-Received		76
+Ascend.value	Ascend-Connect-Progress	LCP-State-Ack-Sent		77
+
+Ascend.value	Ascend-Connect-Progress	IPXNCP-Opened			80
+Ascend.value	Ascend-Connect-Progress	ATNCP-Opened			81
+Ascend.value	Ascend-Connect-Progress	BACP-Opening			82
+Ascend.value	Ascend-Connect-Progress	BACP-Opened			83
+
+Ascend.value	Ascend-Connect-Progress	V110-Up				90
+Ascend.value	Ascend-Connect-Progress	V110-State-Opened		91
+Ascend.value	Ascend-Connect-Progress	V110-State-Carrier		92
+Ascend.value	Ascend-Connect-Progress	V110-State-Reset		93
+Ascend.value	Ascend-Connect-Progress	V110-State-Closed		94
+
+#
+# End of Ascend Vendor Specific Attributes and Values
+#
+
+#	Merit Global Service
+
+MGS.Attribute	MGS-Time		1	date	(1, 0, encapsulate)
+MGS.Attribute	MGS-Speed		2	integer	(1, 0, encapsulate)
+MGS.Attribute	MGS-Connection-Type	3	octet	(1, 0, encapsulate)
+
+MGS.Value	MGS-Connection-Type	Ct-Unknown		0
+MGS.Value	MGS-Connection-Type	Ct-800			1
+MGS.Value	MGS-Connection-Type	Ct-Leased-Line		2
+MGS.Value	MGS-Connection-Type	Ct-Feature-Group-B	3
+MGS.Value	MGS-Connection-Type	Ct-Local-Dial		4
+MGS.Value	MGS-Connection-Type	Ct-Local-ISDN		5
+MGS.Value	MGS-Connection-Type	Ct-DDOV			6
+MGS.Value	MGS-Connection-Type	Ct-VSAT			7
+MGS.Value	MGS-Connection-Type	Ct-Feature-Group-D	8
+MGS.Value	MGS-Connection-Type	Ct-800-ISDN		9
+
+#	Bay Networks Extensions
+
+Bay.attr	Annex-IP-Filter			28	string	(*, 0)
+Bay.attr	Annex-CLI-Command		29	string	(*, 0)
+Bay.attr	Annex-CLI-Filter		30	string	(*, 0)
+Bay.attr	Annex-Host-Restrict		31	octets	(*, 0)
+Bay.attr	Annex-Host-Allow		32	octets	(*, 0)
+Bay.attr	Annex-Product-Name		33	string
+Bay.attr	Annex-SW-Version		34	string
+Bay.attr	Annex-Local-IP-Address		35	ipaddr	(1, 0)
+Bay.attr	Annex-Callback-Portlist		36	integer	(1, 0)
+Bay.attr	Annex-Sec-Profile-Index		37	integer	(1, 0)
+Bay.attr	Annex-Tunnel-Authen-Type	38	integer	(1, 0)
+Bay.attr	Annex-Tunnel-Authen-Mode	39	integer	(1, 0)
+Bay.attr	Annex-Authen-Servers		40	string	(1, 0)
+Bay.attr	Annex-Acct-Servers		41	string	(1, 0)
+Bay.attr	Annex-User-Server-Location	42	integer	(1, 0)
+Bay.attr	Annex-Local-Username		43	string	(1, 0)
+Bay.attr	Annex-System-Disc-Reason	44	integer
+Bay.attr	Annex-Modem-Disc-Reason		45	integer
+Bay.attr	Annex-Disconnect-Reason		46	integer
+Bay.attr	Annex-Addr-Resolution-Protocol	47	integer	(1, 0)
+Bay.attr	Annex-Addr-Resolution-Servers	48	string	(1, 0)
+Bay.attr	Annex-Domain-Name		49	string	(1, 0)
+Bay.attr	Annex-Transmit-Speed		50	integer	(Config)
+Bay.attr	Annex-Receive-Speed		51	integer	(Config)
+Bay.attr	Annex-Input-Filter		52	string	(*, 0)
+Bay.attr	Annex-Output-Filter		53	string	(*, 0)
+Bay.attr	Annex-Primary-DNS-Server	54	ipaddr	(1,0)
+Bay.attr	Annex-Secondary-DNS-Server	55	ipaddr	(1,0)
+Bay.attr	Annex-Primary-NBNS-Server	56	ipaddr	(1,0)
+Bay.attr	Annex-Secondary-NBNS-Server	57	ipaddr	(1,0)
+#Bay.attr	unused				58	???
+Bay.attr	Annex-Keypress-Timeout		59	integer	(1,0)
+Bay.attr	Annex-Unauthenticated-Time	60	integer
+Bay.attr	Annex-Re-CHAP-Timeout		61	integer	(1,0)
+
+
+#	Annex-Tunnel-Authen-Type Values
+
+Bay.value	Annex-Tunnel-Authen-Type		none		0
+Bay.value	Annex-Tunnel-Authen-Type		kmd5-128	1
+
+#	Annex-Tunnel-Authen-Mode Values
+
+Bay.value	Annex-Tunnel-Authen-Mode		none		0
+Bay.value	Annex-Tunnel-Authen-Mode		prefix-suffix	1
+
+#	Annex-User-Server-Location Values
+
+Bay.value	Annex-User-Server-Location		local		1
+Bay.value	Annex-User-Server-Location		remote		2
+
+#	Annex-Addr-Resolution-Protocol Values
+
+Bay.value	Annex-Addr-Resolution-Protocol		none		0
+Bay.value	Annex-Addr-Resolution-Protocol		DHCP		1
+
+#
+#	Shiva Extensions
+
+Shiva.attr	Shiva-Called-Number	90	string	(1, 0)
+Shiva.attr	Shiva-Calling-Number	91	string	(1, 0)
+Shiva.attr	Shiva-Customer-ID	92	string	(1, 0)
+Shiva.attr	Shiva-Type-Of-Service	93	integer	(1, 0)
+Shiva.attr	Shiva-Link-Speed	94	integer	(1, 0)
+Shiva.attr	Shiva-Links-In-Bundle	95	integer	(1, 0)
+Shiva.attr	Shiva-Compression-Type	96	integer	(1, 0)
+Shiva.attr	Shiva-Link-Protocol	97	integer	(1, 0)
+Shiva.attr	Shiva-Network-Protocols	98	integer	(1, 0)
+Shiva.attr	Shiva-Session-Id	99	integer	(1, 0)
+Shiva.attr	Shiva-Disconnect-Reason	100	integer	(1, 0)
+Shiva.attr	Shiva-Acct-Serv-Switch	101	ipaddr	(1, 0)
+Shiva.attr	Shiva-Event-Flags	102	integer	(1, 0)
+Shiva.attr	Shiva-Function		103	integer	(1, 0)
+Shiva.attr	Shiva-Connect-Reason	104	integer	(1, 0)
+
+#
+#	Shiva-Type-Of-Service Values
+
+Shiva.value	Shiva-Type-Of-Service	Analog			1
+Shiva.value	Shiva-Type-Of-Service	Digitized-Analog	2
+Shiva.value	Shiva-Type-Of-Service	Digital			3
+Shiva.value	Shiva-Type-Of-Service	Digital-V110		4
+Shiva.value	Shiva-Type-Of-Service	Digital-V120		5
+Shiva.value	Shiva-Type-Of-Service	Digital-Leased-Line	6
+
+#
+#	Shiva-Link-Protocol Values
+
+Shiva.value	Shiva-Link-Protocol	HDLC	1
+Shiva.value	Shiva-Link-Protocol	ARAV1	2
+Shiva.value	Shiva-Link-Protocol	ARAV2	3
+Shiva.value	Shiva-Link-Protocol	SHELL	4
+Shiva.value	Shiva-Link-Protocol	AALAP	5
+Shiva.value	Shiva-Link-Protocol	SLIP	6
+
+#
+#	Shiva-Connect-Reason Values
+
+Shiva.value	Shiva-Connect-Reason	Remote			1
+Shiva.value	Shiva-Connect-Reason	Dialback		2
+Shiva.value	Shiva-Connect-Reason	Virtual-Connection	3
+Shiva.value	Shiva-Connect-Reason	Bandwidth-On-Demand	4
+
+#
+#	Shiva-Disconnect-Reason Values
+
+Shiva.value	Shiva-Disconnect-Reason	Remote			1
+Shiva.value	Shiva-Disconnect-Reason	Error			2
+Shiva.value	Shiva-Disconnect-Reason	Idle-Timeout		3
+Shiva.value	Shiva-Disconnect-Reason	Session-Timeout		4
+Shiva.value	Shiva-Disconnect-Reason	Admin-Disconnect	5
+Shiva.value	Shiva-Disconnect-Reason	Dialback		6
+Shiva.value	Shiva-Disconnect-Reason	Virtual-Connection	7
+Shiva.value	Shiva-Disconnect-Reason	Bandwidth-On-Demand	8
+Shiva.value	Shiva-Disconnect-Reason	Failed-Authentication	9
+Shiva.value	Shiva-Disconnect-Reason	Preempted		10
+Shiva.value	Shiva-Disconnect-Reason	Blocked			11
+Shiva.value	Shiva-Disconnect-Reason	Tariff-Management	12
+Shiva.value	Shiva-Disconnect-Reason	Backup			13
+
+#
+#	Shiva-Function Values
+
+Shiva.value	Shiva-Function	Unknown		0
+Shiva.value	Shiva-Function	Dialin		1
+Shiva.value	Shiva-Function	Dialout		2
+Shiva.value	Shiva-Function	Lan-To-Lan	3
+
+#
+#	Cisco Extensions
+
+Cisco.attr	Cisco-Avpair			1	octets	(*, 0)

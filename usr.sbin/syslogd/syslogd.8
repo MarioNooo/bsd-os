@@ -1,0 +1,163 @@
+.\"     BSDI    syslogd.8,v 2.7 1997/10/17 17:44:14 jch Exp
+.\" Copyright (c) 1983, 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)syslogd.8	8.1 (Berkeley) 6/6/93
+.\"
+.Dd Nov 27, 1996
+.Dt SYSLOGD 8
+.Os BSD 4.2
+.Sh NAME
+.Nm syslogd
+.Nd log systems messages
+.Sh SYNOPSIS
+.Nm syslogd
+.Op Fl iln
+.Op Fl f Ar config_file
+.Op Fl m Ar mark_interval
+.Op Fl p Ar log_socket
+.Sh DESCRIPTION
+.Nm Syslogd
+reads and logs messages to the system console, log files, other
+machines and/or users as specified by its configuration file.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f
+Specify the pathname of an alternate configuration file;
+the default is
+.Pa /etc/syslog.conf .
+.It Fl i
+Insecure mode.  Do not log credentials of messages from non-root
+users.  The default is to log credentials of messages received from
+other processes on the same host if the username is not
+.Dq root
+and neither the real or effective uids are zero.
+.It Fl l
+Accept local connections only; do not accept connections
+on the Internet domain socket. This is useful to prevent
+denial of service attacks on a system set up as a firewall.
+.It Fl m
+Select the number of minutes between
+.Dq mark
+messages;
+the default is 20 minutes.
+.It Fl n
+Log requests from remote hosts with the source address.  
+By default
+the source address is used to lookup the hostname of host originating
+each message.
+Under heavy loads the delay incurred doing this lookup could result in
+lost messages.
+.It Fl p
+Specify the pathname of an alternate log socket;
+the default is
+.Pa /var/run/log .
+.El
+.Pp
+.Nm Syslogd
+reads its configuration file when it starts up and whenever it
+receives a hangup signal.
+For information on the format of the configuration file,
+see
+.Xr syslog.conf 5 .
+.Pp
+.Nm Syslogd
+reads messages from the
+.Tn LOCAL
+domain socket
+.Pa /var/run/log ,
+from an Internet domain socket specified in
+.Pa /etc/services ,
+and from the special device
+.Pa /dev/klog
+(to read kernel messages).
+Messages received on the Internet and
+.Tn LOCAL
+domain sockets may be
+.Dv NULL
+terminated and may include a single trailing newline, any other
+non-printable characters are encoded into a visible representation by
+.Xr strvisx 3 .
+.Pp
+.Nm Syslogd
+creates the file
+.Pa /var/run/syslog.pid ,
+and stores its process
+id there.
+This can be used to kill or reconfigure
+.Nm syslogd .
+.Pp
+The message sent to
+.Nm syslogd
+should consist of a single line.
+The message can contain a priority code, which should be a preceding
+decimal number in angle braces, for example,
+.Dq Aq 5 .
+This priority code should map into the priorities defined in the
+include file
+.Aq Pa sys/syslog.h .
+.Sh FILES
+.Bl -tag -width /var/run/syslog.pid -compact
+.It Pa /etc/syslog.conf
+The configuration file.
+.It Pa /var/run/syslog.pid
+The process id of current
+.Nm syslogd .
+.It Pa /var/run/log
+Name of the
+.Tn LOCAL
+domain datagram log socket.
+.It Pa /dev/klog
+The kernel log device.
+.El
+.Sh SEE ALSO
+.Xr logger 1 ,
+.Xr syslog 3 ,
+.Xr services 5 ,
+.Xr syslog.conf 5
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 .
+.Sh BUGS
+.Pp
+No authentication is done on messages received via the Internet domain
+socket.
+The source address of a message can easily be spoofed, as can the
+translation of address to host name.
+Use of the
+.Fl l
+flag whenever possible to disable the reception of messages via
+the Internet domain socket is recommended.
+Alternatively, the
+.Fl n
+flag may be used to avoid address to host name translation.

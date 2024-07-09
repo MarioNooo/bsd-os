@@ -1,0 +1,227 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.de NX
+.sp
+.ti +.5i
+.nf
+\fI<system-name[:port]>  <key>  <type>  <version>  <prefix>\fP
+.fi
+.ti -.5i
+.LP
+For example:
+.sp
+.ti +.5i
+.nf
+.ft B
+merit.edu      notsosecure   type = nas   v2      pfx
+.fi
+.ti -.5i
+..
+.de TX
+.IP
+.I <system-name[:port]> "  <key>" "        <type>" "     <version>" "  <prefix>"
+.LP
+For example:
+.IP
+.nf
+.ft B
+merit.edu                  notsosecure  type = nas    v2           pfx
+.fi
+..
+.TH CLIENTS 5 "5 December 1997"
+.SH NAME
+clients \- \s-2RADIUS\s+2 client/host to shared-secret mapping file
+.SH SYNOPSIS
+.B ../raddb/clients
+.SH DESCRIPTION
+.LP
+The
+.I clients
+file resides in the Merit \s-2AAA\s+2 server configuration directory (named
+.I .../raddb
+somewhere).  It contains a list of clients and servers (or pairs of same).
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+The file contains a line of information for each client or server.
+Each line has up to five, white-space delimited fields.
+The first two fields are required while the last three fields are optional.
+Each line has the following of the form:
+.if t .TX
+.if n .NX
+.LP
+The
+.I <system-name>
+field may be an \s-2IP\s+2 address (in dotted-quad notation) or a valid
+Domain Name System (\s-2DNS\s+2) hostname.
+This optionally may be followed by a colon (":") and a \s-2UDP/TCP\s+2 port
+number.
+This value overrides the
+.B \-pp
+and
+.B \-qq
+options of the Merit \s-2AAA\s+2 server (see the
+.BR radiusd (8)
+man page).
+The accounting \s-2UDP\s+2 port number is assumed to be one greater than
+the authentication \s-2UDP\s+2 port number.
+A pair of clients or servers may be specified using the
+following alternate notation:
+.TP
+.B "           name1/name2"
+.LP
+This allows the same clients file to be used by and distributed to physically
+different, but like configured, Merit \s-2AAA\s+2 servers.
+A \s-2RADIUS\s+2 request from a client or server will match such an entry only
+if its source \s-2IP\s+2 address matches the \s-2IP\s+2 address of
+.I name1
+.B or
+.I name2
+and
+.I name2
+or
+.I name1
+matches the host name of this server as returned by the
+.BR hostname (1)
+command.
+Using this style for the first field precludes the use of the optional
+.I [:port]
+modifier.
+.LP
+The
+.I <key>
+field is the encryption key or "shared secret" held between a \s-2RADIUS\s+2
+server and a client or between two \s-2RADIUS\s+2 servers.
+The secret field may be arbitrarily large, but should be kept to less than
+several hundred characters for administrative convenience.
+The older sixteen character maximum no longer applies to version 3.x
+Merit \s-2AAA\s+2 Servers.
+.LP
+The
+.I <type>
+field may specify the vendor name and/or the type of the machine
+exchanging \s-2RADIUS\s+2 requests with this server.
+The vendor is indicated by placing one (or more) vendor's name(s) in front
+of the client type and separated with a colon (":") character.
+If more than one vendor is specified, use the ("+") character to separate them.
+For example,
+.IP
+.ft B
+type = ascend:nas
+.LP
+There is a default vendor "Merit" which results in Merit Vendor-Specific
+attributes being sent off this machine without being encapsulated in the
+type 26 Vendor-Specific attribute.
+There is a special vendor "none" which may be used to force these Merit
+Vendor-Specific attributes to be encapsulated.  This may be used to help
+prevent inter-operability problems.
+.LP
+The server applies a technique called
+.I pruning
+which is driven by configurable entries in the
+.B dictionary
+file (see the
+.BR dictionary (5)
+man page).
+When an attribute is
+.I pruned
+it is not sent to the client.
+It makes little sense to send a proprietary attribute defined by vendor
+\s-2A\s+2 to a \s-2RADIUS\s+2 client manufactured by vendor \s-2B\s+2.
+.LP
+Currently, the following values are recognized for the
+.I type
+field:
+.BR \s-2NAS\s+2 ,
+.BR \s-2PROXY\s+2 ,
+.BR \s-2RAD_RFC\s+2 ,
+.BR \s-2ACCT_RFC\s+2 ,
+.BR \s-2DEBUG\s+2 ,
+.BR \s-2APPEND\s+2 ,
+.BR \s-2OLDCHAP\s+2 ,
+.BR \s-2NOENCAPS\s+2 ,
+and for \s-2US\s+2 Robotics products
+.BR \s-2DAS\s+2 ,
+.BR \s-2FRGW\s+2 ,
+and
+.BR \s-2NEIGHBOR\s+2 ,
+where \s-2RAD_RFC\s+2 indicates a \s-2RADIUS\s+2 \s-2RFC\s+2 conforming
+client, \s-2ACCT_RFC\s+2 indicates conformance with the \s-2RADIUS\s+2
+accounting \s-2RFC\s+2, \s-2DEBUG\s+2 tells the server to turn on packet
+level debugging for just this client (when debugging is enabled),
+\s-2APPEND\s+2 indicates this client is not a modern Merit \s-2AAA\s+2
+Server with respect returning \s-2RADIUS\s+2 repplies, \s-2OLDCHAP\s+2
+indicates this client handles \s-2CHAP\s+2 requests in the older,
+pre-\s-2RFC\s+2 fashion and \s-2NOENCAPS\s+2 indicates that no encapsulation
+of vendor specific attributes is necessary for this client.
+These various types may be logically combined ("\fI\s-2AND\s+2ed\fP")
+using the plus sign ("+") character.
+For example,
+.IP
+.ft B
+type = \s-2NAS+RAD_RFC+ACCT_RFC\s+2
+.LP
+The optional
+.I <version>
+field specifies the \s-2RADIUS\s+2 version number.
+If this is omitted, it defaults to version one.
+Version one is described in the \s-2IETF\s+2 \s-2RADIUS\s+2 standard document,
+and version two is described in draft-calhoun-enh-radius-00.txt
+written by Pat Calhoun of \s-2US\s+2 Robotics.
+Currently, the following values are recognized for the
+.I version
+field:
+.B \s-2V1\s+2
+and
+.BR \s-2V2\s+2 .
+.LP
+The optional
+.I "<prefix>"
+field specifies a text string prefix which may be used to select an
+.I authfile
+and/or 
+.I users
+file, which is different than the "standard"
+.I authfile
+or
+.I users
+file, to be used for requests from the associated client.
+This feature allows for different \s-2RADIUS\s+2 clients to share the same
+Merit \s-2AAA\s+2 server, but use different authentication databases on this
+server.
+The prefix is pre-pended to the configuration file name (normally, "users"
+and "authfile").
+.LP
+The
+.I clients
+file information is read by
+.B radiusd
+upon startup, or when a \s-2HUP\s+2 signal is received by
+.BR radiusd .
+The Merit \s-2AAA\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+This file is maintained by the system administrator using a text editor.
+.SH FILES
+.PD 0
+.TP
+.I ../raddb/authfile
+.TP
+.I ../raddb/clients
+.TP
+.I ../raddb/dictionary
+.TP
+.I ../raddb/users
+.PD
+.SH "SEE ALSO"
+.BR hostname (1),
+.BR signal (3),
+.BR authfile (5),
+.BR dictionary (5),
+.BR users (5),
+.BR vendors (5),
+.BR radiusd (8),
+.BR radcheck (8),
+.BR radpwtst (8)

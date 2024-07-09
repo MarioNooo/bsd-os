@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+#	BSDI resume,v 1.1 2000/07/08 02:28:55 prb Exp
+#
+# The system may come back confused as to the cycle counter and turn
+# off its use.  Turn it back on.  Also bring the PC Card devices back
+# on line.
+
+sysctl -w kern.use_cycle_time=1
+csconfig -a up

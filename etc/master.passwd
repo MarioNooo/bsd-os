@@ -1,0 +1,17 @@
+root::0:0:daemon:0:0:System Administrator:/root:/bin/csh
+daemon:*:1:1::0:0:System Daemon:/:/sbin/nologin
+sys:*:2:2::0:0:Operating System:/tmp:/sbin/nologin
+bin:*:3:7::0:0:BSDI Software:/usr/bsdi:/sbin/nologin
+operator:*:5:5::0:0:System Operator:/usr/opr:/sbin/nologin
+uucp:*:6:6::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucico
+games:*:7:13::0:0:Games Pseudo-user:/usr/games:/sbin/nologin
+news:*:9:8:news:0:0:USENET News,,,:/var/news/etc:/sbin/nologin
+demo:*:10:13::0:0:Demo User:/usr/demo:/sbin/nologin
+lpd:*:11:11:daemon:0:0:LPRng:/etc/lpdhome:/sbin/nologin
+smmsp:*:25:25::0:0:Sendmail:/var/spool/clientmqueue:/sbin/nologin
+sshd:*:27:27::0:0:sshd privsep:/var/empty:/sbin/nologin
+www:*:51:84::0:0:WWW-server:/var/www:/sbin/nologin
+radius:*:52:52::0:0:Radius Server:/etc/raddb:/sbin/nologin
+postgres:*:53:53::0:0:PostgreSQL,,,:/usr/contrib/pgsql:/bin/sh
+nobody:*:32767:32766::0:0:Unprivileged user:/nonexistent:/sbin/nologin
+nonroot:*:65534:32766::0:0:Non-root root user for NFS:/nonexistent:/sbin/nologin

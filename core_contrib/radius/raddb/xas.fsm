@@ -1,0 +1,39 @@
+#
+# Copyright [C] The Regents of the University of Michigan and Merit Network,
+# Inc. 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+#
+
+# RCSID:	$Id: xas.fsm,v 1.6 1998/01/30 17:03:16 web Exp $
+
+#
+#   External version of built-in state machine table (lacking detail files)
+#   for use by eXternal Authentication Servers (XAS) without LAS support.
+#
+#   All items in the "Action" column are AATV name strings (ids)
+#
+
+%FSMID xas-1.0a
+
+#		Event
+# State Name	(state.action.event)		Action		Next State
+# ------------	------------------------------	--------------	----------
+
+Start:
+		*.*.AUTHEN			AUTHENTICATE	REPLYhold
+		*.*.AUTH_ONLY			AUTHENTICATE	REPLYhold
+		*.*.AUTHENTICATE		AUTHENTICATE	REPLYhold
+		*.*.ACCT			ACK		REPLYhold
+		*.*.MGT_POLL			SRV_STATUS	REPLYhold
+		*.+AUTHENTICATE.ACK		AUTHENTICATE	REPLYhold
+		*.+AUTH_ONLY.ACK		AUTHENTICATE	REPLYhold
+		*.+MGT_POLL.ACK			SRV_STATUS	REPLYhold
+		*.*.NAK				REPLY		End
+
+REPLYhold:
+		*.*.ACK				REPLY		Hold
+		*.*.NAK  			REPLY		Hold
+
+Hold:
+		*.*.TIMEOUT			NULL		End
+
+End:

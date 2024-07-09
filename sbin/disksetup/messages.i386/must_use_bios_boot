@@ -1,0 +1,5 @@
+It appears that this disk will be used for co-residency and uses
+a mapped geometry.  In order for this disk to boot you must use
+the BIOS boot blocks.
+
+Press <ENTER> to continue.

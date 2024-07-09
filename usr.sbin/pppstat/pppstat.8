@@ -1,0 +1,32 @@
+.\"	BSDI pppstat.8,v 1.2 1996/09/29 15:47:01 bostic Exp
+.Dd March 26, 1996
+.Dt PPPSTAT 8
+.Os BSD/OS
+.Sh NAME
+.Nm pppstat
+.Nd display information about a ppp interface
+.Sh SYNOPSIS
+.Nm pppstat
+.Op Fl v
+.Ar system\-name
+.Sh DESCRIPTION
+The
+.Nm pppstat
+utility displays information about a ppp interface.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl v
+The
+.Fl v
+option causes the ppp options which are not set to be displayed with
+a leading dash
+.Pq Dq - .
+By default, only the ppp options which are set are displayed.
+.El
+.Pp
+The
+.Nm pppstat
+utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr ppp 8

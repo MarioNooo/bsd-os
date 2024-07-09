@@ -1,0 +1,52 @@
+.pl 60
+.po 8
+.TH UUPOLL 8 95/07/15
+.SH NAME 
+
+uupoll - run uucico to poll systems specified in /etc/uucp/Poll
+
+.SH SYNOPSIS
+
+uupoll
+
+.SH DESCRIPTION
+
+.I uupoll 
+should be run out of cron once an hour.  It parses the file
+/etc/uucp/Poll and calls uucico to initiate a uucp transfer with any
+systems listed in /etc/uucp/Poll that  have call times matching the 
+current hour. 
+
+The format of  /etc/uucp/Poll is:
+
+.nf
+
+system_name<TAB>HH HH HH HH HH
+
+.fi
+The first white space after the system_name must be a tab.  The tab is 
+followed by a white space separated list of hours.  Each hour must be 2 
+digits and the time is expected to be in 24 hour format.  To have a poll 
+happen during the 8 A.M. hour the needed entry would be 08, while for an 
+8 P.M. poll the entry would be 20.
+
+.SH BUGS
+
+There are no known bugs at the time of this writing.
+
+.SH AUTHOR
+
+Brett Wynkoop
+
+uucp.......uupsi3!wa3yre!wynkoop
+domain.....wynkoop@wynn.com
+
+.I uupoll
+and this document are copyright 1995 by Brett Wynkoop
+
+.SH FILES
+
+/etc/uucp/Poll
+
+.SH SEE ALSO
+uucico(8) cron(8)

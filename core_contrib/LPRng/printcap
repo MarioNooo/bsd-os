@@ -1,0 +1,250 @@
+#	BSDI printcap,v 1.4 2000/08/03 03:28:06 jch Exp
+#
+#	This file defines configuration and capabilities of local and
+#	remote printers and print queues.  DO NOT MAKE CHANGES TO THIS
+#	FILE, make changes to /etc/printcap.local.
+#
+
+#
+#	LPRng has an abundance of features and is very configurable.
+#	The prototypes and examples in this file are only intended as
+#	starting points for basic configurations.  For complete
+#	documentation on the capabilities of LPRng, see the man pages
+#	for checkpc, ifhp, lpbanner, lpc, lpd, lpd.conf, lpd.perms,
+#	lpf, lpq, lpr, lprm, pclbanner, printcap, and psbanner.  Also
+#	see the HTML documentation at
+#
+#		file:/var/www/docs/LPRng/LPRng-HOWTO.html
+#	and
+#		file:/var/www/docs/LPRng/IFHP-HOWTO.html
+#
+
+#
+#	After making changes to this file or /etc/printcap.local first
+#	run:
+#
+#		checkpc -f
+#
+#	Then fix any problems mentioned, rerun checkpc until all the
+#	problems are fixed.  finally run:
+#
+#		lpc reread
+#
+#	If a printer is active when you reconfigure it the changes
+#	will not take effect until it is finished with the current
+#	job.
+#
+	
+#	The first section of this file has prototype entries that may
+#	be referenced from entries in /etc/printcap.local.  The second
+#	section has examples that may be copied to /etc/printcap.local
+#	and editted for your configuration.
+#
+#	Some common capabilities that may be useful:
+#
+#	lp=	Specifies the printer to use.  This may be a
+#		file to store output to a file, a device name
+#		to use the specified device, a printer on an
+#		remote system, or a port number of a specified
+#		host.  For example:
+#
+#		lp=/dev/lp0		Parallel port 0
+#		lp=/dev/tty01		A serial port
+#		lp=/tmp/pr.output	Write output to this file
+#		lp=jet-direct%9100	Use Jet-Direct port (9100) on
+#					the host jet-direct.
+#		lp=ps@other-host	Use the printer ``ps'' on the
+#					host other-host.
+#
+#	sh	Surpress headers.  Add this entry to a printcap entry
+#		that has banners be= or bp= defined to surpress the
+#		generation of banner pages.
+#
+#	hl	Header Last.  Print the banner page after the job
+#		instead of before it.  This capability is useful on
+#		printers that stack pages backwards.
+#
+#	rw	Indicates that the device specified by lp= should be
+#		opened read/write.  This is useful on PCL and PS
+#		printers to get back printer status.  BSD/OS supports
+#		only unidirectional parallel ports so this option
+#		should not be used on a parallel port.
+#
+
+#
+#	Prototype for a dumb line printer on a parallel port.
+#	Use lp= to assign a port (for example :lp=
+#
+.lpf:
+	:if=/usr/libexec/lpr/lpf
+
+#
+#	Banner programs for the various printer formats.  Reference
+#	the appropriate one of these to enable banners.
+#
+#	Reference the appropriate one of these to generate banners for
+#	your printer if desired.  Add ``:hl:'' to print the banner after
+#	the job instead of before it.
+#
+.banner.lp:
+	:be=/usr/libexec/lpr/lpbanner:
+	:bp=/usr/libexec/lpr/lpbanner:
+
+.banner.pcl:\
+	:be=/usr/libexec/lpr/pclbanner:
+	:bp=/usr/libexec/lpr/pclbanner:
+
+.banner.ps:\
+	:be=/usr/libexec/lpr/psbanner:
+	:bp=/usr/libexec/lpr/psbanner:
+
+#
+#	Prototype for a PS/PCL/PJL printer.  These printers use
+#	the ifhp filter.  Many printer types are directly supported,
+#	see /etc/ifhp.conf.  The model number and other ifhp
+#	parameters are specified by using the ifhp= parameter.
+#	For instance:
+#
+#		:ifhp=model=hp3si:
+#		:ifhp=model=ps:
+#
+#	When using a parallel port (BSD/OS does not support
+#	bidirectional parallel ports) it is necessary to specify
+#	status@ as an ifhp parameter so ifhp will not hang waiting for
+#	status back from the printer.  For example with a PostScript
+#	printer the ifhp parameter can be specified as:
+#
+#		:ifhp=model=ps,status@:
+#
+.ifhp:
+	:sf:
+	:mx=0:
+	:if=/usr/libexec/lpr/ifhp:
+
+#
+#	Prototype for a serial connections.  Don't forget to specify
+#	the device to use with the lp= parameter (i.e. :lp=/dev/tty00:).
+#
+.s1200:
+	:rw:
+	:stty=1200 raw opost onlcr ixon igncr pass8 -echok:
+
+.s2400:
+	:rw:
+	:stty=2400 raw opost onlcr ixon igncr pass8 -echok:
+
+.s4800:
+	:rw:
+	:stty=4800 raw opost onlcr ixon igncr pass8 -echok:
+
+.s9600:
+	:rw:
+	:stty=9600 raw opost onlcr ixon igncr cstopb -echok:
+
+.s38400:
+	:rw:
+	:stty=38400 raw opost onlcr ixon igncr pass8 -echok:
+
+.s19200:
+	:rw:
+	:stty=19200 raw opost onlcr ixon igncr pass8 -echok:
+
+.s57600:
+	:rw:
+	:stty=57600 raw opost onlcr ixon igncr pass8 -echok:
+
+.s115200:
+	:rw:
+	:stty=115200 raw opost onlcr ixon igncr pass8 -echok:
+
+#
+#	Prototype for printing to a printer on a Windows system via
+#	Samba.   To use this you must create a .config file in the
+#	spool directory for your printer (/var/spool/lpd-PRINTERNAME/.config) 
+#	which contains the following entries:
+#			server=PC_SERVIER
+#			service=PR_SHARENAME
+#			password="password"
+.samba:
+	:lp=|/usr/libexec/lpr/smbprint:
+
+#
+#	Example of a PCL only printer (i.e. HP OfficeJet) on a
+#	parallel port.  Specify the printer device name to ghostscript
+#	with the device= keyword.  This is important as some devices
+#	have different resolutions.
+#
+#	oj:
+#		:cm=HP Office Jet:
+#		:tc=.banner.pcl:	# Use PCL banners
+#		:tc=.ifhp:ifhp=model=pcl_ps_conversion,device=deskjet,status@:
+#		:lp=/dev/lp0:
+#
+
+#
+#	Example of a HP LaserJet IIIsi on a parallel port
+#
+#	lj:
+#		:cm=HP LaserJet IIIsi:
+#		:tc=.banner.pcl:	# Use PCL banners
+#		:tc=.ifhp:ifhp=model=hp3si,status@:
+#		:lp=/dev/lp0:
+
+#
+#	Example of a dumb line printer on a parallel port
+#
+#	lp:
+#		:cm=Dumb Line Printer:
+#		:tc=.banner.lp:		# Use text banners, remove for no banners
+#		:tc=.lpf:		# Use standard lpf(5) filter
+#		:lp=/dev/lp0:
+
+#
+#	Example of a PostScript-only printer on a serial port
+#
+#	ps:
+#		:cm=PostScript printer:
+#		:tc=.banner.ps:		# Use PostScript banners, remove for no banners
+#		:tc=.ifhp:ifhp=model=ps:
+#		:tc=.s9600:		# Use 9600 Baud
+#		:lp=/dev/tty01:
+
+#
+#	Example of an HP LaserJet IIIsi via a JetDirect box
+#
+#	lj:
+#		:cm=HP LaserJet IIIsi:
+#		:tc=.banner.pcl:	# use PCL banners, remove for no banners
+#		:tc=.ifhp:ifhp=model=hp3si:
+#		:lp=jet-direct.mycompany.com%9100:
+
+#
+#	Example of a PCL only printer (i.e. HP OfficeJet) on a Windows
+#	system.  Specify the printer device name to ghostscript
+#	with the device= keyword.  This is important as some devices
+#	have different resolutions.
+#
+#	oj:
+#		:cm=HP Office Jet:
+#		:tc=.banner.pcl:	# Use PCL banners
+#		:tc=.ifhp:ifhp=model=pcl_ps_conversion,device=deskjet,status@:
+#		:tc=.samba:
+#
+
+#
+#	Remote printer with no local processing
+#
+#	In this example jobs for the local printer ``rp'' will be
+#	forwarded to the remote printer ``lp'' on
+#	``remote.host.com''.  No processing will be done on the job
+#	locally.  See documentation on bounce queues on how to run
+#	filters on jobs before forwarding to a remote server.
+#
+#	rp:\
+#		:cm=Remote Printer:\
+#		:lp=lp@remote.host.com:
+
+#
+#	Include /etc/printcap.local, make local changes there.
+#
+include /etc/printcap.local

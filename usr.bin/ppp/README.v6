@@ -1,0 +1,15 @@
+IPv6CP support to bsdi4/usr.bin/ppp
+Jun-ichiro itojun Hagino, KAME project
+$KAME: README.v6,v 1.1 2000/05/24 13:19:54 itojun Exp $
+
+
+Caveats:
+- not really tested.
+- does not support on-demand dialing.
+- need more modification in sys/net/if_ppp.c, to make sure no IPv6 PPP frame
+  is sent before completion of IPv6CP.
+- bsdi4 usr.bin/ppp does not decline its interface identifier, even if it
+  receives NAK from the peer.
+- uses crypt(hostname) as ifid cookie.
+- the result of ifid negotiation in IPv6CP will not be reflected into
+  link-local address assignment.

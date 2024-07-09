@@ -1,0 +1,591 @@
+/* config.h.in.  Used with configure.in by autoheader.  */
+/*
+ * Copyright (c) 2001 QUALCOMM Incorporated.  All rights reserved.
+ * QPOPPER.
+ *
+ * Revisions:
+ *  01/25/01 [rg]
+ *  11/13/00 [rg]
+ *  10/27/00 [rg]
+ *  10/18/00 [rg]
+ *  10/12/00 [rg]
+ *  10/02/00 [rg]
+ *  09/28/00 [rg]
+ *  09/08/00 [rg]
+ *  09/01/00 [rg]
+ *  08/23/00 [rg]
+ *  08/16/00 [rg]
+ *  07/14/00 [rg]
+ *  07/05/00 [rg]
+ *  06/20/00 [rg]
+ *  06/16/00 [rg]
+ *  06/07/00 [rg]
+ *  06/05/00 [rg]
+ *  05/16/00 [rg]
+ *  03/09/00 [rg]
+ *  03/08/00 [rg]
+ *  03/03/00 [rg]
+ *  02/16/00 [rg]
+ *  01/27/00 [rg]
+ *  01/20/00 [rg]
+ *  01/18/00 [rg]
+ *  01/15/00 [rg]
+ *  01/07/00 [rg]
+ *  12/29/99 [rg]
+ *  12/21/99 [rg]
+ *  12/02/99 [rg]
+ *  11/24/99 [rg]
+ *  05/21/99 [rg]
+ *  05/05/99 [rg]
+ *  04/04/98 [py]
+ *
+ */
+
+
+/********************************************
+ *    system environment items
+ ********************************************/
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef gid_t
+
+/* Define if your system provides the /dev/urandom device */
+#undef HAVE_DEV_URANDOM
+
+/* Define if you don't have vprintf but do have _doprnt.  */
+#undef HAVE_DOPRNT
+
+/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define if utime(file, NULL) sets file's timestamp to the present.  */
+#undef HAVE_UTIME_NULL
+
+/* Define if you have the vprintf function.  */
+#undef HAVE_VPRINTF
+
+/* Define if you have the wait3 system call.  */
+#undef HAVE_WAIT3
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+/* On NeXTStep, mode_t is defined to be u_short in sys/types.h,  
+ * but only if _POSIX_SOURCE is defined.  Probably should just
+ * add -D_POSIX_SOURCE to CFLAGS early in configure script. */
+#ifndef NEXT
+#undef mode_t
+#endif /* not NEXT */
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+#undef off_t
+
+/* Define if you need to in order for stat and other things to work.  */
+#undef _POSIX_SOURCE
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if `sys_siglist' is declared by <signal.h>.  */
+#undef SYS_SIGLIST_DECLARED
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if your <sys/time.h> declares struct tm.  */
+#undef TM_IN_SYS_TIME
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef uid_t
+
+/* The number of bytes in a unsigned long int.  */
+#undef SIZEOF_UNSIGNED_LONG_INT
+
+/* Define if you have the bcopy function.  */
+#undef HAVE_BCOPY
+
+/* Define if you have the flock function.  */
+#undef HAVE_FLOCK
+
+/* Define if you have the gethostname function.  */
+#undef HAVE_GETHOSTNAME
+
+/* Define if you have the gettimeofday function.  */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define if you have the getusershell function.  */
+#undef HAVE_GETUSERSHELL
+
+/* Define if you have the hstrerror function.  */
+#undef HAVE_HSTRERROR
+
+/* Define if you have the index function.  */
+#undef HAVE_INDEX
+
+/* Define if you have the mkdir function.  */
+#undef HAVE_MKDIR
+
+/* Define if you have the pw_encrypt function.  */
+#undef HAVE_PW_ENCRYPT
+
+/* Define if you have the set_auth_parameters function.  */
+#undef HAVE_SET_AUTH_PARAMETERS
+
+/* Define if you have the setproctitle function.  */
+#undef HAVE_SETPROCTITLE
+
+/* Define if you have the snprintf function.  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the socket function.  */
+#undef HAVE_SOCKET
+
+/* Define if you have the srand function.  */
+#undef HAVE_SRAND
+
+/* Define if you have the srandom function.  */
+#undef HAVE_SRANDOM
+
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
+/* Define if you have the strstr function.  */
+#undef HAVE_STRSTR
+
+/* Define if you have the usleep function.  */
+#undef HAVE_USLEEP
+
+/* Define if you have the vsnprintf function.  */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have the <dbm.h> header file.  */
+#undef HAVE_DBM_H
+
+/* Define if you have the <dirent.h> header file.  */
+#undef HAVE_DIRENT_H
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <gdbm.h> header file.  */
+#undef HAVE_GDBM_H
+
+/* Define if you have the <limits.h> header file.  */
+#undef HAVE_LIMITS_H
+
+/* Define if you have the <maillock.h> header file.  */
+#undef HAVE_MAILLOCK_H
+
+/* Define if you have the <ndbm.h> header file.  */
+#undef HAVE_NDBM_H
+
+/* Define if you have the <ndir.h> header file.  */
+#undef HAVE_NDIR_H
+
+/* Define if you have the <net/errno.h> header file.  */
+#undef HAVE_NET_ERRNO_H
+
+/* Define if you have the <netinet/in.h> header file.  */
+#undef HAVE_NETINET_IN_H
+
+/* Define if you have the <prot.h> header file.  */
+#undef HAVE_PROT_H
+
+/* Define if you have the <security/pam_appl.h> header file.  */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define if you have the <select.h> header file. */
+#undef HAVE_SELECT_H
+
+/* Define if you have the <shadow.h> header file.  */
+#undef HAVE_SHADOW_H
+
+/* Define if you have the <strings.h> header file.  */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <sys/dir.h> header file.  */
+#undef HAVE_SYS_DIR_H
+
+/* Define if you have the <sys/fcntl.h> header file.  */
+#undef HAVE_SYS_FCNTL_H
+
+/* Define if you have the <sys/file.h> header file.  */
+#undef HAVE_SYS_FILE_H
+
+/* Define if you have the <sys/ndir.h> header file.  */
+#undef HAVE_SYS_NDIR_H
+
+/* Define if you have the <sys/netinet/in.h> header file.  */
+#undef HAVE_SYS_NETINET_IN_H
+
+/* Define if you have the <sys/param.h> header file.  */
+#undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/security.h> header file.  */
+#undef HAVE_SYS_SECURITY_H
+
+/* Define if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define if you have the <sys/stat.h> header file.  */
+#undef HAVE_SYS_STAT_H
+
+/* Define if you have the <sys/syslog.h> header file.  */
+#undef HAVE_SYS_SYSLOG_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/types.h> header file.  */
+#undef HAVE_SYS_TYPES_H
+
+/* Define if you have the <syslog.h> header file.  */
+#undef HAVE_SYSLOG_H
+
+/* Define if you have the <sys/unistd.h> header file.  */
+#undef HAVE_SYS_UNISTD_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the cposix library (-lcposix).  */
+#undef HAVE_LIBCPOSIX
+
+/* Define if you have the drac library (-ldrac).  */
+#undef HAVE_LIBDRAC
+
+/* Define if you have the gen library (-lgen).  */
+#undef HAVE_LIBGEN
+
+/* Define if the compiler supports __attribute__ (format) */
+#undef SUPPORT_ATTRIBUTE_FORMAT
+
+
+/********************************************
+ *    items selected by --enable and --with
+ ********************************************/
+
+/* Define if you want to have DEBUG code compiled in */
+#undef DEBUG
+
+/* Define for low-level, heavy-duty debugging only */
+#undef _DEBUG
+
+/* Define to enable APOP */
+#undef APOP
+/* Define to enable SCRAM */
+#undef SCRAM
+
+/* Define the POPUID as pop user ID which acts as admin for POPUSERS */
+#undef POPUID
+
+/* Define if you want successful authentications to be logged */
+#undef LOG_LOGIN
+
+/* 
+ * Define if you want to automatically delete RETRd messages.
+ * Caution: This could cause lost mail.  Be sure users are
+ * informed before enabling.  Must also define NOUPDATEONABORT.
+ *
+*/
+#undef AUTO_DELETE
+
+/* 
+ * Define if you don't want qpopper to display its version in the banner
+ * or CAPA INPLEMENTATION response.  Many people feel this makes qpopper
+ * more secure, since it avoids advertising if you are running a version
+ * which has a known vulnerability.  Others feel it is counter-productive,
+ * since it also avoids advertising if you are running a known-fixed
+ * version, and may lead attackers to simply try exploits they otherwise
+ * would avoid. 
+ */
+#undef SHY
+
+/*
+ * Default qpopper behavior is to enter UPDATE state even if
+ * session aborts (connection closes unexpectedly).  This is
+ * actually contrary to RFC 1939 (section 6 et al), but proved
+ * necessary under noisy line conditions, as otherwise users
+ * found themselves often unable to delete messages.
+ *
+ * Define NOUPDATEONABORT if you want to prevent the default
+ * behavior and revert to RFC 1939 rules.
+ *
+*/
+#undef NOUPDATEONABORT
+
+/* Define if using GDBM instead of DBM */
+#undef GDBM
+
+/* Define if using BSDI style DBM, with DBM_SUFFIX=".db" */
+#undef BSD44_DBM
+
+/* Define MAIL_COMMAND Value to the path of MTA */
+#undef MAIL_COMMAND
+
+/* Define MAILDIR to the spool directory */
+#undef POP_MAILDIR
+
+/* Define for the temporary mail drop directory */
+#undef POP_DROP_DIR
+
+/* Define for the temporary mail drop file name */
+#undef POP_DROP
+
+/* Define for the cache directory */
+#undef POP_CACHE_DIR
+
+/* Define for the cache file name */
+#undef POP_CACHE
+
+/* Define for tempdrop names */
+#undef POP_TMPDROP
+#undef POP_TMPXMIT
+
+/* Define if the system supports MAILLOCK functions */
+#undef SYS_MAILLOCK
+
+/*
+ * Define to enable bulletin support; value should be the 
+ * path to the bulletin directory.
+ */
+#undef BULLDIR
+
+/* Define to enable use of a bulletin database */
+#undef BULLDB
+
+/* Define to specify maximum bulletins for new users */
+#undef NEWBULLCNT
+
+/* 
+ * Define to specify directory for popbull files; leave
+ * undefined to use home directory.  popbull files are
+ * named ".popbull" when in user's home directory, and
+ * "<user>.popbull" elsewhere.
+ */
+#undef POPBULLDIR
+
+/* 
+ * Define to run in SERVER_MODE. Take a look at
+ * <http://www.eudora.com/qpopper/qpop_faq.html>
+ * to know more about SERVER_MODE. Also see the
+ * INSTALL file.
+ */
+#undef SERVER_MODE
+
+/*
+ * Define this macro if your system supports special authorization
+ * mechanisms like shadow passwords or special crypt programs.
+ */
+#undef SPEC_POP_AUTH
+
+/*
+ * Define and set to 1 or 2 to use hashed spool directories.  Value
+ * 1 hashes the first 4 characters; value 2 uses /<1st letter>/
+ * <2nd letter>.  For example, if the spool directory is "/var/mail", 
+ * the spool file for user "maida" would be:
+ *     /var/mail/maida          HASH_SPOOL not set
+ *     /var/mail/o/maida        HASH_SPOOL=1
+ *     /var/mail/m/a/maida      HASH_SPOOL=2
+ */
+#undef HASH_SPOOL
+
+/* 
+ * Define if spool files should be in user's home directories.  Value
+ * of macro is name of spool file, usually:
+ *     ".mail"              general default
+ *     "Mailbox"            for qmail
+ */
+#undef HOMEDIRMAIL
+
+/* 
+ * Define if you want to use PAM (Pluggable Authentication
+ * Modules), libpam, for user authentication.  This is
+ * available on Linux and Solaris, and perhaps others.  The
+ * value of the macro is the service name to use (default
+ * "pop3").
+ */
+#undef USE_PAM
+
+/*
+ * Specify the desired log facility.  Default is LOG_LOCAL1
+ * or LOG_MAIL, depending on the OS.
+ */
+#undef POP_FACILITY
+
+/*
+ * Define if you want to check for and hide the UW "Folder
+ * Internal Data" messages.  
+ */
+#undef CHECK_UW_KLUDGE
+
+/* 
+ * Define if you want to use group names as the second token
+ * in bulletin file names
+ */
+#undef USE_BULL_GROUPS
+
+/*
+ * Define if you want to log elapsed time for various operations
+ */
+#undef DO_TIMING
+
+/*
+ * Define if you want to call dracauth following a successful
+ * authentication.
+ */
+#undef DRAC_AUTH
+
+/*
+ * Define if you want to prevent Qpopper from writing 'Status' and
+ * 'X-UIDL' headers to the spool.  This means UIDs must be recalculated
+ * in each session for each message kept on the server.
+ */
+#undef NO_STATUS
+
+/*
+ * Define if you want to encode UIDLs in old (pre-3.x) style instead
+ * of new, compact style.  This is only useful if you use NO_STATUS
+ * and have existing users with pre-3.x mail spools.
+ */
+#undef OLD_STYLE_UIDL
+
+/*
+ * Define if you want to keep the temporary drop files.  Otherwise they
+ * are deleted.
+ */
+#undef KEEP_TEMP_DROP
+
+/*
+ * Define if you want to grant POP access to users who have not changed
+ * their password within the required time.
+ */
+#undef DONT_CHECK_SP_MAX
+
+/*
+ * Define if you also set either HASH_SPOOL or HOMEDIRMAIL and don't want
+ * to check for old .user.pop files in the spool directory.
+ */
+#undef DONT_CHECK_OLD_SPOOL
+
+/*
+ * Define if the hash spool directories already exist.  Qpopper will
+ * not check for or create the directories when this is defined.
+ */
+#undef DONT_CHECK_HASH_SPOOL_DIR
+
+/*
+ * If you want to enable server mode by default for users in a
+ * a specified group, define this to be the name of the group.
+ */
+#undef SERVER_MODE_GROUP_INCL
+
+/*
+ * If you want to disable server mode by default for users in a
+ * a specified group, define this to be the name of the group.
+ */
+#undef SERVER_MODE_GROUP_EXCL
+
+/*
+ * define if you use secure NIS+ 
+ */
+#undef SECURENISPLUS
+
+/*
+ * Define if you want to use Kerberos libraries.  You must also
+ * then define either KRB4 or KRB5.
+ */
+#undef KERBEROS
+
+/*
+ * Define to link with Kerberos IV libraries.
+ * Not recommended due to security issues.
+ */
+#undef KRB4
+
+/*
+ * Define to link with Kerberos V libraries.
+ */
+#undef KRB5
+
+/*
+ * Define to permit backwards compatibility with Kerberos IV servers
+ * when linking with Kerberos V libraries.
+ */
+#undef KRB5_KRB4_COMPAT
+
+/*
+ * Define to permit use of any Kerberos principal in client request.
+ */
+#undef ACCEPT_ANY_PRINCIPAL
+
+/*
+ * Define to use KUSEROK function to vett user request.
+ */
+#undef KUSEROK
+
+/*
+ * Define to use getsockinst for the Kerberos instance.
+ */
+#undef K_GETSOCKINST
+
+/*
+ * Define to run Qpopper as a stand-alone daemon instead of through inetd.
+ */
+#undef STANDALONE
+
+/*
+ * To permit access only to users listed in a file, define to be the path
+ * to the file.  List users one per line.
+ */
+#undef AUTHFILE
+
+/*
+ * To deny access to users listed in a file, define to be the path to the
+ * file.  List users one per line.
+ */
+#undef NONAUTHFILE
+
+/*
+ * Define this macro to reduce I/O during update at end of session in server
+ * mode.  Note that use of this option may cause utilities which access the
+ * spool (such as biff or the shell's mail check) to not function properly.
+ * This option should only be used when all spool access is through POP
+ * (other than the local delivery agent).
+ */
+#undef FAST_UPDATE
+
+/* Define if any of the following SSL libraries have been selected */
+#undef QPOP_SSL
+
+/*
+ * Define to compile with SSL Plus libraries from Certicom.  The value
+ * should be the path to the top-level directory for the SSL Plus files.
+ * Inside this directory should exist the include/ and lib/ directories.
+ */
+#undef QPOP_SSLPLUS
+
+/*
+ * Define to compile with OpenSSL.  The value should be the path to the
+ * top-level directory for OpenSSL.  Inside this directory should exist
+ * the include/ and lib/ directories.
+ */
+#undef QPOP_OPENSSL
+
+/*
+ * Define to alter the default behavior of pooling network writes:
+ * 0=default (pool all writes); 1=tls (pool only under tls); 2=never
+ */
+#undef CHUNKY_WRITES
+
+#include "conf.h"  /* some macros */

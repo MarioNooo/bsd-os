@@ -1,0 +1,58 @@
+Edit the ending sector of the partition.  The ending sector may be
+an arbitrary sector beyond the offset of the partition.  You may
+enter numbers in megabytes or cylinders by pressing m or c after
+typing in the number.  This will convert your number to the correct
+number of sectors.  Pressing the upper case letters M and C you
+can convert to the appropriate number of sectors such that the
+partition will end on a cylinder boundary.  You can alter the
+current ending sector by a relative amount by preceding the number
+with a + or -.
+
+ESC    Cancel all changes to this partition.
+ENTER  Apply changes to this partition.
+TAB    Go on to editing the letter the partition is assigned to
+
+[0-9.] Use the number keys to enter the ending sector of the partition. 
+       When entering in megabytes or cylinders you may use a floating
+       point number.
+
++ or - Start a entering a value which will be relative to the current
+       ending sector displayed.
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.
+
+U      Undo the current changes to the partition ending sector and
+       redisplay the value that was displayed upon entering this field.
+
+X      Set partition ending sector to the maximum value given the current
+       starting offset.  The maximum value is one which will not cause
+       this partition to overlap any other partition or run off the end
+       of the disk.
+
+    The following modifiers are always entered after a number has been
+    entered.  When the modifier is entered whatever number that is
+    currently displayed is converted to sectors.
+
+S or = Apply the current, possibly relative, number to the ending
+       sector of the partition.  Treat the current value displayed
+       in sectors.
+
+T      Apply the current, possibly relative, number to the ending
+       sector of the partition.  Treat the current value displayed
+       in tracks.
+
+c      Apply the current, possibly relative, number to the ending
+       sector of the partition.  Treat the current value displayed
+       in cylinders.
+C      ... and adjust the ending sector such that the partition will
+       end on a cylinder boundary.
+
+m      Apply the current, possibly relative, number to the ending
+       sector of the partition.  Treat the current value displayed
+       in megabytes.
+M      ... and adjust the ending sector such that the partition will
+       end on a cylinder boundary.

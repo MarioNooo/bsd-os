@@ -1,0 +1,39 @@
+/*	BSDI sched.xh,v 1.1 2000/12/08 03:35:38 donn Exp	*/
+
+%{
+
+#include <sys/sfork.h>
+#include <sched.h>
+
+#define	CLONE_VM		SF_MEM
+#define	CLONE_FS		SF_DESCRIP
+#define	CLONE_SIGHAND		SF_SIG
+
+%}
+
+flag int clone_flags_t {
+	LINUX_CSIGNAL		0x000000ff;
+	CLONE_VM		0x00000100;
+	CLONE_FS		0x00000200;
+	LINUX_CLONE_FILES	0x00000400;
+	CLONE_SIGHAND		0x00000800;
+	LINUX_CLONE_PID		0x00001000;
+	LINUX_CLONE_PTRACE	0x00002000;
+	LINUX_CLONE_VFORK	0x00004000;
+	LINUX_CLONE_PARENT	0x00008000;
+	in(f, n) {
+		/* We steal 8 bits in the middle of the flags for the signal. */
+		n |= (f & LINUX_CSIGNAL) << 16;
+		if (f & LINUX_CLONE_VM)
+			n |= SF_RLIM;		/* XXX */
+		if (f & LINUX_CLONE_FS)
+			n |= SF_CRED;		/* XXX */
+		return (n);
+	}
+};
+
+cookie int sched_priority_t {
+	SCHED_OTHER		0;
+	SCHED_FIFO		1;
+	SCHED_RR		2;
+};

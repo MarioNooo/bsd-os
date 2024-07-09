@@ -1,0 +1,83 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_schedparam.3,v 1.3 1996/12/12 03:03:46 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_SCHEDPARAM 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_getschedparam ,
+.Nm pthread_setschedparam 
+.Nd get/set pthread scheduling parameters
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <sched.h>
+.Ft int
+.Fn pthread_getschedparam "pthread_t thread" "int *policy" "struct sched_param *param"
+.Ft int
+.Fn pthread_setschedparam "pthread_t thread" "int policy" "const struct sched_param *param"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_getschedparam
+and
+.Fn pthread_setschedparam
+functions dynamically retrieve and establish the scheduling 
+parameters for the thread specified by the thread ID
+.Fa thread .
+The 
+.Fa policy
+field should be a scheduling policy as defined in 
+.Pa sched.h .
+Currently
+.Dv SCHED_RR ,
+.Dv SCHED_FIFO ,
+and
+.Dv SCHED_OTHER
+are defined for use.
+Currently the only valid field in 
+.Fa param
+is
+.Dv sched_priority .
+.Sh RETURN VALUES
+Upon successful completion, the
+.Nm pthread_getschedparam
+and
+.Nm pthread_setschedparam
+functions both return 0.  A non-zero result indicates
+that an error occurred.
+.Sh ERRORS
+The
+.Nm pthread_getschedparam
+and
+.Nm pthread_setschedparam
+functions may fail and return the following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of a function argument is invalid.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_attr 3 ,
+.Xr pthread_create 3 ,
+.Xr pthread_attr_getschedparam 3 ,
+.Xr pthread_attr_setschedparam 3
+.Sh STANDARDS
+The
+.Nm pthread_getschedparam
+and
+.Nm pthread_setschedparam
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_getschedparam
+and
+.Nm pthread_setschedparam
+functions first appeared in BSD/OS 3.0.

@@ -1,0 +1,305 @@
+See the TUTORIAL file for a brief overview/history of RADIUS.
+
+
+The Files:
+----------
+INSTALL          -- This file.
+tarlist          -- Relative pathnames of all the files in the tar file.
+README.TACACS    -- Compile and link instructions specific to TACACS version.
+README.hostnames -- Reminders about DNS and how the Merit AAA Server uses it.
+TUTORIAL	 -- Overview of RADIUS.
+Makefile	 -- This file is used by make(1) to install things.
+raddb/*          -- Contains the sample Merit AAA Server database files.
+man/*            -- The man(1) pages for executables and configuration files.
+doc/*            -- Contains descriptive documents about the RADIUS protocol.
+bin/*            -- Contains the various Merit AAA Server programs and tools.
+
+
+Beginning the installation:
+---------------------------
+
+Note: While the Merit AAA Server may be run by any non-privileged user account,
+      some operating systems (notably Solaris and others where the shadow
+      password file is readable only by the user "root") require the server
+      process to be owned by the user "root".  In some of the testing steps
+      below, the tests may need to be run as "root" if your situation calls
+      for this.
+
+
+1.  Uncompress the tar archive and run tar(1) on the resultant tar file.
+    For example, depending on which files you downloaded:
+
+       % gunzip radius.*.*.tar.gz
+       % tar -xf radius.*.*.tar
+    or
+       % uncompress radius.*.*.tar.Z
+       % tar -xf radius.*.*.tar
+
+
+Local configuration and testing:
+--------------------------------
+
+2.  Make sure your system has an /etc/shells file.  This file lists the full
+    path names of the various shell programs on your system, one per line.
+    This is needed to support the UNIX-PW type of user authentication.  Some
+    examples are: /bin/sh, /bin/csh and /bin/ksh (but only one per line).
+    These paths must be correct or your users will be unable to use the
+    chsh command.  It is possible to omit this feature by editing the
+    Makefile and commenting out the CHK_SHELLS make macro.
+
+    For some of the steps below, you may want to install the man pages.  This
+    is described in step ten (10) below, but it is advisable to install them
+    now.  Just enter:
+
+       % make man-install
+
+    to have the man pages installed.  If you have retained the Makefile
+    macros MAN and MAN_INSDIR in the Makefile as distributed, the man pages
+    will be placed into the /usr/local/man/man5 and /usr/local/man/man8
+    directories.  Feel free to make changes to these definitions provided you
+    exercise care if you apply any local changes to the make macros found
+    between the line starting with "BIN" and the line starting with "SERVER".
+    You may also want to verify that the directories /usr/local/man/man5 and
+    and /usr/local/man/man8 are part of your MANPATH environment variable
+    (e.g., "% echo $MANPATH") or read your system's manual page on the man
+    command (e.g., % man man).
+
+
+3.  Note:  Do NOT USE any authfile, clients, dictionary, users or vendors
+    files from any previous version!  Edit any local entries and/or local
+    customization into the files which are provided with this release.
+
+    Each Merit AAA Server configuration file is distributed with read-only
+    permission, so you may want to change that now.  Change to the ./raddb
+    directory in the Merit distribution (e.g., "% cd raddb") and add write
+    permission to all the configuration files (e.g., "% chmod u+w *").
+
+
+4.  Configure the "clients" file for your site.  This file is used to define
+    the secrets shared with other RADIUS machines communicating with your
+    server.  Read the clients(5) man page and the comments inside the sample
+    "clients" file for more information.  You will need, at the minimum, one
+    entry for your site's host machine (the one on which you plan to run the
+    Merit AAA Server).  Additionally, you may need an entry for each RADIUS
+    client or server exchanging authentication requests or replies with the
+    Merit AAA Server server on your machine.
+
+    For testing purposes, you should remove all the sample entries by placing
+    the comment character ("#") in column one of those entries and by adding
+    just the following line:
+
+       my.radius.host.dns.name      <any-secret>     type=Merit:PROXY
+
+    Replace 'my.radius.host.dns.name' with the full DNS name of the machine
+    running the Merit AAA Server.  Your secret may be any character string
+    which does not contain blanks or control characters.
+
+
+5.  Configure the "authfile" for your site.  This file is used to define
+    the realm to authentication-type mapping for your installation.  Read
+    the authfile(5) man page and the comments inside the sample "authfile"
+    for more information.  This file is needed if the Authentication-Type is
+    set equal to "Realm" for _any_ entries in the "users" configuration file.
+    If you use the default "users" file, which has the Authentication-Type
+    set to "Realm" for the DEFAULT entry, then you will require an authfile.
+    You will need, at the minimum, one entry for your site's host machine
+    (the one on which you plan to run the Merit AAA Server).  Be sure to
+    comment out all seven (7) sample entries in the distributed authfile.
+
+    A typical example might resemble the following: (for using /etc/passwd)
+
+       my_realm (my_realm_alias)   UNIX-PW
+
+    Or if you wish to apply the same packet filter to each user in my_realm:
+
+       my_realm (my_realm_alias)   UNIX-PW    my.host.dns.name   a_filter
+
+    Normally, UNIX-PW authentication does not require the DNS name in the
+    third field.  When specifying a filter, however, since the filter name
+    is in the fourth field, the DNS name is required for parsing purposes.
+
+    The "users" file may be used in some cases to specify user authentication
+    information.  See the users(5) man page and the sample users file for
+    more information.  In most cases, however, the authfile mechanism is
+    preferable and the sample "users" file may be used without modification.
+
+    Do not alter the entries in the "users" file following the DEFAULT entry.
+
+    Do not alter the dictionary or vendors files in the raddb directory.
+
+
+6.  It is possible to test the server in the as-delivered distribution tree.
+    After testing you should install the radiusd executable and configuration
+    files into their final directories.  See the man pages for radiusd(8)
+    (server) and the configuration files authfile(5), clients(5), dictionary(5)
+    and users(5), for more information.  The server, from the distribution,
+    expects the executables to be in the /usr/private/etc directory and the
+    configuration files to be in the /usr/private/etc/raddb directory.
+
+    However, for testing purposes, it is perfectly reasonable to test the
+    server by leaving the files where are after the tar command has finished
+    in step one (1) above.  To facilitate your testing efforts, you may wish
+    to alter your shell "PATH" environment variable to include the path to
+    the Merit AAA Server and the test clients' executables.
+
+
+7.  Using the example in the radiusd(8) man page, be sure your copy of the
+    /etc/services file contains the two entries for RADIUS authentication and
+    accounting services.  These entries tell the server which UDP ports to
+    use (these default to 1645 and 1646, respectively).
+
+
+8.  Test your server by issuing the following commands.  If you use windows,
+    try to run the server (radiusd) in one window and the client (radcheck)
+    in another window.  This example assumes the server and the test clients
+    are on your path (or you could enter ./bin/radiusd -p 1647 ... etc.):
+
+    % radiusd -p 1647 -q 1648 -d <raddb-dir> -x &
+    % radcheck -p 1647 -r 1 <srv-DNS-name>
+
+    The choice of port 1647/8 is arbitrary, but meant to steer clear of an
+    already running server which may be listening on the 1645/6 ports.
+
+    Problems here may stem from an incomplete "clients" file configuration.
+
+    If radcheck was successful, try to authenticate a test user as follows:
+
+    % radpwtst -p 1647 -d <raddb-dir> -s <srv-DNS-name> -r 1 -u ppp xyz@realm
+    Password:
+
+    The "realm" following "xyz@" must be a realm in your authfile (if you
+    are using realms and have an authfile) and, if its authentication type
+    is UNIX-PW, the "xyz" must be in your /etc/passwd file.  If you are
+    not using realms, you don't need the authfile at all, and you may omit
+    the "@realm" string from the end of the above radpwtst command.  Any
+    problems here may stem from an incomplete "authfile" configuration or
+    an inability of the Merit AAA Server or the user who is running it to
+    access the password file (or possibly a shadow password file).
+
+    If this step is successful, you need to properly terminate the test
+    Merit AAA Server process (called radiusd) to avoid confusion later (e.g.,
+    use "kill -TERM xxx" where xxx is the radiusd process number or PID).
+
+    If you are going to re-install the server on a machine running an older
+    version in production mode, be sure to see the tip in step ten (10) below.
+
+
+Installation and production operation:
+--------------------------------------
+
+9.  To install the Merit AAA Server "radiusd" just enter, "% make install",
+    for the Merit AAA Server configuration files use, "% make config-install",
+    for the Merit AAA Server test utility files enter, "% make util-install",
+    for the Merit AAA Server man page files use, "% make man-install", if
+    you haven't already installed the man pages in step two (2) above.
+
+    You may configure the Makefile to put the above files wherever you wish,
+    but see step two (2) above.
+
+    TIP: If you are upgrading your existing production Merit AAA Server, you
+    may want to alter the default path in the Makefile used for installing
+    to avoid over-writing your existing configuration.  For example, you
+    might want to change:
+
+       RADDB_INSDIR    = /usr/private/etc/raddb
+
+    to become:
+
+       RADDB_INSDIR    = /usr/private/etc/raddb.x.y.z
+
+    where "x.y.z" is the version number of the Merit AAA Server upgrade.
+    Of course, after you install the server and the configuration files,
+    you will need to "kill -TERM" your running server (if any) and then
+    rename your old ./raddb directory to be, say, ./raddb.old, but then
+    don't forget to rename the /usr/private/etc/raddb.x.y.z directory
+    to become your new ./raddb directory.
+
+
+10. To set up for production use, you should add an entry to your system's
+    /etc/inetd.conf file which will start the server if it isn't already
+    running whenever a RADIUS request arrives at your machine.  The line
+    in /etc/inetd.conf should look like (use <TAB> characters to keep the
+    fields aligned with the other lines in the file):
+
+       radius dgram   udp wait root /usr/private/etc/radiusd radiusd
+
+    Should the Merit AAA Server crash, inetd(8) will restart the server
+    automatically at the next incoming RADIUS request.  Do not forget to
+    send the "HUP" signal to your inetd process after you edit the file:
+
+       % kill -HUP yyy         [where yyy is the inetd process number]
+
+    You need to do this each time after you change your /etc/inetd.conf file.
+
+
+Accounting:
+-----------
+
+The Livingston style accounting call detail records are produced by default by
+the basic server for compatibility with other systems.
+
+
+Default Merit AAA Server Directory Structure:
+---------------------------------------------
+
+As supplied, the Merit AAA Server will be installed into the following
+directory hierarchy:
+
+/usr/private/etc/
+
+   dnscheck  -  utility to check DNS mapping
+   radcheck  -  Merit AAA Server test utility [like the UNIX ping(8) command]
+   radiusd   -  Merit AAA Server executable
+   radpwtst  -  Merit AAA test client utility
+
+   radacct/  -  Livingston style RADIUS accounting call detail records are
+                placed into directories under this directory
+
+   raddb/
+
+        authfile               - realm to authentication-type mapping file
+        clients                - client to shared secret mapping file
+        conversion.pl          - Perl script to change Livingston style
+                                 "users" files to match the RADIUS RFC2138
+                                 as implemented in the Merit AAA Server
+        dictionary             - definition file required by radiusd
+        logfile                - the server log file
+        logfile.yymmdd.Z       - compressed daily or weekly log files
+        radius.fsm             - the finite state machine definitions file
+        radius.pid             - contains the process id for the server, etc.
+        users                  - holds user security profiles and reply items
+        vendors                - holds vendor specific details (IANA numbers)
+
+The logfile, logfile.yymmdd.Z files are created by the basic Merit AAA Server
+during normal execution.
+
+
+Other files supplied with the distribution:
+-------------------------------------------
+
+The man directory in the distribution hierarchy contains these man pages:
+
+    man/
+
+      authfile.5    - authfile description
+      clients.5     - clients file description
+      dictionary.5  - dictionary file description
+      dnscheck.8    - dnscheck command description for checking DNS config
+      radcheck.8    - radcheck command description for checking server status
+      radius.fsm.5  - description of Merit AAA Server finite state machine table
+      radiusd.8     - radiusd Merit AAA Server description
+      radpwtst.8    - radpwtst command description of client simulation utility
+      users.5       - users file description
+      vendors.5     - vendors file description
+
+By default, these files will be installed into the /usr/local/man/man5 and 
+/usr/local/man/man8 directories.
+
+
+How To Get Help:
+---------------- 
+
+If you have any problems or fixes send them to:  aaa-support@merit.edu
+
+Please place one of the strings "[AAA]" or "[AAA support]" in front of
+the "Subject:" lines of your email message.

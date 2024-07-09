@@ -1,0 +1,4 @@
+Disksetup cannot continue as a BSD partition table must be specified
+and accepted in order to continue with options that have been
+chosen.  Please rerun disksetup when you have decided on a new
+course of action.

@@ -1,0 +1,159 @@
+.\"	BSDI vplay.1,v 1.5 1997/01/16 00:01:08 bostic Exp
+.Dd October 18, 1995
+.Dt VPLAY 1
+.Os
+.Sh NAME
+.Nm vplay
+.Nd play / record sound files
+.Sh SYNOPSIS
+.Nm vplay
+.Op Fl SMvd
+.Op Fl f Ar audio_dev
+.Op Fl s Ar speed
+.Op Fl b Ar bits
+.Op Fl t Ar secs
+.Op Fl w Ar secs
+.Op Ar
+.Nm vrec
+.Op Fl SMvd
+.Op Fl T Ar format
+.Op Fl f Ar audio_dev
+.Op Fl s Ar speed
+.Op Fl b Ar bits
+.Op Fl t Ar secs
+.Op Fl w Ar secs
+.Op Ar
+.Sh DESCRIPTION
+The
+.Nm vplay
+program is used to play audio data via the standard audio driver
+interface.
+The
+.Nm vrec
+program is used to record sound data.
+The following options are available:
+.Bl -tag -width Fl
+.It Fl f Ar audio_dev
+Audio device, defaults to
+.Pa /dev/dsp.
+.It Fl T Ar rec_fmt
+Recording format, may be
+.Li raw, wav,
+or
+.Li voc.
+If not supplied the filename suffix is used to determine the filetype
+to record to. If all else fails recording is done in raw format.
+.It Fl s Ar speed
+Speed to record or play at. For playback if the speed isn't given the
+speed determined from the file header is used. For playback of raw
+files and recording a default speed (8Khz) is used if the speed isn't
+given. The units for speed are Hz.
+.It Fl b Ar bits
+Specifies the sample size. May be
+.Li 8
+or
+.Li 16.
+If the file header shows a file is 16 bit but
+.Li -b 8
+is specified the audio data will converted to 8 bits per sample on
+the fly. If not specified the size from the file header is used. For
+recording and raw files a default of 8 is used.
+.It Fl S
+Specify stereo recording. Has no meaning for playback. The default for
+recording is mono.
+.It Fl M
+Specify mono recording or playback. If the file being played back is
+stereo it will be converted to mono on the fly. This is the default for
+recording.
+.It Fl t Ar secs
+Time limit for playback or recording. If not specified entire file is
+played or recording continues until process is interrupted.
+.It Fl w Ar secs
+Number of seconds to wait for audio device to become available. If set
+and the audio device is busy it is polled every 500ms up to
+.Ar secs
+seconds waiting for access. The default is not to wait (an error is
+returned immediately if the audio device is busy). This option is
+can be used to queue background processes (like mail delivery daemons)
+for audio output.
+.It Fl v
+Enable verbose mode, messages are printed regarding playback format.
+.It Fl d
+Enable debugging mode, detailed messages of use debugging problems are
+printed.
+.El
+.Pp
+The
+.Ar speed
+option can be used to override the DSP output rate for files with
+headers specifying their recorded speed. This does not do sample
+rate conversion, the audio sample will simply be played back at the
+overridden speed.
+.Pp
+.Nm Vplay
+can, however, convert from 16 bit to 8 bit and from stereo to mono
+during playback. The 2 channels are mixed equally when converting from
+stereo to mono.
+.Pp
+The 
+.Fl t
+parameter applies to each file. For example:
+.Bd -literal
+	vrec -t 1 a.wav b.wav c.wav
+.Ed
+.Pp
+records one second of audio data to each of the files a, b, and c and
+.Bd -literal
+	vplay -t 1 a.wav b.wav c.wav
+.Ed
+.Pp
+plays the first second of each of the files a, b and c.
+.Pp
+If no filenames are given, stdout (vrec) or stdin (vplay) is used.
+.Pp
+This program supports:
+.Bl -bullet -compact
+.It
+the full Creative Labs voice structure: Silence, Repeat loops 
+(on seekable input), Stereo, ASCII blocks, blocks with different sampling 
+rates
+.It
+on non-16-bit cards, 16 bit WAVE files will be played as 8 bit 
+.El
+.Pp
+Soundfile features that are currently unsupported:
+.Bl -bullet -compact
+.It
+packed VOC files
+.It
+multi block WAVE files
+.It
+Wave files that are not PCM encoded.
+.It
+More than 2 channel .wav files.
+.El
+.Sh BUGS
+The -t option is not effective for voc file playback (it is ignored).
+.Pp
+Voc files with repeat sections will not work if this program is compiled
+with the 2.0 C library (due to a bug in the C library).
+.Pp
+It is not possible to record block type 9 (new format) voc files (these support
+16 bit data), it is possible to play these back however. Only 8 bit voc
+files may be created.
+.Pp
+When a recording time is not given and an interrupt is used to stop recording
+some data at the end is lost due to buffering in the program.
+The output file (if it
+is voc or wav) will have an incorrect count in its header as well, although
+.Nm vplay
+will not complain when playing back such a file.
+.Sh SEE ALSO
+.Xr sox 1 ,
+.Xr mixer 1
+.Sh HISTORY
+The
+.Nm vplay
+and
+.Nm vrec
+commands were written for BSD/OS 2.1.

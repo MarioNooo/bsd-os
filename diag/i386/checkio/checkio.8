@@ -1,0 +1,79 @@
+.Dd Jan 30, 1997
+.Dt CHECKIO 8
+.Sh NAME
+.Nm checkio
+.Nd Check I/O memory space
+.Sh SYNOPSIS
+.Nm checkio
+.Fl r \&| Fl w
+.Op Fl d
+.Op Fl f Ar dumpfile
+.Sh DESCRIPTION
+The
+.Nm checkio
+diagnostic program scans the I/O memory space between 640 KB and 1 MB
+on a PC (addresses 0xA0000 to 0x100000).
+It looks for BIOS ROMs, display memory and other memory areas.
+The
+.Nm
+program is generally used to check for memory conflicts or as an aid
+in finding an unused area for a new device.
+The program can be used in a read-only mode, or read-write mode.
+It looks for BIOS ROMs, other ROMs, and memory; in read-write mode,
+.Nm
+checks whether BIOS ROMs are shadowed in RAM, and can tell the difference
+between ROM and RAM.
+When a ROM is found,
+.Nm
+looks for printable strings near the beginning of the ROM, printing
+any strings that are found, such as copyright notices that can identify
+the device.
+The program should only be run in single-user mode
+on a quiescent system, as its probes can interfere with normal operation
+of some devices; it might be necessary to reboot after running this program.
+.Pp
+It is usually best to boot the system to single-user mode, then
+run
+.Nm
+without enabling devices such as network cards unless necessary.
+After noting the results in that state,
+additional devices can be enabled, and the results can be rechecked.
+Note that memory on some devices is not enabled until the device
+is opened or configured.
+Memory on other devices is enabled only when it is accessed by the
+driver, and such memory is not visible to
+.Nm checkio .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Debug.
+Display the first four bytes at each checked address in hexadecimal
+to the standard error output; these are the locations that are checked
+to see if ROM or RAM is present.
+.It Fl f
+The
+.Fl f
+option causes
+.Nm checkio
+to copy the 384K bytes of I/O memory to the specified file
+.Ar dumpfile .
+.It Fl r
+Readonly: don't attempt to determine if memory areas are writable or not.
+Either
+.Fl r
+or
+.Fl w
+must be specified.
+.It Fl w
+Write: attempt to determine if memory areas are writable or not.
+Either
+.Fl r
+or
+.Fl w
+must be specified.
+.El
+.Pp
+The
+.Nm checkio
+utility exits 0 on success, and >0 if an error occurs.

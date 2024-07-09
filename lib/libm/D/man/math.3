@@ -1,0 +1,572 @@
+.\"	BSDI math.3,v 1.6 1998/05/11 19:09:15 donn Exp
+.\"
+.\" Copyright (c) 1985 Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
+.\"	math.3,v 1.6 1998/05/11 19:09:15 donn Exp
+.\"
+.Dd February 17, 1998
+.Dt MATH 3
+.Os
+.Sh NAME
+.Nm math
+.Nd introduction to mathematical library functions
+.Sh SYNOPSIS
+.Ic cc \&... -lm \&...
+.Pp
+.Fd #include <math.h>
+.Sh DESCRIPTION
+These functions constitute the C math library,
+.Nm libm .
+The link editor
+.Xr ld 1
+searches this library under the
+.Fl lm
+option.
+Declarations for these functions may be obtained from the header file
+.Pa <math.h> .
+.Pp
+The header
+.Pa <math.h>
+also declares the macro
+.Dv HUGE_VAL .
+On current architectures,
+this value is a constant IEEE 754 positive infinity.
+.Sh "LIST OF FUNCTIONS"
+See the individual manual pages for the meanings of the various functions:
+.Bd -literal -offset indent
+double acos(double);
+float acosf(float);
+double acosh(double);
+float acoshf(float);
+double asin(double);
+float asinf(float);
+double asinh(double);
+float asinhf(float);
+double atan(double);
+double atan2(double, double);
+float atan2f(float, float);
+float atanf(float);
+double atanh(double);
+float atanhf(float);
+double cabs(struct {double x, y;});
+float cabsf(struct {float x, y;});
+double cbrt(double);
+float cbrtf(float);
+double ceil(double);
+float ceilf(float);
+double copysign(double, double);
+float copysignf(float, float);
+double cos(double);
+float cosf(float);
+double cosh(double);
+float coshf(float);
+double drem(double, double);
+float dremf(float, float);
+double erf(double);
+double erfc(double);
+float erfcf(float);
+float erff(float);
+double exp(double);
+float expf(float);
+double expm1(double);
+float expm1f(float);
+double fabs(double);
+float fabsf(float);
+int finite(double);
+int finitef(float);
+double floor(double);
+float floorf(float);
+double fmod(double, double);
+float fmodf(float, float);
+double frexp(double, int *);
+float frexpf(float, int *);
+double gamma(double);
+double gamma_r(double, int *);
+float gammaf(float);
+float gammaf_r(float, int *);
+double hypot(double, double);
+float hypotf(float, float);
+int ilogb(double);
+int ilogbf(float);
+int isinf(double);
+int isnan(double);
+int isnanf(float);
+double j0(double);
+float j0f(float);
+double j1(double);
+float j1f(float);
+double jn(int, double);
+float jnf(int, float);
+double ldexp(double, int);
+float ldexpf(float, int);
+double lgamma(double);
+double lgamma_r(double, int *);
+float lgammaf(float);
+float lgammaf_r(float, int *);
+double log(double);
+double log10(double);
+float log10f(float);
+double log1p(double);
+float log1pf(float);
+double logb(double);
+float logbf(float);
+float logf(float);
+int matherr(struct exception *);
+double modf(double, double *);
+float modff(float, float *);
+double nextafter(double, double);
+float nextafterf(float, float);
+double pow(double, double);
+float powf(float, float);
+double remainder(double, double);
+float remainderf(float, float);
+double rint(double);
+float rintf(float);
+double scalb(double, double);
+float scalbf(float, float);
+double scalbn(double, int);
+float scalbnf(float, int);
+double significand(double);
+float significandf(float);
+double sin(double);
+float sinf(float);
+double sinh(double);
+float sinhf(float);
+double sqrt(double);
+float sqrtf(float);
+double tan(double);
+float tanf(float);
+double tanh(double);
+float tanhf(float);
+double y0(double);
+float y0f(float);
+double y1(double);
+float y1f(float);
+double yn(int, double);
+float ynf(int, float);
+.Ed
+.Sh "HARDWARE-DEPENDENT LIBRARIES
+On some architectures, such as the Intel architecture family,
+there are separate versions of the math library for systems
+that have hardware floating point support and those without.
+The hardware-dependent library is named after the architecture;
+for example,
+.Fl lmi386
+refers explicitly to the hardware-dependent library on the Intel architecture.
+A hardware-dependent library is geared toward fast execution;
+it typically supports only IEEE 754 error semantics and
+it may use instructions that are not included
+in the system's floating point emulation.
+.Pp
+The generic library is named
+.Fl lmstd
+and it provides standard-conforming error semantics.
+The external variable
+.Va _LIB_VERSION
+sets the specific error semantics:
+.Bd -literal -offset indent
+typedef enum {
+	_IEEE_ = -1,
+	_SVID_,
+	_XOPEN_,
+	_POSIX_
+} _LIB_VERSION_TYPE;
+extern _LIB_VERSION_TYPE _LIB_VERSION;
+.Ed
+.Pp
+When
+.Va _LIB_VERSION
+is assigned one of the following values,
+it has the indicated effect on error reporting:
+.Bl -tag -width _XOPEN_\0
+.It Dv _IEEE_
+If exceptions are
+.Em masked
+(see
+.Xr fpsetmask 3 ) ,
+an appropriate IEEE 754 value is returned
+.Pf ( Li Inf ,
+.Li NaN ,
+.Li 0 ,
+.Li \&... )
+and a
+.Dq sticky
+bit is set
+(see
+.Xr fpgetsticky 3 ) .
+If exceptions are
+.Em unmasked ,
+then an unmasked exception generates a
+.Dv SIGFPE
+signal
+(see
+.Xr sigaction 2 ) .
+Note that returning from a
+.Dv SIGFPE
+signal handler will normally just repeat the faulting operation;
+the
+.Xr longjmp 3
+function is typically used in the
+.Dv SIGFPE
+handler to avoid re-executing the failing operation.
+The
+.Va errno
+variable is unaffected.
+.It Dv _SVID_
+On encountering an error,
+the library calls the function
+.Xr matherr 3 .
+If
+.Fn matherr
+returns 0,
+a message is usually printed on
+.Li stderr
+and the global variable
+.Va errno
+is set appropriately (see below).
+Unless you redefine
+.Fn matherr ,
+the default
+.Fn matherr
+function returns 0.
+.It Dv _XOPEN_
+This mode works much like
+.Dv _SVID_
+except no messages are printed.
+.It Dv _POSIX_
+In this mode,
+.Va errno
+is always set appropriately for errors.
+.Fn Matherr
+is ignored.
+.El
+.Pp
+For those situations that set
+.Va errno
+on error,
+.Va errno
+is set to
+.Dv EDOM
+if the input argument was outside of the domain
+in which the operation is defined, or to
+.Dv ERANGE
+if the result is out of range
+(for example, if it would overflow or underflow).
+.Pp
+IEEE 754 semantics are the default.
+See
+.Xr fpsetmask 3
+for information on configuring IEEE 754 exceptions.
+.Pp
+The script
+.Xr mathlink 8
+runs at boot time and sets up hard links such that
+.Fl lm
+refers to the hardware-dependent library if the hardware supports it,
+and to the generic library otherwise.
+System administrators can force a particular choice
+by editing the file
+.Pa /etc/rc.configure/0.math.0
+appropriately.
+Users may select a specific version of the library
+by providing the corresponding link flags
+.Pf ( Fl lmi386
+or
+.Fl lmstd ,
+for example).
+.Sh "SEE ALSO
+.Xr fpsetmask 3 ,
+.Xr matherr 3
+.Sh BUGS
+If you link against static shared libraries,
+only the useless default
+.Fn matherr
+function can be used.
+If you need to provide your own matherr(),
+link non-shared or dynamically.
+.Pp
+On the Intel architecture,
+floating point calculations are traditionally performed in double precision
+even for single precision arguments.
+Single precision library functions are no faster
+than double precision functions for this reason.
+.Sh "IEEE 754
+Properties of IEEE 754 Double Precision:
+.Bl -bullet
+.It
+Wordsize: 64 bits, 8 bytes.  Radix: Binary.
+.It
+Precision: 53
+significant
+bits, roughly like 16
+significant
+decimals.
+.Pp
+If
+.Li x
+and
+.Li x'
+are consecutive positive double precision
+numbers (they differ by 1
+.Em ulp ) ,
+then:
+.Bd -literal -offset indent
+1.1e\-16 < 0.5**53 < (x'\-x)/x \(<= 0.5**52 < 2.3e\-16
+.Ed
+.It
+Range:
+Overflow threshold
+.Li = 2.0**1024 = 1.8e308;
+underflow threshold
+.Li = 0.5**1022 = 2.2e\-308 .
+.Pp
+Overflow goes by default to a signed
+.Em infinity ,
+usually written as
+.Li Inf .
+.Pp
+Underflow is
+.Em gradual ,
+rounding to the nearest
+integer multiple of
+.Li "0.5**1074 = 4.9e\-324" .
+.El
+.Pp
+Zero is represented ambiguously as
+.Li +0
+or
+.Li \-0 .
+Its sign transforms correctly through multiplication or
+division, and is preserved by addition of zeroes
+with like signs; but
+.Li x\-x
+yields
+.Li +0
+for every
+finite
+.Li x .
+The only operations that reveal zero's
+sign are division by zero and
+.Li copysign(x,\(+-0) .
+In particular, comparison
+.Pf ( Li "x > y" ,
+.Li "x \(>= y" ,
+etc.)
+cannot be affected by the sign of zero; but if
+finite
+.Li "x = y
+then
+.Bd -literal -offset indent
+Inf \&= 1/(x\-y) \(!= \-1/(y\-x) = \-Inf
+.Ed
+.Pp
+.Li Inf
+is signed.
+It persists when added to itself
+or to any finite number.  Its sign transforms
+correctly through multiplication and division, and
+.Bd -literal -offset indent
+(finite)/\(+-Inf = \(+-0
+(nonzero)/0 = \(+-Inf
+.Ed
+.Pp
+But 
+.Li Inf\-Inf ,
+.Li Inf**0
+and
+.Li Inf/Inf ,
+like
+.Li 0/0
+and
+.Li sqrt(\-3) ,
+are invalid operations that produce a non-numerical result, or a
+.Li NaN
+.Pq Dq not a number .
+.Pp
+There are
+.Li 2**53\-2
+.Em reserved operands,
+all called
+.Li NaN .
+Some, called
+.Em signaling NaNs ,
+trap any floating-point operation
+performed upon them; they are used to mark missing
+or uninitialized values, or nonexistent elements
+of arrays.  The rest are
+.Em quiet NaNs ;
+they are
+the default results of invalid operations, and
+propagate through subsequent arithmetic operations.
+If
+.Li x \(!= x
+then
+.Li x
+is
+.Li NaN ;
+every other predicate
+.Pf ( Li x > y ,
+.Li x = y ,
+.Li x < y ,
+.Li \&... )
+is false if
+.Li NaN
+is involved.
+(NOTE: Trichotomy is violated by
+.Li NaN . )
+.Pp
+Besides being false, predicates that entail ordered
+comparison, rather than mere (in)equality,
+signal
+.Dq invalid operation
+when
+.Li NaN
+is involved.
+.Pp
+Every algebraic operation
+.Pq Li "+, \-, \(**, /, \(sr
+is rounded by default to within half an
+.Em ulp ,
+and when the rounding error is exactly half an
+.Em ulp
+then the rounded value's least significant bit is zero.
+This kind of rounding is usually the best kind,
+sometimes provably so; for instance, for every
+.Li "x = 1.0, 2.0, 3.0, 4.0, ..., 2.0**52,
+we find
+.Li "(x/3.0)\(**3.0 == x
+and
+.Li "(x/10.0)\(**10.0 == x
+and so on
+despite the fact that both the quotients and the products
+have been rounded.  Only rounding like IEEE 754
+can do that.  But no single kind of rounding can be
+proved best for every circumstance, so IEEE 754
+provides rounding towards zero or towards
+.Li +Inf
+or towards
+.Li \-Inf
+at the programmer's option.
+.Pp
+IEEE 754 recognizes five kinds of floating-point
+.Em exceptions ,
+listed below in declining order of probable importance.
+.Pp
+.Bl -tag -compact -width Invalid\0Operation\0\0 -offset indent
+.It Exception
+Default Result
+.Pp
+.It Invalid\ Operation
+.Li NaN ,
+or false
+.It Overflow
+\(+-Inf
+.It Divide\ by\ Zero
+.Li \(+-Inf
+.It Underflow
+Gradual Underflow
+.It Inexact
+Rounded value
+.El
+.Pp
+NOTE:  An exception is not an error unless handled
+badly.  What makes a class of exceptions exceptional
+is that no single default response can be satisfactory
+in every instance.  On the other hand, if a default
+response will serve most instances satisfactorily,
+the unsatisfactory instances cannot justify aborting
+computation every time the exception occurs.
+.Pp
+For each kind of floating-point exception, IEEE 754
+provides a flag that is raised each time its exception
+is signaled, and stays raised until the program resets
+it.  Programs may test, save and restore a flag
+.Pq see Xr fpgetsticky 3 .
+Thus, IEEE 754 provides three ways by which programs
+may cope with exceptions for which the default result
+might be unsatisfactory:
+.Pp
+.Bl -enum -compact
+.It
+Test for a condition that might cause an exception
+later, and branch to avoid the exception.
+.It
+Test a flag to see whether an exception has occurred
+since the program last reset its flag.
+.It
+Test a result to see whether it is a value that only
+an exception could have produced.
+.El
+.Pp
+CAUTION: The only reliable ways to discover
+whether
+.Em underflow
+has occurred are to test whether
+products or quotients lie closer to zero than the
+underflow threshold, or to test the underflow
+flag.
+(Sums and differences cannot underflow in
+IEEE 754; if
+.Li "x \(!= y
+then
+.Li x\-y
+is correct to
+full precision and certainly nonzero regardless of
+how tiny it may be.)  Products and quotients that
+underflow gradually can lose accuracy gradually
+without vanishing, so comparing them with zero
+will not reveal the loss.
+Fortunately, if a gradually underflowed value is
+destined to be added to something bigger than the
+underflow threshold, as is almost always the case,
+digits lost to gradual underflow will not be missed
+because they would have been rounded off anyway.
+So gradual underflows are usually
+.Em provably
+ignorable.
+The same cannot be said of underflows flushed to 0.
+.Pp
+Other ways to cope with exceptions may be provided by IEEE 754
+compliant architectures.
+Most commonly, the floating point unit can cause a hardware fault,
+which the operating system can propagate to the program.
+On BSD/OS, various types of exceptions may be
+.Em unmasked
+so that the occurrence of an unmasked exception
+results in a
+.Dv SIGFPE
+signal being sent to the process
+.Pq see Xr sigaction 3 .
+Masking is controlled by the
+.Xr fpsetmask 3
+function.

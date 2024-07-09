@@ -1,0 +1,39 @@
+.\" Copyright (c) 1998 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI trbsetup.8,v 1.1 1998/09/01 17:39:57 geertj Exp
+.\"
+.Dd August 13, 1998
+.Dt TRBSETUP 8
+.Os
+.Sh NAME
+.Nm trbsetup
+.Nd download microcode to 3Com 3C359 TokenLink Velocity XL PC adapter
+.Sh SYNOPSIS
+.Nm trbsetup
+.Ar interface-name
+.Sh DESCRIPTION
+The
+.Nm trbsetup
+utility loads microcode into the 3Com 3C359 token ring adapter (driven by the
+.Xr trb 4
+driver). This must
+be done before the interface is configured up and need not be repeated
+until power is lost (although it does not hurt to load new microcode over
+old). Each
+.Nm trb
+adapter in the system must be loaded individually (typically from a script in
+.Pa /etc/rc.hardware
+). Adapter microcode can only be loaded when the adapter
+is down.
+The microcode image is built into the
+.Nm trbsetup
+binary.
+.Sh EXAMPLES
+.Dl "# trbsetup trb0
+.Sh SEE ALSO
+.Xr trb 4 ,
+.Xr ifconfig 8
+.Sh History
+The microcode is copyright 3Com corporation and is included by permission.
+

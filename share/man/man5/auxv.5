@@ -1,0 +1,95 @@
+.\"	BSDI auxv.5,v 2.1 1997/12/22 20:45:07 donn Exp
+.Dd December 21, 1997
+.Dt AUXV 5
+.Os
+.Sh NAME
+.Nm auxv
+.Nd "ELF auxiliary vector
+.Sh SYNOPSIS
+.Fd #include <sys/elf.h>
+.Sh DESCRIPTION
+When the system runs an ELF program
+.Pq see Xr elf 5 ,
+it puts some extra information on the stack.
+This information is called the
+.Em auxiliary vector .
+The elements of the auxiliary vector have type
+.Fa auxv_t :
+.Bd -literal -offset indent
+typedef struct {
+	int	a_type;
+	union {
+		long	a_val;
+		void	*a_ptr;
+		void	(*a_fcn)();
+	} a_un;
+} auxv_t;
+.Ed
+.Pp
+Each element in the vector has an
+.Fa a_type
+field from the list below.
+If a value is associated with the type,
+then the appropriate union member is initialized to that value.
+The final element in the vector must have type
+.Dv AT_NULL .
+.Pp
+The following element types are defined:
+.Bl -tag -width AT_PSSTRINGS\0
+.It Dv AT_BASE
+The base address of the interpreter
+(typically, the dynamic loader).
+.It Dv AT_ENTRY
+The entry point of the program;
+the address where the system or the interpreter should start
+executing instructions out of the program.
+.It Dv AT_EUID
+The effective UID of the program.
+(Linux extension.)
+.It Dv AT_EGID
+The effective GID of the program.
+(Linux extension.)
+.It Dv AT_EXECFD
+A file descriptor, open to the program's executable file.
+(Not currently used.)
+.It Dv AT_FLAGS
+Architecture-specific flags.
+.It Dv AT_GID
+The real GID of the program.
+(Linux extension.)
+.It Dv AT_IGNORE
+A placeholder; its value is ignored.
+.It Dv AT_NULL
+The terminating element; its value is ignored.
+.It Dv AT_PAGESZ
+The page size in bytes.
+.It Dv AT_PHDR
+The address of the program header table.
+This element allows an interpreter to locate
+the segments of a program that the system has loaded.
+See
+.Xr elf 5
+for a description of the ELF program header table.
+.It Dv AT_PHENT
+The size in bytes of a program header.
+.It Dv AT_PHNUM
+The number of entries in the program header table.
+.It Dv AT_PSSTRINGS
+The address of the
+.Fa ps_strings
+structure
+.Pq see Xr ps_strings 5 .
+The
+.Fa ps_strings
+structure provides the locations and sizes
+of the argument and environment vectors.
+(BSD/OS extension.)
+.It Dv AT_UID
+The real UID of the program.
+(Linux extension.)
+.El
+.Pp
+The auxiliary vector immediately follows the environment vector on the stack.
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr elf 5

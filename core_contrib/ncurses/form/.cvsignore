@@ -1,0 +1,4 @@
+Makefile
+libform.so*
+*.po
+*.do

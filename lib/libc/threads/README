@@ -1,0 +1,164 @@
+The threads system is built around a few fundamental subsystems
+with pthread facilities and other posix facilities layered atop them.
+The basic support modules handle:
+
+	Signal Management
+	Asynchronous, non-blocking I/O.
+	Timer management.
+	Thread scheduling and block/wakeup queueing.
+
+Signals:
+
+Upon initialization of the threads package the signal management
+code installs a generic signal handler for all signals for which
+a user defined signal catching function is defined.  All other
+signals are either being ignored or will stop, exit or coredump
+the process.  Delivery of signals are then managed in conjunction
+with the dispatcher.   The pthread kernel runs with signals unmasked.
+When a signal is delivered the state of the thread kernel (see
+Thread Scheduling below) is checked.  If the thread kernel is locked
+the signal is posted and will be handled when the current thread
+unlocks the kernel.  In this way the thread routines can control
+pre-emption to provide critical regions without constantly calling
+sigprocmask to mask signals.
+
+Note, when pthread-cancel is added:  Cancel is semantically somewhat
+like signal delivery.  In fact a number of other threads systems
+I looked at use the signal handling code to do alot of the pthread
+cancel work.  I modeled the signal handling code after these systems
+to some degree (specifically see Frank Mueller's pthreads library).
+Doing pthread_cancel could easily re-use alot of the signal code
+with some extra glue in the system call stubs defined as cancellation
+points.
+
+
+Non-blocking I/O:
+
+The user space thread implementation must create the illusion of
+parallelism.  Blocking I/O calls must be translated to non-blocking
+variants.  In the thread kernel this is managed by providing thread
+specific versions of those syscalls that block. The thread I/O
+subsystem maintains file flags and a queue per file descriptor.
+If a I/O call would block a bit is enabled in a bitstring managed
+by the library to indicate that that file descriptor is active for
+I/O and the thread is blocked.  The thread dispatcher will poll
+for I/O on all active descriptors and wakeup blocked threads when
+the I/O operation can proceed.  This model is fairly flexible but
+there are limitations.  Some file types simply cannot do non-blocking
+I/O.  In these cases the system call will block the process and
+all the threads.  This is incompatible with the pthreads standard
+but there simply isn't sufficient support at the kernel level to
+get around this.
+
+When kernel threads are available alot of the issues with blocking
+I/O get easier to deal with.  A thread doing a blocking I/O operation
+is bound to a kernel thread for the duration of the system call.
+If this exhausts all the available threads a new kernel thread is
+created to continue to run compute intensive thread code.  In
+essence you have a kernel thread for each blocking I/O operation
+plus one additional for compute intensive tasks.  This has interesting
+side effects.  You could pretty easily implement the Posix 1.b
+aio_xxx calls using this thread model.
+
+I also looked at kernel continuations and a callback when a threads 
+scheduling state changes.  This also looked promising.
+
+
+Timer Management:
+
+The thread kernel manages delivery of all signals for the process.
+Because of this its relatively straightforward to "steal" a signal
+for use by the library.  To provide timer management that complies
+with POSIX.1b (you must provide at least a CLOCK_REALTIME clock)
+I steal the ITIMER_REAL clock and use it to provide a variety
+of timer services for the threaded process.  The setitimer and
+getitimer functions have remapped threaded versions that return a
+virtual ITIMER_REAL when called.
+
+The new timers are used to provide scheduling timeout for SCHED_RR
+scheduled threads, an ITIMER_REAL interval timer (and in the future
+some number of POSIX interval timers) and general support for
+timeouts throughout the thread kernel.  A thread can block in any
+state with a timeout value associated with the blocking event.  In
+particular this is used for condition wait as well as an overloaded
+select which in turn is used by sleep and usleep, etc.  Other than
+requiring a managed SIGALARM interface the timer code is pretty
+much thread un-aware.  It may or may not be usefull stand-alone.
+
+As with scheduling, it would be a straightforward task to provide
+POSIX 1.b timer facilities using the multiplexed SIGALRM timer I
+coded for threads.  The bits to support CLOCK_REALTIME are already
+there.
+
+
+Thread Scheduling:
+
+The pthread scheduler support POSIX SCHED_RR and SCHED_FIFO scheduling
+classes.  Both are pre-emptive priority driven schedulers.  SCHED_RR
+adds a time quantum and hence a timer drven interrupt.  The pthread
+kernel is implemented as a monitor.  Entry into the monitor locks
+the kernel.  Signals that arrive while the kernel is locked are
+posted and handled on exit from the monitor.  If the a time quantum
+expires or the current thread prepares to block an event is posted
+that indicates that a reschedule is pending.  Exiting the monitor
+tests for this event and calls the dispatcher which does the
+reschedule.  A thread can force pre-emption by calling sched_yield()
+which simply enters the monitor, sets the pre-emption flag and
+exits the monitor which causes a reschedule to occur.
+
+Basically the thread kernel monitor forms a mechanism to disable
+pre-emption for a time.  On a single processor that is really enough
+to create critical sections.  An SMP environment will require
+additional locks (probably using spin-locks on data elements.)
+The universal signal handler will modify _thread_sig_blocked when
+a signal arrives. Access to _thread_sig_blocked must be write
+protected by disabling signals at the process level.  We do this
+by calling _thread_sig_block/unblock which sets the process signal
+mask accordingly.  This could probably me made more lightweight if
+the procmask was put in user space.  Something to keep in mind for
+the future.  Look closely at the code in thread_kern.c.  Its careful
+to minimize the need to mask signals.  Overall the scheduling
+mechanism can be remarkably lightweight for the normal case where
+no unusual events happen during a trip through the dispatcher.
+
+Kernel enter/exit is called around all user callable functions.  This 
+provides well defined pre-emption points within the library.  The low
+level modules (thread_aio.c, thread_sig.c, thread_timer.c, and 
+thread_kern.c) largely assume that pre-emption has been disabled.
+
+
+ISSUES:
+
+  The current implementation provides thread attributes for the user to
+specify stacksize and address.  We might not want this in the future if
+we are going to do kernel threads.  On many processors the most efficient
+way to locate thread specific data, errno, etc is by locating them at the
+base of the stack frame and algorithmically computing the base address.
+This usually requires that stack attributes are constant to make the 
+algorithm to do this practical.
+
+The I/O Polling mechanism is easily the weakest part of this implementation.
+A better mechanism to implement parallelism in conjunction with the kernel
+is desireable and much less error prone.
+
+
+IMPLEMENTATION NOTES:
+
+	Errno is saved/restored at context switch time.
+    	This maps nicely to LWP's down the road as they can have fixed 
+    	stacks where TLS is easy to get to and hence a easy way to save/restore
+    	the value.  In the current scheme we only HAVE one kernel thread so the
+    	global errno is enough. Careful with signal handlers, have to make
+	sure the signal is delivered within the correct thread context.
+
+
+INCLUDE FILES:
+
+ X  ./include/pthread.h
+	Definitions for pthread functions and structures.
+ X  ./include/sched.h
+	Definitions for scheduler attributes.
+ X  ./machine/sync.h
+	Added for Posix 1j Draft 5 spin locks.
+ X  ./sys/time.h
+	Added definitions for clockid_t and clock_xxx routines.

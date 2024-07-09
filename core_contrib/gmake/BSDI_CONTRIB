@@ -1,0 +1,23 @@
+Software Package:       
+	GNU make
+
+Release/Version:
+	3.80
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu:pub/gnu/make
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and bug-gnu-utils@prep.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+The only modification was the addition of the file "makefile"
+to do man page formatting provide the standard BSDI targets,
+and move the binaries from "make" to "gmake".
+

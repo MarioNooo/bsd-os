@@ -1,0 +1,72 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_vmmeter.3,v 2.1 1997/05/25 15:09:03 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_VMMETER 3
+.Os
+.Sh NAME
+.Nm kvm_vmmeter ,
+.Nm kvm_vmtotal
+.Nd return virtual memory statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/time.h>
+.Fd #include <sys/proc.h>
+.Fd #include <sys/sysctl.h>
+
+.Fd #include <vm/vm.h>
+
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.\" .Fa kvm_t *kd
+.br
+.Ft int
+.Fn kvm_vmmeter "kvm_t *kd" "struct vmmeter *vm"
+.Ft int
+.Fn kvm_vmtotal "kvm_t *kd" "struct vmtotal *vt"
+.Sh DESCRIPTION
+The
+.Fn kvm_vmmeter
+function fills in the
+.Va struct vmmeter
+referenced by
+.Fa vm .
+This structure contains various event counters and page
+state information about the virtual memory system of the
+kernel indicated by
+.Fa kd .
+.Pp
+The
+.Fn kvm_vmtotal
+function fills in the
+.Va struct vmtotal
+referenced by
+.Fa vt
+with system statistics of processes in various states and physical
+and virtual memory usage in pages.
+.Pp
+The 
+.Va struct vmmeter
+and
+.Va struct vmtotal
+structures are defined in 
+.Pa /usr/include/sys/vmmeter.h .
+.Sh RETURN VALUES
+.Fn kvm_vmmeter
+will return 0 on success and -1 on failure.
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3
+

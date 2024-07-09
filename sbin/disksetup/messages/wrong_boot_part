@@ -1,0 +1,6 @@
+Disksetup has determined that the BSD/OS disk label must be placed on
+on a BSD/OS FDISK partition which is not the same BSD/OS partition
+that contains the BSD/OS root filesystem.  No BSD/OS boot blocks will
+be written to this disk.
+
+Press <ENTER> to continue:

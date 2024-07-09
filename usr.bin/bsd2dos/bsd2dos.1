@@ -1,0 +1,30 @@
+.\" Copyright 1992 BSDI
+.Dd August 3, 1992
+.Dt BSD2DOS 1
+.Os
+.Sh NAME
+.Nm bsd2dos
+.Nd convert a UNIX file to a DOS file
+.Sh SYNOPSIS
+.Nm bsd2dos
+.Op Ar input Op Ar output
+.Sh DESCRIPTION
+The
+.Nm bsd2dos
+utility converts a UNIX text file into a DOS text file.
+This is done by adding ^M to the end of each line that lacks one.
+.Pp
+By default,
+.Nm bsd2dos
+reads from standard input and writes to standard output.
+If one argument is specified,
+.Nm bsd2dos
+reads from that file and writes to standard output.
+If two arguments are specified,
+.Nm bsd2dos
+reads from the file specified by the first argument, and writes to the
+file specified by the second argument.
+.Pp
+The
+.Nm bsd2dos
+utility exits 0 on success, and >0 if an error occurs.

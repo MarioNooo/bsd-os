@@ -1,0 +1,228 @@
+Software Package:       
+	bind
+
+Release/Version:
+	9.2.2-P3
+
+Retrieved from:
+	 ftp://ftp.isc.org/isc/bind9
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and bind-bugs@isc.org
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added the file "makefile" to do man page formatting and provide the
+standard BSDI targets.
+
+Modified configure/libtool.m4 to correctly support shared libs
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+lib/bind changes:
+
+We build libbind into libc instead of building it here
+Ran configure and modified port_before.h and port_after.h appropriately
+Added the KAME versions of getnameinfo/getaddrinfo
+
+Index: irs_data.c
+===================================================================
+RCS file: /master/core_contrib/bind/lib/bind/irs/irs_data.c,v
+retrieving revision 1.1
+diff -c -r1.1 irs_data.c
+*** irs_data.c	2003/06/06 22:56:12	1.1
+--- irs_data.c	2003/06/10 15:23:05
+***************
+*** 102,107 ****
+--- 102,115 ----
+  	memput(net_data, sizeof *net_data);
+  }
+  
++ #ifdef DO_PTHREADS
++ static pthread_once_t net_data_init_once_control = PTHREAD_ONCE_INIT;
++ static void
++ net_data_init_once(void) {
++ 	pthread_key_create(&key, net_data_destroy);
++ }
++ #endif
++ 
+  /* applications that need a specific config file other than
+   * _PATH_IRS_CONF should call net_data_init directly rather than letting
+   *   the various wrapper functions make the first call. - brister
+***************
+*** 109,137 ****
+  
+  struct net_data *
+  net_data_init(const char *conf_file) {
+! #ifdef	DO_PTHREADS
+! 	static pthread_mutex_t keylock = PTHREAD_MUTEX_INITIALIZER;
+! 	struct net_data *net_data;
+  
+! 	if (!once) {
+! 		pthread_mutex_lock(&keylock);
+! 		if (!once++)
+! 			pthread_key_create(&key, net_data_destroy);
+! 		pthread_mutex_unlock(&keylock);
+! 	}
+! 	net_data = pthread_getspecific(key);
+  #endif
+  
+! 	if (net_data == NULL) {
+! 		net_data = net_data_create(conf_file);
+! 		if (net_data == NULL)
+  			return (NULL);
+  #ifdef	DO_PTHREADS
+! 		pthread_setspecific(key, net_data);
+  #endif
+  	}
+  
+! 	return (net_data);
+  }
+  
+  struct net_data *
+--- 117,143 ----
+  
+  struct net_data *
+  net_data_init(const char *conf_file) {
+! 	struct net_data *ndp;
+  
+! #ifdef	DO_PTHREADS
+! 	pthread_once(&net_data_init_once_control, net_data_init_once);
+! 	ndp = pthread_getspecific(key);
+! #else
+! 	ndp = net_data;
+  #endif
+  
+! 	if (ndp == NULL) {
+! 		ndp = net_data_create(conf_file);
+! 		if (ndp == NULL)
+  			return (NULL);
+  #ifdef	DO_PTHREADS
+! 		pthread_setspecific(key, ndp);
+! #else
+! 		net_data = ndp;
+  #endif
+  	}
+  
+! 	return (ndp);
+  }
+  
+  struct net_data *
+***************
+*** 191,197 ****
+  void
+  __h_errno_set(struct __res_state *res, int err) {
+  
+! 	h_errno = res->res_h_errno = err;
+  }
+  
+  #endif /*__BIND_NOSTATIC*/
+--- 197,203 ----
+  void
+  __h_errno_set(struct __res_state *res, int err) {
+  
+! 	*__h_errno() = h_errno = res->res_h_errno = err;
+  }
+  
+  #endif /*__BIND_NOSTATIC*/
+
+Index: herror.c
+===================================================================
+RCS file: /master/core_contrib/bind/lib/bind/resolv/herror.c,v
+retrieving revision 1.1
+diff -c -r1.1 herror.c
+*** herror.c	2003/06/06 22:56:49	1.1
+--- herror.c	2003/06/10 15:24:26
+***************
+*** 71,76 ****
+--- 71,77 ----
+  #include "port_after.h"
+  #undef	h_errno
+  
++ #ifndef BSDI_LIBC
+  const char *h_errlist[] = {
+  	"Resolver Error 0 (no error)",
+  	"Unknown host",				/* 1 HOST_NOT_FOUND */
+***************
+*** 79,84 ****
+--- 80,89 ----
+  	"No address associated with name",	/* 4 NO_ADDRESS */
+  };
+  int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
++ #else
++ extern char *h_errlist[];
++ extern int  h_nerr;
++ #endif
+  
+  int	h_errno;
+  
+Index: netdb.h
+===================================================================
+RCS file: /master/core_contrib/bind/lib/bind/include/netdb.h,v
+retrieving revision 1.1
+diff -c -r1.1 netdb.h
+*** netdb.h	2003/06/06 22:56:04	1.1
+--- netdb.h	2003/06/10 15:13:42
+***************
+*** 368,374 ****
+  void		setservent __P((int));
+  int		getaddrinfo __P((const char *, const char *,
+  				 const struct addrinfo *, struct addrinfo **));
+! int		getnameinfo __P((const struct sockaddr *, size_t, char *,
+  				 size_t, char *, size_t, int));
+  void		freeaddrinfo __P((struct addrinfo *));
+  const char	*gai_strerror __P((int));
+--- 368,374 ----
+  void		setservent __P((int));
+  int		getaddrinfo __P((const char *, const char *,
+  				 const struct addrinfo *, struct addrinfo **));
+! int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,
+  				 size_t, char *, size_t, int));
+  void		freeaddrinfo __P((struct addrinfo *));
+  const char	*gai_strerror __P((int));
+
+Index: resolv.h
+===================================================================
+RCS file: /master/core_contrib/bind/lib/bind/include/resolv.h,v
+retrieving revision 1.1
+diff -c -r1.1 resolv.h
+*** resolv.h	2003/06/06 22:56:04	1.1
+--- resolv.h	2003/06/10 15:21:24
+***************
+*** 99,105 ****
+  #define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
+  struct __res_state; /* forward */
+  __BEGIN_DECLS
+! void __h_errno_set(struct __res_state *res, int err);
+  __END_DECLS
+  
+  /*
+--- 99,105 ----
+  #define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
+  struct __res_state; /* forward */
+  __BEGIN_DECLS
+! void __h_errno_set __P((struct __res_state *res, int err));
+  __END_DECLS
+  
+  /*
+***************
+*** 282,288 ****
+  /* Things involving an internal (static) resolver context. */
+  #ifdef _REENTRANT
+  __BEGIN_DECLS
+! extern struct __res_state *__res_state(void);
+  __END_DECLS
+  #define _res (*__res_state())
+  #else
+--- 282,288 ----
+  /* Things involving an internal (static) resolver context. */
+  #ifdef _REENTRANT
+  __BEGIN_DECLS
+! extern struct __res_state *__res_state __P((void));
+  __END_DECLS
+  #define _res (*__res_state())
+  #else

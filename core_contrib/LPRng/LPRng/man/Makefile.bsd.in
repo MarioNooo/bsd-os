@@ -1,0 +1,118 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1997 Patrick Powell, San Diego, California
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: UTILS/Makefile
+# PURPOSE: generate utilities
+# Makefile.in,v 3.7 1998/03/30 01:54:50 papowell Exp
+########################################################################## 
+
+# Manual pages installation Makefile.
+#
+SRC = @srcdir@
+VPATH=${SRC}
+MANINSTCMD =	@INSTALL_MAN@
+
+# change MANEXT to .gz or .Z if you use compressed manpages.
+MANEXT =
+
+## fix up prefix to be a make variable
+prefix = @prefix@
+MAN =		@mandir@
+SHELL =		@SHELL@
+
+# Install man pages in compressed form.
+# COMPRESS     = compression utility
+# COMPRESS_DIR = man compressed directory
+# COMPRESS_EXT = man extension for compressed files
+COMPRESS_DIR=
+COMPRESS_EXT=.gz
+COMPRESS=gzip -c
+
+all:
+
+.PHONY: all clean install ci install.zman
+
+CI=
+CO=-kv
+update:
+	- for i in *.[0-9]; do \
+		rcs -l ./$$i; \
+		ci $(CI) -l -mUpdate -t-Initial ./$$i; \
+	done;
+
+	- VER=`cat ${SRC}/../VERSION`; \
+	  for i in *.[0-9]; do \
+		sed -e "s/^.ds VE.*/.ds VE $$VER/" ./$$i >/tmp/$$i; \
+		cp /tmp/$$i ./$$i; \
+	done;
+
+	- for i in *.[0-9]; do \
+		ci $(CI) -mUpdate -t-Initial ./$$i; \
+		yes | co $(CO) ./$$i; \
+	done
+
+# Standard man install target.
+#
+install:
+	for suffix in 1 5 8 ; do \
+	  if [ ! -d $(INSTALL_PREFIX)$(MAN)/man$${suffix} ] ; then \
+		  echo ${SRC}/mkinstalldirs $(INSTALL_PREFIX)$(MAN)/man$${suffix}; \
+		  ${SRC}/mkinstalldirs $(INSTALL_PREFIX)$(MAN)/man$${suffix}; \
+	  fi; \
+	  for i in ${SRC}/*.$$suffix; do \
+		echo $(MANINSTCMD) $$i $(INSTALL_PREFIX)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+		$(MANINSTCMD) $$i $(INSTALL_PREFIX)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+	  done; \
+	done;
+install.zman:
+	for suffix in 1 5 8 ; do \
+	  if [ ! -d $(INSTALL_PREFIX)$(MAN)/man$${suffix} ] ; then \
+		  echo ${SRC}/mkinstalldirs $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR); \
+		  ${SRC}/mkinstalldirs $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR); \
+	  fi; \
+	  for i in ${SRC}/*.$$suffix; do \
+		 echo $(COMPRESS) $$i ; \
+		 $(COMPRESS) < $$i >_; \
+		 echo $(MANINSTCMD) _ $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR)/`basename $$i`$(COMPRESS_EXT) ; \
+		 $(MANINSTCMD) _ $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR)/`basename $$i`$(COMPRESS_EXT) ; \
+		 rm _; \
+	  done; \
+	done;
+
+uninstall:
+	for suffix in 1 5 8 ; do \
+	  for i in ${SRC}/*.$$suffix; do \
+		echo rm $(INSTALL_PREFIX)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+		rm $(INSTALL_PREFIX)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+	  done; \
+	done;
+uninstall.zman:
+	for suffix in 1 5 8 ; do \
+	  for i in ${SRC}/*.$$suffix; do \
+		 echo rm -f $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR)/`basename $$i`$(COMPRESS_EXT) ; \
+		 rm -f $(INSTALL_PREFIX)$(MAN)/man$${suffix}$(COMPRESS_DIR)/`basename $$i`$(COMPRESS_EXT) ; \
+	  done; \
+	done;
+	
+realclean mostlyclean distclean:: clean
+	rm -f Makefile
+
+clean::
+
+TAGS info:
+
+cifast ci:
+	if test ! -d RCS ; then mkdir RCS; fi;
+	checkin() { \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		yes |co $(CO) $$1; \
+	}; \
+	for i in *.[0-9] Makefile.in Makefile; do \
+		checkin $$i; \
+	done;

@@ -1,0 +1,76 @@
+.\"
+.\" Copyright (c) 1995, Migration Associates Corporation. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"
+.Dd September 26, 1995
+.Dt LOGIN_TOKEN 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_activ , login_crypto , login_snk
+.Nd provide ActivCard, CRYPTOCard and SNK-004 authentication
+.Sh SYNOPSIS
+.Nm login_token
+.Op Fl s Ar service
+.Op Fl v Ar name=value
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm login_token
+program implements a X9.9 token card challenge response authentication
+mechanism (see
+.Xr login.conf 5 ) .
+It must be invoked by one of the names:
+.Nm login_activ , login_crypto ,
+or
+.Nm login_snk .
+.Pp
+Available options are:
+.Bl -tag -width indent
+.It Fl s
+Specify the service.  Currently only
+.Li challenge ,
+.Li login ,
+and
+.Li response
+are supported.
+.It Fl v
+This option and its value are ignored.
+.El
+.Pp
+.Nm login_token
+will look up
+.Ar user
+in the the appropriate database file, depending on what name it was called as:
+.Pa /etc/activ.db ,
+.Pa /etc/crypto.db ,
+or
+.Pa /etc/snk.db .
+It will then will issue a challenge, and if the user
+is able to correctly respond (by using the appropriate token)
+the user will be authenticated.
+The
+.Ar class
+argument is unused.
+.Sh DIAGNOSTICS
+Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
+.Sh FILES
+.Bl -tag -width xetcxcrypto.db
+.It Pa /etc/activ.db
+data base of information for the ActivCard tokens.
+.It Pa /etc/crypto.db
+data base of information for the CRYPTOCard tokens.
+.It Pa /etc/snk.db
+data base of information for the SNK-004 tokens.
+.El
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr login.conf 5 ,
+.Xr tokenadm 8 ,
+.Xr tokenctl 8 ,
+.Xr tokeninit 8
+.Sh AUTHOR
+Jack Flory <jpf@mig.com>

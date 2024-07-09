@@ -1,0 +1,38 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.ntwo.ami,v 1.2 1995/12/01 22:55:06 cp Exp
+#
+
+#
+# BSDI $IDI
+# ntwo setup script to configure T1 csu for ami line coding
+
+unit=
+IFS=.
+for i in $0
+do
+    unit=$i
+done
+IFS=
+
+echo -n " ntwo$unit"
+n2setup -u $unit <<EOF
+
+active channels = all;
+clock source = external;
+line coding = ami;	
+rate multiplier = 56;
+framing mode = d4;
+equalizer gain limit = on;
+line build out = 0db;
+csu data polarity = invert;
+
+#
+# uncomment following to make driver silent about receive
+# errors such as parity and framing
+#
+#receive data errors = silent;		
+EOF

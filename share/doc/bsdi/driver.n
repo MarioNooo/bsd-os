@@ -1,0 +1,4906 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\" Copyright (c) 1993, 1995, 1996, 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI driver.n,v 2.13 2002/06/19 21:44:20 seebs Exp
+.\"
+.\"     Macro: bd
+.\"   Reflects the date when substantive changes were last made.
+.\"
+.de bd
+NO LONGER SUPPORTED - USE PROGRAMMER'S GUIDE
+..
+.\"
+.de c
+.nr _F \\n(.f
+.ul 0
+.ft CR
+.if \\n(.$ \&\\$1\f\\n(_F\\$2\\$3\\$4
+.rr _F
+..
+.de B3
+.sm BSD/OS \\$1 \\$2 \\$3 \\$4
+..
+.de Xr
+\&\f(CR\\$1\fP\^(\\$2)\\$3
+..
+.\" code start
+.de CS
+.lp
+.c
+.nf
+.in 3n
+.ta \w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u +\w'01234567'u
+..
+.\" code end
+.de CE
+.in
+.fi
+.lp
+..
+.na
+.ll 6.5i
+.he 'Device Drivers in BSD/OS''%'
+.hx
+.(b C
+.sv 0.5i
+.sz 14
+.b "Device Drivers and Autoconfiguration in BSD/OS"
+.sz 12
+.sp 0.5i
+Michael J. Karels
+Eric Varsanyi 
+Berkeley Software Design, Inc.
+\*(bd
+.sp 0.5i
+.)b
+.\" Warning
+.sh 1 WARNING
+This document is not maintained, and may be inaccurate.  Refer to the
+.i "Programmer's Guide"
+for more information.
+.sh 1 Introduction
+.pp
+This document provides background information for authors
+of device drivers for
+.B3 .
+It is not a tutorial on writing device drivers,
+but assumes general knowledge of drivers and the kernel environment.
+It also assumes that the reader is familiar with the information
+in the document,
+.i "Building Kernels on BSD/OS" .
+This document concentrates on the areas in which
+.B3
+is different from
+other systems, especially those in which it differs from earlier BSD systems.
+For an in depth treatment of kernel internals see
+"The Design and Implementation of the 4.4 BSD Operating System"
+(ISBN 0-201-54979-4).
+.pp
+The major differences in the present
+.B3
+driver environment
+(version 3.0 onwards)
+are in the areas of autoconfiguration.
+The system uses a portable autoconfiguration scheme developed
+by Chris Torek, then at Lawrence Berkeley Laboratory.
+.B3
+autoconfiguration is based
+on code done for 4.4BSD.
+This scheme uses a portable framework, data structures, and support
+functions in conjunction with bus- and device-specific functions
+to configure and support hardware on various possible I/O busses.
+The
+.B3
+system presently supports devices on the ISA, EISA, PCMCIA, and PCI busses.
+.pp
+The sections below summarize changes since
+.B3 1.1 ;
+these are followed by a summary of the new autoconfiguration
+scheme, its data structures, and the entry points supported
+by a typical driver.
+The next few sections describe support routines and other topics that are 
+of interest to driver writers.
+The remainder of the document presents
+a skeletal character device driver for a fictitious
+device as an example.
+The sources for real device drivers in the system serve as additional
+examples, and this guide provides assistance in understanding those drivers.
+Note that this information is subject to change in later releases.
+.sh 1 "Major change summary by release"
+.pp
+The sections below summarize the changes most likely to affect
+existing drivers and the development of new ones.
+.sh 2 "Changes between \s-2BSD/OS\s0 1.1 and \s-2BSD/OS\s0 2.0"
+.bu
+The kernel include file convention now uses angle brackets in most cases.
+Header files closely tied to the source file
+should still use the double quote syntax.
+For instance, in the
+.i xx
+driver, one might include
+.c <sys/param.h> ,
+.c <i386/isa/isa.h> ,
+and
+.c <machine/cpu.h> ,
+but also \f(CR"xxreg.h"\fP.
+.bu
+The
+.c bdevsw
+and
+.c cdevsw
+driver entries have been merged into a single
+.c devsw ,
+and the initialized structure for each device is now in the driver.
+The
+.i xx
+driver might have (for a tty device):
+.CS
+struct devsw xxsw = {
+	&xxcd,
+	xxopen, xxclose, xxread, xxwrite, xxioctl, xxselect, nommap,
+	nostrat, nodump, nopsize, 0,
+	xxstop
+};
+.CE
+Note that \*(lqno\*(rq functions are provided
+for unsupported entry points.
+Similar \*(lqnull\*(rq functions are provided for entry points
+that need do nothing.
+A complete list of these appears in
+.c <sys/conf.h> .
+.bu
+The
+.c cfdriver
+structure has a new field, the device type,
+between the attach function and the size of the device structure.
+Device types are defined in <sys/device.h>.
+The type
+.c DV_DULL
+can be used if no other type is appropriate.
+The device type must be inserted in the initialized
+.c xxcd
+structure.
+.bu
+Some drivers may fail to compile because of new function prototypes.
+In particular, the first parameter to the
+.c timeout
+function must be a pointer to a function taking a
+.c "void *"
+parameter.
+Also, entry points such as the device open and close
+now match against prototypes,
+and any missing parameters must be added; see
+.c <sys/conf.h>
+for the complete types.
+.sh 2 "Changes between \s-2BSD/OS\s0 2.0 and \s-2BSD/OS\s0 2.1"
+.pp
+.bu
+Bus types are now identified by a new bus type locator. This
+makes it easier to write drivers that support similar devices on different
+bus types.
+.bu
+Support routines for the PCI bus type have been added.
+.bu
+Support has been added for auto-init DMA, this feature is usually used by
+sound card drivers.
+.bu
+Network drivers using ARP now have a simple interface to the ARP layer.
+.bu
+Autoconfiguration printf's are now split into categories, drivers
+must call different functions to print various types of information 
+during attach.
+.bu
+A function has been added to allow device drivers to read locator overrides
+from the boot command line.
+.bu
+Support for sharing and synchronously polling ISA interrupts has been
+added.
+.bu
+It is now possible to register a system shutdown callback.
+.pp
+Most of the changes add functionality without modifying the
+interface seen by older drivers. There are, however, some changes that
+will affect most drivers being ported to 2.1:
+.bu
+Attach time printf()'s must be changed to 
+.c aprint_xxx()'s
+and some new
+aprint_xxx()'s may also be appropriate.
+See the section on driver console output below.
+.bu
+Use 
+.c irq_indextomask()
+instead of computing an IRQ bit mask directly from an interrupt
+index.
+.bu
+.c Isa_irqalloc()
+allocates IRQs in a different order than under 2.0.
+.bu
+Ethernet drivers must now use 
+.c ether_attach()
+instead of 
+.c if_attach(), and
+.c arp_ifinit() 
+instead of 
+.c arpwhohas() 
+when setting their IP address in the 
+.c SIOCIFADDR
+ioctl.
+.pp
+.sh 2 "Changes between \s-2BSD/OS\s0 2.1 and \s-2BSD/OS\s0 3.0"
+.pp
+.bu
+Kernel and user changes from the BSD 4.4 lite 2 release have been merged
+into the system. Changes affecting drivers will be noted below.
+.bu
+Gcc2 (2.7.2) is now the compiler used to build the kernel, it is more
+vigilant at checking for type mismatches and other such lint. It also
+is more highly optimized and has been know to optimize out
+operations involving undeclared volatile variables.
+.bu
+The command argument to a driver ioctl routine is now a u_long (instead of
+an int).
+.bu
+The SCSI framework has been rewritten; it now has support for different 
+types of SCSI transport (such as Fiber Channel), tagged queueing of
+disk requests, and non-blocking 'immediate' commands. All SCSI HBA
+drivers must be ported to fit into the new framework; this is not a
+major undertaking, in general lots of code that was once necessary in each
+HBA driver is now common (the HBA drivers get smaller and simpler).
+.bu
+Network driver media selection is now handled through a generic media
+selection layer (instead of using driver specific link flags). Drivers
+can continue to use link flags to set options but this will not fit in
+well with the new administrative interface available through ifconfig.
+.bu
+An interface and glue code has been defined to allow network drivers to
+use independent drivers to control devices on an MII (IEEE 802.3u) bus,
+this is currently used in 100mbit ethernet drivers.
+.bu
+It is now possible to wildcard configure PCI and EISA devices (ef* at pci?).
+In addition a new parent type has been added that is a composite of PCI and
+EISA, this allows one line in the configuration file to configure all PCI and
+EISA devices in the system supported by a given driver (ef* at any?). ISA
+devices may NOT be wildcarded. This feature doesn't require changes to
+the device driver, however the configuration file (files.xxx) must be
+updated to use the 'any?' parent.
+.bu
+A wraparound kernel trace buffer (and tools to print it) has been added to
+aid in debugging time sensitive or infrequent problems.
+.bu
+A dvprintf() convenience routine has been added that acts like printf()
+but prepends the full device name to the output.
+.bu
+A new PCI convenience routine has been added that performs most of the
+common tasks needed by a PCI probe routine.
+.bu
+It is no longer necessary to modify a kernel to halt in kgdb early during
+the boot sequence, there is now a Boot program command (-kdebug) that
+can cause the system to stop early in the boot sequence for debugging. This
+only applies to cross-system serial line debugging.
+.pp
+.sh 1 "Autoconfiguration Overview"
+.pp
+The autoconfiguration system uses data structures
+which are partly generic and partly hardware-dependent.
+The data structures utilize the object-oriented concept of derived
+classes, including multiple inheritance, although all code is written in C.
+.pp
+The general scheme of autoconfiguration is that the topology
+of a system's devices forms a directed graph with a single root.
+The root might be an imaginary location relative to the CPU
+or an internal bus, or it might be a genuine I/O bus.
+In
+.B3 ,
+the main bus is called an ISA bus, even though
+the bus might physically be EISA, PCI, PCMCIA, ISA, or a mixture of
+bus types. Devices 
+actually directly attached to the CPU also appear to be on the
+ISA bus.
+Devices are either controllers or terminal devices on the graph;
+a controller is any device to which other devices may attach.
+Examples of controllers include busses (none are presently implemented
+this way), SCSI host adapters,
+and traditional disk controllers.
+Other devices include disks, terminal multiplexors, etc.
+.pp
+The system is configured with a number of possible devices
+and associated addresses.
+The system locates the root node (
+.c isa0
+) to initiate autoconfiguration.
+Starting from there, the autoconfiguration code
+traverses the graph looking for the presence of devices
+that have been configured.
+Thus, autoconfiguration performs a depth-first traversal of the device
+attachments.
+.pp
+The attach function for a controller
+must initiate configuration
+of all possible child devices.
+There are two mechanisms available for this.
+The first (and generally more desirable)
+is for the controller to examine the hardware to find any devices present.
+This is possible on hardware with a small number of possible device
+locations and self-describing child devices; for example, a SCSI bus
+usually allows this style of configuration.
+As each device is found,
+.c config_found()
+is called with the identity of the parent and a parent-specific
+location parameter.
+If a configured device specification matches the device,
+it is then attached, otherwise a message is printed about finding
+a device that was not configured.
+.pp
+If a controller is unable to locate child devices by direct examination,
+its attach function can use
+.c config_search()
+to locate all possible child devices that have been configured into the system,
+and to probe each of them in turn.
+
+.sh 1 "Generic Driver and Autoconfiguration Data Structures"
+.pp
+Several machine-independent data structures
+exist;
+these data structures describe a device driver (the
+.c cfdriver
+structure),
+a possible device that has been configured at a particular location (a
+.c cfdata
+structure), and a device that has been located (a
+.c device
+structure).
+All three structures are defined in
+.c /sys/sys/device.h .
+The old
+.c bdevsw
+and
+.c cdevsw
+structures have been replaced by a combined
+.c devsw
+structure, which (where needed) is defined in the driver itself.
+It is important to understand the general functions of these data
+structures, although not all of the specifics are necessary
+to understand the development of a device driver.
+.pp
+The
+.c cfdriver
+structure describes a generic device driver, including its autoconfiguration
+entry points.
+It is also used as the base for finding all of the devices
+after autoconfiguration.
+One of these structures is statically allocated in each device driver
+using a conventional name that is assumed by the
+.c config
+program:
+the name of the device followed by
+.c cd
+(for the 
+.c xx
+device, the name is
+.c xxcd ).
+Note that some device driver source files support multiple types
+of device, for example a given type of disk controller and the disks
+that would be attached to such a controller;
+those drivers contain a
+.c cfdriver
+structure for each device type.
+.pp
+The present
+.c cfdriver
+structure is:
+.CS
+typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
+
+struct cfdriver {
+	void	**cd_devs;		/* devices found */
+	char	*cd_name;		/* device name */
+	cfmatch_t cd_match;		/* returns a match level */
+	void	(*cd_attach) __P((struct device *, struct device *, void *));
+	enum	devclass cd_class;	/* device classification */
+	size_t	cd_devsize;		/* size of dev data (for malloc) */
+	void	*cd_aux;		/* additional driver, if any */
+	int	cd_ndevs;		/* size of cd_devs array */
+};
+.CE
+.lp
+(Note that the function prototypes and surrounding parentheses
+are passed as a parameter to the macro
+.c __P ,
+which allows them to be hidden in a non-ANSI\-C environment.)
+.pp
+The two driver functions located via this structure are the
+.c cd_match
+function, which is analogous to the older device
+.c probe
+function,
+and the
+.c cd_attach
+function.
+During autoconfiguration, the
+.c cd_match
+function of a driver is called each time a possible device is to be probed.
+If the probe is successful in finding a device, a
+.c device
+structure is allocated (see below) and the
+.c cd_attach
+function is called to allow the device driver to complete initialization.
+Further details are given in the section on driver autoconfiguration functions.
+.pp
+The 
+.c cfdata
+structure is the next data structure of interest.
+One of these structures is created by the
+.c config
+program for each controller or device specification in a kernel
+configuration file.
+These structures are placed in an initialized array in
+.c ioconf.c
+in the compilation directory.
+They describe the device (type and unit number), the parent device,
+and the location of the device in machine- and parent-specific units.
+The present
+.c cfdata
+structure is:
+.CS
+struct cfdata {
+	struct	cfdriver *cf_driver;	/* config driver */
+	short	cf_unit;		/* unit number */
+	short	cf_fstate;		/* finding state (below) */
+	int	*cf_loc;		/* locators (machine dependent) */
+	int	cf_flags;		/* flags from config */
+	short	*cf_parents;		/* potential parents */
+	void	(**cf_ivstubs)();	/* config-generated vectors, if any */
+};
+#define FSTATE_NOTFOUND	0	/* has not been found */
+#define	FSTATE_FOUND	1	/* has been found */
+#define	FSTATE_STAR	2	/* duplicable leaf (unimplemented) */
+.CE
+.lp
+The
+.c cf_loc
+field points at an array of integers containing the addressing
+information for the device, the nature of which is specific
+to the machine and bus or controller type.
+Note that the same device (driver and unit) may be configured multiple
+times to specify alternate locations for the device.
+The
+.c cf_parents
+value points to an array of indices into the
+.c cfdata
+array, which is the list of possible parent devices to which this device might
+attach.
+.pp
+The
+.c devsw
+structure gives the entry points (function pointers)
+for block and character devices.
+If a device will have a
+.c /dev
+entry, the driver must provide this structure,
+and the
+.c ioconf.c.i386
+template file must be modified to provide a pointer to it as needed.
+The system will find the driver's open, close, and other routines
+through this pointer.
+By convention, the name of this structure is the name of the device
+followed by
+.c sw
+(for the 
+.c xx
+device, the name is
+.c xxsw ).
+There is normally only one such structure per device,\(dg
+although there are some special cases, such as ptys.
+.(f
+\(dgDevices that provide both block and character interfaces
+now use a single
+.c devsw
+structure.
+All devices are considered valid character devices,
+but only those devices that provide a
+.i strategy
+routine can be opened as a block device.
+.)f
+.pp
+The
+.c device
+structure is the minimal data structure to describe a device that has
+been found during autoconfiguration.
+It is dynamically allocated when the device is found and before
+it is attached.
+Most drivers require additional per-device information, and it is desirable
+that all of this storage be allocated dynamically.
+Thus, the
+.c cfdriver
+structure contains a field to indicate the amount of storage needed
+for each device, and the autoconfiguration attach function allocates
+space for the device structure and additional driver data.
+By convention, the driver's data structure is known as a
+.c softc
+structure
+(e.g.
+.c xx_softc
+for the
+.c xx
+driver);
+this structure must begin with a
+.c device
+structure.
+.ns
+.CS
+struct xx_softc {
+	struct	device sc_dev;		/* base device, must be first */
+
+	int	sc_base;		/* I/O port base */
+	int	sc_membase;		/* kernel address of device memory */
+
+	/* additional private driver storage */
+};
+.CE
+.pp
+The autoconfiguration code allocates an array of pointers to the device
+structures for each driver;
+this array is found via the
+.c cd_devs
+pointer in the
+.c cfdriver
+structure, and the number of elements in the array is given by
+.c cd_ndevs .
+In this manner, most of the data structures that depend on the number
+of devices located are allocated dynamically by the generic autoconfiguration
+code. The minor number is usually used as an index into the
+.c cd_devs
+array to find the
+.c softc
+structure.
+.lp
+The present
+.c device
+structure is:
+.CS
+enum devclass { DV_DULL, DV_CPU, DV_DISK, DV_IFNET, DV_TAPE, DV_TTY,
+DV_CLK, DV_COPROC, DV_SLOWDISK };
+
+#define DV_NET  DV_IFNET        	/* BSDI compatibility */
+
+struct device {
+	enum	devclass dv_class;	/* this device's classification */
+	struct	device *dv_next;	/* next in list of all */
+	struct	cfdata *dv_cfdata;	/* config data that found us */
+	int	dv_unit;		/* device unit number */
+	int	dv_flags;		/* flags (copied from config) */
+	char	dv_xname[16];		/* external name (name + unit) */
+	struct	device *dv_parent;	/* pointer to parent device */
+};
+.CE
+Some generic device classes provide a class-specific data structure
+derived from the
+.c device
+structure;
+for example, a disk device is described by the 
+.c dkdevice
+structure, which includes an initial
+.c device
+structure.
+There are also devices which are intermediate in their level of description,
+which help describe hardware with common features.
+Thus there is a
+.c "struct wd_softc
+which describes an individual PC hard disk, and it is based on a
+.c "struct dkdevice
+which describes disks in general, and this is in turn based on
+the generic device type.
+By virtue of inheritance from the generic device,
+all devices have a common way
+of representing their device name, their logical device number
+and other parameters.
+For example, an IDE hard disk is described by an instance of a
+.c "struct wd_softc"
+which might have the name
+.c wd1 .
+The parent of this device would be a
+.c "struct wdc_softc"
+that describes the IDE interface on the ISA bus
+and might be named
+.c wdc0 .
+The parent of the latter device is the root device,
+.c isa0 .
+These are some examples of inheritance in the new device scheme,
+demonstrating the object-oriented data structures.
+Examples of multiple inheritance will be shown below.
+.pp
+For performance tuning the system counts various events
+such as disk transactions.
+In addition to various specific counters,
+the system provides a generic \*(lqevent counter\*(rq structure:
+.CS
+struct evcnt {
+	struct	evcnt *ev_next;		/* linked list */
+	struct	device *ev_dev;		/* associated device */
+	int	ev_count;		/* how many have occurred */
+	char	ev_name[8];		/* what to call them (systat display) */
+};
+.CE
+Any number of counters may be included in a device's
+.c xx_softc
+structure, but it is best to count only those events that would be interesting
+to someone tuning system performance.
+.sh 1 "ISA Data Structures"
+.pp
+In addition to the machine-independent data structures,
+there are several ISA architecture specific data structures.
+These are defined in
+.c /sys/i386/isa/isavar.h .
+.pp
+The first ISA-specific information is the content and interpretation
+of the locators built by
+.c config
+and referenced via the
+.c cfdata
+structure.
+For ISA devices, the locators contain:
+the I/O port base, the number of ports (initially zero), the I/O memory base
+and size, the IRQ value (usually unspecified, IRQUNK), the DMA channel
+(DRQ, usually DRQNONE), and the physical bus type (ISA, PCI, EISA, PCMCIA).
+The value IRQNONE indicates that no IRQ is used, and is not the same as IRQUNK.
+The value DRQNONE indicates that no DRQ is used.
+Only the bus type is always specified,
+any or all of the other values may be unspecified if they are unused
+or if they are determined dynamically.
+.pp
+The bus type field is filled
+in by
+.c config
+based on the parent bus type listed. This is a trick used in the configuration
+language,
+the ISA, PCI, EISA, or PCMCIA physical busses are actually descendants
+of the logical ISA bus root node.
+.pp
+Most drivers see the configuration  information in a different form, the
+.c isa_attach_args
+structure; this is passed as a parameter to ISA device probe and attach
+functions:
+.CS
+struct isa_attach_args {
+	u_short	ia_iobase;		/* base i/o address */
+	u_short	ia_iosize;		/* span of ports used */
+	int	ia_irq;			/* interrupt request */
+	u_short	ia_drq;			/* DMA request */
+	caddr_t ia_maddr;		/* physical i/o mem addr */
+	u_int	ia_msize;		/* size of i/o memory */
+	int	ia_bustype;		/* specific bus type */
+	void	*ia_aux;		/* driver specific */
+};
+.CE
+.pp
+The
+.c isadev
+structure is also used for each ISA device.
+This structure could also have been derived from the generic
+.c device
+structure/class, but that would have made things difficult
+for ISA devices that were also members of a functional device class
+such as disk devices or tty devices.
+This is an example of multiple inheritance (multiple inheritance
+with virtual base classes).
+Here, a device class that inherits from both a functional class
+and the ISA device class would use a functional class containing a
+.c device
+structure; thus, the ISA device class contains a pointer to the
+.c device
+structure which is external to it, possibly in the data structure
+for another base class.
+The
+.c isadev
+structure is thus:
+.CS
+struct isadev {
+	struct  device *id_dev;		/* back pointer to generic */
+	struct	isadev *id_bchain;	/* forward link in bus chain */	
+};
+.CE
+.pp
+The ISA device layer handles interrupts for devices,
+although not all devices use interrupts.
+The structure used by an ISA device that uses interrupts
+is the
+.c intrhand
+structure. Interrupt handling is described in detail in a later
+section.
+.CS
+struct intrhand {
+	int	(*ih_fun)();
+	void	*ih_arg;
+	u_long	ih_count;
+	struct	intrhand *ih_next;
+};
+.CE
+.sh 1 "Probing on the different physical bus types"
+.pp
+There are several physical bus types supported by
+.B3
+: ISA, EISA, PCMCIA\(dd
+.(f
+\(ddPCMCIA issues are not covered in this document.
+.)f
+and PCI.
+In the configuration file potential devices are
+declared as children of various root bus nodes:
+.CS
+ef0	at eisa?
+de0	at pci?
+te0	at isa? port 0x280 iomem 0xd8000
+.CE
+.pp
+Although the syntax suggests that there are root nodes for the various
+bus types, devices on these busses are all actually descendents of
+the
+.c isa
+root node. The above bus types share ISA resources to some extent
+- IRQs for example - so they are grouped under the single ISA root
+node. This syntax is used in the configuration file for readability.
+.pp
+The new bus type
+.c any
+will find PCI and EISA devices. ISA devices must still be explicitly
+declared due to the large number of locators required.
+.pp
+The following describes the use of the various ISA locators and
+outlines the probe process for each of the
+physical bus types. A probe routine ultimately returns 0 if
+no device has been found, or 1 if a device has been found. If the
+device is found, the attach routine is called with the
+.c isa_attach_args
+structure that has been filled in by the probe routine.
+.sh 2 "ISA bus"
+.pp
+This bus type has little to no self describing features.\(sc
+.(f
+\(scAlthough this has changed somewhat with the introduction of
+ISA Plug-and-Play.
+.B3 3.0
+does not presently support ISA Plug-and-Play functionality.
+.)f
+The locator information in configuration file must 
+be specific enough for the driver to locate the hardware and configure it.
+This usually means that at least the base I/O port address must be specified
+in the configuration file.
+.pp
+The probe routine is called with whatever information has been supplied in
+the configuration file; given this information it must verify the device
+is present and discover any additional resources (such as shared memory
+or IRQs) that were not given in the configuration file.
+.pp
+There are 3 categories the locators (
+.c ia_xxx
+) can fall into,
+these determine if they are required or optional in the configuration file:
+.ip "Required to locate the device"
+A locator that must be supplied to the driver to find and configure the
+device is required.
+The
+.c ia_iobase
+locator is usually in this category as the I/O base address is generally
+needed for the driver to begin communicating with the 
+device. In some cases the shared memory address (
+.c ia_maddr
+) is used for this function. Some devices (such as
+.c ef
+) are discovered through a fixed I/O port and none of the locators
+are required for this function.
+
+.ip "Required to configure the device"
+These are parameters that are needed either to configure the device or tell the
+driver how the device is configured.
+The shared memory address (
+.c ia_maddr
+) and DMA channel fields usually fall into this category (for devices
+that use shared memory or DMA channels). In the case of shared memory
+once the device is located it must be programmed with its shared memory
+address. In some cases this is set with jumpers or dip switches and
+.c ia_maddr
+serves to tell the driver where to find it; in other cases the driver
+uses
+.c ia_maddr
+to tell the device where to put its shared memory.
+
+.ip "Optionally used to modify configuration of the device"
+These locators are put in the configuration to change some default
+behavior.
+The
+.c ia_msize
+locator
+sometimes falls into this category; supplying this allows one to vary
+the amount of shared memory used by a device that can support different
+shared memory sizes.
+.pp
+The
+.c ia_irq
+locator can fall into either of the latter two categories. If
+the IRQ number is hard coded into the device (usually with a jumper setting),
+either the configuration file specifies which IRQ is to be used or
+.c isa_discoverintr()
+is used to discover the IRQ number.
+For devices that can be told which IRQ to use (usually one of
+a small subset of the available IRQs), the
+.c isa_irqalloc()
+function can be called to allocate an IRQ acceptable to the
+device. It is usually left to the attach routine to actually program
+the device to use the discovered IRQ. In any case the
+.c ia_irq
+field must be set by the probe routine if it returns with
+a successful match. Note that
+.c isa_irqalloc()
+warns of IRQs which are in conflict.
+.pp
+The autoconfiguration
+routines perform consistency checks on the values returned from the
+driver probe routines.
+One of these checks looks for overlapping memory ranges. It is
+possible, however, for multiple instances of the same type of board to
+share memory ranges. In these cases
+the driver may override the memory range check by ORing in the
+.c IOM_SHARE
+bit into
+.c ia_msize
+to indicate that it is OK for multiple boards of the same type to share
+a memory range.
+.pp
+The locator rules given above are not hard and fast rules; the
+locators required by and used by a given driver vary depending on the
+device. This is flexible but also
+sometimes makes it difficult to properly configure a machine full of ISA
+cards with different requirements and capabilities. This also places
+the burden on the device driver to handle many potentially different
+configuration scenarios for a single device.
+.lp
+Given the
+.c isa_attach_args
+locators, the probe routine for an ISA device must:
+.bu
+Verify that the device exists and the driver can support it.
+.bu
+Discover the resources needed to operate the device and possibly
+program the device with these resources (or discover the resources
+needed from the device itself and verify they are available).
+.bu
+Allocate any dynamically allocated resources
+(presently only IRQs
+fall into this category).
+.bu
+Fill in (in most cases) the
+.c ia_iosize
+and
+.c ia_msize
+fields so that that system can perform resource conflict checks after
+the probe routine returns. Frequently these fields are filled in
+with constants.
+.pp
+See the example driver at the end of this document for an example of
+an ISA probe routine.
+.sh 2 "PCI bus"
+.pp
+Devices on the PCI bus are usually completely self describing. The 
+configuration file rarely specifies any information other than the
+fact the device exists and is on the PCI bus.
+.pp
+The system BIOS allocates I/O ports and memory areas for PCI
+devices at boot time. PCI devices contain configuration registers
+that describe to the BIOS (and the device driver) the resources
+needed. The probe routine reads the configuration
+registers set up by the BIOS to determine where the device is
+configured. Even though the
+BIOS has already insured that there
+will be no memory or I/O port conflicts, the
+.c ia_iosize
+and
+.c ia_msize
+fields must be set.
+.pp
+Since the probe routine has no details on the location of
+the device it must first locate a device
+it can control; the
+.c pci_scan()
+routine is used for this purpose.
+.c Pci_scan()
+is called with a pointer to a match function and returns a pointer
+to a
+.c pci_devaddr_t
+structure if a PCI device that can be handled by this driver was found.
+The match function is called for each unconfigured physical PCI device
+known to the system and is passed a pointer to a
+.c pci_devaddr_t
+structure that contains information needed to access the configuration
+registers of the device being inspected. The match function can call
+.c pci_inl(),
+.c pci_inw(),
+and
+.c pci_inb()
+to read the configuration registers of the device under scrutiny. In most
+cases the vendor ID and device ID fields are retrieved and compared to
+constants (supplied by the device manufacturer) to determine if
+the device is supported by the driver.
+.pp
+If the device uses an interrupt request line the PCI I_LINE register
+must be read from the card to determine if the BIOS assigned an interrupt
+to it. It is not appropriate to use a device that requires an
+interrupt line if the BIOS has not allocated an interrupt for it.
+If the device passes these checks, the match routine returns a 1.
+If the device cannot be operated by the driver, the match routine
+returns a 0.
+.pp
+The autoconfiguration
+routines perform consistency checks on the values returned from the
+driver probe routines.
+One of these checks looks for overlapping IRQs.
+It is possible, however, for the PCI bus to allow
+multiple instances of the same type of board to
+share IRQs.
+In these cases
+the driver may override the IRQ overlap check by ORing in the
+.c IRQSHARE
+bit into
+.c ia_irq .
+.pp
+.c Pci_scan()
+returns a pointer to a
+.c pci_devaddr_t
+that corresponds to a device accepted by the match routine (or a NULL if
+no devices qualified). 
+.pp
+Using the pointer returned by
+.c pci_scan()
+the probe routine calls
+.c pci_getres()
+to read the configuration from the device. If desired,
+.c pci_getres()
+can also fill in the
+.c isa_attach_args
+structure; this structure will be passed to the attach routine and can
+be used to set up the 
+.c softc
+and other driver data structures.
+.c Pci_getres()
+can also map memory regions found into kernel virtual space. These
+values are returned in the
+.c pci_devres_t
+structure.
+.pp
+.c Pci_scan()
+will not find a device that has already been accepted by a match routine;
+this allows multiple devices of the same type to be used.
+.lp
+Below is a skeletal PCI probe function:
+.CS
+static int
+xxxprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	pci_devaddr_t *pa;
+	pci_devres_t res;
+
+	if ((pa = pci_scan(xxxmatch)) == NULL)
+		return (0);
+
+	/* read device configuration and fill in isa_attach_args */
+	pci_getres(pa, &res, 1, ia);
+
+	/* 
+	 * if desired, additional checking on values read from the
+	 * device can be performed here
+	 */
+	if (ia->ia_maddr == 0)
+		return(0);
+
+	/* save the kernel virtual address of the memory space because
+	   attach() might do something useful with it */
+	ia->ia_aux = res.pci_vaddr;
+
+	return (1);
+}
+.CE
+.pp
+.CS
+static int
+xxxmatch(pa)
+	pci_devaddr_t *pa;
+{
+	u_short vendor;
+	u_short dev;
+	u_char line;
+
+	vendor = pci_inw(pa, PCI_VENDOR_ID);
+	if (vendor != XXX_VENDOR_ID)
+		return (0);
+
+	dev = pci_inw(pa, PCI_DEVICE_ID);
+	if (dev != XXX_DEVICE_ID)
+		return (0);
+
+	line = pci_inb(pa, PCI_I_LINE);
+	if (!PCI_I_LINE_VALID(line))	/* no interrupt assigned by BIOS */
+		return (0);
+
+	return (1);
+}
+.CE
+.pp
+
+.sh 2 "EISA bus"
+.pp
+EISA devices lie between ISA and PCI in their configurability. Each
+EISA slot is hardwired to a range of I/O addresses so there is
+never a problem with I/O port conflicts.
+I/O memory
+regions, IRQ addresses, and other resources are allocated by a
+configuration program (the EISA configuration utility) that must be
+run whenever an EISA device is removed or installed in the system.
+This utility stores configuration information in non-volatile memory
+on the motherboard.
+.pp
+There is presently no way to read
+these extended configuration settings from NVRAM so any parameters
+other than the I/O port base must be dealt with in the same manner as 
+with devices on a regular ISA bus. One slight advantage of EISA over
+ISA in configurability is that EISA devices are generally
+programmed by the device driver and do not use jumpers or switches
+to manually set up resources.
+.pp
+There is a standard way to ask a device in a given slot for its (unique)
+ID string. This is used by an EISA driver probe routine to find a slot
+that contains a device the driver can operate.
+.pp
+An EISA probe routine should first scan for any slots
+containing cards with IDs that are recognized by the driver. IDs are
+ASCII strings assigned by the device manufacturer.
+The
+.c cd_aux
+field of the
+.c cfdriver
+structure for an EISA device driver points to an array of character
+pointers. The last element in this array must be a NULL pointer.
+Each element in the array must point at a NULL terminated ASCII
+string that is an EISA device ID the driver can handle. In many
+cases there will only be 1 element in this array. For example:
+.CS
+static char *xxx_ids[] = {
+        "DBI0201",
+        0
+};
+
+struct cfdriver xxxcd = {
+    NULL, "xxx", xxxprobe, xxxattach, DV_DULL, sizeof(xxx_softc_t), xxx_ids
+};
+.CE
+.pp
+The
+.c eisa_match()
+function is called with the pointers to the
+.c cfdata
+and
+.c isa_attach_args
+structures passed in to the probe routine.
+If a device with an ID matching any of the IDs in the id list is found 
+in an unallocated slot, the slot number is returned. The slot number
+is then used to determine the base I/O port address for the card and
+to mark the slot used. Once a slot is allocated,
+.c eisa_match()
+will not return that slot again.
+.lp
+Below is a skeletal EISA probe routine:
+.CS
+static int
+xxxprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
+	int slot;
+
+	if ((slot = eisa_match(cf, ia)) != 0) {
+		ia->ia_iobase = slot << 12;
+		ia->ia_iosize = NPORTS_USED_BY_THIS_DEVICE;
+		eisa_slotalloc(slot);
+	} else
+		return (0);
+
+	allocate/check IRQ
+	program device with ia_maddr
+	set ia_msize if appropriate
+
+	return (1);
+}
+.CE
+.sh 2 "Device drivers supporting multiple bus types"
+.pp
+The
+.c ia_bustype
+field in the
+.c isa_attach_args
+structure contains the type of physical bus the system is expecting to find
+the device on. In many cases a device is only available on one
+bus type and it is not possible to declare the device on more than
+one bus in the configuration file. The exception to this is the bus
+type
+.c any .
+For devices which are configured for bus type
+.c any
+in the configuration file the probe routine will be called with ia_bustype
+set to
+.c BUS_PCI
+and then again called with ia_bustype set to
+.c BUS_EISA
+if both buses are found to exist in the system.
+.pp
+Devices that are more or less identical but are built in different
+versions for different bus types may be supported by a single driver
+by building a probe routine that does a probe appropriate for the
+bus type being probed. Frequently a driver such as this will
+be identical for all the supported device types except for the
+probe code.
+.lp
+Below is a skeletal probe routine for a driver that supports devices on
+the ISA, PCI, and EISA busses:
+.CS
+int
+xxxprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+        struct isa_attach_args *ia = (struct isa_attach_args *)aux;
+	int rc;
+
+	switch (ia->ia_bustype) {
+	case BUS_PCI:
+		rc = xxx_pci_probe(parent, cf, ia);
+		break;
+	case BUS_EISA:
+		rc = xxx_eisa_probe(parent, cf, ia);
+		break;
+	default:
+		rc = xxx_isa_probe(parent, cf, ia);
+		break;
+	}
+	return (rc);
+}
+.CE
+.pp
+The
+.c xxx_ttt_probe()
+routines are as described in previous sections.
+.sh 1 "Interrupts"
+.pp
+For the discussion below it is worth pointing out the difference between
+an interrupt mask and an interrupt index. An interrupt mask is a value
+that represents one or more interrupts via a bit vector. The bits are
+defined in
+.c <i386/isa/icu.h>
+(for example IRQ15 is 0x8000). An IRQ index defines only a single
+IRQ: it is a number in the range 0 to 15. To convert from an
+index to a mask a function called
+.c irq_indextomask()
+is called. To convert from a mask to an index the 
+.c ffs()
+function can be used (see the example driver below) to find the
+first IRQ in the bit vector.
+.pp
+The logical ISA bus (PC) has 16 interrupt lines called IRQs (interrupt
+requests). Some IRQ lines are dedicated to motherboard devices and are
+unavailable for add-in devices. Typically when a device needs service
+it asserts (drives low) one of these interrupt lines; this can interrupt
+the processor (if the interrupt is not blocked) and cause the operating
+system to call
+the interrupt service routine for the device driver. The interrupt
+routine must do whatever is needed to service the device and cause it
+to release the IRQ.
+.pp
+To set up the above scenario several steps must be taken:
+.bu
+The device must be configured to use a particular interrupt line (not usually 
+shared with any other device).
+.bu
+The device driver must be told which IRQ to use.
+.bu
+The device driver must notify 
+.B3
+that it wishes to be called when the device interrupts. It must also
+tell
+.B3 
+what class the device is in for interrupt blocking purposes.
+.pp
+The method used to configure a device to use a particular IRQ is
+device dependent; a jumper or dip switch setting may be required, or
+the driver may program the device with the IRQ number.
+.pp
+The driver can discover which interrupt the device is configured to use
+(if it does not know) via the
+.c isa_discoverintr()
+function. It is passed a pointer to a function (supplied by the
+driver) that will cause the device to interrupt (safely). 
+.c Isa_discoverintr()
+sets up
+the interrupt controller to wait for an interrupt on any free IRQ,
+calls the supplied function, and waits for an interrupt. If no interrupt
+is detected a 0 is returned; otherwise an IRQ mask is returned after
+a timeout period.
+.pp
+If the device can be programmed with one of a number of interrupts, an
+interrupt mask containing all the interrupts the device can be programmed
+for should be set up and the
+.c isa_irqalloc()
+function called. This will choose one of the acceptable interrupts (from the
+ones not already allocated) and return a mask containing only that
+interrupt. If none of the requested interrupts are available a
+0 is returned. Free IRQs are scanned for in the following order:
+11, 10, 9, 5, 7, 4, 3, 15, 14, 6, 12, 8, 13, 1.
+.pp
+Once the IRQ number is decided on, the system must be notified. This is
+done by filling in a 
+.c "struct intrhand"
+with a pointer to the interrupt routine and an opaque (to the system)
+pointer that the interrupt handler function will be called
+with (this value is usually a pointer to the 
+.c softc
+for the device).
+The
+.c intr_establish()
+function is called with an interrupt mask (containing a single
+IRQ to attach), a pointer to the 
+.c intrhand
+structure (which must not be freed) and a device class. The device class
+is used to build interrupt blocking masks. Interrupts are blocked for
+a class when an interrupt handler is running. The special class
+DV_DULL blocks the interrupt for the interrupting device only but has
+no
+.c splXXX()
+function to allow the driver to block interrupts.
+Interrupts may also be blocked by the driver with
+the following functions:
+.TS
+center, box;
+c s
+c | c
+l | l.
+Interrupt blocking functions
+=
+Class	Spl
+_
+DV_DISK	splbio()
+DV_TAPE	splbio()
+DV_TTY	spltty()
+DV_NET	splimp()
+DV_CLK	splhigh()
+.TE
+.pp
+These functions return an integer that must be used to re-enable
+interrupts (if they were enabled to start with) via the
+.c splx()
+function.
+.pp
+The function
+.c splraise()
+may be used to block interrupts for the particular interrupt associated
+with this driver but not for the entire class.
+.pp
+It must be noted that beginning in
+.B3 2.1
+the
+.c intr_establish()
+function must be called from the attach routine. The blocking masks are
+computed once (at the end of the autoconfiguration sequence) so
+subsequent calls to
+.c intr_establish()
+will connect the interrupt handler, but there will be no way to block
+interrupts for the device.
+.pp
+Interrupts may be shared
+if the underlying hardware supports level triggered interrupts (as 
+with PCI). Multiple interrupt handlers may be installed on a single
+IRQ if the IRQSHARE bit is set in the mask passed to
+.c intr_establish()
+for all devices that wish to share the interrupt. When an interrupt is
+shared each interrupt handler is called when the shared interrupt is
+detected. The interrupt handler determines if the device needs
+service; if not, it must return a 0 (this is also true of non-shared
+interrupt handlers). If none of the interrupt handlers take ownership
+of the interrupt an error message is printed on the console.
+.pp
+For some drivers (notably the SCSI immediate command entry point) 
+it is sometimes necessary
+to poll for an interrupt while it is blocked. The
+.c icu_read_ir()
+function returns the current state of all IRQ lines. It must
+not be called while interrupts are blocked with
+.c splmem_fast().
+The return code is an interrupt mask with each bit representing an
+asserted interrupt line. If a device releases a level triggered interrupt
+line the corresponding bit will return to 0. In general polling for interrupts
+is not recommended for performance reasons.
+.sh 1 "Direct memory access"
+.pp
+There are two types of DMA in common use on the ISA architecture: slave, and
+bus master.
+Slave DMA uses the DMA controller built into the motherboard and special signal
+lines on the ISA bus. Bus master DMA is controlled entirely by the I/O
+device; it essentially disconnects the CPU from memory and directly transfers
+the data to or from memory.
+.sh 2 "Slave DMA"
+.pp
+With slave DMA a controller on the motherboard is set up to point
+to an area of physical memory and given a length and direction. The device
+issues a slave DMA cycle each time it wants to transfer data. There
+are several address/count pairs (channels) in the DMA controller and
+devices can usually be set up to use a particular channel. As long
+as they use different channels multiple devices can transfer data
+with slave DMA at the same time. DMA channels 1, 2, and 3 can
+transfer 8 bits of data per cycle; channels 5, 6, and
+7 can transfer 16 bits of data per cycle.
+.pp
+Due to the design of the ISA bus, slave DMA is slow with respect to
+memory and most modern I/O devices. Slave DMA is presently used
+only by sound cards (which usually require only 300K bytes/second worst
+case), some older tape drives, and the system floppy controller. Use
+of the motherboard DMA controller limits transfers to the first 
+16MB of physical memory.
+.pp
+ISA DMA channels are commonly referred to as DRQs in adapter manuals.
+.pp
+Since drivers that use DMA often do not have control over where the
+data buffers are located in memory, the DMA support routines hide the 
+difficulties of
+doing DMA across page boundaries and above the 16M physical memory
+limit. This is done with "bounce buffers" that are aligned properly
+for DMA operations.
+.sh 3 "Basic slave DMA"
+.pp
+A driver wishing to use motherboard DMA must call
+.c at_setup_dmachan()
+once (per DMA channel used) at initialization time; the attach routine
+is usually a good place for this. The largest possible DMA transfer
+and the DMA channel number (
+.c ia_drq
+) are passed; these are used to allocate the bounce buffer and set up
+channel state structures.
+.pp
+When the driver is ready to transfer data the
+.c at_dma()
+function should be called. It is passed: a flag to indicate if the
+transfer is for a read (
+.c ATDMA_READ
+) or write (no flag), the address of the I/O buffer in kernel
+virtual memory, the number of bytes to transfer, and the DMA channel
+number. I/O may then be started on the device. Since this is slave
+DMA the device only needs a byte count for the transfer; it has
+no notion of where the data is going to or coming from in memory.
+.pp
+The driver is responsible for not attempting to overlap DMA requests,
+only one request (read or write) may be active at a time per DMA
+channel. There are no facilities for two drivers to share a single
+DMA channel.
+.pp
+The device will usually interrupt to indicate the transfer is complete. If
+the device claims to have completed the transfer successfully, the
+.c at_dma_terminate()
+function should be called to complete the transfer. On DMA read operations,
+the terminate function copies the data from the bounce buffer if necessary.
+If the transfer did not complete successfully,
+.c at_dma_abort()
+should be called to reset the DMA channel. In this case some of
+the data may have already been transferred, although if a bounce buffer
+was being used this may not be visible to the driver.
+.sh 3 "Raw slave DMA"
+.pp
+Slave DMA is possible
+at a much lower level. In this mode the driver must
+ensure that the requirements for DMA are met. The buffer must:
+.bu
+be in physically contiguous memory
+.bu
+may not span a 64K (8 bit channel) or 128K (16 bit channel) boundary
+.bu
+be entirely in the first 16MB of physical RAM
+.pp
+To assist in allocating buffers for use in raw DMA the function
+.c vm_page_alloc_contig()
+may be used; it is given an alignment and physical memory range
+and attempts to find contiguous physical pages that fit the
+requirements. This uses a very slow (linear) search of the page
+tables, so it should only be used infrequently (typically during
+the attach routine). This function can be called at any time,
+but as the system becomes busy the likelihood of finding free
+contiguous pages is diminished.
+.pp
+When using raw slave DMA, the
+.c at_setup_dmachan()
+function should not be called as there is no bounce buffer to maintain.
+To set up the DMA channel for I/O the
+.c at_dma()
+function is used. The
+.c ATDMA_READ
+flag must be specified for read to memory (otherwise the operation is write
+from memory) and the
+.c ATDMA_RAW
+flag must also be specified to indicate this is a raw request. The address
+passed must be a physical memory address. A physical address for a kernel
+virtual address can be determined with the
+.c kvtop()
+function. Remember that unless
+.c vm_page_alloc_contig()
+was used to allocate the memory, any kernel virtual memory block that spans
+page boundaries may not be contiguous in physical memory.
+The byte count and DMA channel number are the same as for regular DMA.
+.sh 3 "Auto-initialize slave DMA"
+.pp
+Auto-initialize DMA is a mode that may be set in conjunction with
+raw mode.
+In this mode the DMA controller is programmed to wrap its internal
+address counter back to the start of the buffer when it reaches the end
+(as specified by the byte count). Again, the
+.c at_dma()
+function is used, this time with the addition of the
+.c ATDMA_AUTO
+flag. This mode is only useful with raw slave DMA since there is no
+standard way for a driver to determine where the bounce buffers are
+or if they are in use. This mode is used by some sound card drivers
+to maintain a steady stream of data to or from the device. There is
+generally some mechanism provided by the device to notify the driver
+that a sub-section of the DMA buffer has been completed; this allows
+the system to asynchronously fill or drain the DMA area as the device
+does the same. Audio devices need this feature to avoid glitches in
+the sound due to variable interrupt latencies.
+
+.sh 2 "Bus master DMA"
+.pp
+Compared to slave DMA, bus master DMA is generally much simpler. The
+device itself maintains the physical address and byte count and initiates
+DMA operations without using the motherboard DMA controller.
+.pp
+The ISA bus does not directly support bus master DMA although some vendors
+have discovered ways to do it; an example is the venerable Adaptec 1540
+series of ISA SCSI adapters. Devices doing ISA bus master DMA generally
+still allocate a DMA channel but the driver does not call
+.c at_dma()
+for each transfer. Devices such as this require a special mode
+to be set in the motherboard DMA controller to enable the device to
+contend for the bus. The
+.c at_dma_cascade()
+function sets this mode; it is only called once, usually in the
+attach routine. A limitation of ISA bus master DMA is that it
+can only address the first 16MB of physical memory. The device
+driver must handle this limitation through the use of bounce buffers; these
+can be allocated with the
+.c vm_page_alloc_contig()
+function to insure they are in the first 16MB of physical memory.
+.pp
+The EISA and PCI busses do not need such special treatment; usually all
+DMA operations are controlled directly by the device and all physical
+memory is accessible.
+.pp
+A device that uses bus master DMA must:
+.bu
+be programmed with 
+with physical memory addresses; the
+.c kvtop()
+function may be used to determine physical buffer start locations.
+.bu
+break requests that are not contiguous in physical memory into
+contiguous chunks.
+Physical pages are not guaranteed to be contiguous;
+the
+.c trunc_page()
+macro may be used to determine if a request spans a page boundary.
+.pp
+Most modern bus master adapters allow a single I/O request to refer to
+a list of address/count pairs specifically to deal with paged memory.
+Thus, one of the primary tasks of a device driver using bus master
+DMA is usually to break up I/O requests into contiguous chunks that
+can be processed by the device directly.
+.pp
+Since every device is different is is not possible to give generic examples
+of how to program bus master DMA.
+
+.sh 1 "Printing messages from a device driver"
+.pp
+While the system is booting and running the autoconfiguration code a
+number of messages are displayed on the console and logged in the
+system log buffer. The format and content of many these messages are  
+standardized to make it easier to tell what is installed in the
+machine at a glance.
+.pp
+The standard output format applies mainly during the attach routine. Once
+a driver is up and running it should print diagnostic and error
+messages with either
+.c dvprintf()
+or the standard
+.c printf()
+routine.
+.pp
+The
+.c dvprintf()
+routine is called as printf, except the first argument is a pointer to
+the
+.c "struct device
+for the driver; in return
+.c dvprintf()
+prepends the name and unit number of the device to the message being output.
+.pp
+When the attach routine is called for a device, the name of the device and
+its parent have already been printed. Depending on the mode the system is
+running in more detailed information may also have been printed. A
+newline is not printed so that the driver may append other information.
+Different types of output may be generated by the attach routine depending
+on the state of boot time flags: this allows various level of detail to
+be displayed at boot time.
+.pp
+The boot program's
+.c "-autodebug"
+command is used to set the boot verbosity. The
+.c aprint_xxx()
+functions are called just as
+.c printf().
+The table below shows how
+output is directed for each type of printf based on the autodebug flags:
+.TS
+center, box;
+c s s s s
+l || c c c c.
+How debug flags relate to output functions
+=
+Function	Normal	Quiet	Verbose	Debug
+_
+printf	C/L	C/L	C/L	C/L
+aprint_normal	C/L	L	C/L	C/L
+aprint_naive		C
+aprint_verbose	L	L	C/L	L
+aprint_debug				C/L
+.TE
+.c C
+indicates output will be printed on the console; 
+.c L
+indicates the output will be appended to the log.
+With the exception of the quiet flag (-q) multiple flag options may be
+combined to generate the different types of output. The most verbose
+output would be generated by:
+.c "-autodebug -d -v" .
+The distribution boot floppy is set up to use quiet mode by default.
+.pp
+Naive output should be generated once at the top of the attach routine;
+it should always be an English description of the device and perhaps
+the manufacturer. Normal output should be used for information that will be of
+general interest to a user of the device (on a network device this may
+be the media type). Verbose should
+be used to print detailed information regarding the device and 
+its configuration,
+usually this is where firmware release levels or on board buffer sizes
+would be printed. Debug level is to print information that is of use
+to someone troubleshooting a machine, this usually includes a message
+at each place the probe may fail and any other places that seem appropriate.
+.pp
+Care should be taken that the number of lines of output should be
+minimized for naive, normal and verbose output, so that as many devices
+as possible fit on the initial bootup screen. For naive, normal and
+verbose mode, the driver should not print a message if the hardware
+is not installed.
+.pp
+Care should be taken that when printing newlines output looks correct
+under any combination of flags. The example below is a typical arrangement
+of output calls that works well under all flag conditions.
+.CS
+void
+dpprobe(...)
+{
+	int rc;
+
+	rc = inb(base + DP_REV);
+	if (rc != DP_SUPPORTED_REV) {
+		aprint_debug("dp: Probe failed, rev=%d\\n");
+	}
+	[...]
+}
+
+void
+dpattach(parent, self, aux)
+        struct device *parent;
+        struct device *self;
+        void *aux;
+{
+	struct dp_softc *dp = (struct dp_softc *)aux;
+
+	[...]
+	aprint_naive(": Dog polisher");
+	aprint_normal(": %s", (model_no == 1) ? "diesel" : "electric");
+	printf("\\n");
+	[...]
+	aprint_verbose("%s: Rev=%d Ver=%d %d horsepower\\n",
+	    dp->dp_dev.dv_xname, revision, version, horsepower);
+	[...]
+	aprint_normal("%s: Spinning up dog, please wait...\\n",
+	     dp->dp_dev.dv_xname);
+	while (xxx) {
+		[...]
+		aprint_debug("%s: Dog at %d RPM\\n",  dp->dp_dev.dv_xname,
+		    cur_speed);
+	}
+	if (error spinning up dog) {
+		dvprintf(sc, "Dog spin-up error\\n");
+	}
+}
+.CE
+This might produce console output like the following:
+.pp
+Naive (quiet mode):
+.CS
+Found dp0 at pci0: Dog polisher
+.CE
+.pp
+Normal mode:
+.CS
+Found dp0 at pci0 irq 14 maddr 0xf0805000-0cf0x050ff: diesel
+dp0: Spinning up dog, please wait...
+.CE
+.pp
+Verbose mode:
+.CS
+Found dp0 at pci0 irq 14 maddr 0xf0805000-0cf0x050ff: diesel
+dp0: Rev=12 Ver=3 150 horsepower
+dp0: Spinning up dog, please wait...
+.CE
+.pp
+Debug:
+.CS
+Found dp0 at pci0 irq 14 maddr 0xf0805000-0cf0x050ff: diesel
+dp0: Spinning up dog, please wait...
+dp0: Dog at 400 RPM
+dp0: Dog at 2312 RPM
+dp0: Dog at 3600 RPM
+.CE
+.pp
+All normal and verbose output always go to the system log; the log is
+displayed with the
+.c dmesg
+command, or by looking at
+.c /var/db/dmesg.boot
+after the system comes up multi-user.
+Naive output never goes into the log, and only goes to the console if
+quiet mode is set.
+Error messages, especially fatal ones,  should always be output with
+.c dvprintf()
+or
+.c printf().
+.sh 1 "Network drivers"
+.pp
+This section describes drivers for multiple access networks (such as
+ethernet);
+point to point network interfaces use a
+different interface to the system. Point to point interfaces are beyond
+the scope of this document.
+.pp
+Network devices do not use
+.c devsw
+entries and thus are not accessible via filesystem device nodes. A set
+of internal interfaces in the kernel call network device drivers; these
+interfaces are summarized in this section.
+.pp
+The kernel network code uses a structure called an
+.c mbuf
+to manipulate network data.
+A variety of utility functions are used to manage data stored 
+in mbufs and mbuf chains. It is beyond the scope of this document to
+describe the many ways in which mbufs are used and manipulated by the
+networking code. See
+"The Design and Implementation of the 4.4 BSD Operating System"
+for more detail.
+.pp
+Note that network media access has changed considerably in
+.B3 3.0.
+Please pay special attention to the Network media access section which
+follows this one.
+.sh 2 Initialization
+.pp
+A network driver 
+.c softc
+should include a
+.c "struct arpcom" .
+The attach routine of the network driver is responsible
+for filling in several fields of the
+.c ifnet
+structure in the
+.c arpcom
+structure.
+.CS
+	if_unit		Unit number (xx->xx_dev.dv_unit)
+	if_name		Device name (xxcd.cd_name)
+	if_mtu		Maximum packet size (ETHERMTU, IEEE88025_MTU, FDDIMTU)
+	if_flags	Capabilities, usually one or more of:
+				IFF_BROADCAST, IFF_MULTICASE, IFF_SIMPLEX, and
+				IFF_NOTRAILERS
+	if_init		Device initialization function, never called by system
+	if_start	Called to process the device output queue
+	if_ioctl	Called to set interface addresses
+	if_watchdog	Called once every second
+.CE
+.pp
+After these structures are initialized, the interface can be attached to the
+system via
+one of the media specific attach functions:
+.c ether_attach(),
+.c token_attach(),
+or
+.c fddi_ifattach().
+.pp
+If the device will support the Berkeley Packet Filter (this is strongly
+recommended), it should call
+.c bpfattach() ;
+this is passed: a pointer to
+the a BPF structure for this interface (stored in the 
+.c ifnet
+structure),
+a pointer to the 
+.c ifnet
+structure for this interface, the data link type (see
+.c net/bpf.h ),
+and the size of the largest possible mac header that may be passed
+to BPF in a packet.
+.pp
+The device interrupt routine is attached to the system as described earlier.
+.pp
+The network media interface must also be initialized. Please see the section
+entitled "Network media" which follows this section.
+.sh 2 "Packet output"
+.pp
+When the system wishes to send packets on the interface the following
+general flow of events takes places:
+
+.sh 3 "The start routine"
+.pp
+The start routine is called when there may be output on the interface
+queue to process. It is acceptable for the driver to process any number
+of packets waiting on the queue, including none. If packets are left on
+the queue there must be some assurance by the driver that the start 
+routine will be
+called again to process them; the system will only call the start routine
+when a packet is added to the queue and the device flags indicate the
+device is not currently busy (IFF_OACTIVE is clear).
+.pp
+The outline for a start routine is:
+.CS
+xxstart(ifp)
+	struct ifnet *ifp;
+{
+	struct mbuf *m, *mp;
+
+	while (the device is able to accept a new packet) {
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+		for (mp = m; mp != NULL; mp = mp->m_next) {
+			bcopy(mtod(mp, caddr_t), device buffer, mp->m_len);
+			maintain current location in device buffer
+			maintain total packet length
+		}
+		start I/O on the device
+		m_freem(m);
+		ifp->if_flags |= IFF_OACTIVE;
+		ifp->if_opackets++;
+	}
+}
+.CE
+.pp
+All start routines must handle discontiguous packet data (as shown above)
+passed in an mbuf chain.
+.pp
+For devices that support bus master DMA the packets are not released with
+.c m_freem(),
+instead they are usually put on a private queue and released after the
+device has indicated it has successfully transmitted the packet.
+Bus master DMA device drivers should also call
+.c bpf_mtap()
+after the packet has been sent instead of before.
+.sh 3 "Output interrupts"
+.pp
+When a packet (or packets) have been transmitted the device usually interrupts.
+The portion of the interrupt routine relevant to output is outlined below:
+.CS
+int
+xxintr(arg)
+	void *arg;
+{
+	...
+	if (transmit interrupt) {
+		clear interrupt
+		ifp->if_flags &= ~IFF_OACTIVE;
+		xxstart(ifp);
+	}
+}
+.CE
+.pp
+For bus master DMA devices, the packets are released here with
+.c m_freem()
+instead of in the start routine. It is important not to free an
+mbuf chain that DMA is being performed to until the operation is complete.
+The start routine is called in case more packets were put on the
+interface queue while the device was busy. Many devices can transmit
+only one packet at a time so there is no loop in the start routine;
+devices that can queue up more than one packet must be careful to
+maintain the IFF_OACTIVE flag correctly.
+.sh 2 "Packet input"
+.pp
+As packets are received from the network the driver must dispose of them
+to the upper layers of the system.
+.pp
+The input interrupt routine is usually notified when a packet is available
+from a network device, sometimes multiple packets may be available.
+.CS
+int
+xxintr(arg)
+	void *arg;
+{
+	...
+	if (receive interrupt) {
+		while (packets available) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (packet is larger than MINCLSIZE)
+				MCLGET(m, M_DONTWAIT);
+			bcopy(device buffer, mtod(m, caddr_t), pkt_len);
+			ifp->if_ipackets++;
+			if (ifp->if_bpf) {
+				bpf_mtap(ifp->if_bpf, m);
+				if (packet is not for this machine) {
+					m_freem(m);
+					continue;
+				}
+			}
+			xxx_input(ifp, m);
+			notify device packet has been processed
+		}
+		clear interrupt
+	}
+}
+.CE
+.pp
+If the device can receive a packet larger than MCLBYTES (2K)
+this code must handle allocating additional mbufs and chaining them
+to the first. In many cases the device buffers are discontiguous as
+well.
+.pp
+The check to see if the packet is for this machine applies if the
+interface can be set into promiscuous mode (via the IFF_PROMISC flag).
+If the packet was destined for another machine (and we're just acting
+as a voyeur) it is not appropriate to pass the packet up to the higher
+layers. Multicast or broadcast packets must not be filtered out
+with this test.
+.pp
+The
+.c xxx_input()
+routine passes the packet up to the next network layer, from this point
+on the responsibility for the packet is no longer with the driver. The
+input routines are: 
+.c ether_input(),
+.c token_input(),
+and
+.c fddi_input().
+These routines all expect the data in the mbuf to start with the MAC
+header.
+.pp
+For bus master DMA devices input is more complicated. A strategy
+used by some drivers is to preallocate mbuf chains at attach time and
+point the device's DMA engine at them. As they are processed and
+passed up the network stack the input interrupt function allocates
+new mbufs to replenish the pool.
+.sh 2 "ARP and IP addresses"
+.pp
+The ioctl entry point for the driver is called with two general
+standardized requests; (additional per device requests are possible but
+are not discussed here).
+.pp
+The first request is
+.c SIOCSIFADDR ;
+this called when the interface address is first set or changed.
+For the IP protocol (which uses ARP for address resolution)
+the ARP layer must be notified of the new address so it can respond to
+queries. This is done via the
+.c arp_ifinit()
+function.
+.pp
+The
+.c SIOCSIFFLAGS
+ioctl is called when the if_flags field is set. There are
+three driver specific flags (
+.c "IFF_LINK0, IFF_LINK1"
+and
+.c IFF_LINK2
+) that can be set with the
+.c ifconfig
+utility, these formerly were used to select which media the driver will
+program the card to use. Now the
+.c if_media
+mechanism is used. See the section entitled "Network media" which follows
+this section.
+The
+.c IFF_UP
+flag is used to enable and disable the interface (this can also be manipulated
+with
+.c ifconfig
+).
+Finally, the
+.c IFF_PROMISC
+flag is set by BPF to tell the driver to accept all network packets even if
+they are not destined for this interface; this can safely be ignored if the
+device does not support a promiscuous mode.
+.pp
+The driver typically keeps a private copy of 
+.c if_flags
+and compares this to the new flag settings in the
+.c ifnet
+structure when
+.c SIOCIFFLAGS
+is called. Many devices require a lengthy 
+reinitialization process to change media types or promiscuous mode and
+SIOCIFFLAGS may be called when other flags (that are not of interest
+to the driver) are changed.
+.sh 2 "BPF notes"
+.pp
+.bu
+It is usually best to call the BPF tap routines as soon after a packet
+is received and as close to (before or after) a packet is transmitted.
+.bu
+Other forms of
+.c bpf_mtap()
+are available. The
+.c bpf_tap()
+function can be passed a simple buffer instead of an mbuf chain. This
+may be advantageous to avoid an extra data copy in promiscuous mode
+(for packets that need not be put into mbufs and passed upward).
+
+.sh 1 "Network media"
+.pp
+Once upon a time network interfaces had a small number of options to select
+media (usually just AUI vs. TP vs BNC, many times not even that much).
+This was generally done by manipulating device specific bits, typically
+the three link flags which could be controlled by
+.c ifconfig.
+With the advent of the IEEE 802.3u bus and fast ethernet the world
+has become much more complex. There are numerous types of network
+media, many accessed via the same RJ45 connector (ex: 10baseT, 100baseTX,
+100baseT4) and more options (such as NWay negotiation and full duplex
+mode). A well defined interface between media specific hardware
+and host interface hardware was drawn in 802.3u, there is now a
+well defined electrical interface (in the form of a bus called the
+MII) that host interface hardware (the DMA and protocol engine)
+uses to access connected media. A new software interface capable of
+dealing with the new complexities of the hardware is necessary.
+.pp
+.sh 2 "Media selection"
+.pp
+Since the three link flags available to a network driver via
+.c ifconfig
+not longer cut it anymore a new
+media options word has been defined that can unambiguously define
+a single way a driver may program a card to connect to the network.
+Unlike the three driver specific flags this media word is common to
+all network media interfaces.
+This word is defined as follows:
+.TS
+center, box;
+c s
+l || c.
+Media options word
+=
+Bits	Use
+_
+0-3	Media variant
+4	RFU
+5-7	Network type
+8-15	Type specific options
+16-19	RFU
+20-27	Shared (global) options
+28-31	Instance
+.TE
+.lp
+.(b L
+Network type:
+.)b
+.ns
+.ip
+Selects between broad media types (ethernet, token ring, FDDI). This
+field currently allows for 8 media types. This field is somewhat
+redundant with the if_data.ifi_type field, however putting it here
+and possibly allowing it to be set covers the possibility of a
+network interface that supports multiple network types (for instance,
+the TI Thunderlan chip can support ethernet and token ring on the
+same hardware).
+.lp
+.(b L
+Media variant:
+.)b
+.ns
+.ip
+The way card is connected over this media. This would typically be
+used to choose 10baseT vs. AUI for example. 16 media variants per media
+type are currently supported.
+.lp
+.(b L
+Type specific options:
+.)b
+.ns
+.ip
+A bit vector in which bit meanings are defined by the media type. For
+example, this is used to turn on Early Token Release for token ring.
+.lp
+.(b L
+Global options:
+.)b
+.ns
+.ip
+A bit vector with options that may be applicable to multiple network
+types, an example is Full Duplex/Half Duplex.
+.lp
+.(b L
+Instance:
+.)b
+.ns
+.ip
+Selects between instances of otherwise identical interfaces. For 
+example, it is possible (and common) to have an internal and external
+10baseT PHY connected to 802.3u MII busses on the newer network interface
+chips (Intel, DEC, TI, and 3COM all allow the connection of an MII bus
+with several PHY's).
+.ns
+.pp
+The placement of the RFU bits is such that the fields on either
+side may grow into them as needed; the options word is defined as an
+int.
+.pp
+The definitions for the options word (and the utility routines
+that support this interface inside the kernel) are in 
+.c "sys/net/if_media.h.
+.pp
+.sh 3 "Media selection ioctls"
+.pp
+From user mode the media selection interface is via the following
+2 new ioctls that are handled at the network device driver:
+.lp
+.(b L
+SIOCGIFMEDIA:
+.)b
+.ns
+.ip
+Returns current media status and optionally a list of supported media 
+options. The structure below sits in the
+.c "ifreq.ifr_ifru
+union (this is a bidirectional parameter):
+.CS
+	struct 	ifmediareq {
+		char	ifm_name[IFNAMSIZ];
+		int	ifm_current;	/* Current media options */
+		int	ifm_mask;	/* Don't care mask */
+		int	ifm_status;	/* Media status */
+		int	ifm_count;	/* # of words in ifm_types */
+		union {			/* Return structure */
+			caddr_t	ifm_buf;
+			int	*ifm_list;
+		} ifm_ifmu;
+	};
+.CE
+.ip
+.c ifm_current
+receives the current media options word.
+.ip
+.c ifm_mask
+receives the current don't care mask (options that are
+always valid for this interface).
+.ip
+.c ifm_status
+receives current status, currently there is a single
+flag that indicates the network is attached and appears
+to be active.
+.ip
+.c ifm_count
+on input is the number of words available for interface
+information in
+.c ifm_types .
+On output contains the number of
+words filled in to
+.c ifm_types .
+If 0, no interface type information is returned, however the number of options
+words needed is still filled in.
+.ip
+.c ifm_list
+points to an array of media option words (int's) that
+is
+.c ifm_count
+words long. This array will be filled in with
+valid interface option words if
+.c ifm_types
+is non-NULL and large enough to hold all the options. If there is not
+enough space then
+.c E2BIG
+is returned (and the array is left
+partially filled); even in this case
+.c ifm_count
+receives the number of media words that would be needed.
+.lp
+.(b L
+SIOCSIFMEDIA:
+.)b
+.ns
+.ip
+This directs driver to switch media options, the
+.c "ifreq.ifr_ifru.ifru_metric
+word is used to pass in the
+media options word. If the operation fails:
+.ip
+EIO	- Error attempting change
+.ip
+ENXIO	- Requested options not available on interface.
+.ns
+.pp
+.sh 3 "Media selection user interface"
+.pp
+The standard command line interface for this feature is the
+.c ifconfig
+command.
+Two types of operations are supported, getting interface
+media status and setting the current media options.
+.pp
+The
+.c "-m"
+option may be used to display a list of all possible network media
+configurations and media options.
+.lp
+.(b L
+new link types:
+.)b
+.ns
+.ip
+linktype ether
+.ip
+linktype token
+.ip
+linktype fddi
+.lp
+.(b L
+ valid for linktype ether:
+.)b
+.ns
+.ip
+aui, 10base5		- Aui connector
+.ip
+bnc, 10base2, coax		- 10base2
+.ip
+10baset, utp, tp		- 10baseT
+.ip
+100basetx, tx		- 100baseTX, RJ45
+.ip
+100basefx, fx		- 100baseFX, Fiber
+.ip
+100baset4, t4		- 100baseT4, 4 pair cat 3
+.ip
+100vganylan, vg, anylan	- 100VG-AnyLAN
+.lp
+.(b L
+valid for linktype token:
+.)b
+.ns
+.ip
+stp			- shielded twisted pair
+.ip
+utp			- unshielded twisted pair
+.ip
+16mbit, 16m		- 16mbit token ring speed
+.ip
+4mbit, 4m			- 4mbit token ring speed
+.ip
+etr, early			- Early token release
+.ip
+srt, source_route		- Token ring source routing
+.ip
+allbc, all_broadcast		- All routes broadcast
+.lp
+.(b L
+valid for linktype fddi:
+.)b
+.ns
+.ip
+fiber			- Fiber connection
+.ip
+utp, cddi			- Fddi over copper
+.ip
+da, dual			- Dual ring attach
+.lp
+.(b L
+valid for any link type:
+.)b
+.ns
+.ip
+fdx, full_duplex		- Full duplex (to switch)
+.ip
+flag0, loopback		- Debug
+.ip
+flag1			- Debug
+.ip
+flag2			- Debug
+.ip
+automedia, auto		- Automatically select media
+.ip
+nomedia, disc		- Detach from current media
+.lp
+.(b L
+debug use only:
+.)b
+.ns
+.ip
+mopt val			- Pass in raw media options value
+.ip
+inst num
+.ns
+.ns
+.pp
+An example of 'ifconfig -m xxN' output on a 100baseTX de card:
+.CS
+de0: ether flags=8863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
+        inet 205.230.226.129 netmask 0xffffff80 broadcast 205.230.226.255
+
+	automedia
+	linktype ether 10baset
+	linktype ether 100basetx
+	linktype ether 100basetx fdx
+.CE
+.ns
+ ... or for a 3c509 combo:
+.ns
+.CS
+	linktype ether 10baset
+	linktype ether aui
+	linktype ether bnc
+.CE
+.ns
+ ... or for an SMC TokenCard Elite:
+.ns
+.CS
+	linktype token 16mbit utp
+	linktype token 16mbit stp
+	linktype token 16mbit utp etr
+	linktype token 16mbit stp etr
+	linktype token 4mbit utp
+	linktype token 4mbit stp
+	[ srt allbc ] 
+.CE
+.pp
+.sh 3 Initialization
+.pp
+The
+.c ifmedia
+interface must
+be initialized during the network driver initialization. This is typically
+done during the
+.c "attach()
+routine. To use ifmedia the driver must:
+.bu
+Include a 'struct ifmedia' (from if.h) in its softc.
+.lp
+During attach:
+.ns
+.bu
+Init
+.c ifm_mask
+(don't care) mask in the ifmedia structure.
+.bu
+Init
+.c ifm_change
+(media change callback).
+.bu
+Init
+.c ifm_status
+(media status callback).
+.bu
+Add possible media options to the ifmedia structure at attach
+time via
+.c ifmedia_add()
+or
+.c ifmedia_list_add() .
+.bu
+At ioctl time if SIOCSIFMEDIA or SIOCGIFMEDIA, then call
+.c ifmedia_ioctl() .
+.bu
+Provide a callback that
+.c ifmedia_ioctl()
+will call if the interface options appear valid and have changed.
+This is called synchronously from
+.c ifmedia_ioctl() .
+.bu
+Provide a media status callback (also called from
+.c ifmedia_ioctl() )
+which returns a status word for SIOCGIFMEDIA.
+.ns
+.lp
+The following support routines are provided by
+.c "sys/net/if_media.c:
+.ns
+.CS
+ifmedia_init(struct ifmedia *mp, int mask, ifm_change_cb_t change, ifm_stat_cb_t status)
+.CE
+.ns
+.ip
+This initializes the ifmedia structure in a driver's
+.c softc .
+.CS
+ifmedia_add(struct ifmedia *mp, int mword, int data, void *aux)
+.CE
+.ns
+.ip
+This adds a supported media configuration to a list kept by the
+support code. 
+.CS
+ifmedia_list_add(struct ifmedia *mp, struct ifmedia_entry *lp, int count)
+.CE
+.ns
+.ip
+Similar to above but passed the start of an array of mword/data/aux
+elements. Use this if the card supports only a static set of
+options (the ifmedia list can be initialized by the compiler). The
+link fields in the ifmedia_entries can be left uninitialized.
+.CS
+ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, int cmd, ifmedia_cb_t *cbf)
+.CE
+.ns
+.ip
+Handle SIOCSIFMEDIA and SIOCGIFMEDIA. Return value should be returned
+to caller. The callback function is called with the old and new media
+options and may reject the change by returning an errno.
+.ns
+.ip
+For SIOCSIFMEDIA, the ioctl routine masks the don't care
+bits (from
+.c ifm_mask )
+then tries to find a matching
+.c ifmedia_entry
+entry. If one is found the driver is called back with a pointer
+to the current and new entries.
+.ip
+The callback routines are called with an
+.c ifp pointer .
+The driver may examine the
+.c ifm_cur
+and
+.c ifm_media
+fields in the
+.c ifmedia
+structure
+to determine the current state of the media. The media change callback
+is not called if the media word has not changed.
+.pp
+.sh 2 "Media independent interface"
+.pp
+With 802.3u the details of media connection are concentrated in a
+chunk of hardware (usually a single chip) known as a PHY. In some
+cases the PHY is embedded in the host interface chip.
+.pp
+Not only can one mix and match PHY's and host interface chips via
+the MII bus, but multiple PHY's can be placed on a single MII bus
+(only one can be active at a time). All this flexibility requires
+some way to manage features on individual PHY's - a 2 wire
+bidirectional serial bus is used for this purpose. There can be up
+to 32 PHY's on an MII bus and each PHY can have up to 32 registers
+that are accessed via the 2 wire serial interface. 
+.pp
+802.3u defines the meaning of bits in the first few registers of
+a PHY, the rest are available for vendor specific extensions. While
+it should be possible to write a generic PHY driver that uses only
+the 802.3u standard registers (this seemed to be their plan anyway),
+the parts have sufficient quirks that one must really write code for
+each chip.
+.pp
+The nature of the MII bus lends itself to being handled by the BSD/OS
+autoconfiguration system in a parent/child relationship. If the interface
+rules are followed one should be able to configure a driver that speaks
+to a given vendor PHY chip underneath an arbitrary network interface driver.
+.pp
+.sh 3 "MII overview and data structures"
+.pp
+The MII layer fits in with the new media selection interface (
+.c if_media.c
+and friends), and at present the interface is not designed to
+be used with drivers that do not support
+.c if_media.c
+style media selection.
+.pp
+The general idea is that a network driver (such as '
+.c de ')
+that intends to support (possibly arbitrary) MII PHY's has an interface to
+those PHY drivers. In turn the PHY drivers do nothing hardware specific
+outside the realm of the PHY register set. Since the 2-wire management
+bus is accessed in a manner specific to the host interface hardware 
+being used the PHY drivers must be able to call their parents to read
+and write registers.
+.pp
+An network interface that wishes to be a parent to PHY drivers
+must export the '
+.c mii '
+interface class. The parent
+.c softc
+must include
+an '
+.c mii_data '
+structure, generally this is put after the arpcom entry
+in the interface:
+.CS
+typedef struct exp_softc {
+        struct device exp_dev;          /* Base device */
+        struct isadev exp_id;           /* ISA device */
+        struct intrhand exp_ih;         /* Interrupt vector */
+        struct arpcom exp_ac;           /* per-interface network data */
+        struct mii_data exp_mii;        /* MII/media control */
+        struct atshutdown exp_ats;      /* shutdown vector */
+        caddr_t csr;                    /* control/stat register block base */
+        exp_cb_tx_t *cbl_last_busy;     /* Last (newest) busy cmd block */
+	[...]
+.CE
+.pp
+The
+.c mii_data
+inherits the
+.c ifmedia
+structure which is used to
+communicate with
+.c ifconfig
+and keep track of available media options. It
+also contains the head of a list of all PHY units attached to this driver
+(used for downcalls), status words that are used to pass information from
+PHY drivers up to the parent (then usually on through the
+.c ifmedia
+interface).
+The
+.c mii_data
+also contains function pointers for upcalls the PHY driver may
+make to their parent.
+.pp
+A PHY driver
+.c softc
+inherits a
+.c mii_softc
+as its first member, this
+exports the interface so that the parent understands how to talk to
+to make requests of the PHY driver, it also contains configuration information
+and a pointer to the parent
+.c mii_data
+structure.
+.pp
+The network driver's initialization changes somewhat when using an mii
+driver. Instead of probing the media interface directly, now an
+.c mii
+probe routine is called to
+find and attach all valid media options:
+.CS
+        /* Set up the MII interface */
+        LIST_INIT(&sc->exp_mii.mii_phys);
+        sc->exp_mii.mii_ifp = &sc->exp_ac.ac_if;
+        sc->exp_mii.mii_readreg = (mii_readreg_t)exp_readphy;
+        sc->exp_mii.mii_writereg = (mii_writereg_t)exp_writephy;
+        sc->exp_mii.mii_statchg = (mii_statchg_t)exp_statchg;
+        ifmedia_init(&sc->exp_mii.mii_media, 0, exp_mediachg, exp_mediastat);
+        mii_phy_probe((struct device *)sc, &sc->exp_mii, ~0);
+
+        i = IFM_ETHER | IFM_AUTO;
+        if (sc->exp_mii.mii_instance == 0) {
+                dvprintf(sc, "No usable PHYs found\n");
+                i = IFM_ETHER | IFM_NONE;
+                ifmedia_add(&sc->exp_mii.mii_media, i, 0, NULL);
+        }
+        ifmedia_set(&sc->exp_mii.mii_media, i);
+
+        /* Report 0 baud until PHY updates us via exp_statchg() */
+        ifp->if_baudrate = 0;
+.CE
+.lp
+It is permissible to insert additional media types (via
+.c "ifmedia_add())
+after calling
+.c "ifmedia_init();
+this might be needed for
+devices such as the 3c59x which can have built in non-MII and MII based
+media on the same host interface.
+.pp
+Note that the network driver is still responsible for initializing the
+.c ifmedia
+interface even though the MII driver will handle most functions during
+operation.
+.pp
+The
+.c "mii_phy_probe()
+routine reads the IEEE OUI and vendor/model
+information at each possible PHY location on the MII bus (of which there
+are 32) and calls
+.c "config_found()
+for each PHY it deems present. If there
+is a driver willing to claim that PHY (based on the OUI and vendor/model
+number) its probe routine returns non-zero and its attach routine is
+called.
+.sh 3 "PHY driver"
+.pp
+From a configuration standpoint a PHY driver is like any other
+device driver. Its parent is the '
+.c mii '
+class (which includes all network
+drivers claiming to export the '
+.c mii '
+interface). The attach arguments
+passed down to a PHY driver's probe and attach routine are:
+.ns
+.CS
+typedef struct mii_attach_args {
+	mii_data_t              *mii_data;      /* Parent data */
+        int                     mii_phyno;      /* PHY address on bus */
+        int                     mii_id1;        /* PHY ident 1 */
+        int                     mii_id2;        /* PHY ident 2 */
+        int                     mii_capmask;    /* BMSR capability mask */
+} mii_attach_args_t;
+.CE
+.pp
+Where
+.c mii_data
+is the parents
+.c mii_data
+structure (used to
+find the parents upcall function pointers and other bookkeeping
+info), the PHY number (address on the MII bus the probe is at),
+the two PHY ident registers (mostly to save each PHY driver from
+reading the the ID registers at each probe), and a capability mask
+that indicates 802.3u capabilities that should not be used even if
+the PHY chip itself reports it has those capabilities.
+.lp
+A typical PHY probe (match) routine:
+.CS
+/*
+ * Check ID and status register to see if its an 83840.
+ */
+int
+nsphy_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	mii_attach_args_t *ap = (mii_attach_args_t *)aux;
+	mii_data_t *mdp = ap->mii_data;
+	int stat;
+
+	if (cf->cf_loc[LOC_PHY] != -1 && cf->cf_loc[LOC_PHY] != ap->mii_phyno)
+		return (0);
+
+	if (MII_OUI(ap->mii_id1, ap->mii_id2) != NSPHY_OUI ||
+	    MII_MODEL(ap->mii_id2) != NSPHY_MODEL)
+		return (0);
+
+	return (1);
+}
+.CE
+.pp
+There is only one locator defined for the mii class,
+.c LOC_PHY ,
+this is -1 if any PHY should be matched or the PHY address on the
+MII bus (which can be used to wire down configurations). Currently there
+is no way to modify the locator from the Boot: command prompt.
+.ns
+The PHY attach routine's responsibilities include:
+.ns
+.bu
+Initializing the
+.c softc ,
+specifically the
+.c mii_softc .
+.ns
+.bu
+Probing the capabilities of the PHY chip and calling
+.c ifmedia_add()
+to advertise the various operational modes.
+.ns
+.bu
+Assigning itself a media instance (to allow differentiation
+between the same modes at different PHY addresses by
+.c ifconfig )
+.ns
+.bu
+Printing the usual configuration information.
+.ns
+.lp
+A skeletal attach routine:
+.ns
+.CS
+/*
+ * Device found
+ */
+void
+nsphy_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	mii_attach_args_t *ap = (mii_attach_args_t *)aux;
+	mii_data_t *mdp = ap->mii_data;
+	nsphy_softc_t *sc = (nsphy_softc_t *)self;
+	int cap;
+	char *sep;
+
+	aprint_naive(": Ethernet media interface");
+
+	LIST_INSERT_HEAD(&mdp->mii_phys, &sc->nsphy_mii, mii_list);
+	sc->nsphy_mii.mii_phy = ap->mii_phyno;
+	sc->nsphy_mii.mii_service = nsphy_service;
+	sc->nsphy_mii.mii_pdata = mdp;
+
+	/* We can always do loopback */
+	ifmedia_add(&mdp->mii_media, IFM_ETHER | IFM_100_TX | IFM_LOOP,
+	    BMCR_LOOP | BMCR_S100, NULL);
+
+	/* Reset and read up the capabilities */
+	nsphy_reset(sc);
+	sc->nsphy_cap = rdreg(MII_BMSR);
+	sc->nsphy_cap &= ap->mii_capmask;
+
+	/* Advertise capabilities based on manual selection */
+	sc->nsphy_mii.mii_inst = mdp->mii_instance++;
+	sep = ": ";
+	if (sc->nsphy_cap & BMSR_10THDX) {
+		ifmedia_add(&mdp->mii_media, IFM_ETHER | IFM_10_T,
+		    0, NULL);
+		aprint_normal("%s10baseT", sep);
+		sep = ", ";
+	}
+	[... advertise other capabilities ...]
+	if (sc->nsphy_cap & BMSR_ANEG) {
+		ifmedia_add(&mdp->mii_media, IFM_ETHER | IFM_AUTO,
+		    BMCR_AUTOEN, NULL);
+		aprint_normal("%sAuto", sep);
+	}
+	printf("\n");
+}
+.CE
+.pp
+.sh 3 "Run time interfaces"
+.pp
+Once the configuration is complete the parent and child drivers
+communicate with each other through defined interfaces.
+.pp
+.sh 4 "Downcalls from parent to phy drivers"
+.pp
+Network drivers generally make requests of the phy drivers
+through a layer of glue code (found in 
+.c "dev/mii/mii_subr.c).
+This glue layer typically broadcasts operations to all attached PHY
+children. The parent drivers make the following downcalls:
+.lp
+.c mii_tick()
+.ns
+.ip
+Must be called once a second (usually from the
+interface watchdog routine). The PHY drivers may use this
+to sequence an autonegotiation state machine or monitor
+link state.
+.lp
+.c mii_mediachg()
+.ns
+.ip
+Must be called whenever the request media options change and
+the change might affect any PHY (usually always). This is
+generally called from the network drive media change routine
+(which is called via its
+.c "ioctl()
+routine through
+.c "ifmedia_ioctl()).
+.lp
+.c mii_pollstat()
+.ns
+.ip
+This must be called whenever updated media status is needed,
+typically from the media status routine (called via
+.c "ioctl()
+similar to media change).
+.ns
+.lp
+PHY drivers must export a service routine entry point that
+is called by the glue layer. This service routine is stored in the
+mii-generic portion of the PHY's 
+.c softc
+(xxx_mii.mii_service).
+.pp
+There are 3 requests made of service routines: status poll,
+media change, and timer tick. Each PHY is called for every request,
+the PHY must use the parent mii_media structure to determine which
+instance the parent considers active, if the request is being made
+to a different PHY the current PHY must return silently, or in the
+case of a media change request it must isolate itself from the
+MII bus.
+.lp
+If the PHY is the current instance then:
+.ip
+.c MII_POLLSTAT
+routine simply updates the 
+.c "mii_media_status/mii_media_active
+words in the
+parent
+.c mii_data
+structure and returns.
+.ip
+.c MII_MEDIACHG
+switches media modes (or possibly kicks
+off an autonegotiation cycle), then updates the
+status/active words.
+.ip
+.c MII_TICK
+may be used to monitor the link condition and
+restart autonegotiation if needed. It should not
+update the status/active words unless it has
+changed something.
+.ns
+.pp
+Since autonegotiation (or reset processing) may run a long time
+the tick routine can be used to drive a state machine. The parent driver
+can be notified (from the TICK routine) when media has changed (in the
+case the host interface needs some twiddling when speeds or duplex mode
+change).
+.pp
+The
+.c mii_media_status
+word is simply an indication that the
+interface thinks its connected to valid media or not. If the
+determination cannot be made it is permissible to return 0 (or not
+update) the status word. This word has the same format as the
+.c ifm_status
+word in the
+.c ifmediareq
+structure. The
+.c mii_media_active
+word should be updated to reflect the current status of the interface
+(which can, and with automatic mode usually is) different than the
+mode requested by
+.c ifconfig.
+.pp
+.sh 4 "Upcalls from PHY drivers to parent"
+.pp
+PHY drivers must never make upcalls except as a result of downcalls (ie:
+it is not permissible to make an upcall as the result of a timeout handle).
+This allows the parent drivers to be in a known state when upcalls are made.
+Any upcall is fair game as a result of any downcall from the parent driver.
+.lp
+There are 3 upcalls that the PHY driver may make:
+.lp
+.c "mii_readreg()
+.ns
+.ip
+Read and return the value of a phy register (sync).
+.lp
+.c "mii_writereg()
+.ns
+.ip
+Write a phy register
+.lp
+.c "mii_statchg()
+.ns
+.ip
+Should be called by the PHY driver any time it is the active
+instance and some aspect of the media has changed (status or
+active word). Used by the parent to keep
+.c if_baudrate
+up to
+date and possibly update host controller modes to match the
+current media speed or duplex settings.
+.pp
+.sh 4 "Configuration syntax"
+.pp
+A network driver that will probe for PHY children should define the
+mii class as one of its supported interfaces:
+.CS
+	# Intel EtherExpress Pro 100B ethernet/fast ethernet
+	device  exp at pci: ifnet, ether, pcisubr, mii
+	file    i386/pci/if_exp.c               exp device-driver
+.CE
+.ns
+A PHY driver should be a child of the
+.c mii
+class:
+.ns
+.CS
+	device  nsphy at mii
+	file    dev/mii/dp83840.c               nsphy device-driver
+.CE
+.ns
+An example configuration finding all PCI
+.c exp
+devices and probing for any
+.c nsphy
+PHY's looks like:
+.CS
+	exp*    at pci?
+	nsphy*  at exp? phy ?
+.CE
+.ns
+As PHY drivers are architecture neutral they reside in
+.c "dev/mii .
+.pp
+.sh 1 "Obtaining configuration information from the boot command line"
+.pp
+The boot program allows entry of locator override parameters via the
+.c -dev
+command. For most devices this is transparent; the ISA routines automatically
+apply these overrides to 
+.c isa_attach_args
+before the probe routine is called.
+.pp
+The children of ISA drivers that act as controllers
+(or any other drivers that are not direct children of the ISA bus)
+can retrieve boot configuration records via
+.c getdevconf() .
+This can be called from a probe or attach routine.
+This function handles wildcard records (such as
+.c wd*
+), these are overridden if a more specific record exists (such as
+.c wd1
+). 
+.c Getdevconf()
+is called with the
+.c cfdata
+pointer for the device, the unit number (-1 if called from probe), and
+a pointer to a pointer to a
+.c boot_devspec
+structure that will be filled in with any data found.
+The return value is the value of the flags locator override.
+If more information is needed from the override record
+the
+.c boot_devspec
+pointer will be filled in (if non-NULL) to point at the located
+record. If no record is located then a NULL is written to the
+.c boot_devspec
+pointer and 0 is returned.
+.pp
+The
+.c boot_devspec
+structure is:
+.CS
+struct boot_devspec {
+	char	ds_driver[16];		/* driver name */
+	u_short	ds_unit;		/* unit number at probe time */
+	u_short	ds_validmask;		/* bit flags indicating valid loc */
+	int	ds_loc[8];		/* one locator may be flags field */
+};
+.CE
+.pp
+When searching for a matching record the name of the driver and the unit
+numbers is the key; these are extracted from the
+.c xxcd
+structure (found through the
+.c cfdata
+pointer). For each set bit in
+.c ds_validmask ,
+the corresponding locator in
+.c ds_loc
+is valid. Only fields actually specified to boot are marked valid.
+.pp
+The boot program uses the names and offsets of 
+ISA locators to fill in the
+.c ds_loc
+array but any valid data can be placed in these fields if necessary. Thus,
+it is possible to pass an arbitrary parameter to a driver through the
+.c maddr
+(for example) locator:
+.pp
+.CS
+Boot: -dev xx maddr=0x1234
+.CE
+.pp
+Then in the attach routine for the xx device:
+.CS
+void
+xxattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct xx_softc *sc = (struct xx_softc *)self;
+	struct boot_devspec *ds;
+	int speed;
+
+	getdevconf(self->dv_cfdata, &ds, sc->xx_dev.dv_unit);
+	speed = DEFAULT_SPEED;
+	if (ds && (ds->ds_validmask & (1 << LOC_MADDR)) != 0)
+		speed = ds->ds_loc[LOC_MADDR];
+.CE
+Usually only the flags field is needed and this ugliness can be avoided.
+
+.sh 1 "Other driver support functions"
+.pp
+.sh 2 "Synchronization - suspending a process"
+.pp
+Read, write, or ioctl entry points are called from process context;
+they are run on the kernel stack for the process that did the
+system call. In the case of blocking operations (such as a read when
+no data is available) a mechanism is available to disconnect the
+process (kernel stack) from the CPU and suspend its execution. At
+some later time another process or an interrupt handler
+may awaken the suspended
+process and it will continue (in the kernel) from where it left off.
+.pp
+The function that suspends a process is
+.c tsleep().
+.c Tsleep()
+is called with an identifier, a priority, message, and timeout.
+The identifier is a typeless value that is used to reawaken the
+process, the address of the 
+.c softc
+structure (or one of its elements)
+is usually used; it is important to use a value that other device
+drivers will not use. The priority is the scheduling priority the
+process is reawakened at. Processes with higher priorities
+(smaller numbers) will be scheduled earlier than processes with lower
+priorities. Generally,
+.c PRIBIO
+is appropriate for use with device drivers.
+The message is a pointer to an ASCII string the describes
+the purpose of the sleep, this is used for debugging (it can be displayed
+with the
+.i ps
+command). The timeout is the maximum number of system clock ticks to wait
+for a wakeup command, if NULL the process can wait forever.
+.pp
+If the constant
+.c PCATCH
+is logically or-ed with the priority, signals may be delivered to the
+process while it is sleeping. With
+.c PCATCH
+set a signal will cause the
+.c tsleep()
+call to return immediately with a return value of
+.c ERESTART
+or
+.c EINTR.
+If
+.c PCATCH
+is not given, the process can not be interrupted by signals; they will
+be ignored until the process wakes up and attempts to return to user
+mode.
+.pp
+If a timeout was specified and occurs, the value
+.c EWOULDBLOCK
+is returned.
+Finally if the process is woken up via the
+.c wakeup()
+function a 0 is returned.
+.pp
+The
+.c wakeup()
+function takes an identifier parameter and resumes all processes 
+suspended with it. If more than one process is
+suspended with the same identifier, all are scheduled and run in the
+order of their priority.
+.pp
+To prevent race conditions that can lead to hung processes, device
+drivers typically maintain a separate record of the condition they
+are waiting for and wait in a loop. This has the added advantage
+of handling the case where multiple processes are all trying
+to read or write to the same device at the same time. Below is
+an example of a function that reads one character from the
+device, waiting if no characters are available:
+.CS
+[in driver read function]
+	x = splxxx();
+	while (sc->rx_chars_available == 0) {
+		if (tsleep(sc, PRIBIO | PCATCH, "xxread", 0)) == 0)
+			break;
+		/* Signal received */
+		splx(x);
+		return (0);
+	}
+	[remove character from queue]
+	sc->rx_chars_available--;
+	splx(x);
+
+[character received interrupt]
+	[put character on queue]
+	sc->rx_chars_available++;
+	wakeup(sc);
+.CE
+.pp
+Normally a flag is kept in the 
+.c softc
+to indicate that a process is sleeping
+and 
+.c wakeup()
+is only called if this flag is set (
+.c wakeup()
+is somewhat
+costly in terms of CPU time).
+In the example above interrupts are blocked 
+when checking the queue pointer so that
+other processes (or the interrupt handler) cannot interfere.
+.pp
+It is a serious error to call
+.c tsleep()
+from an interrupt routine, timeout, or wayout. The context attached to the
+CPU (which generally cannot be predicted) becomes the innocent victim.
+.c Wakeup()
+can be called from anywhere, even if nothing is sleeping with the
+given identifier.
+
+.sh 2 "System shutdown callback"
+.pp
+It is possible to register for a callback just before the system is
+shut down; this can be used to disable or otherwise shut down a device
+just before the system shuts down.
+.pp
+To use this feature a
+.c "struct atshutdown"
+should be included in the driver 
+.c softc
+structure. During attach this should be
+filled in with the address of the function to call at shut down time and an
+opaque pointer (usually a pointer to the 
+.c softc
+itself). The
+.c atshutdown()
+function is called with a pointer to this structure and the
+.c ATSH_ADD
+command (to add the handler):
+.CS
+	[in softc]
+		struct atshutdown xx_ats;
+	[...]
+
+	[ in attach ]
+	sc->xx_ats.func = xx_shutdown;
+	sc->xx_ats.arg = (void *)sc;
+	atshutdown(&sc->xx_ats, ATSH_ADD);
+.CE
+.c Atshutdown()
+can be called later with the
+.c ATSH_REMOVE
+command to delete the callback if needed.
+.pp
+Before the system shuts down (just before it resets itself or prints
+the halted message and spins) each handler is called with registered
+argument.
+The order in which the handlers
+are called is not defined.
+.pp
+Shutdown callbacks are
+particularly useful to disable devices that use I/O memory. Sometimes
+these will conflict with the system BIOS if they remain mapped and prevent
+the machine from rebooting (without a power cycle).
+
+.sh 2 "Non-blocking I/O - Select()"
+.pp
+Many times it is desirable for a process to handle asynchronous I/O on
+multiple file descriptors; this can be done with the
+.c select()
+system call. Briefly,
+.c select()
+allows a user program to sleep waiting for an event to occur on one or
+more file descriptors; usually the event of interest is "read data available".
+With this call it is possible to manage a large number of file descriptors
+with a single process. Details on the use of 
+.c select()
+from a user mode process are available in the
+.c select(2)
+man page.
+.pp
+Each device driver must cooperate in the
+.c select()
+process. This is done via the use of the device driver
+.c select
+entry point (in the
+.c devsw
+table) and utility functions.
+.pp
+The device driver 
+.c select
+entry point is called by the system to determine if an operation of the
+requested type would succeed on the device. If the operation would not
+succeed for any reason, the driver must record the fact that a process
+is waiting for it (by event type). When the operation can succeed
+the driver must call 
+.c selwakeup()
+to notify the system. When notified
+the system will call the
+.c select
+entry point for the driver again to determine if the operation will in fact
+succeed.
+.pp
+There are three types of events that the select system is designed to
+monitor:
+.ip "Read data available"
+This condition is true when a read from the device would succeed for
+at least 1 byte without blocking or returning an error.
+.ip "Write space available"
+This condition is true when a write to the device would accept at
+least 1 byte without blocking or returning an error.
+.ip "Exceptional condition"
+This condition is true when the device is in an abnormal mode. This
+can mean anything device specific; it is usually used to indicate
+some form of asynchronous event not related to data transfer (out 
+of paper for instance).
+This condition is not
+frequently used by device drivers, it is mostly intended for use
+with network sockets.
+.pp
+The select entry point is called with the device number, a flag
+indicating what operation is being polled, and a pointer to the
+process structure of the process calling
+.c select() .
+The flag is:
+.c FREAD
+for read,
+.c FWRITE
+for write,
+or
+.c 0
+for exceptional condition.
+.pp
+The select routine must return 1 if the proposed operation is possible
+on the device. If the operation is not possible the process requesting
+the operation must be recorded and a 0 returned. The driver must maintain
+a record of the waiting process for each type of event (read, write, and
+exception) with
+.c selrecord() .
+.pp
+For operations that do not make any sense (or for which
+it is not desired to support select) the driver should return 0
+for read or exception and 1 for write. This may inspire a process to
+write to a read only device (harmless, the write routine can just
+discard the data) but should keep it from reading a write only device
+(which should return an error if read from).
+.pp
+Each device driver wishing to support 
+.c select
+must include a select state structure (
+.c "struct selinfo"
+) for each type of event in its 
+.c softc
+structure; this is used by 
+.c selrecord()
+to record what process is to
+be awakened.
+.c Selrecord()
+must be
+called when a device returns a 0 from its select routine
+and later expects that the status will change
+for the given operation type. 
+If the answer will always be 0 for a given operation
+type, there is no need to use
+.c selrecord() .
+.c Selrecord()
+handles the case where multiple processes are selecting on the same
+device.
+.pp
+The following example is for a device that can read and write data but
+has no exceptional conditions to report.
+.CS
+struct xx_softc {
+	[...]
+	int input_chars_available;	/* Amount of data in input bufr */
+	int output_buf_space;		/* Free bytes in output buffer */
+	struct selinfo rsel;		/* Latest read requester */
+	struct selinfo wsel;		/* Latest write requester */
+	[...]
+};
+
+int
+xxselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
+{
+	struct xx_softc *sc = xxcd.cd_devs[minor(dev)];
+
+	switch (rw) {
+	case FREAD:
+		if (sc->input_chars_available != 0)
+			return (1);
+		selrecord(p, &sc->rsel);
+		break;
+
+	case FWRITE:
+		if (sc->output_buf_space != 0)
+			return (1);
+		selrecord(p, &sc->wsel);
+		break;
+
+	case 0:
+		/* No exceptional conditions, always report 0 */
+		break;
+	}
+	return (0);
+}
+
+int
+xxintr(sc)
+	struct xx_softc *sc;
+{
+	if (input interrupt) {
+		[move characters to input buffer]
+		[update sc->input_chars_available]
+		selwakeup(&sc->rsel);
+	}
+	if (output interrupt) {
+		[update sc->output_buf_space]
+		selwakeup(&sc->wsel);
+	}
+}
+.CE
+.pp
+It is sometimes appropriate to indicate read data available only after
+a certain number of characters are available (instead of just 1). If
+it is known that the reader will always want to read 6 bytes, 
+.c selwakeup()
+should be deferred and 
+the select entry point should not return 1 until at least 6 bytes
+are available.
+This saves
+on needless context switches for devices that use data packets with
+a minimum size (such as mice).
+.pp
+To use the select mechanism on a block
+device the driver must provide read and write entry points.
+
+.sh 2 "Delaying execution"
+.pp
+.sh 3 "Short delays"
+.pp
+Short delays (sometimes needed to deal with finicky hardware) can be
+introduced via the
+.c DELAY()
+macro. This does a spin wait without altering the current interrupt
+blocking state. The parameter is in microseconds. The delay function
+is calibrated to the speed of each system at boot time.
+
+.sh 3 "Long delays and timeouts"
+.pp
+If a callback is desired after some time delay but it is not
+appropriate to spin wait (it almost never is), a callback can be
+scheduled via the
+.c timeout()
+function.
+.c Timeout()
+is passed a function pointer, argument, and a number of ticks;
+the callback is scheduled and
+.c timeout() 
+returns immediately. After the specified number of ticks have passed,
+the function is called with the supplied argument. Timeout callbacks are
+called during a system clock interrupt (which occur once per tick).
+The function is only called once; for a repeating callback the timeout
+must be rescheduled.
+.pp
+The system clock interrupts
+.c hz
+(a global variable) times per second; these are ticks.
+.c Hz
+is normally
+set to 100 (10ms per tick).
+.pp
+A timeout may be unscheduled with the
+.c untimeout()
+function; this finds the first timeout in the queue with the given
+function pointer and argument and removes it.
+This is done with a linear search; scheduling and
+releasing timeouts frequently is not recommended.
+.pp
+Timeouts are usually used to detect problems with hardware; a several
+second timeout is continually scheduled and the driver checks to see
+if a request has been pending for too long. Due to the overhead involved
+it is not recommended that a timeout be set for each I/O request and
+then cleared when it completes.
+
+.sh 2 "Wayouts"
+.pp
+There are times when a large amount of processing must be done as the
+result of an interrupt. Doing the processing in the interrupt routine
+is not desirable since it will block further interrupts.
+.pp
+To schedule a wayout a
+.c "struct wayout"
+must be allocated (this could be placed in the 
+.c softc
+structure) and the
+function pointer (
+.c func
+) and argument (
+.c arg
+) filled in; the
+.c wayout()
+function is called with a pointer to a wayout structure. It is an
+error to call
+.c wayout()
+more than once (before wayouts run) with the same wayout structure.
+Wayouts run just before user mode is re-entered (with interrupts enabled).
+Each wayout scheduled is run only once, to be run again it must be
+rescheduled.
+.pp
+Wayouts are a good place to put calls to
+.c free()
+when a buffer (or whatever) is no longer needed following an interrupt.
+.pp
+An example
+of wayout usage is in the console driver.
+Scrolling the screen takes considerable
+CPU time so if output is attempted in interrupt mode a wayout is scheduled
+and the screen output (and scrolling) happens during the wayout. This
+mechanism could also be used for network input packet processing (although an
+older mechanism, the soft interrupt, is still being used at present).
+
+.sh 1 "Moving data into and out of a device driver"
+.pp
+There are two methods used to transfer data to or from device drivers; the
+data may be copied in the read or write functions of the
+driver (either directly to the device or into buffers in the softc
+structure), or I/O may be done directly to the memory buffer by
+using the driver strategy routine.
+.pp
+Note that it is a bad idea to use stack resident buffers for moving data
+in and out of a device driver. I/O devices use physical addresses and there
+is no guarantee that the stack may not be located somewhere else in
+physical memory at some later time.
+.pp
+.sh 2 "Copying data with uiomove()"
+.pp
+The read or write entry points of a driver are called with a pointer
+to a
+.c "struct uio" .
+This structure contains details on where and how much data is
+to be transferred. The data area pointed to by the uio structure may
+not be contiguous or even present in physical memory. The
+.c uiomove()
+function is used to transfer data described by the uio structure
+into or out of the device driver.
+.c Uiomove()
+must be called in the
+context of a read or write system call (not from an interrupt or
+timeout callback) since it must be able to synchronously bring pages
+into memory. If the data will
+be needed in an interrupt handler it must be copied into a non-pageable
+buffer (perhaps in the
+.c softc
+structure).
+.pp
+.c Uiomove()
+is called with a pointer to the uio structure, a buffer address, and
+a length. The uio structure defines the direction the transfer is
+to take (read or write). The
+.c uio_resid
+field in the uio structure may be used by the driver to determine the
+amount of data requested to be transferred. The driver may call
+.c uiomove()
+multiple times with different buffer addresses and lengths, the
+.c uio
+structure maintains the current location between calls. If the driver
+attempts to transfer more than
+.c uio_resid
+bytes, no error occurs; the transfer is terminated when the byte count
+in the uio structure is satisfied. It is acceptable to transfer less
+data than requested by the uio structure, the calling process will
+be notified how much was actually transferred. Transferring no
+data on a read call signals an end-of-file condition to many
+programs.
+.pp
+The file offset (set with the
+.c lseek()
+system call by the calling process)
+is available in the
+.c uio_offset
+field. It is valid when the read or write entry point is first called
+but is not maintained across multiple calls to
+.c uiomove().
+
+.sh 2 "Driver strategy entry point"
+.pp
+An alternative to copying data with
+.c uiomove()
+is the strategy routine. The strategy routine is called with a pointer to a
+.c "struct buf"
+that describes the I/O operation (buffer location, size of transfer, block
+number, direction). The data area pointed to by the 
+.c "struct buf"
+(referred to as a buffer header) is in kernel virtual memory (the same
+address space the driver is running in), is contiguous, and all pages
+are guaranteed to be present in memory. The strategy routine should
+never attempt to sleep; if the operation can not be performed immediately
+it should be started and the strategy routine should return.
+.pp
+The driver performs the I/O operation directly to the referenced memory
+area,
+fills in status in the buffer header, and calls a function to
+notify the kernel that the request is complete.
+.pp
+Fields of interest in the buffer header are:
+.ip b_flags
+Several flags are of interest to the driver: B_READ indicates a read
+operation (otherwise it is a write), B_CHAIN indicates a chained request
+(detailed below), and B_ERROR is used by the driver to indicate the
+operation ended in error.
+.ip b_data
+The address (in kernel virtual memory) of the data area.
+.ip b_bcount
+The size of the data area.
+.ip b_iocount
+The total size of the transfer, usually the same as
+.c b_bcount.
+See the discussion on chaining below.
+.ip b_blkno
+The device block number for the I/O. Device blocks are in
+.c DEV_BSIZE
+units (512 bytes).
+.ip b_error
+The
+.c errno
+to return if the request failed.
+.ip b_resid
+The number of bytes that could not be transferred. Usually
+this field is set along with the
+.c b_error
+field on error.
+.pp
+The filesystems use a mechanism called chaining; the
+.c B_CHAIN
+flag indicates chaining is being used. With chaining, multiple
+buffer headers are passed in a linked list. The
+.c b_chain
+field points to the next buffer header in the chain. The transfer is
+contiguous on the device but not contiguous in memory, each buffer
+header describes a fragment of the request in memory. 
+The
+.c b_iocount
+field indicates the total size of the request and
+.c b_bcount
+and
+.c b_data
+describe each memory fragment. The last buffer header
+has a NULL
+.c b_chain
+field.
+.c B_iocount
+is the sum of all
+.c b_bcount
+fields in the chain. Aside from describing data fragments to the
+driver the data
+in the chained buffer headers are not to be used for any purpose.
+.pp
+A device driver must:
+.bu
+Validate and start the I/O request described by the buffer header then
+return.
+.bu
+When the request is complete, the
+.c biodone()
+function should be called with the buffer header passed to the strategy
+routine.
+.bu
+If an error occurs the driver should set
+.c b_error
+and
+.c b_resid ,
+and call
+.c biodone().
+.pp
+The strategy routine for
+devices that are to be used for
+filesystem storage is called directly by the filesystem code in the kernel.
+There
+is no direct way for a user mode process to call the strategy routine
+of a device driver.
+.sh 2 "Physio"
+.pp
+The
+.c physio()
+function provides a driver read or write entry point with a way to use
+the driver strategy routine for a user request; This can be used to
+avoid
+.c uiomove().
+and its data copy.
+.c Physio()
+is appropriate when large blocks of data are to be transferred,
+such as with a tape drive.
+.pp
+Physio handles all the details of preparing a buffer header, locking
+pages in memory, and breaking up a large request if needed. Physio is
+passed:
+.ip "Strategy function"
+A pointer to the strategy routine that will perform the I/O.
+The strategy routine is never called with a buffer chain by
+.c physio();
+only filesystem code uses buffer chaining.
+.ip "Device"
+The device number (major/minor).
+.ip "Uio"
+A pointer to a uio structure representing the entire transfer request.
+.ip "Flag"
+The direction of the transfer.
+.ip "Optional buffer header"
+A buffer header (sometimes allocated in the 
+.c softc
+). If given as
+NULL, a buffer header is allocated and freed dynamically.
+.ip "Size function"
+A pointer to a function that limits the size of a single transfer.
+.pp
+Physio will call the strategy routine (multiple times if necessary) to
+complete the request described by the uio parameter. No data copy is
+done, the driver is pointed directly at the buffer the user
+passed in with the
+.c read()
+or
+.c write()
+system call. The buffer passed on each call to the strategy routine is
+contiguous in kernel virtual memory but may not be in physical memory;
+see the section on DMA for notes on how to deal with this.
+.pp
+The size function is called with each proposed transfer fragment, it
+may truncate the size of the transfer. Transfer size should be limited
+to prevent a single request from locking down too much memory. If the
+device can only transfer a limited amount of data at a time, setting the limit
+here can simplify the driver; a default function called
+.c minphys()
+is provided for this purpose, it simply truncates the transfer to a
+reasonable size (MAXPHYS). The
+size
+function is called with a pointer to the buffer header of the proposed
+transfer; to truncate a request it must modify the
+.c b_bcount
+field.
+.pp
+Physio is called from a process context (read or write system call) and
+is synchronous; the strategy routine is asynchronous. Thus, physio
+may put the process to sleep waiting for a fragment of the transfer to
+complete.
+.pp
+Physio does not necessarily pass DEV_BSIZE chunks of data into the
+driver strategy routine (although a DEV_BSIZE limit per fragment can
+be applied by using the size function).
+.pp
+If the only task a read or write routine will do in a driver is to
+call
+.c physio()
+then the
+.c rawread()
+or
+.c rawwrite()
+functions may be used; they simply call 
+.c physio()
+from the context of a read or write driver entry point. Block device
+drivers (such as the disk drivers) use this to provide a raw interface
+(for programs such as
+.c fsck
+and
+.c dump).
+.pp
+One drawback to using
+.c physio()
+is there is no well defined way to pass the file offset to the
+strategy routine. The upper bits of the offset are passed as the block
+number but the lower bits of the offset are discarded. A driver
+that wishes byte addressing through the strategy routine must devise
+an out of band mechanism for this purpose. For example the offset can
+be stored in the 
+.c softc 
+structure and used by the
+strategy routine (care must be taken to deal with multiple outstanding
+requests from different processes).
+
+.sh 1 "Pseudo device drivers"
+.pp
+A
+.c pseudo-device
+is a device with no real underlying hardware; it is not a child
+of any node in the device tree. A pseudo-device driver may attach
+to any kernel interfaces a regular driver would attach to; this
+means a pseudo-device can act as a character or block mode driver,
+a network driver, or as any other type of device.
+.pp
+There is no probe function for a pseudo-device driver, nor
+are any of the standard configuration data structures used. A pseudo-device
+driver is called by the autoconfiguration code only once, 
+when the system boots.
+The entry point is the name of the pseudo-device followed by "attach". So
+for a pseudo-device called
+.c dog
+the function
+.c dogattach
+would be called once as the system boots. A single integer is passed to the
+attach function; this defines the number of instances of the pseudo-device
+that were requested in the configuration file.
+.pp
+To configure the
+.c dog
+pseudo-device one might use the following config file language:
+.CS
+pseudo-device dog 10
+.CE
+.pp
+If the number (10) is omitted the attach function will be called
+with a count of 1.
+
+.sh 1 "SCSI host bus adapter interface"
+.pp
+A defined interface exists between the generic SCSI drivers (
+.c "tg, sd" ,
+and
+.c st
+and support code) and SCSI adapter drivers. This interface enables
+drivers to be written for different SCSI adapters without duplicating
+all the generic SCSI code and support routines.
+.pp
+Details of this interface are beyond the scope of this document, please
+refer to the source of a working driver (such as
+.c ncr
+) for details.
+
+.sh 1 "TTY interface"
+.pp
+A defined interface exists between device drivers and the
+tty system. This interface allows a device to act as a terminal
+on the system. All line discipline and PPP/slip code are generic,
+actual device drivers have a few simple entry points to pass characters
+into and out of the system and handle control information.
+.pp
+A change has been made in the interface to terminal device drivers
+to fix a temporary or permanent system hang when multiple processes
+wait for output to drain.
+Unmodified drivers should work no worse than before, but should be
+updated to use the new conventions.
+Terminal drivers should now call the
+.Li ttyowake
+function to notify any processes waiting for output to drain
+rather than testing the TS_ASLEEP flag and doing wakeups directly.
+.pp
+Further details of this interface are beyond the scope of this document,
+please refer to the source to a working driver (such as
+.c com
+) for details.
+
+.sh 1 "Point to point network drivers"
+.pp
+A generic layer of code exists that performs HDLC and PPP encapsulation;
+all point to point network drivers should make use this code layer.
+.pp
+Details of this interface are beyond the scope of this document, please
+refer to the source of a working driver (such as
+.c ntwo
+) for details.
+
+.sh 1 "Sound card interface"
+.pp
+A generic layer of code is used to provide a consistent audio interface to
+user level programs. There is a well defined interface
+between this layer and device drivers supporting particular audio
+hardware.
+This interface handles MIDI and synthesizer functions but
+not the built in CD interfaces many sound cards have.
+.pp
+Details of this interface are beyond the scope of this document, please
+refer to the source in
+.c "sys/i386/isa/sound"
+for details.
+
+.sh 1 "Kernel debugging"
+.pp
+There are many ways to debug a kernel:
+.bu
+The simplest is the use of
+.c printf()
+at strategic locations in the code. This has the downfall of potentially
+affecting timing (as
+.c printf()
+may be writing to a serial console and thus be very slow) and
+cluttering up the console.
+.bu
+A wraparound trace buffer can be used to log interesting
+events in the life of the driver, this buffer can then be examined on
+a running or crashed system. This has the advantage of being able to
+monitor a great number of events with little overhead.
+.bu
+The system can be crashed with the
+.c panic()
+function and the resulting dump can be examined with
+.i gdb .
+.bu
+The running system can be examined via 
+.i gdb .
+This is similar
+to examining a dump but the system is live while 
+.i gdb
+looks at it.
+The command is:
+.CS
+gdb -k bsd.gdb /dev/kmem
+.CE
+.bu
+A kernel can be debugged from a second machine with serially
+connected (remote) 
+.i gdb .
+.pp
+For details on dumps and kernels with debugging symbol tables (highly
+desired) see the
+.B3 2.1
+release notes.
+.sh 2 "Remote kernel debugging"
+.pp
+To debug a kernel over a serial connection you
+must have two machines. In this environment breakpoints can
+be set (almost) anywhere in the target kernel and the full capabilities
+of 
+.i gdb
+are available; this is similar to debugging a user
+mode program with 
+.i gdb .
+.sh 2 "Setting up a kernel for remote gdb"
+.pp
+The kernel to be debugged must be compiled with some special options:
+.CS
+options KGDB                    # enable cross-system kernel debugger
+options "KGDBDEV=0x800001"      # kgdb device, tty01
+options "KGDBRATE=38400"
+.CE
+These options apply to the
+.c com
+driver, if they are changed
+.c com.o
+should be removed and 
+.i make
+run again (there is no dependency that covers
+this automatically).
+.pp
+A kernel built with these options will be interruptible with 
+.i gdb .
+To stop
+in the xx driver ioctl routine:
+.bu
+Attach the two machines with a null modem serial cable. Only pins
+2, 3, and 7 are actually needed.
+.bu
+Boot the kernel with debugging enabled.
+.bu
+Run 
+.i gdb
+on the machine acting as the debugging master:
+.CS
+boom sys/compile/TEST> gdb -k bsd.gdb
+GDB is free software and you are welcome to distribute copies of it
+under certain conditions; type "show copying" to see the conditions.
+There is absolutely no warranty for GDB; type "show warranty" for details.
+GDB 4.15.1 (i386-unknown-bsdi2.1), 
+Copyright 1995 Free Software Foundation, Inc...
+(gdb) 
+.CE
+.bu
+Assuming the machine running 
+.i gdb 
+is using /dev/tty01 and we are running
+at 38400 baud (this MUST match on both ends of the cable):
+.CS
+(gdb) set sl-baudrate 38400
+(gdb) target remote /dev/tty01
+Remote debugging using /dev/tty01
+kgdb_connect (verbose=0) at ../../i386/i386/kgdb_stub.c:280
+280             if (verbose)
+(gdb)
+.CE
+.pp
+At this point the remote machine is halted and you have control. A breakpoint
+may be set and waited for:
+.CS
+(gdb) break xxintr
+Breakpoint 1 at 0xf00bfc98: file ../../i386/pci/if_xx.c, line 1433.
+(gdb) cont
+Continuing.
+
+Breakpoint 1, xxintr (arg=0xf05bf000) at ../../i386/pci/if_xx.c:1433
+1433        int progress = 1;
+(gdb) 
+.CE
+.pp
+You can single step, set watchpoints, and do most other gdb operations
+that are valid in user mode. The
+.c x
+command tends to be very useful (to dump raw data) when kernel debugging.
+Another handy command is
+.c bt,
+this generates a stack backtrace. This is especially useful when debugging
+after a panic or when a process is hung; the backtrace shows where the
+.c tsleep()
+call is that is suspending the process.
+.pp
+If you 
+.c continue
+and never hit a breakpoint you can regain control of gdb by
+hitting ctl-C, at this point the machine being debugged is still running;
+it can be stopped with the
+.c remote-signal
+command.
+.pp
+Eventually you will want to detach.  The 
+.c detach 
+command removes
+all breakpoints and tells the remote it is going away.
+If the remote system is hung, detach may also hang; sometimes a
+.c "detach q"
+will exit gdb without hanging. If that does not work you can
+suspend gdb (with a Ctl-Z) then manually kill it.
+.pp
+.CS
+options "KGDB_DEBUG_PANIC=1"
+.CE
+This will cause the kernel to stop and wait for gdb to be attached when
+it panics. You will have the option of skipping gdb and taking
+a dump.
+.pp
+One final trick is debugging initialization code. 
+There are now two ways to get control of
+the system very early in the boot procedure. The old way is to patch
+the variable
+.c kgdb_debug_init
+to a non-zero value. A good way to do this is by using the
+.c bpatch
+command something like this:
+.CS
+bpatch -l -N /bsd kgdb_debug_init 1
+.CE
+You must reboot with the patched kernel for this change to take effect.
+.pp
+The new way is to use the
+.c "-kdebug -i"
+boot command. This will initialize the variable
+.c kgdb_debug_init
+to a non-zero value during the boot process. The
+.c -i
+flag requests the kernel attach to the kgdb port as soon as that port is 
+attached.
+.pp
+Either way, setting the variable
+.c kgdb_debug_init
+will cause the kernel to stop
+and wait for 
+.i gdb 
+to attach very early in the autoconfiguration sequence (while
+attaching the com driver).
+.pp
+.sh 2 "Debugging kernel processes"
+.pp
+Each process running on the system has a virtual address space associated
+with it which usually includes a stack. Details on switching between
+stacks on a running system or in a dump are in the debugging section
+of the release notes. It is not presently possible to switch contexts
+with the
+.c paddr
+command when using 
+.i gdb
+over a serial line; use of
+.c paddr
+on serial 
+.i gdb
+will result in great confusion.
+.pp
+.sh 2 "Wraparound trace buffer
+.pp
+Many times adding
+.c printf
+to the code to observe variables changes the timing such that it interferes
+with the system and the problem is either masked or a new one appears.
+Other times it is necessary to determine the exact sequence of a particular
+series of events since the path taken through the code is highly variable.
+In situations like this a wraparound trace buffer can be an invaluable
+debugging aid. It does, however, require modification of the source code
+to add the trace calls and needs some special options enabled in the
+kernel configuration file. This tracing is intended to be lightweight
+enough to run in a production environment (if need be). It is used much like
+.c printf ,
+however for each trace call (actually inline via a macro)
+only a trace entry (5 words) is updated
+(the time, a pointer to the printf style string, and two parameter words).
+.pp
+To begin, add
+.CS
+#include <sys/ktr.h>
+.CE
+to the source files where tracing calls will be added. Note that
+.c ktr.h
+requires that
+.c sys/types.h
+and
+.c sys/time.h
+be included as well. If these are not already included add them now as well.
+.pp
+Two types of tracing are available - unconditional and conditional.
+Unconditional tracing always happens. Conditional tracing can be
+enabled/disabled at run time by the state of the corresponding bit
+in the global trace mask. The following conditional tracing classes
+are defined:
+.TS
+center, box;
+c s
+l || c.
+Conditional tracing classes
+=
+Class	Use
+_
+KTR_GEN	General (TR)
+KTR_INTR	Interrupt tracing
+KTR_IO	Upper I/O
+KTR_FS	Filesystem
+KTR_DEV	Device driver
+KTR_PROC	Process scheduling
+KTR_SYSC	System call
+.TE
+.pp
+The following tracing calls are supported:
+.ns
+Unconditional traces:
+.ns
+.CS
+	TR(fmt, p1, p2)		- Simple trace entry
+	HTR(fmt, p2, p2)	- Trace entry with high-res timing
+	BTR(fmt, p1, p2)	- Trace entry with cli/sti protection
+				   (don't use in code that is already cli'd)
+.CE
+.ns
+Conditional (entry made if (type & ktr_mask) != 0 at run time):
+.ns
+.CS
+	CTR(type, fmt, p1, p2)	- Simple trace entry
+	CBTR(type, fmt, p1, p2)	- Conditional entry with cli/sti protection
+.CE
+.ns
+.pp
+fmt is a pointer to a character string, usually generated by the
+compiler (as in "xxxx"). Only the pointer is stored, if the string
+is not constant then the result when the buffer is formatted may
+not be what is expected.
+.pp
+p1 and p2 may be any small (4 bytes or less) data type, they
+are cast into an unsigned long.
+.pp
+The blocking form of the trace macros is used when there is conflict
+between top level and bottom level code (the window that is protected
+is the acquisition of a new trace entry).
+.pp
+High-res timing involves a call to
+.c microtime()
+and is somewhat slower
+than the other forms. This is most useful timing bcopy's or insw/outsw's
+to devices.
+.pp
+The trace classes are used to turn tracing on and off by manipulating
+.c ktr_mask .
+This facility can be used to enable/disable tracing to
+reduce clutter or to turn off all tracing the first time some condition
+occurs.
+.pp
+To enable tracing globally use
+.c "options KTR
+in the kernel configuration file. The buffer is sized at 256 entries,
+however this can be overridden with
+.c "options KTR_SIZE .
+.pp
+The trace buffer can be inspected by hand with
+.i gdb ,
+by using the
+.c tdump
+script for
+.i gdb ,
+or by running the
+.c tdump
+program (this is the preferred method).
+.pp
+.sh 1 "Virtual Memory"
+.pp
+This section gives a short description of the layout of virtual memory. For
+a more complete discussion of the kernel mechanisms and data structures
+involved in memory management, see "The Design and Implementation of the
+4.4BSD Operating System." This discussion is i386 specific.
+.lp
+The virtual memory address space of a process looks like this:
+.CS
+	0x00000000-0x00001000	Unmapped to catch refs to 0 (QMAGIC
+				binaries only)
+	*** Following is per process ***
+	0x00000000-0x9fffffff	user text, data and mmap() segments
+	0xa0000000-0xa07fffff	reserved for BSD/OS static shared libraries
+	0xa0800000-0xbfffefff	reserved for customer and third party shared libraries
+	0xbffff000-0xc7ffffff	reserved for SCO emulation
+	0xc8000000-0xefbfdfff	user stack segment
+	*** Fixed kernel areas accessible by kernel only
+	0xefbfe000-0xefbfefff	u page
+	0xefbff000-0xefbfffff	kernel stack
+	0xefc00000-0xefffffff	Page tables for kernel+current proc (sparse)
+				Page directory is at 0xeffbf000
+				Alternate page directory is at 0xefffc000
+					[pointing to 0xff80000]
+	0xf0000000-0xf0001000	BIOS area (physical page zero)
+	*** Variable kernel areas shared by all procs
+	0xf0001000-0xff7fffff	kernel arena (actually limited by sysptsize)
+	0xff800000-0xffffffff	alternate page table map
+.CE
+.pp
+The page table area is where the page table pages for the currently
+executing process are mapped.  (This is a convenience; the i386
+architecture doesn't require the page table pages to be mapped,
+although they must reside in the user mode data segment.)  The
+alternate page table map is used to peek at PTEs in some other
+address space.  Note that different physical pages are mapped to
+the same u page / kernel stack address in different processes.
+.lp
+The variable virtual space in the kernel starts at 0xf0001000 and
+looks like this:
+.ip
+kernel text -- read only, unless KGDB is defined or CPU is a 386
+.ip
+kernel data and bss -- read/write from here on
+.ip
+boot parameters -- copied to end of bss
+.ip
+kernel page table directory -- primary page table page
+.ip
+process 0's u page
+.ip
+process 0's kernel stack
+.ip
+page table page for process 0's u area and kernel stack
+.lp
+[end of linear mapping]
+.ip
+virtual addresses for the I/O hole (atdevphys)
+.ip
+10 page virtual gap (slop?)
+.ip
+CADDR1 and CADDR2 virtual pages for physical memory copying
+.ip
+virtual page used to map physical pages for /dev/mem
+.ip
+msgbuf pages (/dev/klog)
+.ip
+64 KB virtual space for WD driver's dump routine
+.ip
+the 'zero' page (for /dev/zero)
+.ip
+VM hash table buckets (mapping vm_object/offset to vm_page)
+.ip
+fixed vm_map and vm_map_entry structures
+.ip
+the vm_page array
+.ip
+pv_table and pmap_attributes arrays for pmap code
+.ip
+the pager_map -- used for pager I/O, 4 MB of virtual space
+.ip
+kmemusage array
+.ip
+kmem_map -- variable in size, many MB
+.ip
+unused kernel_map space, out to the maximum kernel virtual address
+.pp
+The layout of physical memory bears no resemblance to that of virtual memory.
+The physical I/O
+hole usually appears in the middle of the text; its virtual address
+is unrelated to its physical address.  The remaining kernel page
+table pages are mapped into the kernel's page table space, but are
+physically located after the 'page table page for process 0's u
+area and kernel stack'.  There are a fixed number of these pages;
+the total number assigned at boot time limits the maximum virtual
+address in the kernel arena.  The msgbuf pages are out of order;
+they are actually at the end of physical memory.  The dedicated
+memory from the zero page through the end of the vm_page array is
+linearly mapped, but all of the following physical pages (except
+for the msgbuf pages) are allocated dynamically from the page pool
+and have no fixed physical page assignments.
+.pp
+The u page and kernel stack page for a process
+are doubly mapped when the process is running.  For each process,
+the two pages get malloc()ed together, so there's a unique kernel
+address for them (the p_addr value in the proc structure).  When
+the process runs, the pages are mapped again at 0xefbfe000.  This
+makes life a little easier on the i386 because we use a single
+hardware task structure for all processes.  This task structure
+contains a stack pointer that gets loaded when we trap into the
+kernel, so it's convenient that we can always use the same kernel
+virtual address for the kernel stack.  On other architectures, the hardware
+doesn't switch stacks for you when you trap into the kernel, so
+the kernel exception code just uses the unique kernel stack address
+directly.
+.pp
+.sh 2 "Commonly used VM routines"
+.pp
+The following are a few VM routines which are commonly used by drivers:
+.CS
+vm_offset_t pmap_extract(pmap_t pmap, vm_offset_t va)
+.CE
+.ip
+This function returns the physical address associated with
+the given virtual address va in the pmap pa.  In drivers,
+the pmap is always the kernel_pmap.  Note that consecutive
+virtual pages are almost NEVER consecutive physical pages,
+and vice versa.
+.CS
+void pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
+    vm_prot_t prot, boolean_t wired)
+.CE
+.ip
+This function inserts a physical page at a given virtual
+page in the given pmap, with specified protections and
+wiring.  It's used in dump routines for programmed I/O disk
+drivers, so that physical pages can be mapped to virtual
+addresses in the dumpmap.  See wd.c for an example.
+.CS
+offset_t vm_page_alloc_contig(vm_offset_t size, vm_offset_t low,
+    vm_offset_t high, vm_offset_t alignment)
+.CE
+.ip
+This function returns the virtual address of a buffer that
+maps a series of contiguous physical pages selected from
+the given range, with the given page alignment.  It can
+return 0 if sufficient contiguous physical pages cannot be
+found.  See the discussion of slave DMA for more details.
+.CS
+void *mapphys(vm_offset_t pa, int len)
+.CE
+.ip
+This function allocates virtual space to map a region of
+physical addresses, and returns a pointer to the virtual
+space.  It should only be used to map device addresses, and
+NEVER physical memory (use vm_page_alloc_contig()).
+.pp
+.sh 1 "Sample Driver"
+.pp
+The preceeding sections have presented enough information to
+to examine a sample device driver for an
+.c xx
+device on the physical ISA bus.
+This imaginary device and its driver illustrate the data structures
+for the driver, the autoconfiguration routines, and other driver entry points.
+The examples omit any code to make any device do anything;
+where such code would normally be present, the example includes
+calls to functions whose names are intended to describe the operations.
+This should not be construed as a recommendation that all such code
+should be placed in individual functions; normally, it would be present
+in the locations shown here rather than in subroutines.
+.pp
+The imaginary device uses a range of I/O ports, an interrupt,
+and device memory in the 640 KB to 1 MB (0xA0000 to 0x100000) I/O space.
+It also uses a DMA channel.
+It uses many of the ISA support functions, although a real driver
+might not need all of them.
+.pp
+Throughout the example,
+names beginning with
+.c XX
+can be assumed to be driver-specific definitions,
+and functions beginning with
+.c xx
+are driver-specific functions even if not shown.
+.sh 2 "Data Structures"
+.pp
+The driver begins as always with the inclusion of header files
+defining the data structures and other useful items:
+.CS
+#include <sys/param.h>			/* ALWAYS included */
+#include <sys/systm.h>			/* general kernel functions */
+#include <sys/conf.h>			/* /dev entry points (devsw) */
+#include <sys/device.h>			/* generic device definitions */
+#include <i386/isa/isa.h>		/* ISA bus parameters */
+#include <i386/isa/isavar.h>		/* ISA-specific data structures */
+#include <i386/isa/icu.h>		/* interrupt definitions */
+#include <i386/isa/dma.h>		/* DMA definitions */
+#include "xxreg.h"			/* xx register definitions */
+#include "xxvar.h"			/* xx data structure definitions */
+#include "xxioctl.h"			/* xx-specific ioctl definitions */
+.CE
+.lp
+Note that the
+.c xxreg.h
+file should define only register names and contents
+and other values defined by the hardware.
+Any externally-visible data structures or ioctl commands
+should be defined in other header files as in the last two files included.
+Most drivers use neither of these examples.
+.pp
+Next, the data structures
+used in the driver.
+The first structure describes each type/model of device supported
+by the driver, for use later in the example:
+.CS
+struct xx_type {
+	char	*xx_name;
+	/* parameters describing each type of device supported */
+} xx_type[XX_NTYPES] = {
+	/* definitions for each type of device supported */
+	{ "model X" },
+	{ "model Y" },
+};
+.CE
+.pp
+The next data structure is the per-device data structure for a
+.c xx
+device, to be allocated as each device is located;
+by convention, this is called
+.c xx_softc .
+As always, it begins with a
+.c "struct device" .
+It also includes the data structures needed for every ISA device
+and for an ISA device that uses an interrupt.
+Two
+.c "struct evcnt"
+event counters are included for display by
+.i systat .
+The example structure ends with fields to store the addressing parameters
+needed for the device in operation, and other fields useful
+in example functions.
+.CS
+struct xx_softc {
+	struct	device sc_dev;		/* base device, must be first */
+	struct	isadev sc_id;		/* ISA device */
+	struct	intrhand sc_ih;		/* interrupt vectoring */
+
+	struct	evcnt sc_intr;		/* display no. of interrupts */
+	struct	evcnt sc_resync;	/* and number of resynch attempts */
+
+	int	sc_base;		/* I/O port base */
+	int	sc_membase;		/* kernel address of device memory */
+	int	sc_memsize;		/* size of device memory */
+	int	sc_dmachan;		/* DMA channel */
+	struct	xx_type *sc_type;	/* type-specific device parameters */
+
+	struct	selinfo sc_wsel;	/* Selecting process for write */
+	int	sc_open;		/* device is open */
+	/* additional private storage per device located */
+};
+.CE
+.lp
+Finally, function declarations (with prototypes) and the
+.c cfdriver
+and
+.c devsw
+structures are illustrated:
+.CS
+int	xxprobe __P((struct device *, struct cfdata *, void *));
+void	xxforceintr __P((void *));
+void	xxattach __P((struct device *, struct device *, void *));
+struct	xx_type *xxtype __P((struct isa_attach_args *));
+int	xxintr __P((void *));
+
+struct cfdriver xxcd =
+	{ NULL, "xx", xxprobe, xxattach, DV_xxx, sizeof(struct xx_softc) };
+
+int	xxopen __P((dev_t, int, int, struct proc *));
+int	xxclose __P((dev_t, int, int, struct proc *));
+int	xxwrite __P((dev_t, struct uio *, int));
+int	xxioctl __P((dev_t, int, caddr_t, int, struct proc *));
+
+/* entry points.  noX means no operation X provided. */
+struct devsw xxsw = {
+	&xxcd,
+	xxopen, xxclose, noread, xxwrite, xxioctl, seltrue, nommap,
+	nostrat, nodump, nopsize, 0,
+	nostop
+};
+.CE
+.lp
+Again, the name
+.c xxcd
+is assumed by the
+.c config
+program, and is referenced by each
+.c cfdata
+entry for a possible
+.c xx
+device.
+Similarly, the name
+.c xxsw
+is referenced in the
+.c ioconf.c
+template file.
+.sh 2 "Autoconfiguration"
+.pp
+Next, the boilerplate code for the autoconfiguration entry points:
+.CS
+/*
+ * Probe the hardware to see if it is present
+ */
+xxprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct isa_attach_args *ia = (struct isa_attach_args *) aux;
+
+	/*
+	 * Check whether device registers appear
+	 * to be present at this address.
+	 */
+	if (!xx_test_registers(ia->ia_iobase))
+		return (0); 		/* device not present here */
+
+	/*
+	 * Check/test shared memory in 640K to 1MB "hole".  ia_maddr is
+	 * a physical address, ISA_HOLE_VADDR converts to kernel virtual.
+	 */
+	if (!xx_memory_ok(ISA_HOLE_VADDR(ia->ia_maddr)))
+		return (0); 		/* memory not present here */
+
+	/*
+	 * If we support multiple device subtypes, etc., we can pass
+	 * this information to xxforceintr and/or xxattach using ia->ia_aux.
+	 * Here we pass a pointer to the structure describing the subtype.
+	 */
+	ia->ia_aux = xx_check_type(ia);
+
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = isa_discoverintr(xxforceintr, aux);
+		/* disable device interrupts here */
+		if (ffs(ia->ia_irq) - 1 == 0)
+			return (0);	/* no interrupt */
+	}
+
+	ia->ia_iosize = XX_NPORT;	/* reserve this many ports */
+	ia->ia_msize = XX_MSIZE;	/* Reserve this much I/O memory */
+	return (1);			/* device appears to be present here */
+}
+.CE
+.sp
+.CS
+/*
+ * force device to interrupt for autoconfiguration
+ */ 
+void
+xxforceintr(aux)
+	void *aux;
+{
+	struct isa_attach_args *ia = (struct isa_attach_args *) aux;
+
+	xx_intr_enable(ia->ia_iobase, (struct xx_type *) ia->ia_aux);
+	DELAY(100);		/* delay 100 us */
+	/*
+	 * The device should now have interrupted.  If it has not,
+	 * initiate some activity to force an interrupt.
+	 */
+	if (!isa_got_intr())
+		xx_poke_harder();
+}
+.CE
+.lp
+The purpose of the
+.c xxprobe
+function is to determine whether an
+.c xx
+device exists at the specified I/O base port and memory address.
+Obviously, if the device does not exist, but some other device uses
+some of these ports or addresses, it is desirable to minimize
+the problems that may result.
+Accordingly, read-only checks are preferred to those that modify registers.
+The probe function must also modify the addressing values in the
+.c isa_attach_args
+structure to indicate the actual values;
+for example, a memory address may be read from the device
+rather than using a value configured in advance.
+.pp
+This example illustrates configuration of a device that is set to use
+a specific interrupt (IRQ) and memory base by a permanent setup
+such as jumpers or a configuration utility.
+The memory is tested at the specified location,
+and the identity of the interrupt is discovered by making the device
+interrupt;
+.c isa_discoverintr()
+notes the first interrupt, if any, that occurs after calling the
+.c xxforceintr()
+function.
+The value is returned as a bit mask (e.g., IRQ0 has value 1,
+IRQ8 has value 0x100, etc.).
+Currently, if no interrupt occurs, the value for IRQ0 is returned
+(this may change in the future).
+The
+.c ffs
+function returns one greater than the index of the lowest set bit
+of a mask, or zero if no bits are set.
+.pp
+The example function
+.c xxforceintr()
+uses the function
+.c isa_got_intr()
+to test whether it has already received an interrupt.
+The return value of
+.c isa_got_intr()
+is like that of
+.c isa_discoverintr()
+except that the value zero indicates that no interrupt has been received.
+Most drivers will not need to use this function;
+their
+.c forceintr
+functions will normally try one scheme to force an interrupt
+and then return.
+The
+.c forceintr
+function need not wait for an interrupt;
+that is done by
+.c isa_discoverintr() .
+.pp
+Other devices might program the desired memory address and/or interrupt
+number once the device was found via the base port.
+(Some devices even program the base port at run time, using a well-known
+port to locate the device initially.)
+A driver for a device that may be programmed to use one of several interrupts
+can allocate an unused interrupt with the call
+.CS
+	ia->ia_irq = isa_irqalloc(XX_IRQMASK);
+.CE
+The
+.c isa_irqalloc()
+function accepts a mask of possible IRQ values, and returns one of those
+values which is otherwise unused.
+It returns a mask suitable for assignment to
+.c ia_irq
+if one of the values is available, and returns zero if all of the values
+are already in use.
+.pp
+Devices that do not use an interrupt must set
+.c ia->ia_irq
+to IRQNONE, as the default value (IRQUNK) is not the same.
+.pp
+If the driver supports multiple device subtypes, or if the driver
+otherwise needs to pass data to its forceintr and/or attach
+functions, the field
+.CS
+	void	*ia_aux;		/* driver specific */
+.CE
+in the
+.c isa_attach_args
+structure is available to the driver for passing such information.
+Note that it is not safe to use this pointer to refer to dynamically-allocated
+memory, as there is no assurance that the attach function
+will actually be called for each call of the probe function.
+.pp
+If the device probe function returns true and the indicated
+port range does not overlap with any other device,
+the device will be attached to the system.
+Memory for the
+.c xx_softc
+structure is allocated, the
+.c "struct device"
+portion of the structure is initialized to the correct unit number
+and names,
+and a pointer to the structure is placed into the array of known
+.c xx
+devices in the
+.c cd_devs
+array (enlarging the array as needed).
+A configuration message for the device is printed without
+a newline (e.g,
+.c "xx0 at isa0 iobase 0xXXX" "\& ...").
+The
+.c xxattach
+function is then called to allow the driver to initialize
+its portion of the data structures, and to make itself
+known to other classes of which it is a member.
+It must also print additional driver dependent information
+(as described in a previous section)
+preceded by a colon.
+.pp
+The memory pointed to by the
+.c aux
+variable (the
+.c isa_attach_args
+structure) may be overwritten after the attach routine exits. Any
+fields that the driver will need to operate must be copied into
+the 
+.c softc
+(it is not enough to just save the 
+.c aux
+pointer).
+.CS
+/*
+ * Interface exists: initialize softc structure
+ * and attach to bus, interrupts, etc.
+ */
+void
+xxattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	register struct xx_softc *sc = (struct xx_softc *) self;
+	struct isa_attach_args *ia = (struct isa_attach_args *) aux;
+
+	aprint_naive(": Fictitious XX device");
+
+	/* record device location for all future accesses */
+	iobase = ia->ia_iobase;
+	sc->sc_base = iobase;
+	sc->sc_membase = ISA_HOLE_VADDR(ia->ia_maddr);
+	sc->sc_memsize = ia->ia_msize;
+	sc->sc_dmachan = ia->ia_drq;
+	sc->sc_type = (struct xx_type *) ia->ia_aux;
+
+	aprint_normal(": Interface %d\\n", inb(iobase + XX_IFNO));
+	printf("\\n");
+	aprint_verbose("xx%d: Rev=%d\\n", sc->sc_dev.dv_unit, 
+	    inb(iobase + XX_REV));
+
+	/* attach to isa bus */
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	/* attach interrupt handler */
+	sc->sc_ih.ih_fun = xxintr;
+	sc->sc_ih.ih_arg = (void *)sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_xxx);	/* fill in device type */
+
+	/* attach event counters */
+	evcnt_attach(&sc->sc_intr, &sc->sc_dev, "intr");
+	evcnt_attach(&sc->sc_resync, &sc->sc_dev, "resync");
+
+	/* allocate and initialize DMA channel, given maximum I/O size */
+	at_setup_dmachan(sc->sc_dmachan, XX_MAXIOSIZE);
+}
+.CE
+.pp
+This example illustrates the conversion of an ISA physical address (\c
+.c ia->ia_maddr )
+to a kernel virtual address for direct access in the kernel.
+The standard ISA device memory area (640 KB to 1 MB, or 0xA0000 to 0x1000000)
+is always mapped by the kernel, and the macro
+.c ISA_HOLE_VADDR
+returns a kernel virtual address for a physical address in this range.
+There is no simple analog for use with device memory outside
+of this range.
+.pp
+Note that the device attach function should normally not initialize
+the device for operation, and should leave interrupts disabled
+if the device interrupts spontaneously (as do network and communications
+devices).
+This minimizes the chances of confusing future device probes,
+in particular when using
+.c isa_discoverintr() .
+The device should be initialized when it is first opened,
+or (in the case of a network device) when an address is first assigned.
+.pp
+The call to
+.c intr_establish()
+registers an interrupt handler for this device using the specified interrupt.
+Thus, unlike prior systems, the name(s) of the interrupt functions
+need not be specified in the configuration file, and
+.c config
+does not generate assembly-language glue code for each possible
+device as in the past.
+.pp
+The last parameter to
+.c intr_establish()
+is one of the device classes shown with the
+.c device
+structure.
+This parameter is used to compute the interrupt masks
+for the
+.c splbio() ,
+.c spltty() ,
+and
+.c splimp() 
+functions, which block all disk/tape, terminal and network interrupts
+respectively.
+When an interrupt for this device is received, interrupts for other
+devices in this class are also blocked.
+If the parameter is
+.c DV_DULL ,
+the device is presumed to be in a class of its own, and no other interrupts
+will be disabled during the interrupt service.
+If the parameter is
+.c DV_CLOCK ,
+all interrupts are disabled during the service of this interrupt,
+which may be useful for real-time devices whose interrupt routines
+should not be interrupted by lower-priority devices.
+.pp
+.c Evcnt_attach()
+attaches the given event counter to the given device
+and sets its name (which must be no more than 7 characters long).
+The systat display will prepend the device's name (e.g., `xx0')
+to this string,
+then print the value in the
+.c ev_count
+field of the counter.
+This field may be set to any value as appropriate;
+typically the interrupt count would be incremented in the interrupt handler.
+.pp
+Although it is not an autoconfiguration-related entry point,
+the interrupt handler is presented here, as it is registered
+by the attach function.
+Unlike interrupt handlers in other systems, the parameter
+to an interrupt handler in
+.B3
+is a generic
+.c "void *"
+pointer rather than a unit number.
+The value passed is the value placed in the
+.c ih_arg
+field of the
+.c intrhand
+structure which is used to register the interrupt.
+The calling convention results in an interrupt function such as this:
+.CS
+/*
+ * Device interrupt handler
+ */
+xxintr(sc0)
+	void *sc0;
+{
+	struct xx_softc *sc = sc0;
+	register int base = sc->sc_base;
+
+	/* check device status, etc. */
+	at_dma_terminate(sc->sc_dmachan);
+	/* notify process selecting for write */
+	selwakeup(&sc->sc_wsel);
+	/* count interrupt events */
+	sc->sc_intr.ev_count++;
+	return (1);	/* interrupt was expected */
+}
+.CE
+.lp
+The call to
+.c at_dma_terminate()
+would be used at the completion of a DMA operation;
+see the discussion of
+.c xxstart
+below.
+This example also shows the use of the
+.c selwakeup()
+function to notify selecting processes that the desired event may have happened.
+.pp
+Note that the interrupt function has a return value.
+On the ISA bus, the two possible return values are 0 and 1;
+0 indicates that the interrupt was not expected by this driver.
+If no device indicates that it was expecting the interrupt,
+a \*(lqstray interrupt\*(rq message is logged.
+.pp
+It is a bad idea to call either
+.c malloc()
+or
+.c free()
+in an interrupt routine. Put these calls in a
+.c wayout()
+so that they may be done without blocking interrupts.
+.pp
+.sh 2 "Other Entry Points"
+.pp
+Several other driver entry points are illustrated in this section,
+emphasizing those features that different in this system than in most others.
+These examples assume a \*(lqcharacter\*(rq device driver.
+The examples are quite incomplete even as boilerplate for most classes
+of device;
+as always, the best way to write these functions is to reuse a portion
+of an existing driver that is similar in nature.
+Details such as blocking interrupts are ignored in the examples.
+.pp
+Several of the functions in these examples show more parameters
+than declared in drivers for older versions of the system.
+Although the additional parameters are often not needed, especially here,
+they must be included to prevent compiler complaints
+about function types.
+In several cases, a
+.c proc
+parameter is present.
+This should not be used by most drivers, but is present when necessary
+for access checks, etc.
+.pp
+The first example is a simple
+open
+function.
+As the drivers no longer have an array of statically-allocated
+.c softc
+structures, validating the unit number and finding the
+.c softc
+structure are different than in past systems.
+.CS
+int
+xxopen(dev, flag, fmt, p)
+	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
+{
+	int unit = minor(dev);
+	struct xx_softc *sc;
+
+	/* Validate unit number */
+	if (unit >= xxcd.cd_ndevs || (sc = xxcd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+
+	if (sc->sc_open == 0) {
+		if (xxinit(sc))		/* initialize device */
+			sc->sc_open = 1;
+		else
+			return (EIO);
+	}
+	return (0);			/* success */
+}
+.CE
+.pp
+The sample close function is also very simple:
+.CS
+int
+xxclose(dev, flag, fmt, p)
+	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
+{
+	int s;
+	struct xx_softc *sc = xxcd.cd_devs[minor(dev)];
+
+	/* Mark as not open */
+	sc->sc_open = 0;
+	xxshutdown(sc);			/* turn off device */
+
+	return(0);
+}
+.CE
+.pp
+The close function (and the other remaining functions)
+need not check the validity of the unit number, as the open would not have
+succeeded if the unit number were invalid.
+.pp
+The character device read and write functions have the same calling
+convention.
+This example serves mostly to illustrate the calling convention
+and the use of the
+.c tsleep
+function.
+Note that the \*(lqraw\*(rq interfaces to block I/O devices
+generally do not require read and write functions, but can use the
+.c rawread()
+and
+.c rawwrite()
+functions in the
+.c devsw
+structure. These use
+.c physio()
+to insure the buffers are in memory before calling the strategy
+entry point.
+.CS
+int
+xxwrite(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	int n, s, error;
+	struct xx_softc *sc = xxcd.cd_devs[minor(dev)];
+
+	/* Loop while more data remaining */
+	while (uio->uio_resid != 0) {
+		while (xx_device_busy(sc)) {
+			error = tsleep(sc, PZERO | PCATCH, "xxwrit", 0);
+			if (error != 0)
+				return (error);
+		}
+		xxstart(sc, uio);
+	}
+	return (0);
+}
+.CE
+.pp
+The
+.c xxstart()
+function illustrates the use of DMA.
+In fact, the current DMA support is set up for use by block devices
+using a different interface (using a
+.c "struct buf"
+rather than a
+.c uio
+to describe an operation), thus this example is contrived.
+.CS
+void
+xxstart(sc, uio)
+	struct xx_softc *sc;
+	struct uio *uio;
+{
+
+	/* compute or allocate kernel address */
+	at_dma(uio->uio_rw == UIO_READ, kaddr, count, sc->sc_dmachan);
+	/* initiate I/O */
+	if (error)
+		at_dma_abort(sc->sc_dmachan);
+}
+.CE
+.lp
+The
+.c at_dma()
+function programs the DMA controller for a DMA operation.
+The parameter
+.c kaddr
+is a kernel virtual address.
+If the specified address range is not physically contiguous
+or extends above the range of ISA address (16 MB, using 24-bit addresses),
+the data are copied to or from a buffer in low memory.
+The
+.c at_dma_abort()
+function
+can be used to cancel a DMA operation that will not be completed. 
+.pp
+This sample ioctl function illustrates the calling convention:
+.CS
+int
+xxioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	register struct xx_softc *sc = xxcd.cd_devs[minor(dev)];
+
+	switch (cmd) {
+	default:
+		return (ENOTTY);
+	}
+	return (0);
+}
+.CE
+.lp
+The
+.c data
+parameter to the ioctl function is a pointer to a buffer in the kernel
+address space containing any input data, and into which any returned
+data is placed.
+The data is copied into and/or out of the kernel by the ioctl system call,
+not by the device driver.
+The amount of data that can be passed to or from an ioctl call
+is limited by the parameter
+.c IOCPARM_MAX
+in
+.c /sys/sys/ioctl.h
+(currently one page, or 4096 bytes)
+and by the format of an ioctl command, which encodes the amount and direction
+of data to be copied.
+.pp
+Finally, a sample select function illustrates the calling convention
+and conventions, assuming a device that supports write and not read.
+The call to 
+.c selrecord()
+is made when the requested function is not possible
+immediately, but may be possible later.
+The corresponding
+.c selwakeup()
+call is in the interrupt routine.
+.CS
+xxselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
+{
+	int s, ret;
+	struct xx_softc *sc = xxcd.cd_devs[minor(dev)];
+
+	s = splXXX();		/* block xx-class interrupts */
+	switch (rw) {
+	case FREAD:
+		/* Silly to select for input on output-only device */
+		ret = 1;		/* go ahead and try to read! */
+		break;
+	case FWRITE:
+		/* Return true if queue almost empty */
+		if (sc->sc_outq.c_cc < LOWAT)
+			ret = 1;
+		else {
+			ret = 0;
+			selrecord(p, &sc->sc_wsel);
+		}
+		break;
+	case 0:		/* exceptional condition */
+		ret = 0;
+		break;
+	}
+	splx(s);
+	return (ret);
+}
+.CE
+.pp
+Although these examples are rather skeletal, they should serve to provide
+guidance in implementing a device driver and to provide assistance
+in understanding existing drivers.

@@ -1,0 +1,6 @@
+Makefile
+mkbuiltins
+builtext.h
+builtins.c
+psize.aux
+pipesize.h

@@ -1,0 +1,9 @@
+Enter the partition letter you wished this partition assigned to.
+You may not assign the partition to a letter already assigned to
+another partition.
+
+ESC    Cancel all changes to this partition.
+ENTER  Apply changes to this partition.
+TAB    Go on to editing the type of the partition.
+
+[A-H]  The partition letters.

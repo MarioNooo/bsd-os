@@ -1,0 +1,41 @@
+.\" 	BSDI lmcctl.8,v 1.2 1999/10/13 21:33:21 prb Exp
+.\"
+.Dd October 13, 1999
+.Dt LMCCTL 8
+.Os
+.Sh NAME
+.Nm lmcctl
+.Nd control Lan Media interfaces
+.Sh SYNOPSIS
+.Nm lmcctl
+.Op Fl cCeEsSoO
+.Op Fl i Ar interface
+.Op Fl l Ar speed
+.Sh DESCRIPTION
+The
+.Nm lmcctl
+utility is used to configure Lan Media WAN adapters.
+The options are:
+.Bl -tag -width indent
+.It Fl i
+Specifies the interface, defaults to
+.Nm lmc0 .
+.It Fl l
+sets line speed in kbits/sec [LMC1000]
+.It Fl c
+sets external clock source [LMC1000, LMC5200]
+.It Fl C
+sets internal clock source [LMC1000, LMC5200]
+.It Fl e
+selects 16 bit CRC
+.It Fl E
+selects 32 bit CRC
+.It Fl s
+turns DS3 scrambler off [LMC5245]
+.It Fl S
+turns DS3 scrambler on [LMC5245]
+.It Fl o
+sets DS3 cable length < 100 feet [LMC5245]
+.It Fl O
+sets DS3 cable length > 100 feet [LMC5245]
+.El

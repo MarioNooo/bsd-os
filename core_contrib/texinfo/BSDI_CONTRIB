@@ -1,0 +1,39 @@
+Software Package:       
+	texinfo
+
+Release/Version:
+	Version 4.6
+
+Retrieved from:
+	ftp://ftp.gnu.org/pub/gnu/texinfo
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and bug-texinfo@prep.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added a top-level makefile.
+
+BSDI BSDI_CONTRIB,v 1.3 2003/08/07 17:42:44 polk Exp
+Index: D/info/filesys.h
+===================================================================
+RCS file: /master/core_contrib/texinfo-4.0/D/info/filesys.h,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 filesys.h
+*** D/info/filesys.h	1999/11/15 01:49:09	1.1.1.1
+--- D/info/filesys.h	2002/01/08 20:45:12
+***************
+*** 75,80 ****
+--- 75,81 ----
+  extern int is_dir_name ();
+  
+  /* The default value of INFOPATH. */
++ #define DEFAULT_INFOPATH "/usr/share/info:/usr/contrib/share/info:/usr/local/share/info"
+  #if !defined (DEFAULT_INFOPATH)
+  #  define DEFAULT_INFOPATH "/usr/local/info:/usr/info:/usr/local/lib/info:/usr/lib/info:/usr/local/gnu/info:/usr/local/gnu/lib/info:/usr/gnu/info:/usr/gnu/lib/info:/opt/gnu/info:/usr/share/info:/usr/share/lib/info:/usr/local/share/info:/usr/local/share/lib/info:/usr/gnu/lib/emacs/info:/usr/local/gnu/lib/emacs/info:/usr/local/lib/emacs/info:/usr/local/emacs/info:."
+  #endif /* !DEFAULT_INFOPATH */

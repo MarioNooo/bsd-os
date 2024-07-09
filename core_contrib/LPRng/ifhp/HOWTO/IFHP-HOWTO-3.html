@@ -1,0 +1,755 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Printer Capabilities, Configurations, and Printcaps</TITLE>
+ <LINK HREF="IFHP-HOWTO-4.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-2.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-4.html">Next</A>
+<A HREF="IFHP-HOWTO-2.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="s3">3. Printer Capabilities, Configurations, and Printcaps</A></H2>
+
+<P>One of the major difficulties with printer software
+is dealing with the wide range of different printer hardware configurations
+and printer connections.
+This section outlines the printer communication methods,
+the types of print job languages,
+and the effects of these on printing software and the <CODE>ifhp</CODE>
+filter.
+<H2><A NAME="ss3.1">3.1 Printer Configurations</A>
+</H2>
+
+<P>A printer consists of a hardware print engine which marks the output page
+and delivers it,
+a set of control hardware that takes a <I>print job</I>
+in a well defined format and operates the hardware to produce output
+according to information in the <I>print job</I>,
+and a communication channel from the computer to the control hardware.
+The control hardware is sometimes called a <I>print engine</I>.
+In most modern computers the control hardware may consist of multiple microprocessors,
+each with their own firmware,
+and each performing a specific printing task.
+For example,
+one may control the paper feed path,
+one may do rasterization,
+and one handle communications with the outside world.
+<P>In order to set up printing correctly,
+it is necessary to know the following information about your printer.
+<OL>
+<LI>The capabilities of the hardware.
+This is dependent on the model of printer,
+and may be such things as the page feed,
+output and input tray selection,
+numbers of columns and/or rows of output available on the output device.
+This information is readily available from most manufacturers.</LI>
+<LI>The <I>print job language</I>
+recognized by the control hardware.
+This is the special set of codes,
+commands, and formats recognized by the control hardware.</LI>
+<LI>The protocol used to send jobs to the printer and obtain status
+about the printing activity.</LI>
+</OL>
+<P>Usually the capabilities of a modern printer are very well known
+and documented,
+and the <CODE>ifhp</CODE> filter and most print spooling software has
+little difficulty working with them.
+<P>The following checklist will help you in setting up your printer.
+The various options that you will need to know about are indicated
+where appropriate.
+<OL>
+<LI>Printer Model (<CODE>model=???</CODE>)<BR>
+What is the exact printer model?
+Check the serial number or other identification to get this information.
+You should check the <CODE>ifhp.conf</CODE>
+configuration file to see if your printer is already supported.</LI>
+<LI>Print Languages Supported By Your Printer
+<OL>
+<LI>PJL? (<CODE>pjl</CODE> or <CODE>pjl@</CODE>)<BR>
+The Printer Job Language (PJL) is a high level language supported by many Hewlett-Packard
+printers that allows some print system configuration to be performed.
+Due to historical developments,
+not all printers support all PJL language facilities,
+and some support them in different ways than other printers.
+The <CODE>ifhp</CODE> filter can use the PJL support for a printer if it is available.</LI>
+<LI>PostScript (and what version)?  (<CODE>ps</CODE> or <CODE>ps@</CODE>)<BR>
+PostScript is the most common print job language in use.
+If your printer supports PostScript,
+then you will have a relatively trouble free time with it. 
+One problem is that it requires a fairly substantial amount of
+memory and computational support,
+and is usually not found on the low end (less than $500) printers.</LI>
+<LI>PCL? (<CODE>pcl</CODE> or <CODE>pcl@</CODE>)<BR>
+PCL is another Print Language supported by
+many vendors, including Hewlett-Packard,
+Lexmark, and others.
+It is essentially text with escape sequences to tell the print engine
+to place markings on a page at specific places in a specific font.
+It is the second most common format used with modern printers.</LI>
+<LI>Text? (<CODE>text</CODE> or <CODE>text@</CODE>)<BR>
+Text is really just PCL without any control sequences.
+However, it is easy to have <CODE>ifhp</CODE> convert ordinary text into PCL
+by prefixing the appropriate PCL control codes.
+You may also need to use the <CODE>crlf</CODE> option to force
+<CODE>CR</CODE> to <CODE>CR-LF</CODE> translation.
+If you have a simple text printer then you may want to use the much
+easier to configure <CODE>lpf</CODE> filter from the LPRng distribution
+(
+<A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A>).</LI>
+<LI>Vendor Specific<BR>
+There is a growing trend to have very proprietary Print Languages
+for very low end  (less than $300) printers.
+These printers usually require all of their jobs to be preformated by
+software running on the host and to have the job delivered to them
+in a specific manner.
+If you have one of these printers,
+you will need to get a rasterizing program that produces the correct format.
+Check to see if
+<A HREF="IFHP-HOWTO-2.html#ghostscript">GhostScript</A>,
+supports your printer.
+If it does then you can use <CODE>GhostScript</CODE> to translate
+PostScript to your printer's required format.</LI>
+</OL>
+</LI>
+<LI>Memory Size.<BR>
+If you are going to be sending large print jobs or ones with a large
+amount of graphics to the printer, you will need a substantial amount
+of memory to deal with rasterization.
+Most high resolution Laser Copier based printers require a minimum of
+16 megabytes for adequate performance,
+and if you are printing complex PostScript or PDF documents you
+may want at least 32 megabytes.
+Color printers require substantially more and 64 megabytes is not uncommon.</LI>
+<LI>Communications.
+The connection between your printer
+and the host computer.
+<OL>
+<LI>Network Connection<BR>
+This is the most reliable and high speed way to connect a printer
+to a system.
+This is especially true if a printer must be accessible to multiple
+users and is located at a distance from the user.</LI>
+<LI>Parallel Port (<CODE>status@</CODE>)<BR>
+Note that this is a <EM>unidirectional</EM> communications channel
+and there is little to no support for bidirectional communications.
+While there are drivers available for bidirectional communication with 
+various printers,
+these are usually limited in capability and have a severe impact on
+system performance.</LI>
+<LI>Serial Ports<BR>
+This is the very worst way to communicate at high speed with a printer.
+Serial ports usually have a high error rate,
+suffer from data overruns,
+and have a severe impact on system performance.
+You will need to configure your printer speed,
+format (bits per character, parity, stop bit), 
+and flow control method,
+and then do the same for the host.
+This can be an endless source of frustration for the novice user.</LI>
+<LI>Print Server Box<BR>
+Many older printers do not directly support a network connection
+and have an external <I>print server box</I> attached to either their
+serial or parallel ports.
+If you have the printer connected to a parallel port,
+then you will still most likely only have unidirectional communication
+and no status information will be available from the printer.</LI>
+</OL>
+</LI>
+</OL>
+<H2><A NAME="networkprotocols"></A> <A NAME="ss3.2">3.2 Network Communication Protocols</A>
+</H2>
+
+<P>The most high speed and reliable connection to your printer is using a
+network connection.
+The following protocols are usually used to communicate with a network printer:
+RFC1179 (TCP/IP printing),
+Socket Protocol (TCP/IP),
+AppSocket Protocol (TCP/IP),
+Novell Print Protocol (IPX),
+SMB Print Protocol (TCP/IP),
+and AppleTalk Print Protocol (TCP/IP).
+<P>It is highly recommended that you use TCP/IP networking to communications to
+talk to your printer,
+and that you do not enable any other protocol on your printer.
+If you have two different systems trying to connect to the same printer
+using different protocols,
+a wide range of vendor's hardware will lock up and may require a power up reset
+to recover.
+Documented evidence for this behavior includes a wide range of
+printers, including those from Hewlett-Packard, LexMark, IBM and other vendors.
+<P>Only the TCP/IP based network job transfer protocols are discussed in
+this document.
+For details on using other protocols,
+please consult the consult the
+<A HREF="http://www.astart.com/LPRng.html">LPRng</A>
+documentation.
+<H2><A NAME="rfc1179pc"></A> <A NAME="ss3.3">3.3 RFC1179 (BSD or TCP/IP) Job Transfer Printcap Entry</A>
+</H2>
+
+<P>RFC1179 is used to transfer print jobs between
+a client (user) and a print spooler,
+or between two print spoolers.
+Jobs are transferred as a set of files,
+and the only information exchanged during the transfer process is the
+success or failure of the transfer.
+In order to get status about the actual job printing,
+a separate query status (<CODE>lpq</CODE>) is sent to the print spooler.
+<P>Many,
+if not all,
+printers with a network interface that supports the TCP/IP protocol support
+the RFC1179 protocol for job transfer.
+However,
+their support for print job status is usually minimal to non-existent.
+If you want to send a job to a printer using the RFC1179 protocol,
+please be aware of the following problems.
+<P>Normally a print spooler (System 5 lp, BSD lpd, LPRng)
+does not modify a print job when forwarding it to another print spooler.
+This means that your print job will normally pass from the originating
+<CODE>lp</CODE> or <CODE>lpr</CODE> program to the destination printer with no changes.
+This can have disastrous results if the job
+<B>requires</B>
+filter processing.
+<P>If you are using the <CODE>LPRng</CODE> print spooler,
+job transfers using <CODE>RFC1179</CODE>
+is specified by using <CODE>:lp=spoolqueue@host</CODE>
+or <CODE>:rp=spoolqueue:rh=host</CODE> printcap entries.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+raw:
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+cooked:
+  :rp=cooked:rm=host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Please note that no filters specified as the job is not modified,
+only transferred from one server to another.
+Even if filters were specified they would be ignored.
+The
+<B>lpd_bounce</B>
+flag causes the LPRng spooler to pass the print job through
+the specified filter
+and then send the filter output to the actual network printer.
+The <CODE>lpd</CODE> print spooler will open a temporary file for
+to hold the filter output,
+and then proceed to start the specified filter with
+its <CODE>STDOUT</CODE> attached to the temporary file,
+its <CODE>STDIN</CODE> attached to the file to be processed,
+and
+its <CODE>STDERR</CODE> redirected to an error log.
+The single resulting file is then transferred to the destination
+system using the <CODE>RFC1179</CODE> protocol.
+<P>When a job is created
+the job format is specified (default is <CODE>f</CODE>),
+and a filter named by the <CODE>:i</CODE>><I>format</I> option is selected
+for use.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+raw:
+  :lpd_bounce
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :if=/usr/local/libexec/filters/ifhp
+cooked:
+  :lpd_bounce
+  :rp=cooked:rm=host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Unfortunately,
+some print spooling systems also use the <CODE>v</CODE> format by default.
+You may find the following printcap entry useful in this case.
+The <CODE>:filter</CODE> option specifies a default filter that is used
+if one is not specified for the format.
+<BLOCKQUOTE><CODE>
+<PRE>
+raw:
+  :lpd_bounce
+  :lp=raw@host
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :ifhp=model=XXX,status@
+  # for 'f' format
+  :filter=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpr -l</CODE> or <CODE>lpr -b</CODE> flag is used to specify that
+a job has the special <CODE>binary</CODE> flag.
+In this case,
+most filters will perform only the most perfunctory processing
+and pass the job directly to the printer.
+<H2><A NAME="socketpc"></A> <A NAME="ss3.4">3.4 Socket Protocol (TCP/IP) Operation Printcap Entry</A>
+</H2>
+
+<P>Many printers with a network interface provide
+a TCP/IP port that is a direct connection to the
+internal <I>print engine</I>.
+If a TCP/IP connection is made to this port
+and a file is sent over this connection,
+then the print engine will process the file.
+More importantly,
+the connection is bidirectional,
+and the printer will report errors and status conditions
+over the connection.
+PJL and PostScript status request commands can be sent to the printer
+and the printer will respond with information.
+<P>The <CODE>ifhp</CODE> filter makes extensive use of this protocol,
+and provides support for status and error reporting.
+In cooperation with the <CODE>LPRng</CODE> print spooler,
+it will provide a detailed description of the actual print job progress
+and any error conditions that arise.
+<P>To use a Socket connection with <CODE>LPRng</CODE>,
+you use the <CODE>:lp=host%port</CODE> printcap entry shown below.
+The <CODE>lpd</CODE> print spooler will open a connection to the
+TCP/IP <CODE>port</CODE> on <CODE>host</CODE>
+and passes the (bidirectional) connection to the <CODE>ifhp</CODE> filter
+on file descriptor 1 (<CODE>STDOUT</CODE>) and the file to be printed on
+file descriptor 0 (<CODE>STDIN</CODE>).
+Errors and status information are reported by the <CODE>ifhp</CODE> filter
+on file descriptor 2 (<CODE>STDOUT</CODE>) and placed in the error status log by the
+<CODE>lpd</CODE> print spooler.
+<P>The connection made by the <CODE>lpd</CODE> server
+to the printer is <EM>persistent</EM> over the entire job;
+all file transfers for the same job are made over the same
+connection.
+This is important as it prevents other printer users
+from <EM>hijacking</EM> the printer in the middle of print a job
+and getting your job outputs mixed together.
+<P>The following is a typical printcap entry using the socket protocol.
+<BLOCKQUOTE><CODE>
+<PRE>
+raw:
+  :lp=host%9100
+  :sh:sf:mx=0
+  :sd=/var/spool/lp
+  :if=/usr/local/libexec/filters/ifhp
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="appsocketpc"></A> <A NAME="ss3.5">3.5 Appsocket Protocol (TCP/IP) Operation Printcap Entry</A>
+</H2>
+
+<P>The Tektronics Phaser Series printers and QMS printers use the
+<I>Appsocket</I> protocol when sending a job to the printer.
+This protocol uses two ports: a TCP/IP <I>listening</I> port  which
+accepts TCP/IP connections and a UDP <I>query</I> port that
+is used to obtain status information.
+Unfortunately,
+the UDP port is almost totally useless for job monitoring and status
+purposes and is not used except in an advisory role.
+<P>The Appsocket protocol is (briefly):
+<OL>
+<LI> When a UDP packet is received on the UDP port a reply
+packet containing the status is returned to the originator's
+address.
+This packet contains an status indication
+in a <EM>undefined</EM> format but usually is readable or has a clearly defined format.</LI>
+<LI> To send a job to the printer,  a TCP/IP connection is opened to the TCP/IP port
+and a PostScript job is sent.
+Only a single job can be sent at a time - a EOJ in the job, i.e.-
+CTRL-D for PostScript or ESC E for PCL
+will cause the printer to terminate reading from the TCP/IP port,
+and after job processing has finished,
+to close the TCP/IP connection.
+All input after the EOJ may be ignored by the printer and not processed.</LI>
+<LI>While processing the job,
+if <I>bidirectional</I> support is available
+and has been enabled
+the printer will return job status or information until all of the print job
+which is has received has been processed.
+This support is usually not enabled by default and must be enabled
+by using a specialized administration interface or configuration tool.</LI>
+<LI>Unfortunately,
+some printers will also close the connection when the EOJ has been received.
+These printers are virtually useless when trying to get error or status information
+about a job.</LI>
+<LI>While processing the job,
+the printer will ignore any connection requests,
+and only until the job has been processed
+will the printer accept connections.</LI>
+<LI>During job processing,  status and error indications can be obtained by sending
+a query to the UDP port.
+However,  the error conditions and other information are not very precise as the
+status may change dramatically during job processing.</LI>
+</OL>
+<P>The Appsocket protocol does not use a <EM>persistent</EM> connection.
+If two people are sending jobs to the printer simultaneously it is very likely
+that the jobs will get intermixed.
+<P>The <CODE>appsocket</CODE> option causes the <CODE>ifhp</CODE> filter
+to open and close a TCP/IP connections to the printer.
+Since it is handling connections,
+you should specify
+<CODE>:lp=/dev/null</CODE>
+in the printcap to <I>trick</I> the <CODE>lpd</CODE>
+server into allowing the <CODE>ifhp</CODE> filter to make the connections.
+The following is a sample printcap entry for this printer:
+<BLOCKQUOTE><CODE>
+# Phaser Setup
+#  no status reporting - write only to the printer
+lp:server  <BR>
+&nbsp;&nbsp;:<I>lp=/dev/null</I>  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;:ifhp=model=ps,appsocket,status@,dev=10.0.0.1%9100<BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+
+<BLOCKQUOTE><CODE>
+# Phaser Setup
+#  bidirectional connection, status reporting
+lp:server  <BR>
+&nbsp;&nbsp;:<I>lp=/dev/null</I>  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;:ifhp=model=ps,appsocket,dev=10.0.0.1%9100<BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lp=/dev/null/</CODE>
+is necessary to force the <CODE>lpd</CODE> print server to open a connection
+to a dummy device.
+This is passed to the <CODE>ifhp</CODE> filter on file descriptor 1.
+The <CODE>appsocket</CODE>
+option causes the filter to ignore this connection
+and to open a connection directly to <CODE>dev=10.0.0.1%9100</CODE>,
+that is, port <CODE>9100</CODE> on IP address <CODE>10.0.0.1</CODE>.
+This address can also be a DNS host entry.
+The <CODE>status@</CODE> tells it not to expect any status back from the printer.
+<P>For your convenience,
+the <CODE>model=tek</CODE>
+entry is suitable for use with the appsocket protocol.
+<H2><A NAME="ss3.6">3.6 Common Print Server Boxes Configuration Information</A>
+</H2>
+
+<P>The following is a list of print server manufacturers,
+models,
+and with hints on how to access these boxes with various protocols.
+<P>
+<CENTER><TABLE BORDER><TR><TD>
+<BR>
+Manufacturer</TD><TD>Model</TD><TD>RFC1179 Port Name (rp=XXX)</TD><TD>Send to TCP port</TD></TR><TR><TD>
+<A HREF="http://www.digprod.com/">Digital Products Inc.</A></TD><TD>NETPrint Print Server</TD><TD><CODE>PORT<I>n</I></CODE>, where <I>n</I> is port on server</TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.efi.com/">Electronics For Imaging Inc.</A></TD><TD>Fiery RIP i series</TD><TD><CODE>normalq</CODE> or <CODE>urgentq</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+</TD><TD>Fiery RIP XJ series</TD><TD><CODE>xjprint</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+</TD><TD>Fiery RIP XJ+ and SI series</TD><TD><CODE>print_</CODE><I>Model</I>, e.g. <CODE>print_DocuColor</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+</TD><TD>Fiery models ZX2100, ZX3300, X2, X2e</TD><TD><CODE>print</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.emulex.com/">Emulex Corp.</A></TD><TD>NETJet/NETQue print server</TD><TD><CODE>PASSTHRU</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.extendsys.com/">Extended Systems Inc.</A></TD><TD>ExtendNet Print Server</TD><TD><CODE>Printer<I>n</I></CODE>, where <I>n</I> is port on server</TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.hp.com/">Hewlett-Packard</A></TD><TD>JetDirect interface card</TD><TD><CODE>raw</CODE></TD><TD>9100</TD></TR><TR><TD>
+<A HREF="http://www.i-data.com/">I-Data</A></TD><TD>Easycom 10 Printserver</TD><TD><CODE>par1</CODE> (parallel port 1)</TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+</TD><TD>Easycom 100 Printserver</TD><TD><CODE>LPDPRT1</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.printers.ibm.com/">IBM</A></TD><TD>Network Printer 12, 17, 24, and 24PS</TD><TD><CODE>PASS</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+<A HREF="http://www.lantronix.com/">Lantronix</A></TD><TD>EPS1, EPS2</TD><TD><CODE>EPS_XXXX_S1 (serial) port 1, EPS_XXXX_P1 (parallel) port 2</CODE>, etc.</TD><TD>3001 (port 1), 3002 (port 2), etc.</TD></TR><TR><TD>
+<A HREF="http://www.qms.com/">QMS</A></TD><TD>Various Models</TD><TD><CODE>RAW</CODE></TD><TD>35 (Appsocket)</TD></TR><TR><TD>
+<A HREF="http://www.tek.com/color_printers/">Tektronix</A></TD><TD>Tektronix printer network cards</TD><TD><CODE>PS</CODE> (PostScript), <CODE>PCL</CODE> (PCL), or <CODE>AUTO</CODE>(Auto-selection between PS, PCL, or HPGL). Not reliable.</TD><TD>9100 (Appsocket on some models)</TD></TR><TR><TD>
+<A HREF="http://www.rosel.com">Rose Electronics</A></TD><TD>Microserve Print Servers</TD><TD>lp</TD><TD>9100</TD></TR><TR><TD>
+<A HREF="http://www.xerox.com/">Xerox</A></TD><TD>Models 4505, 4510, 4517, 4520</TD><TD><CODE>PASSTHRU</CODE></TD><TD>2501 (Appsocket on some models)</TD></TR><TR><TD>
+</TD><TD>Model 4512</TD><TD><CODE>PORT1</CODE></TD><TD>10001 (programmable)</TD></TR><TR><TD>
+</TD><TD>Model N17</TD><TD><CODE>RAW</CODE></TD><TD>9100</TD></TR><TR><TD>
+</TD><TD>Models N24 and N32</TD><TD><CODE>RAW</CODE></TD><TD>2000</TD></TR><TR><TD>
+</TD><TD>Models 4900, 4915, 4925, C55</TD><TD><CODE>PS</CODE></TD><TD>2000</TD></TR><TR><TD>
+</TD><TD>Document Centre DC220/230</TD><TD><CODE>lp</CODE></TD><TD>- Unknown if supported -</TD></TR><TR><TD>
+
+</TD></TR></TABLE></CENTER>
+<P>All company, brand, and product names are properties of their respective owners.
+<H2><A NAME="ss3.7">3.7 IFHP Filter and Timeout Problems</A>
+</H2>
+
+<P>As described later in this document,
+the <CODE>ifhp</CODE> filter may need to run a program
+such as <CODE>ghostscript</CODE> to do format conversion.
+For large files this can take quite a bit of time.
+Most printers have a
+<I>connection timeout</I>
+and if the printer is idle
+and no data is received for this time the printer will
+close the connection.
+By default this timeout is fairly short: 30 or 90 seconds on most printers.
+<P>If you are sending large jobs to the printer using the
+<CODE>socket</CODE> protocol and are getting timeout
+problems due to conversion timeouts,
+then there are two solutions: a) use the Appsocket protocol,
+which will open and close the connection for each file,
+and only when the converted file is available,
+or b)
+do your conversions first and then spooling the converted job to be sent
+directly to the printer.
+<BLOCKQUOTE><CODE>
+# Method a) Appsocket <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:<I>lp=/dev/null</I>  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR> 
+&nbsp;&nbsp;:ifhp=model=printer,dev=10.0.0.1%9100,appsocket<BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR> <BR>
+# Method b) Bounce Queue <BR>
+#  this queue does the conversion if required <BR>
+lp:server:lpd_bounce  <BR>
+&nbsp;&nbsp;:<I>lp=real@localhost</I>  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR> 
+&nbsp;&nbsp;:ifhp=model=printer<BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR> <BR>
+# this queue does to transmission using the socket protocol <BR>
+raw:server  <BR>
+&nbsp;&nbsp;:<I>lp=/dev/null</I>  <BR>
+&nbsp;&nbsp;:ifhp=model=printer,dev=10.0.0.1%9100<BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR> 
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR> 
+</CODE></BLOCKQUOTE>
+ 
+<P>For method a),
+the Appsocket protocol is used and the <CODE>ifhp</CODE> filter will be invoked before sending a job.
+For method b),
+you use two queues:  a <I>bounce</I> queue that does the format conversion
+and then sends the job to the real queue,
+and the real queue that actually talks to the printer.
+<H2><A NAME="ss3.8">3.8 PS, PCL, PJL Printer with TPC/IP Network Interface</A>
+</H2>
+
+<P>The most common TCP/IP protocols used for transferring
+jobs to network printers are
+<A HREF="#rfc1179pc">RFC 1179</A>,
+a direct TCP/IP
+<A HREF="#socketpc">socket</A>,
+connection to the print engine,
+and the very odd 
+<A HREF="#appsocketpc">Appsocket</A> protocol described
+in previous sections.
+Here is a reprise of the various printcaps and methods
+to use them.
+<BLOCKQUOTE><CODE>
+# printer setup  <BR>
+#  force clients (lpr, lpq, to use server)  <BR>
+lp:lp=lp@serverhost  <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR><BR>
+&nbsp;&nbsp;# No filtering, transfer using RFC1179
+&nbsp;&nbsp;:lp=queue@10.1.1.1<BR>
+&nbsp;&nbsp;#    or <BR>
+&nbsp;&nbsp;:rp=queue:rm=10.1.1.1<BR><BR>
+&nbsp;&nbsp;# Filtering and then transfer using RFC1179
+&nbsp;&nbsp;:lpd_bounce:lp=queue@10.1.1.1<BR>
+&nbsp;&nbsp;#    or <BR>
+&nbsp;&nbsp;:lpd_bounce:rp=queue:rm=10.1.1.1<BR>
+&nbsp;&nbsp;:ifhp=model=<I>name</I><BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR><BR>
+&nbsp;&nbsp;# Filter, transfer using socket
+&nbsp;&nbsp;:lp=10.1.1.1%9100 <BR>
+&nbsp;&nbsp;:ifhp=model=<I>name</I><BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR><BR>
+&nbsp;&nbsp;# Filter, transfer using Appsocket
+&nbsp;&nbsp;:lp=/dev/null <BR>
+&nbsp;&nbsp;:ifhp=model=<I>name</I>,appsocket,dev=10.1.1.1%9100 <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<P>If your printer is a parallel port printer
+connected to an <EM>external</EM> Network Print Spooler such as an HP JetDirect box,
+then while the network connection to the Network Print Spooler is
+bidirectional
+the connection from the Network Print Spooler to the printer 
+may be unidirectional
+and no status information will be returned from the Network Print Spooler.
+In this case you <EM>must</EM> add the <CODE>status@</CODE>
+option to tell <CODE>ifhp</CODE> not to expect status:
+<BLOCKQUOTE><CODE>
+&nbsp;&nbsp;# Filter, transfer using socket
+&nbsp;&nbsp;:lp=10.1.1.1%9100 <BR>
+&nbsp;&nbsp;:ifhp=model=<I>name</I>,status@<BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR><BR>
+&nbsp;&nbsp;# Filter, transfer using Appsocket
+&nbsp;&nbsp;:lp=/dev/null <BR>
+&nbsp;&nbsp;:ifhp=model=<I>name</I>,appsocket,status@,dev=10.1.1.1%9100 <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss3.9">3.9 PS, PCL, PJL Printer with Parallel Port Connection</A>
+</H2>
+
+<P>Even if your printer is connected to a parallel port
+and parallel port is bidirectional
+you may still not <EM>reliably</EM> read status from the printer.
+Use the
+<CODE>status@</CODE> option to prevent the
+<CODE>ifhp</CODE> filter from expecting status,
+and do not  use the
+<CODE>:rw</CODE> (open connection read-write) option:
+<BLOCKQUOTE><CODE>
+# printer setup  <BR>
+#  force clients (lpr, lpq, to use server)  <BR>
+lp:lp=lp@serverhost  <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;# no :rw option! <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;# parallel port <BR>
+&nbsp;&nbsp;:lp=/dev/lpt<BR>
+&nbsp;&nbsp;:ifhp=status@ <BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<P>
+<H2><A NAME="ss3.10">3.10 PS, PCL, PJL Printer with Serial Port</A>
+</H2>
+
+<P>It is strongly advised that serial ports not be used
+for high speed data transfers.
+The main problem is trying to configure them in such as way
+that they do not lose characters due to data overruns or parity errors.
+LPRng is strongly deprecating support for serial port printers.
+<P>The LPRng print spooler will open and set the serial
+line characteristics,
+and pass the open connection to the
+<CODE>ifhp</CODE> filter.
+The 
+<CODE>tty</CODE> connection must pass all 8 bits with no parity,
+and should use hardware flow control if at all possible.
+Unfortunately,
+the various <CODE>stty</CODE>
+options needed to do this vary from system to system.
+Also, you may discover that your serial connection does not
+support hardware flow control.
+If this is the case,
+then you will have to use software flow control
+which is rather unreliable for high speed (over 9600) serial
+lines due to the timing latencies involved.
+<BLOCKQUOTE><CODE>
+# printer setup  <BR>
+#  force clients (lpr, lpq, to use server)  <BR>
+lp:lp=lp@serverhost  <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I>  <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;# serial port <BR>
+&nbsp;&nbsp;:lp=<I>/dev/ttyxxx</I> <BR>
+&nbsp;&nbsp;:stty=38400 -echo -crmod -raw -oddp -evenp \ <BR>
+&nbsp;&nbsp;   ixon pass8 -ixany cbreak crtscts <BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="psonly"></A> <A NAME="ss3.11">3.11 PostScript Only Printer</A>
+</H2>
+
+<P>Use the configuration appropriate to the printer connection,
+and then specify
+<CODE>model=ps</CODE>.
+<BLOCKQUOTE><CODE>
+# printer setup  <BR>
+#  force clients (lpr, lpq, to use server)<BR>
+lp:lp=lp@serverhost <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I> <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;:ifhp=model=ps <BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<P>If you have a parallel port printer with no PostScript support,
+you would use:
+<BLOCKQUOTE><CODE>
+:ifhp=model=ps,status@
+</CODE></BLOCKQUOTE>
+<P>
+<A NAME="no_ps_eoj"></A> 
+<A NAME="no_pcl_eoj"></A> 
+If your printer does not like PostScript EOJ (Control-D)
+flags at the start of a job,
+use the
+<CODE>no_ps_eoj</CODE> (No PS EOJ at Start)
+flag to cause <CODE>ifhp</CODE> to remove them.
+Similarly,
+the
+<CODE>no_pcl_eoj</CODE> (No PCL EOJ at Start)
+flag will remove the PCL EOJ (Esc E)
+command string from the start of a PCL job file.
+<BLOCKQUOTE><CODE>
+:ifhp=model=ps,no_ps_eoj
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss3.12">3.12 PostScript Only Printer Text Conversion</A>
+</H2>
+
+<P>If <CODE>ifhp.conf</CODE>
+can be configured to invoke a text to PostScript converter.
+See the section on
+<A HREF="IFHP-HOWTO-6.html#fileconversion">File Conversion Support</A>.
+<H2><A NAME="ss3.13">3.13 GhostScript and ifhp</A>
+</H2>
+
+<P>Generating a raster image from a PostScript or PCL file in
+a timely manner requires a high speed processor and substantial amounts
+of memory.
+Many of the low cost printers require the user's system to do the raster
+conversion,
+and a raster file is then transferred to the printer.
+These files are usually in a proprietary format.
+<P>The 
+<A HREF="IFHP-HOWTO-2.html#ghostscript">GhostScript</A>
+program can process PostScript files and produce raster output for a
+wide range of devices.
+See the GhostScript documentation for details.
+The <CODE>ghostscript</CODE> printer configuration is intended to be used
+with these printers.
+See
+<A HREF="IFHP-HOWTO-6.html#ghostscriptconfig">Using GhostScript with ifhp</A>
+for details.
+<H2><A NAME="phaser"></A> <A NAME="ss3.14">3.14 Tektronics Phaser, QMS, and Appsocket Protocol</A>
+</H2>
+
+<P>The Tektronics Phaser, QMS Network Printers,
+and a few others use the
+<A HREF="#appsocketpc">Appsocket</A> protocol described
+in a previous section.
+The Tektronics (<CODE>model=tek</CODE>) configuration entry
+has the required options for these printers:
+<BLOCKQUOTE><CODE>
+<PRE>
+[ tek qms ]
+appsocket
+ps
+pjl@
+pcl
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The following shows a typical printcap entry:
+<BLOCKQUOTE><CODE>
+#  force clients (lpr, lpq, to use server)<BR>
+lp:lp=lp@serverhost <BR>
+# server information  <BR>
+lp:server  <BR>
+&nbsp;&nbsp;:sd=<I>spooldir</I> <BR>
+&nbsp;&nbsp;:lp=/dev/null     <BR>
+&nbsp;&nbsp;:...  <BR>
+&nbsp;&nbsp;:ifhp=model=tek,dev=10.1.1.1%35 <BR>
+&nbsp;&nbsp;#path to ifhp filter  <BR>
+&nbsp;&nbsp;:if=/.../ifhp  <BR>
+</CODE></BLOCKQUOTE>
+<HR>
+<A HREF="IFHP-HOWTO-4.html">Next</A>
+<A HREF="IFHP-HOWTO-2.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc3">Contents</A>
+</BODY>
+</HTML>

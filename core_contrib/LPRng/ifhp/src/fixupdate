@@ -1,0 +1,53 @@
+#!/usr/local/bin/perl
+for (@ARGV){
+	print "arg '$_'\n";
+	$cfile = $hfile = $_;
+	$cfile =~ s/\.h$/.c/;
+	$hfile =~ s/\.c$/.h/;
+	next if( ! -f $cfile or ! -f $hfile );
+	print "cfile '$cfile', hfile '$hfile'\n";
+	open( CFILE, "<$cfile") or die "cannot open '$cfile'";
+	$s = $t = $h = "";
+	while (<CFILE>) {
+		chop;	# strip record separator
+		if (/VARARGS[0-9]/ .. /^{/) {
+			chomp;
+			if( /{/ ){
+				$s .= "\n ;\n";
+				$t .= $s;
+				$s = "";
+			} elsif( $s ){
+				$s .= "\n" . $_;
+			} else {
+				$s = $_;
+			}
+		} elsif (/^[a-z]/ .. /^{/) {
+			chomp;
+			if( /{/ ){
+				$s .= ";\n";
+				$t .= $s;
+				$s = "";
+			} elsif( $s ){
+				$s .= "\n" . $_;
+			} else {
+				$s = $_;
+			}
+		}
+	}
+	close CFILE ;
+	$t .= "\n#endif\n" if $t;
+	#print $t;
+	open( HFILE, "<$hfile") or die "cannot open '$hfile'";
+	while( <HFILE> ){
+		$h .= $_;
+		if( /PROTOTYPE/ ) {
+			$h .= $t;
+			last;
+		}
+	}
+	# print $h;
+	`cp $hfile $hfile.bak`;
+	open( HFILE,">$hfile") or die "cannot open '$hfile'";
+	print HFILE $h;
+	close HFILE;
+}

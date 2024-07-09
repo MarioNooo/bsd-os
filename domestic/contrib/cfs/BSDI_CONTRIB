@@ -1,0 +1,20 @@
+
+Software Package:       
+	Crytographic File System
+
+Release/Version:
+	1.4
+
+Retrieved from:
+	http://www.cryptography.org
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and mab@research.att.com
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Makefile is ours

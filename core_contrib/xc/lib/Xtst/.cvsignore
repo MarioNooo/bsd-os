@@ -1,0 +1,4 @@
+Makefile
+unshared
+libXtst.so.6.1
+.depend

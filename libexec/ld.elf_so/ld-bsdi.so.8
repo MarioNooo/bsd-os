@@ -1,0 +1,310 @@
+.\"	BSDI ld-bsdi.so.8,v 1.2 2001/11/27 23:27:32 donn Exp
+.\"
+.Dd November 27, 2001
+.Os
+.Dt LD-BSDI.SO 8
+.Sh NAME
+.Nm ld-bsdi.so
+.Nd "the ELF dynamic linker
+.Sh DESCRIPTION
+The ELF dynamic linker
+.Nm ld.so
+is a program that links and loads
+ELF shared libraries and shared objects
+into an application program when
+you run the application program.
+The shared object
+.Pa /shlib/ld-bsdi.so
+is the BSD/OS-specific version of the dynamic linker.
+.Pp
+An application that is dynamically linked must specify
+the dynamic linker as its ELF
+.Sq interpreter
+(see
+.Xr elf 5 ) .
+The system arranges to load both
+the dynamic linker and the application into memory
+when you execute the application,
+and it gives control to the dynamic linker.
+The dynamic linker has access to the application's
+special ELF dynamic symbol table,
+its list of required shared libraries,
+and other ELF data structures,
+and it processes this information to create
+a complete version of the program in memory.
+The dynamic linker uses a search path to
+locate shared libraries and
+loads each of the requested libraries into memory.
+The dynamic linker relocates the libraries
+(modifies them to refer to their actual address,
+rather than the address that they were originally linked at)
+and then links them with the application.
+For every function or data object that
+the application or a shared library needs but doesn't define itself,
+the dynamic linker will check for the name of the function or object
+in the shared libraries,
+and it will patch a pointer to that function or object
+in the application (or another shared library)
+so that it contains the actual address of the function or object.
+If the linker can safely postpone linking, it will;
+for example, the linker will direct a call to a library function to a
+.Sq stub
+that computes the correct function address and stores it so
+that it can be used again.
+Once the linker has relocated the libraries
+and linked them with the application and with each other,
+it transfers control to the application and
+your program runs.
+The application can give control back to the linker
+to perform more linking,
+either implicitly (as with the function stubs) or
+explicitly using the dynamic linking library
+(see
+.Xr dlopen 3 ) .
+.Pp
+Dynamically linked applications are easy to create.
+The compilers generate dynamically linked executables by default.
+In fact, you must specify the flag
+.Fl static
+to suppress dynamic linking.
+.Pp
+Shared libraries and shared objects must be built
+in a specific way for dynamic linking:
+.Bl -bullet
+.It
+All object files in a shared library or shared object
+must be compiled for
+.Em "position independent code"
+.Pq Em PIC .
+With the C compiler
+.Xr cc 1 ,
+use the
+.Fl fPIC
+option to compile for PIC.
+Note that the application
+.Em "must not
+be compiled for PIC;
+only shared libraries and shared objects
+should be compiled this way.
+(Position independent assembly code must either avoid
+referring to external functions or data,
+or else it must make indirections through the
+.Em "global offset table
+.Pq Em GOT
+and
+.Em "procedure linkage table
+.Pq Em PLT .
+Compiling a C source file to assembly code using
+.Fl fPIC
+.Fl S
+will show you what you need to know.)
+.It
+A shared library or shared object must be linked
+using the linker
+.Xr ld 1
+flag
+.Fl shared .
+The compiler
+.Xr cc 1
+also supports this flag, and because it provides
+useful start-up files and libraries,
+it is usual to link with
+.Li cc
+.Li \-shared .
+A relocatable object file
+(ends in
+.Li \&.o )
+must be converted into a shared library or a shared object
+(ends in
+.Li \&.so )
+before it may be loaded by the dynamic linker.
+For example:
+.Bd -literal -offset indent
+cc -o obj.so -shared obj.o
+.Ed
+.Pp
+More than one relocatable object file may be combined into
+a single shared library or shared object.
+.It
+A shared library should have a library name.
+This feature allows libraries with version number suffixes
+or other pathname changes to be treated similarly.
+The
+.Fl h
+flag to the linker
+.Xr ld 1
+specifies the name of the shared library:
+.Bd -literal -offset indent
+cc -o libx.so.1.1 -shared -Wl,-h,libx.so.1 *.o
+.Ed
+.Pp
+A shared library is simply a shared object with a library name.
+Note that the major shared library version number
+is appended to the library name,
+while both the major and minor numbers
+appear in the filename.
+This is because there is a convention that
+versions of a library
+with the same major version number and different minor
+version numbers are compatible,
+while versions of a library with different major version numbers
+are incompatible.
+By including the major version number in the library name,
+the dynamic linker will be forced to choose only compatible
+versions of the library.
+.It
+If a shared library or shared object requires functions or data
+from another shared library or shared object,
+you should note this dependency when linking the shared library
+or shared object.
+For example, if
+.Pa libx.so
+uses math library functions,
+then it should be linked against the shared
+math library:
+.Bd -literal -offset indent
+cc -o libx.so.1.1 -shared -Wl,-h,libx.so *.o -lm
+.Ed
+.Pp
+If you don't describe these dependencies,
+then you are relying on the application or other libraries
+to load the other libraries and objects that you need,
+which is risky.
+.El
+.Pp
+Once you have built a shared library,
+you will need to install it.
+The dynamic linker reads the file
+.Pa /etc/ld.so.conf
+to obtain the list of standard directories for shared libraries
+and the order in which to check them.
+The file
+.Pa /etc/ld.so.cache
+is a database that maps
+library names to pathnames in the standard directories.
+You can use the program
+.Xr ldconfig 8
+to build this file and to list the mappings in the file.
+You can override the default path (see below).
+Note that
+.Xr ldconfig 8
+can recognize multiple library
+.Sq versions ;
+see the manual page for more details.
+.Pp
+Certain features of the dynamic linker
+may be controlled by environment variables:
+.Bl -tag -width LD_LIBRARY_PATH\0
+.It Ev LD_BIND_NOW
+If this variable is set and not null,
+the dynamic linker will perform all function address
+linking and relocation for a library when it loads it.
+Normally the dynamic linker will delay linking functions
+until they are called.
+This feature is exactly analogous to the
+.Dv RTLD_NOW
+feature of
+.Xr dlopen 3 ,
+but it acts only on shared libraries.
+.It Ev LD_LIBRARY_PATH
+If this variable is set,
+the dynamic linker treats the value as a colon
+.Pq Sq \&:
+separated list of directories
+in which to search for shared libraries and shared objects.
+This path is searched after the
+.Sq "run path
+(see
+.Ev LD_RUN_PATH
+below)
+and before the default path from
+.Pa /etc/ld.so.conf .
+Setuid or setgid programs unset
+.Ev LD_LIBRARY_PATH
+and ignore its value.
+.It Ev LD_PRELOAD
+If this variable is set,
+the dynamic linker treats the value
+as a list of colon or whitespace separated filenames
+of shared libraries.
+If the program is neither setuid nor setgid,
+the linker will load these libraries before
+loading the libraries requested by the program.
+This allows you to interpose alternate libraries,
+so that functions and data in the alternate libraries
+take precedence over functions and data in the standard libraries.
+Setuid or setgid programs unset
+.Ev LD_PRELOAD
+and ignore its value.
+.It Ev LD_RUN_PATH
+Unlike the other variables described here,
+this variable affects the regular linker
+.Xr ld 1 .
+If this variable is set when
+.Xr ld 1
+creates a dynamically linked executable,
+the value is treated as a list of colon-separated directories
+called the
+.Sq "run path" .
+The linker inserts the run path into a dynamically linked program,
+and when you execute the program,
+the dynamic linker checks the directories in the list
+for shared libraries and shared objects.
+The dynamic linker checks the run path before
+.Ev LD_LIBRARY_PATH
+and before the default directories listed in
+.Pa /etc/ld.so.conf.
+Note that the dynamic linker does not read the value of
+.Ev LD_RUN_PATH ;
+only
+.Xr ld 1
+checks the value.
+The
+.Xr ld 1
+flag
+.Fl rpath
+provides another way to set the run path
+(see the
+.Xr ld 1
+manual page).
+.El
+.Pp
+The
+.Xr ldd 1
+program prints the names of shared libraries and shared objects
+that the dynamic linker loads.
+See the manual page for details.
+.Pp
+You can call the dynamic linker directly from user code.
+The
+.Xr dlsym 3
+function will convert a string into the address
+of the named function or data object.
+See the manual page for details.
+.Sh ENVIRONMENT
+.Bl -tag -width LD_LIBRARY_PATH\0\0\0\0\0\0 -compact
+.It Ev LD_BIND_NOW
+forces immediate linking for functions
+.It Ev LD_LIBRARY_PATH
+directory search-path for object files
+.It Ev LD_PRELOAD
+libraries to load before anything else
+.It Ev LD_RUN_PATH
+make
+.Xr ld 1
+set the search path
+.El
+.Sh SEE ALSO
+.Xr cc 1 ,
+.Xr ld 1 ,
+.Xr ldd 1 ,
+.Xr dlopen 3 ,
+.Xr elf 5 ,
+.Xr shlist 8
+.Sh ACKNOWLEDGEMENTS
+The source code for the dynamic linker is derived from NetBSD's
+.Nm ld.elf_so ,
+and it is believed to be compatible with the Solaris dynamic linker.
+This dynamic linker is based on code by
+John Polstra with contributions from
+Matt Thomas and others.

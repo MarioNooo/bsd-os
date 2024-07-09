@@ -1,0 +1,112 @@
+Software Package:       
+	OpenSSL -- SSL/crypto libraries
+
+Release/Version:
+	openssl 0.9.7c
+
+Retrieved from:
+	http://www.openssl.org
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and to openssl-bugs@openssl.org.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to call Makefile for our configuration
+Removed original crypto/rc5 and crypto/idea directories
+Placed almost empty rc5.h and idea.h files in include/openssl
+	(they define NO_RC5 and NO_IDEA respectively)
+Edited crypto/bn/Makefile.ssl to add sparcv8bsdi.o rule
+Edited Configure and config to support sparc
+
+Index: Configure
+===================================================================
+RCS file: /master/core_contrib/openssl/Configure,v
+retrieving revision 1.5
+diff -c -r1.5 Configure
+*** Configure	2002/08/08 19:47:16	1.5
+--- Configure	2002/08/09 01:20:50
+***************
+*** 353,359 ****
+  "FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+  "FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
+  "bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::(unknown)::RSA_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_bsdi_asm}",
+! "bsdi-elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+  "nextstep",	"cc:-O -Wall:<libc.h>:(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
+  "nextstep3.3",	"cc:-O3 -Wall:<libc.h>:(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
+  # NCR MP-RAS UNIX ver 02.03.01
+--- 353,361 ----
+  "FreeBSD-elf",  "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::-pthread -D_REENTRANT -D_THREAD_SAFE -D_THREADSAFE::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+  "FreeBSD",      "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
+  "bsdi-gcc",     "gcc:-O3 -ffast-math -DL_ENDIAN -DPERL5 -m486::(unknown)::RSA_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_bsdi_asm}",
+! "bsdi-x86elf-gcc",     "gcc:-DPERL5 -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+! "bsdi-sparcelf-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8bsdi.o::",
+! "bsdi-powerpcelf-gcc",     "gcc:-DPERL5 -DB_ENDIAN -O3 -Wall::(unknown):-ldl:BN_LLONG::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+  "nextstep",	"cc:-O -Wall:<libc.h>:(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
+  "nextstep3.3",	"cc:-O3 -Wall:<libc.h>:(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:::",
+  # NCR MP-RAS UNIX ver 02.03.01
+Index: config
+===================================================================
+RCS file: /master/core_contrib/openssl/config,v
+retrieving revision 1.6
+diff -c -r1.6 config
+*** config	2002/08/08 19:47:16	1.6
+--- config	2002/08/08 19:56:28
+***************
+*** 151,159 ****
+  	echo "${MACHINE}-lynx-lynxos"; exit 0
+  	;;
+  
+!     BSD/OS:4.*)  # BSD/OS always says 386
+! 	echo "i486-whatever-bsdi4"; exit 0
+! 	;;
+  
+      BSD/386:*:*:*486*|BSD/OS:*:*:*:*486*)
+          case `/sbin/sysctl -n hw.model` in
+--- 151,173 ----
+  	echo "${MACHINE}-lynx-lynxos"; exit 0
+  	;;
+  
+!     BSD/OS:[45].*)
+!         VERS=`echo ${RELEASE} | sed -e 's/[-(].*//'`
+!         MACH=`sysctl -n hw.model`
+!         ARCH='whatever'
+!         case ${MACH} in
+!            *386*       ) MACH="i386"     ;;
+!            *486*       ) MACH="i486"     ;;
+!            Pentium\ II*) MACH="i686"     ;;
+!            Pentium*    ) MACH="i586"     ;;
+!            Alpha*      ) MACH="alpha"    ;;
+!            *           ) MACH="$MACHINE" ;;
+!         esac
+!         case ${MACH} in
+!            i[0-9]86 ) ARCH="pc" ;;
+!         esac
+!         echo "${MACH}-${ARCH}-bsdi${VERS}"; exit 0
+!         ;;
+  
+      BSD/386:*:*:*486*|BSD/OS:*:*:*:*486*)
+          case `/sbin/sysctl -n hw.model` in
+***************
+*** 583,589 ****
+    alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
+    pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
+    *-*-openbsd) OUT="OpenBSD" ;;
+!   *86*-*-bsdi4) OUT="bsdi-elf-gcc" ;;
+    *-*-osf) OUT="alphaold-cc" ;;
+    *-*-tru64) OUT="alpha-cc" ;;
+    *-*-OpenUNIX*)
+--- 597,605 ----
+    alpha*-*-openbsd) OUT="OpenBSD-alpha" ;;
+    pmax*-*-openbsd) OUT="OpenBSD-mips" ;;
+    *-*-openbsd) OUT="OpenBSD" ;;
+!   sparc-*-bsdi[45]*) OUT="bsdi-sparcelf-gcc" ;;
+!   *86-*-bsdi[45]*) OUT="bsdi-x86elf-gcc" ;;
+!   powerpc-*-bsdi[45]*) OUT="bsdi-powerpcelf-gcc" ;;
+    *-*-osf) OUT="alphaold-cc" ;;
+    *-*-tru64) OUT="alpha-cc" ;;
+    *-*-OpenUNIX*)

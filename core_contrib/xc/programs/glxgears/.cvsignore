@@ -1,0 +1,5 @@
+Makefile
+.depend
+glxgears
+glxgears._man
+glxgears.0

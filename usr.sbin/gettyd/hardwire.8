@@ -1,0 +1,78 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI hardwire.8,v 1.3 1996/10/17 03:40:53 prb Exp
+.Dd September 4, 1996
+.Dt HARDWIRE 8
+.Os
+.Sh NAME
+.Nm hardwire
+.Nd control hardwired lines
+.Sh SYNOPSIS
+.Nm /etc/getty/hardwire- Ns Ar function
+.Op Fl command Ar command
+.Op Fl dte-speeds Ar baudrate
+.Fl f Ar filedes
+.Op Fl stty-modes Ar mode Op ...
+.Op Fl term Ar type
+.Sh DESCRIPTION
+There are four
+.Nm hardwire- Ns Ar function
+scripts:
+.Bl -tag -width conditionxx
+.It Ar call
+Configure the lines according to the parameters defined in the
+.Pa /etc/ttys.conf
+file and passed in on the command line.
+.It Ar condition
+Same as the
+.Ar call
+script.
+.It Ar watcher
+Configure the line as in the
+.Ar call
+script and then wait for CD and/or CTS to be raised.
+Once the CD and/or CTS is raised, exec
+.Ar command ,
+or
+.Pa /usr/bin/login
+if
+.Ar command
+was not specified.
+.El
+.Pp
+The options understood by the
+.Nm hardwire-
+scripts are:
+.Bl -tag -width sttyxmodesxx
+.It Fl command
+For
+.Li watcher
+scripts use
+.Ar command
+instead of
+.Pa /usr/bin/login .
+.It Fl dte-speeds
+Set the baud rate of the serial line to be
+.Ar baudrate .
+.It Fl f
+Use the file specified by
+.Ar filedes
+as the device.  This is almost always of the form
+.Pa /dev/fd/ Ns Ar N .
+.It Fl stty-modes
+Use the specified
+.Ar mode Ns No s
+when setting up the serial line.
+.It Fl term
+For
+.Ar watcher
+scripts, set the terminal type to
+.Ar type
+instead of
+.Li unknown .
+.El
+.Sh SEE ALSO
+.Xr ttys.conf 5 ,
+.Xr gettyd 8

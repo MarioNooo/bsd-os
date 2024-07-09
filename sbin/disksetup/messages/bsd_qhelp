@@ -1,0 +1,8 @@
+At this point you should define, alter, or delete the file systems.
+BSD/OS requires at least a root filesystem (/), a swap partition and
+a /usr filesystem.
+
+If you do not understand this screen, press X and then Y to confirm
+the cancel.  When asked if you want the standard setup, answer YES.
+
+[I]mport [A]dd [D]elete [E]dit [N]ext [X]Abort [?]Help

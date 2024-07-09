@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# wce -- view or set value of WCE bit on SCSI drives (Write Cache Enable)
+# usage: wce drive [on|off]
+
+SARGS="-c msen -P pcode=0x08 -p dcp"
+if [ $# -lt 1 -o $# -gt 2 ] ; then
+    echo "usage: wce drive [on|off]" 1>&2
+    exit 1
+fi
+
+if [ -c $1 ] ; then
+    DRIVE=$1
+elif [ -c /dev/$1 ]; then
+    DRIVE=/dev/$1
+elif [ -c /dev/r$1 ]; then
+    DRIVE=/dev/r$1
+elif [ -c /dev/${1}c ]; then
+    DRIVE=/dev/${1}c
+elif [ -c /dev/r${1}c ]; then
+    DRIVE=/dev/r${1}c
+else
+    echo "$1: no such drive, try sd0, sd1, etc" 1>&2
+    exit 1
+fi
+
+if [ $# = 2 ] ; then
+    case $2 in
+    on)
+        WCE=1
+        ;;
+    off)
+        WCE=0
+        ;;
+    *)
+        echo "usage: wce drive [on|off]" 1>&2
+        exit 1
+        ;;
+    esac
+    scsicmd -f $DRIVE $SARGS -c msel -P pcode=0x08,wce=$WCE -p dcp > /dev/null
+fi
+
+WCE=$(scsicmd -f $DRIVE $SARGS | grep wce | sed -e 's/^.* //')
+if [ $WCE = 1 ] ; then
+    echo write cache is enabled
+else
+    echo write cache is disabled
+fi

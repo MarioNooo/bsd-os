@@ -1,0 +1,65 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_exit.3,v 1.3 1996/12/12 03:03:44 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_EXIT 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_exit
+.Nd terminate the calling thread
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft void
+.Fn pthread_exit "void *value"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_exit
+function terminates the calling thread and makes the value 
+.Fa value
+available to a thread executing a successful join.  
+Any cancellation cleanup handlers that have been registered for the
+calling thread will be popped and executed in the reverse order that
+they were registered.  After registered cleanup handlers have been
+executed, if the calling thread has any thread specific data destructor
+functions, these are called.
+.Pp
+Calling
+.Fn pthread_exit
+does not release any thread-related resources that the calling thread
+may hold (such as mutexes, file descriptors, etc.).  It is the
+responsibility of the programmer to ensure that such resources
+are freed before the 
+.Fn pthread_exit 
+function is called.
+.Pp
+After a thread terminates, accesses to local stack variables of the
+calling thread are undefined.  If a value is being returned in
+.Fa value ,
+it should not be allocated on the calling thread's local stack.
+.Sh RETURN VALUES
+The 
+.Fn pthread_exit
+function does not return to its caller.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_create 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_detach 3 ,
+.Xr pthread_join 3 
+.Sh STANDARDS
+The
+.Nm pthread_exit
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_exit
+function first appeared in BSD/OS 3.0.

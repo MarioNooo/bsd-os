@@ -1,0 +1,80 @@
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI kvm_cpustats.3,v 2.1 1997/05/25 15:08:59 jch Exp
+.\"
+.Dd May 7, 1997
+.Dt KVM_CPUSTATS 3
+.Os
+.Sh NAME
+.Nm kvm_cpustats ,
+.Nm kvm_stathz
+.Nd kernel clock and statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/cpustats.h>
+.Fd #include <sys/sysctl.h>
+.Fd #include <kvm.h>
+.Fd #include <kvm_stat.h>
+.br
+.Ft int
+.Fn kvm_cpustats "kvm_t *kd" "struct cpustats *cp"
+.Ft int
+.Fn kvm_stathz "kvm_t *kd"
+.Sh DESCRIPTION
+The
+.Fn kvm_cpustats
+function fills in the 
+.Va struct cpustats
+referenced by
+.Fa cp
+with the CPU usage statistics of the kernel indicated by
+.Fa kd .
+.Pp
+The 
+.Va struct cpustats
+structure contains an array of counters describing the
+amount of time the kernel has spent in various states.  
+The units of time used are those returned by
+.Fn kvm_stathz
+as described below.
+The states are defined as:
+.Bl -tag -width CP_USERXX -compact
+.It CP_USER
+cpu time spent in user mode
+.It CP_NICE
+cpu time spent in user mode running niced processes
+.It CP_SYS
+cpu time spent in system mode
+.It CP_INTR
+cpu time spent handling interrupts
+.It CP_IDLE
+cpu time spent in idle mode
+.El
+.Pp
+The
+.Fn kvm_stathz
+function returns the frequency of the kernel statistics clock, in
+Hertz
+.Pq cycles per second Ns .
+.Sh RETURN VALUES
+The
+.Fn kvm_cpustats
+function returns zero on success and -1 on failure.  
+The
+.Fn kvm_stathz
+function returns the frequency of the kernel statistics clock on
+success or -1 on failure.
+Upon failure
+.Xr kvm_geterr 3
+can be used to obtain a string describing the error.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_geterr 3

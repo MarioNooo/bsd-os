@@ -1,0 +1,22 @@
+BINDIR = /usr/sbin
+LIBDIR = /usr/lib/
+##CFLAGS = -g -DSHADOWPWD -DLINUX -Dcrypt=pw_encrypt
+CFLAGS = -O6 -DSHADOWPWD -DLINUX -Dcrypt=pw_encrypt
+##LFLAGS = -g 
+LFLAGS = -O6
+CCM = gcc -Em
+
+OBJECTS = poppassd.o
+LIBS = -lshadow
+
+poppassd: $(OBJECTS)
+	gcc -o poppassd $(LFLAGS) $(OBJECTS) $(LIBS)
+
+install: poppassd
+	install -g bin -o root -m 500 poppassd $(BINDIR)
+
+clean:
+	rm -f *.o *~* core Makefile.new Makefile.bak poppassd
+
+poppassd.o: poppassd.c
+	gcc -c $(CFLAGS) poppassd.c

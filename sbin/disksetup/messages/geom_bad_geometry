@@ -1,0 +1,4 @@
+The geometry you have entered is invalid.  There must not
+be more than 255 head (16 heads for a BSD geometry of an
+IDE drive).  In FDISK geometries there can be no more than
+63 sectors per track and 1024 cylinders.

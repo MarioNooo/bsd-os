@@ -1,0 +1,4 @@
+.version
+Makefile
+ntptrace
+version.c

@@ -1,0 +1,27 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.te,v 1.1 1996/06/26 21:16:14 ewv Exp
+#
+
+IFS=.
+set $0
+IFS=
+
+while [ "$1" != "te" ]
+do
+	shift
+	if  [ $# -lt 2 ]
+	then
+		echo 
+		echo "te setup script named illegally"
+		exit
+	fi
+done
+shift
+unit=$1
+
+echo -n " te$unit"
+tesetup te$unit

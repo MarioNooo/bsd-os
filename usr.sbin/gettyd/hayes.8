@@ -1,0 +1,170 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI hayes.8,v 1.3 1996/12/20 18:24:50 prb Exp
+.Dd September 4, 1996
+.Dt HAYES 8
+.Os
+.Sh NAME
+.Nm hayes
+.Nd control hayes compatible modems
+.Sh SYNOPSIS
+.Nm /etc/getty/hayes- Ns Ar function
+.Op Fl command Ar command
+.Op Fl dte-speeds Ar baudrate
+.Fl f Ar filedes
+.Op Fl number Ar number Op ...
+.Op Fl stty-modes Ar mode Op ...
+.Op Fl term Ar type
+.Op Fl verbose
+.Sh DESCRIPTION
+There are four
+.Nm hayes- Ns Ar function
+scripts:
+.Bl -tag -width conditionxx
+.It Ar call
+Configure the modem for an outgoing call and dial the specified number(s).
+The modem is configured by sending the
+.Li hreset
+and
+.Li hinit
+strings defined in the
+.Pa /etc/ttys.conf
+file.
+If no number is provided, simply condition the modem, but do not dial.
+.It Ar condition
+Condition a line for dialin.
+The modem is configured by sending the
+.Li hreset ,
+.Li hcondition ,
+and
+.Li hquiet
+strings defined in the
+.Pa /etc/ttys.conf
+file.
+.It Ar hangup
+Disconnect any current call on the line.
+If the modem does not respond to the standard
+.Li AT
+command with
+.Li OK ,
+try sending the string defined by
+.Li hreset .
+If this does not result in
+.Li OK ,
+sleep for 2 seconds, send
+.Li +++
+and wait for 2 more seconds for an
+.Li OK
+response.
+Once contact with the modem is established, send the strings defined
+by
+.Li hhangup
+and
+.Li hinit .
+.It Ar watcher
+Condition a line for dialin and wait for a call.
+Once a call is received, execute the requested command.
+The modem is configured by sending the
+.Li hreset
+and
+.Li hinit
+strings followed by
+.Li ATS0=0 .
+When the modem responds with
+.Li RING
+send the string
+.Li ATA
+and wait for a 
+.Li CONNECT
+message.
+Once the
+.Li CONNECT
+message is received, exec
+.Ar command ,
+or
+.Pa /usr/bin/login
+if
+.Ar command
+was not specified.
+.El
+.Pp
+The options understood by the
+.Nm hayes-
+scripts are:
+.Bl -tag -width sttyxmodesxx
+.It Fl command
+For
+.Li watcher
+scripts use
+.Ar command
+instead of
+.Pa /usr/bin/login .
+.It Fl dte-speeds
+Set the baud rate of the serial line to be
+.Ar baudrate .
+This is not the same as the modulation speed, which is the
+rate at which the modems communicate.  Typically this will be
+2 or 4 times faster than the modulation speed.
+.It Fl f
+Use the file specified by
+.Ar filedes
+as the device.  This is almost always of the form
+.Pa /dev/fd/ Ns Ar N .
+.It Fl number
+For
+.Li call
+scripts dial the numbers specified by
+.Ar number .
+There may be more than a single number provided.
+.It Fl stty-modes
+Use the specified
+.Ar mode Ns No s
+when setting up the serial line.
+.It Fl term
+For
+.Ar watcher
+scripts, set the terminal type to
+.Ar type
+instead of
+.Li unknown .
+.It Fl verbose
+Display what strings are sent to and received from the modem.
+.El
+.Pp
+The following entries from the
+.Pa /etc/ttys.conf
+file are used by these scripts:
+.Bl -tag -width hconditionxx
+.It hcondition
+String used to condition the modem for dialin.
+Default:
+.Li ATE0S0=1S2=255 
+.It hdial
+String used to dial a number.  The number is substituted
+for the string
+.Li $1 .
+Default:
+.Li ATDT$1
+.It hhangup
+String used to place the line on hook.
+Default:
+.Li ATH
+.It hinit
+String used to initialize a modem for outgoing calls.
+Default:
+.Li ATS2=255
+.It hquiet
+String used to turn off response codes.
+Default:
+.Li ATQ1
+.It hreset
+String used to reset the modem to a known state.
+Default:
+.Li ATZ
+.El
+.Sh SEE ALSO
+.Xr dialer.rules 5 ,
+.Xr ttys.conf 5 ,
+.Xr gettyd 8

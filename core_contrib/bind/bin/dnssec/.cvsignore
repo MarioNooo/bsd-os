@@ -1,0 +1,11 @@
+Makefile
+dnssec-keygen
+dnssec-makekeyset
+dnssec-signkey
+dnssec-signzone
+.libs
+dnssec-keygen.lo
+dnssectool.lo
+dnssec-makekeyset.lo
+dnssec-signkey.lo
+dnssec-signzone.lo

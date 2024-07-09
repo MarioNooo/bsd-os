@@ -1,0 +1,71 @@
+.\" Copyright (c) 1994 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI addgroup.8,v 1.1 1996/09/17 01:13:19 prb Exp
+.\"
+.Dd October 13, 1994
+.Os
+.Dt ADDGROUP/RMGROUP 8
+.Sh NAME
+.Nm addgroup, rmgroup
+.Nd "add or delete groups from the system"
+.Sh SYNOPSIS
+.Nm addgroup
+.Op Fl vd 
+.Op Fl g Ar gid
+.Op Fl m Ar members 
+.Op Ar groupname...
+.br
+.Nm rmgroup
+.Op Fl v 
+.Op Ar groupname...
+.Sh DESCRIPTION
+The
+.Nm addgroup
+program adds or deletes groups from the system group 
+file,
+.Xr group 5 .
+When no arguments are provided, 
+.Nm addgroup 
+or 
+.Nm rmgroup
+interactively prompt the user for any necessary information.
+If all necessary information for creating or deleting the group
+is provided on the command line, the user will not be prompted at all.
+.Pp
+The
+.Fl v
+flag causes
+.Nm addgroup
+or 
+.Nm rmgroup
+to display more information about what it is doing.
+.Pp
+.Nm addgroup 
+.Fl d
+is synonymous with 
+.Nm rmgroup.
+.Pp
+The 
+.Fl m
+flag to
+.Nm addgroup
+can be used to specify initial members for the group.
+The 
+.Fl g
+argument to 
+.Nm addgroup
+may be used to specify the group ID chosen for the new group.  If 
+it is not specified, the next unused group ID greater than 
+100 will be used.
+.Sh SEE ALSO
+.Xr adduser 8 ,
+.Xr group 5
+.Sh HISTORY
+The 
+.Nm addgroup
+and
+.Nm rmgroup
+commands first appeared in BSD/OS and are currently under development.

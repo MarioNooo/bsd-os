@@ -1,0 +1,8 @@
+Makefile
+timestamp
+.libs
+check.lo
+log.lo
+parser.lo
+version.lo
+libisccfg.la

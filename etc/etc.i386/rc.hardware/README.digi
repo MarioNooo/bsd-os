@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 1995, 1998 Berkeley Software Design, Inc. All rights reserved.
+ * The Berkeley Software Design Inc. software License Agreement specifies
+ * the terms and conditions for redistribution.
+ *
+ *	BSDI README.digi,v 1.3 1998/02/26 21:23:39 cp Exp
+ */
+
+The Digiboard prototype file is proto.digi.  As there are no known reasons
+to run digisetup early or late in the sequence of setting up hardware
+it is suggested that it be run in the middle. Assigning the first
+digit as a "5" will accomplish this.
+
+To cause a digiboard to be configured copy the prototype file
+to a file with the named formed as follows:
+
+5.digi.x
+
+	This causes digi unit x to be initialized.
+	Legal values for x are 0-3. 
+	After changing directory "cd" to /etc/rc.hardware the 
+	following examples could be used to create the appropriate
+	hardware setup file.
+
+cp proto.digi 5.digi.0		# to setup up digiboard 0
+cp proto.digi 5.digi.3		# to setup up digiboard 3
+
+	Altpin can also be specified. The form of the file name
+when altpin is used is "5.digi.a.x".
+
+	An example of configuring a digiboard for altpin is
+
+cp proto.digi 5.digi.a.0	# setup up digiboard 0, and altpin
+
+	It is also possible to specify a particular version of
+the firmware. The form of the file name when this is done is "5.digi.vy.x"
+where y represents a particular version of the firmware. An
+example of selecting version 3 of the firmware would be
+
+cp proto.digi 5.digi.v3.0	# setup up digiboard 0, with version 3 firmware
+
+
+	It is important that each unit be only set up once. This means
+that there should only be a single instance of each trailing digit (0,1,2,3).
+If a unit is initialized multiple time the first invocation will override
+all subsequent invocations.

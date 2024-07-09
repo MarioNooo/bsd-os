@@ -1,0 +1,18 @@
+# netcpasswd file used by /usr/bin/netcpass daemon
+# NW-srv is the name of the Novell NetWare Server.
+# NW-Login-name => is the Netware Login Name on the Netware Server
+# NW-Passwd=> is the password on the Server (a '-' says no passwd)
+# unix-username=> is the unix login name of the user
+# type = either 'user', 'group' or 'world'
+# The flags field contains:
+#	'default' for the default machine name login
+# An Entry with flags of default is required.
+#
+#
+#[<-----------UPPER CASE ONLY---------->]
+# NW-srv	NW-Login-name	NW-passwd	unix-name	type	flags
+#------------------------------------------------------------------------------
+MYSERVER	NOBODY		keep.out	nobody		user	default
+MYSERVER	WHEEL		-		wheel		group	default
+MYSERVER	ROOT		change.me	root		user	
+

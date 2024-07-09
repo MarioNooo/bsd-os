@@ -1,0 +1,177 @@
+.\"	BSDI matherr.3,v 1.1 1998/03/04 18:41:32 donn Exp
+.Dd March 4, 1998
+.Dt MATHERR 3
+.Os
+.Sh NAME
+.Nm matherr
+.Nd report errors in math library functions
+.Sh SYNOPSIS
+.Fd #include <math.h>
+.Pp
+.Bd -literal
+/* Modes: */
+typedef enum {
+	_IEEE_ = -1,
+	_SVID_,
+	_XOPEN_,
+	_POSIX_
+} _LIB_VERSION_TYPE;
+
+extern _LIB_VERSION_TYPE _LIB_VERSION;
+
+struct exception {
+	int type;
+	char *name;
+	double arg1;
+	double arg2;
+	double retval;
+};
+
+/* Types: */
+#define	DOMAIN		1
+#define	SING		2
+#define	OVERFLOW	3
+#define	UNDERFLOW	4
+#define	TLOSS		5
+#define	PLOSS		6
+.Ed
+.Ft int
+.Fn matherr "struct exception *exc"
+.Sh DESCRIPTION
+The
+.Fn matherr
+function is a function that math library functions
+(see
+.Xr math 3 )
+call when they detect an error.
+Normally, you provide your own version of
+.Fn matherr
+if you need to process math library errors specially.
+This makes
+.Fn matherr
+different from most library functions,
+which are not designed to be replaced by users.
+.Pp
+The
+.Fn matherr
+function is only called from the math library
+in a very specific set of conditions:
+.Pp
+.Bl -bullet -compact
+.It
+You link your program to the generic math library,
+.Fl lmstd .
+Hardware-specific math libraries under BSD/OS
+support only IEEE 754 semantics.
+.It
+You assign
+.Dv _XOPEN_
+or
+.Dv _SVID_
+to the global variable
+.Va _LIB_VERSION
+before calling any math library function
+that may in turn need to call
+.Fn matherr .
+The default mode is
+.Dv _IEEE_ ,
+in which errors are reported using exceptions
+(see
+.Xr fpgetsticky 3 ) .
+.It
+You call a math library function that
+reports an error using
+.Fn matherr ,
+as documented in that function's manual page.
+.It
+Your code presents an exceptional condition
+for that math library function,
+as documented in the manual page.
+.El
+.Pp
+If the return value of
+.Fn matherr
+is nonzero, the error is ignored and
+.Va errno
+is unaltered.
+If the return value is 0,
+.Va errno
+is set to
+.Dv EDOM
+or
+.Dv ERANGE
+to indicate the error appropriately.
+If the return value is 0 and
+.Va _LIB_VERSION
+is set to
+.Dv _SVID_ ,
+a message describing the error may be printed to
+.Va stderr .
+.Pp
+Library functions call
+.Fn matherr
+with a pointer to an
+.Fa exception
+structure.
+The members of this structure have the following meanings:
+.Bl -tag -width retval\0\0
+.It Fa type
+The type of the error:
+.Bl -tag -width UNDERFLOW\0 -compact
+.It Dv DOMAIN
+The value of an argument to the function
+is not in the domain on which the function is defined.
+.It Dv SING
+The value of an argument to the function
+lies in a singularity;
+the result of the function at this point is infinite.
+.It Dv OVERFLOW
+The magnitude of the result of the function is larger than
+the largest magnitude that
+the floating point format can represent,
+even though the arguments were finite and in the function's domain.
+.It Dv UNDERFLOW
+The magnitude of the result of the function is smaller than
+the smallest magnitude that
+the floating point format can represent,
+even though the arguments were finite and in the function's domain.
+.It Dv TLOSS
+The result of the function has a total loss of significance.
+.It Dv PLOSS
+The result of the function has a partial loss of significance.
+.El
+.It Fa name
+A string that represents the nul-terminated name of the function.
+.It Fa arg1
+The first argument to the function.
+.It Fa arg2
+The second argument to the function (if more than one).
+.It Fa retval
+The result of the function.
+If
+.Fn matherr
+changes this value, the library function will appear
+to return the new value to the caller.
+.El
+.Pp
+The library provides a default version of
+.Fn matherr .
+The default
+.Fn matherr
+always returns 0.
+If the first argument to the function is an IEEE 754
+.Li NaN ,
+it will report an invalid operation exception
+(see
+.Xr fpgetsticky 3 ) .
+.Sh SEE ALSO
+.Xr math 3
+.Sh BUGS
+You can't replace a function in a static shared library,
+so programs that are compiled with
+.Xr shlicc 1
+may not use
+.Fn matherr .
+.Pp
+It's not clear what version of the SVID, if any,
+this implementation might be compatible with.

@@ -1,0 +1,67 @@
+<!--	BSDI	homepage.template,v 2.1 1997/04/16 18:59:29 sanders Exp	-->
+
+<!--
+ Sample HTML home page
+ Copyright 1994, 1995, 1998 Berkeley Software Design, Inc.
+
+ HTML constructs start with a keyword between angle brackets and
+ end with the same keyword preceded by a slash (still within angle
+ brackets).
+
+ HTML files have two basic sections, the HEAD section and
+ the BODY section.  The head section specifies the title of
+ the page and the body section specifies the content.  See the 
+ HTML reference manual for a complete description of the options.
+-->
+
+<!-- Start the head section -->
+<HEAD>
+
+<!-- Define the title of the document -->
+<TITLE>@ORGANIZATION@: Home Page</TITLE>
+
+<!-- End the head section -->
+</HEAD>
+
+<!-- Start the body section -->
+<BODY>
+
+<!-- Display the following line in the H2 header format.  -->
+<H2>
+Welcome to @ORGANIZATION@...
+</H2>
+
+<!-- Start a list -->
+<UL>
+
+<!-- List item (includes a hypertext link) -->
+<LI> <A HREF="/cgi-bin/bsdi-man"><B>BSD/OS</B> Hypertext Man Pages</A>
+<LI> <A HREF="apache/manual"><B>Apache</B> server documentation</A>
+
+<!-- End list -->
+</UL>
+
+<!-- Insert paragraph marker -->
+<P>
+Learn more about the <I>World-Wide Web</I> at
+<A HREF="http://www.bsdi.com"><B>BSDI's</B></A> list of
+<A HREF="http://www.bsdi.com/points-of-interest.html">Internet Points
+of Interest</A>.
+<P>
+<!-- Show the address/number in ADDRESS format -->
+<ADDRESS>@ORGANIZATION@</ADDRESS>
+@ADDR@
+<ADDRESS>Phone: @PHONE@</ADDRESS>
+<ADDRESS>FAX: @FAX@</ADDRESS>
+<ADDRESS>Email: <A HREF="mailto:@EMAIL@">@EMAIL@</A></ADDRESS>
+<P>
+<!-- Draw a line separator -->
+<HR>
+
+<!-- Draw a couple of images -->
+<IMG SRC="bsdi/bsdi-power.gif" ALIGN="LEFT" ALT="Berkeley Software Design">
+
+<IMG SRC="apache_pb.gif" ALIGN="RIGHT" ALT="Apache logo">
+
+<!-- End the body -->
+</BODY>

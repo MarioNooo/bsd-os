@@ -1,0 +1,264 @@
+.\" Copyright (c) 1994,1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ibcs2.5,v 2.4 1998/02/14 01:04:54 donn Exp
+.Dd October 18, 1996
+.Dt IBCS2 5
+.Os
+.Sh NAME
+.Nm ibcs2, coff, sco
+.Nd "Intel386 Family Binary Compatibility Specification 2
+.Sh SYNOPSIS
+.Cd options COFF
+.Sh DESCRIPTION
+BSD/OS offers limited support for executable binary files that
+conform to
+.Nm iBCS2
+with some extensions;
+SCO System V Release 3.2 binaries are the canonical example.
+To enable this binary compatibility,
+the current kernel must be configured with the
+.Dv COFF
+option.
+.Pp
+When you execute an
+.Nm iBCS2
+COFF binary file,
+the kernel loads it with another image called the
+.Em emulator library .
+The kernel passes control to the emulator,
+which then performs some initializations
+and jumps to the entry point in the executable file.
+The most important initialization is to change
+the local descriptor table (LDT) to replace
+segment 0, the system call segment.
+Subsequently when the program executes a system call,
+the hardware pushes a return address on the stack
+and calls the emulator.
+The emulator switches stacks and performs initializations,
+then dispatches the call through a system call switch.
+Automatically generated stub routines then
+convert from
+.Nm iBCS2
+data formats and parameters to BSD formats and parameters,
+and call the appropriate support routine or BSD system call.
+BSD system calls are always available using
+an LDT segment specifically reserved for them.
+.Pp
+Since the BSD kernel does not implement the
+.Nm iBCS2
+interface directly,
+the emulator maintains its own state in some situations.
+For example, the emulator notices when the program opens a directory
+rather than a regular file,
+and when the program reads directory entries from the file,
+the emulator simulates the reads using
+.Xr getdirentries 3 .
+The emulator also treats terminal and socket special files specially.
+The emulator maintains quite a bit of state about signals,
+so that it can reproduce the old signal semantics ``reliably''.
+Signals are always handled on the program stack.
+If a signal arrives while the emulator is executing,
+the emulator either backs out of its current state,
+executes the signal handler and then re-executes the system call,
+or it continues executing with signals blocked until the system
+call is serviced,
+then builds signal frames on the stack and executes handlers.
+The precise action depends on emulator and kernel state.
+.Pp
+The emulator contains a filename substitution facility.
+When the program first opens a file,
+the emulator reads in a list of filename translations from
+.Pa /sco/filemap .
+Comments (from
+.Sq Li #
+to the end of the line) are ignored, as are blank lines.
+Each content line should contain a path prefix and a substitution string,
+separated by white space.
+Filenames that match the prefix are modified inside the emulator
+such that the prefix is replaced with the substitution string.
+The emulator only recognizes complete matches against pathname elements,
+and only substitutes absolute pathname prefixes.
+No regular expression or globbing characters are supported.
+.Pp
+Since a COFF program can exec a BSD
+.Xr elf 5
+program,
+the emulator is loaded into BSD programs
+that are exec'ed by COFF programs so that
+the emulator will also translate filenames for BSD programs,
+making them appear to live in a SCO environment;
+this can be useful for installation scripts, for example.
+To explicitly load the emulator with a BSD program, use the
+.Xr sco 1
+command.
+.Pp
+The emulator supports debug traces using the environment variable
+.Li EMULATE_DEBUG .
+The emulator will print out a trace of its emulated system calls
+if you run a program with
+.Li EMULATE_DEBUG
+set to 1.
+If you set
+.Li EMULATE_DEBUG
+to 8, the emulator will execute
+a built-in breakpoint in its startup code,
+which is useful for breakpoint debugging inside the emulator (see BUGS below).
+Adding 4 to
+.Li EMULATE_DEBUG
+enables filename translation debugging.
+To turn on two debug modes simultaneously,
+just add the values.
+Note that emulator debugging is disabled for
+.Sq setuid
+programs.
+.Sh FILES
+.Bl -tag -width /sco/dev/socksys\0 -compact
+.It Pa /sco/emulator
+the emulator image
+.It Pa /sco/filemap
+the filename translation table
+.It Pa /sco/shlib
+directory of emulated iBCS2/SCO shared libraries
+.It Pa /sco/dev/socksys
+empty file with protections for socket emulation
+.It Pa /sco/bin
+simple emulations of a few System V programs
+.It Pa /sco/etc
+simple emulations of SCO
+.Xr custom
+and
+.Xr fixperm
+.El
+.Sh SEE ALSO
+.Xr elf 5 ,
+.Xr sco 1
+.br
+Intel386 Family Binary Compatibility Specification 2
+.Sh HISTORY
+Written by Donn Seeley at BSDI for BSD/OS 1.1.
+.Sh BUGS
+Releases of BSD/OS prior to release 3.0 came with a
+.Fl l Ns Ar ipc
+library.
+In those earlier releases, it was necessary to link BSD/OS programs with
+.Fl l Ns Ar ipc
+if you wanted them to use System V IPC
+(shared memory, semaphores, message queues).
+Several bugs were related to this IPC implementation.
+These bugs are no longer present in 3.0,
+which has a completely different System V IPC emulation.
+However, as a consequence of the new implementation,
+BSD/OS programs linked with the old
+.Fl l Ns Ar ipc
+library will no longer interoperate with SCO programs
+running under the emulation if they use System V IPC.
+The BSD/OS programs must be re-linked without
+.Fl l Ns Ar ipc
+under 3.0 in order for them to interoperate.
+.Pp
+The emulator and the shared libraries can print an error message and exit
+in certain unusual situations.
+Please report any such messages to BSDI support.
+If you want to debug the emulator yourself,
+the following
+.Pa \&.gdbinit
+file can be useful:
+.Bd -literal -offset indent
+add-sym /sco/emulator 0x1000
+dir /usr/src/sco/emulator
+add-sym /sco/shlib/libc_s 0
+dir /usr/src/sco/shlib/libc
+.Ed
+.Pp
+The emulator does not support alternate signal stacks, and neither does the
+.Nm iBCS2 .
+However BSD programs that use alternate signal stacks
+may not work properly when loaded with the emulator.
+.Pp
+There is only limited support for the huge number of standard
+.Nm iBCS2
+.Xr ioctl 2
+calls.
+In particular, none of the console
+.Xr ioctl 2
+calls work yet.
+Standard console escape sequences are supported, however,
+as are
+.Dv termio
+terminal
+.Xr ioctl 2
+calls.
+.Pp
+Several system calls are not yet emulated.
+These include:
+.Xr mount ,
+.Xr umount ,
+.Xr stime ,
+.Xr uadmin ,
+.Xr sysfs ,
+.Xr ptrace ,
+.Xr pgrp ,
+.Xr plock ,
+.Xr mknod
+(except for FIFOs),
+and
+.Xr ustat .
+None of the STREAMS-related system calls are supported,
+although TLI calls using the shared NSL library work,
+since they can be emulated without STREAMS.
+.Pp
+The
+.Nm iBCS2
+mandates support for Xenix binaries.
+This is not currently available.
+Also, COFF binaries other than
+.Dv ZMAGIC
+format are not supported.
+Support for
+.Dv COFF
+shared libraries has been coded but never tested;
+BSDI only supports
+.Xr elf 5
+format shared libraries.
+Currently the only functional shared library emulations are
+the C library,
+.Pa /sco/shlib/libc_s ,
+and the network services shared library,
+.Pa /sco/shlib/libnsl_s .
+.Pp
+There are no cross-development tools supplied for the
+.Nm iBCS2
+environment.
+There are no compilers, assemblers or linkers
+to help you produce
+.Nm iBCS2
+executable files.
+.Pp
+The emulated
+.Xr custom
+and
+.Xr fixperm
+utilities have been only lightly tested,
+and handle only small subsets of the functionality
+of the equivalent System V programs.
+.Pp
+There are only ad hoc replacements for System V style utilities.
+A few are listed in
+.Pa /sco/filemap ;
+for some installations of third party software,
+it may be necessary to add a few more.
+Note that in writing a replacement script,
+you can access absolute pathnames without
+translation through
+.Pa /sco/filemap
+by using
+.Sq Li //
+instead of
+.Sq Li /
+at the root; for example,
+.Pa //bin/expr
+locates the real
+.Pa /bin/expr ,
+not a mapped version.

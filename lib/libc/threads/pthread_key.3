@@ -1,0 +1,105 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_key.3,v 1.3 1996/12/12 03:03:45 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_KEY 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_key_create ,
+.Nm pthread_key_delete
+.Nd thread specific data key functions
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_key_create "pthread_key_t *key" "void (*func)(void *)"
+.Ft int
+.Fn pthread_key_delete "pthread_key_t key"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_key_create
+and
+.Fn pthread_key_delete
+functions maintain data keys used to locate thread-specific data.  
+While the same data key may be used by multiple threads, the values 
+bound to the data key are maintained per-thread.  When a 
+.Fa key
+is initially created a 
+.Dv NULL
+value is associated with the new key in all threads until a data value
+is associated with it using
+.Fn pthread_setspecific .
+.Pp
+The
+.Fn pthread_key_create
+function creates a new data key and optionally associates the destructor
+.Fa func
+with it.  The newly created data key may be used to locate thread-specific
+data items in the calling thread using
+.Fn pthread_setspecific .
+If a destructor function was registered upon key creation with
+.Fa func ,
+it is called upon thread exit for all non-NULL data values with the 
+thread-specific data value as its single argument. This process is
+repeated for non-NULL data values up to 
+.Dv PTHREAD_DESTRUCTOR_ITERATIONS 
+or until there are no more non-NULL data values remaining.
+.Pp
+The 
+.Fn pthread_key_delete
+function deletes a previously created data key. It is the responsibility
+of the application to free any allocated storage and/or clean up data 
+structures related to the deleted key.  No destructor functions are
+called from 
+.Fn pthread_key_delete .
+It is safe to call
+.Fn pthread_key_delete 
+from a destructor function and any destructor functions associated with
+the deleted data key will no longer be called from 
+.Fn pthread_exit .
+.Sh RETURN VALUES
+On success the
+.Nm pthread_key_create
+and
+.Nm pthread_key_delete
+functions return 0.  A non-zero result indicates that an error occurred.
+.Sh ERRORS
+The
+.Nm pthread_key_create
+and
+.Nm pthread_key_delete
+functions may fail and return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+The system lacked the necessary resources (other than memory) to 
+create another pthread data key.
+.It Bq Er EINVAL
+The value of a function argument is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to fulfill the requested operation.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_setspecific 3 ,
+.Xr pthread_getspecific 3
+.Sh STANDARDS
+The
+.Nm pthread_key_create
+and
+.Nm pthread_key_delete
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_key_create
+and
+.Nm pthread_key_delete
+functions first appeared in BSD/OS 3.0.

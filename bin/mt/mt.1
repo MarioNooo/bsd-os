@@ -1,0 +1,182 @@
+.\"	BSDI mt.1,v 2.7 1998/05/06 11:29:07 torek Exp
+.\"
+.\" Copyright (c) 1981, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd June 6, 1993
+.Dt MT 1
+.Os BSD 4
+.Sh NAME
+.Nm mt
+.Nd magnetic tape manipulating program
+.Sh SYNOPSIS
+.Nm mt
+.Op Fl f Ar tapename
+.Ar command
+.Op Ar count | Ar length
+.Sh DESCRIPTION
+.Nm Mt
+is used to give commands to a magnetic tape drive.
+.Pp
+For commands with associated counts,
+operations may be performed multiple times by specifying a
+.Ar count  .
+By default,
+.Nm mt
+performs the requested operation once.
+.Pp
+The
+.Ar tapename
+argument must reference a raw (not block) tape device.
+.Pp
+The available commands are listed below.
+Only as many characters as are required to uniquely identify a command
+need be specified.
+.Bl -tag -width "blocksize"
+.It Cm blocksize
+Set block 
+.Ar length
+for fixed length records.
+If no
+.Ar length
+is specified the current value will be reported.
+This command is only useful on Exabyte and DDS (dat data storage) SCSI drives.
+.It Cm bsf
+Back space
+.Ar count
+files.
+.It Cm bsr
+Back space
+.Ar count
+records.
+.It Cm buffered
+Enable data buffering in the physical tape drive.  When data buffering
+is enabled, and the physical end of media is detected,
+the drive may be unable to write all the buffered data to physical
+media. Few programs count on end of media detection, so this
+is unlikely to be a problem.
+Currently
+only SCSI tape drives are affected by this command.  This command
+updates NVRAM in the physical tape drive, and is therefore very
+sticky, even across a reboot or power cycle.
+.It Cm eof , weof
+Write
+.Ar count
+end-of-file marks at the current position on the tape.
+.It Cm fsf
+Forward space
+.Ar count
+files.
+.It Cm fsr
+Forward space
+.Ar count
+records.
+.It Cm offline , rewoffl
+Rewind the tape and place the tape unit off-line.
+The
+.Ar count
+argument is ignored.
+.It Cm rewind
+Rewind the tape.
+The
+.Ar count
+argument is ignored.
+.It Cm status
+Print status information about the tape unit.
+The
+.Ar count
+argument is ignored.
+.It Cm unbuffered
+Disable data buffering in the physical tape drive. 
+Currently
+only SCSI tape drives are affected by this command.  This command
+updates NVRAM in the physical tape drive, and is therefore 
+sticky even across a reboot or power cycle.
+.It Cm eof , weof
+.El
+.Pp
+If a tape name is not specified, and the environment variable
+.Ev TAPE
+does not exist;
+.Nm mt
+uses the device
+.Pa /dev/nrst0 .
+.Pp
+.Nm Mt
+returns a 0 exit status when the operation(s) were successful,
+1 if the command was unrecognized, and 2 if an operation failed.
+.Sh ENVIRONMENT
+If the following environment variable exists, it is utilized by
+.Nm mt .
+.Bl -tag -width Fl
+.It Ev TAPE
+.Nm Mt
+checks the
+.Ev TAPE
+environment variable if the argument
+.Ar tapename
+is not given.
+.Sh FILES
+.Bl -tag -width /dev/rstxxx -compact
+.It Pa /dev/rst*
+SCSI tape devices.
+.It Pa /dev/nrst*
+No-rewind SCSI tape devices.
+.El
+.Sh SEE ALSO
+.Xr dd 1 ,
+.Xr ioctl 2 ,
+.Xr st 4 ,
+.Xr environ 7
+.Sh BUGS
+The stickiness of 
+.Cm buffered
+and 
+.Cm unbuffered
+could lead to unexpected behavior if 
+.Nm mt
+is not always used to set the drive in the expected mode.
+.Pp
+The 
+.Xr wt 4
+driver does not pay attention to
+.Cm buffered 
+or
+.Cm unbuffered
+and always run in buffered mode.
+.Sh HISTORY
+The
+.Nm mt
+command appeared in
+.Bx 4.3 .

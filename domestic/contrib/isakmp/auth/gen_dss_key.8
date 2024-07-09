@@ -1,0 +1,166 @@
+.Dd Jan 1, 1998
+.Dt GEN_DSS_KEY 8
+.Os IKE 0.8
+.Sh NAME
+.Nm gen_dss_key
+.Nd generate public/private DSS key pair.
+.Sh SYNOPSIS
+.Nm add_preshr_key
+.Ar address
+.Ar key
+.br
+.Nm add_pub_key
+.Op RSA
+.Ar filename
+.br
+.Nm dump_key
+.Op RSA
+.br
+.Nm fingerprint
+.Op RSA
+.Op Ar ascii file
+.br
+.Nm gen_dss_key
+.br
+.Nm gen_rsa_key
+.br
+.Nm list_keys
+.Op Ar RSA
+.br
+.Nm show_preshr
+.Sh DESCRIPTION
+.Pp
+Both public keys and pre-shared keys are kept in flat files (a known 
+security hole!) and are managed by a suite of routines and an interface 
+library in the auth directory.
+.Pp
+Key rings are kept in a directory specified in authdef.h (KEYPATH) under 
+the names <hostname>.dsspriv and <hostname>.dsspub for DSS keys, 
+<hostname>.rsapriv and <hostname>.rsapub for RSA keys, and 
+<hostname>.preshr.priv and <hostname>.preshr.pub for pre-shared keys. For 
+example, using the default KEYPATH of /var/db on host joe.blow.org, the DSS
+private key file would be /var/db/joe.blow.org.dsspriv; the public key ring 
+would be the file /var/db/joe.blow.org.dsspub. Edit the authdef.h file and 
+set the KEYPATH directory if the default is not satisfactory.
+.Pp
+The supplied routines are:
+.Bl -tag -width fingerprint -compact
+.It Nm gen_dss_key
+This routine will generate a public/private DSS key
+pair and store the result in $KEYPATH/<hostname>.dsspriv.
+.It Nm gen_rsa_key
+This routine will generate a public/private RSA key
+pair and store the result in $KEYPATH/<hostname>.rsapriv.
+.It Nm dump_key
+Generate an ASCII rendition of your public key. This
+routine is used to create a file suitable for sharing with
+other parties with whom you would like to authenticate.
+.It Nm add_pub_key
+Add another party's public key to your public key
+ring. It is assumed that the file to add was created by the
+other party with
+.Nm dump_key .
+.It Nm list_keys
+Print out ASCII renderings of all entries in your
+public key ring.
+.It Nm fingerprint
+Obtain the fingerprint of a public key. This routine
+is used to verify that a public key has not been tampered with. 
+This routine is either passed the filename of an ASCII file
+which contains the public key of another party, in 
+which case it will generate a fingerprint from it, or nothing,
+in which case it will generate a fingerprint from the public
+key of the current host.
+.It Nm add_preshr_key
+Add a key to the pre-shared key ring.
+The
+.Ar address
+is an IP address and the
+.Ar key
+can be up to 128 bytes long.
+.It Nm show_preshr
+Print out ASCII renderings of all entries in your
+pre-shared key ring.
+.El
+.Pp
+.Nm dump_key ,
+.Nm add_pub_key ,
+.Nm list_keys , and
+.Nm fingerprint
+all take an optional
+parameter (RSA) to denote which public key ring to operate on. The default
+is DSS.
+.Pp
+In addition to these routines the libauth.a library contains subroutines
+which can be used by applications wishing to access the key files. The 
+authdef.h file defines appropriate structures and prototypes for this 
+library. Using the aforementioned routines and library, individuals can
+generate, exchange, and manage public keys and pre-shared keys. At this 
+time there is no facility for indirect trust-- a key in your public key 
+ring in implicitly trusted.
+.Sh DISCLAIMER OF LIABILITY
+.Pp
+THIS SOFTWARE IS PROVIDED BY CISCO SYSTEMS, INC. ("CISCO")  ``AS IS'' 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL CISCO BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE."
+.Sh LICENSE
+.Pp
+All software in this package is provided under the following license:
+.Pp
+"In no event shall Cisco's or its suppliers' liability to Licensee, whether
+in contract, tort (including negligence), or otherwise, exceed the price
+paid by Licensee.
+.Pp
+This License is effective until terminated. Licensee may terminate this
+License at any time by destroying all copies of software including any
+documentation. This License will terminate immediately without notice from
+Cisco if Licensee fails to comply with any provision of this License. Upon
+termination, Licensee must destroy all copies of software.
+.Pp
+This License shall be governed by and construed in accordance with the laws
+of the State of California, United States of America, as if performed
+wholly within the state and without giving effect to the principles of
+conflict of law. If any portion hereof is found to be void or
+unenforceable, the remaining provisions of this License shall remain in
+full force and effect. This License constitutes the entire License between
+the parties with respect to the use of the software."
+.Pp
+If licensee is the U.S. Government, then the following restrictions apply:
+Restricted Rights - Cisco's software is provided to non-DOD agencies with
+RESTRICTED RIGHTS and its supporting documentation is provided with LIMITED
+RIGHTS. Use, duplication, or disclosure by the Government is subject to the
+restrictions as set forth in subparagraph "C" of the Commercial Computer
+Software - Restricted Rights clause at FAR 52.227-19. In the event the sale
+is to a DOD agency, the government's rights in software, supporting 
+documentation, and technical data are governed by the restrictions in the
+Technical Data Commercial Items clause at DFARS 252.227-7015 and DFARS
+227.7202.
+.Sh FILES
+.Bl -tag -width /var/db/<hostname>.preshr.priv -compact
+.It Pa /var/db/<hostname>.dsspub
+Public DSS key.
+.It Pa /var/db/<hostname>.dsspriv
+Private DSS key.
+.It Pa /var/db/<hostname>.rsapriv
+Public RSA key.
+.It Pa /var/db/<hostname>.rsapub
+Private RSA key.
+.It Pa /var/db/<hostname>.preshr.pub
+Public pre-shared key.
+.It Pa /var/db/<hostname>.preshr.priv
+Private pre-shared key.
+.Sh BUGS
+.Pp
+An application to remove a key from the public key ring is left
+as an exercise for the reader.
+.Pp
+A BSAFE version of the RSA specific routines has been written
+but is not part of this distribution. 

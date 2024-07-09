@@ -1,0 +1,3 @@
+#! /bin/sh
+
+exec //usr/bin/cpp -Ubsdi -U__bsdi__ -DSCO -DSYSV386 "$@"

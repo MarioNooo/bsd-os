@@ -1,0 +1,23 @@
+.\" Copyright (c) 1998 Berkeley Software Design, Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\" 
+.\"	BSDI patchhdr.8,v 1.1 1998/09/12 02:46:26 torek Exp
+.\"
+.Dd September 11, 1998
+.Dt PATCHHDR 8
+.Os
+.Sh NAME
+.Nm patchhdr
+.Nd patch elf64 header fields
+.Sh SYNOPSIS
+.Nm patchhdr
+.Ar file
+.Op Ar name=value Ar ...
+.Sh DESCRIPTION
+The
+.Nm
+program is a hack to work around a change in the ELF64 "em_machine"
+field values before 4.0-release.
+.Sh SEE ALSO
+.Xr elf 5

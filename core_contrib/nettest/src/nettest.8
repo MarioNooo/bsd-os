@@ -1,0 +1,594 @@
+\"
+.\" Copyright 1992 Cray Research, Inc.
+.\" All Rights Reserved.
+.\"
+.\"
+.\" Permission to use, copy, modify and distribute this software, in
+.\" source and binary forms, and its documentation, without fee is
+.\" hereby granted, provided that:  1) the above copyright notice and
+.\" this permission notice appear in all source copies of this
+.\" software and its supporting documentation; 2) distributions
+.\" including binaries display the following acknowledgement:  ``This
+.\" product includes software developed by Cray Research, Inc.'' in
+.\" the documentation or other materials provided with the distribution
+.\" and in all advertising materials mentioning features or use of
+.\" this software; 3) the name Cray Research, Inc. may not be used to
+.\" endorse or promote products derived from this software without
+.\" specific prior written permission; 4) the USMID revision line and
+.\" binary copyright notice are retained without modification in all
+.\" source and binary copies of this software; 5) the software is
+.\" redistributed only as part of a bundled package and not as a
+.\" separate product (except that it may be redistributed separately if
+.\" if no fee is charged); and 6) this software is not renamed in any
+.\" way and is referred to as Nettest.
+.\"
+.\" THIS SOFTWARE IS PROVIDED AS IS AND CRAY RESEARCH, INC.
+.\" DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+.\" ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+.\" PARTICULAR PURPOSE.  IN NO EVENT SHALL CRAY RESEARCH, INC. BE
+.\" LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
+.\" DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+.\" WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+.\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd November 9, 1992
+.Dt NETTEST 8
+.Os BSD/OS 4.3
+.Sh NAME
+.Nm nettest
+.Nd Perform client functions for timing data throughput
+.br
+.Nm nettestd
+.Nd Perform server functions for timing data throughput
+.Sh SYNOPSIS
+.Nm nettest
+.Op Fl cCdfFhmqw
+.Op Fl b Ar bufsize
+.Op Fl n Ar conns
+.Op Fl p Li tcp|udp|iso
+.Op Fl s Ar n
+.Op Fl S Ar tos
+.Op Ar host Op Ar count Op Ar size\ [\ port\ ]
+.br
+.Nm nettest
+.Op Fl cCdfhw
+.Op Fl b Ar bufsize
+.Fl p Li local|locald|pipe
+.Op Fl n Ar conns
+.Op Ar count Op Ar size Op Ar filename
+.br
+.Nm nettest
+.Op Fl cCdfh
+.Op Fl b Ar bufsize
+.Fl p Li file Ar writefile Ar readfile
+.Op Ar count Op Ar size
+.br
+.Nm nettest
+.Fl V
+.sp
+.Nm nettestd
+.Op Fl d
+.Op Fl p Li tcp|udp|iso
+.Op Ar port
+.br
+.Nm nettestd
+.Op Fl d
+.Fl p Li local|locald|pipe
+.Op Ar filename
+.br
+.Nm nettestd
+.Op Fl d
+.Fl p Li file Ar readfile Ar writefile
+.br
+.Nm nettestd
+.Fl V
+.Sh DESCRIPTION
+The
+.Nm nettest
+and
+.Nm nettestd
+commands invoke client
+and server programs that are used for timing data throughput of various
+methods of interprocess communication.  For
+.Tn TCP
+and
+.Tn OSI
+connections,
+the
+.Nm nettest
+program establishes a connection with
+the
+.Nm nettestd
+program, and then it does
+.Ar count
+writes
+of
+.Ar size
+bytes, followed by
+.Ar count
+reads of
+.Ar size
+bytes.  For
+.Tn UDP ,
+the
+.Nm nettest
+program performs
+only writes; reads are not performed.
+The
+.Nm nettestd
+program, if used with
+.Tn UDP
+connections, reads
+the data packets and prints a message for each data packet it
+receives.
+The number and size of the reads and writes may not
+correlate with the number and size of the actual data packets
+that are transferred; it depends on the protocol that is chosen.
+If you append an optional
+.Li k (or
+.Li K )
+to the
+.Ar size ,
+.Ar count ,
+or
+.Ar bufsize
+value,
+the number specified is multiplied by 1024.
+.Pp
+The
+.Nm nettest
+and
+.Nm nettestd
+commands accept the following
+arguments:
+.Bl -tag -width "xxxxx"
+.It Fl b Ar bufsize
+This option applies only to
+.Nm nettest .
+For
+.Tn TCP
+and
+.Tn UDP
+connections, use the
+.Fl b
+option to specify the amount of kernel buffering allowed.
+.It Fl b
+This option applies only to
+.Nm nettestd .
+Run as a background daemon.  In this mode,
+.Nm nettestd
+will detach itself from its controlling terminal, and put itself
+into the background.
+In addition, all error messages are logged
+via
+.Xr syslog 3 ,
+instead of via
+.Xr perror 3 .
+Note that if both the
+.Fl C
+and
+.Fl v
+options are used
+in conjunction with the
+.Fl b
+option, any errors that are
+detected in the data stream will not be reported.
+.It Fl c
+To specify that the data must be checked
+to verify its accuracy, use the
+.Fl c
+option.
+.Pp
+Because this is done by comparing one character at a time,
+using the
+.Fl c
+option can cause noticeable throughput degradation.
+The data is verified by filling up the data buffer with a 32-byte repeating
+pattern of all the lower case letters and the first 6 upper case
+letters of the alphabet.
+This option is useful for detecting data that has been corrupted.
+If there is a problem with lost or duplicated data, this option
+may generate a large number of error messages.
+.It Fl C
+Similar to
+.Fl c ,
+except that the data is written out as
+a sequence of sequential 64-bit numbers in network byte order.
+.Pp
+Because this is done by comparing one word at a time,
+it is slightly faster than the
+.Fl c
+option, but it
+can still cause noticeable throughput degradation.
+This option is useful for detecting data that has been lost
+or duplicated, as it resynchronizes itself when an error is
+encountered.  However, if the size of the lost or duplicated
+data is not an even multiple of 8, it may not resynchronize
+properly.
+.It Fl d
+For
+.Tn TCP ,
+.Tn UDP
+and
+.Tn OSI
+connections, the
+.Fl d
+option turns on the socket-level debugging flag.
+.It Fl f
+Indicates that a full-size read must be issued.
+.Pp
+Usually, when a read returns a short count,
+both
+.Nm nettest
+and
+.Nm nettestd
+issue a
+read for the remaining data for that buffer,
+whether or not a short count was received.
+(The total number of bytes is not changed.)
+.It Fl F
+For
+.Tn TCP
+connections,
+the
+.Fl F
+option turns on the
+.Dv TCP_NODELAY
+socket option.
+The
+.Tn TCP
+code in the kernel usually tries to send only
+full-sized packets over the network; this is accomplished
+by delaying some writes until a full packet size
+accumulates.  The
+.Fl F
+option disables this algorithm.
+.It Fl h
+To turn on hash marks to be printed,
+use the
+.Fl h
+option.
+Each time a complete buffer is written or read, a hash mark is printed.
+If a read returns a partial count and the
+.Fl f
+option
+is not specified, a period is printed.
+If the
+.Fl f
+option is specified,
+a hash mark is printed each time a read completes,
+regardless of the amount of data read.
+.It Fl m
+Indicates that for datagram connections
+.Fl p Li udp
+and
+.Fl p Li locald )
+that
+.Nm nettest
+should use the
+.Xr sendmsg 2
+system call instead of the
+.Xr sendto 2
+system call (see
+.Xr send 2 ) ,
+and that
+.Nm nettestd
+should use the
+.Xr recvmsg 2
+system call
+instead of the
+.Xr recvfrom 2
+system call (see
+.Xr recv 2 ) ,
+For other protocols this option is ignored.
+.It Fl n Ar nconns
+For
+.Tn TCP ,
+.Tn LOCAL
+and
+.Tn ISO
+connections, the
+.Fl n
+option specifies the number of
+simultaneous connections to be opened.
+.Pp
+For each connection, a subprocess is created.
+Each subprocess, after establishing a connection to the
+server and negotiating the options, suspends itself.
+When all the connections have been established, a continue
+signal is sent to all the subprocesses to start them running
+at the same time.
+As each subprocess completes, it returns its timing results,
+and returns that information to the main process, which
+then prints out the individual timing information.
+After all the subprocesses have completed, aggregate timing
+results given.
+The aggregate timings are based on the total amount of data
+transferred by all the subprocesses, the start time of the first
+subprocess to begin writing its data to its server, and end time
+of the last subprocess to complete reading its data from its server.
+The synchronization information shows when each subprocess began running,
+the duration of the data transfer for each subprocess, and
+ending time of each subprocess.
+These times are relative to the start time of
+the first subprocess to began running.
+.It Fl p Ar protocol
+Specifies the protocol in use.
+.Pp
+The valid values for
+.Ar protocol
+are
+.Li tcp ,
+.Li udp ,
+.Li iso ,
+.Li local ,
+.Li locald ,
+.Li pipe
+and
+.Li file . 
+.sp .5
+If the
+.Fl p
+option is not specified,
+.Li tcp
+is the default.
+.sp .5
+The
+.Li local
+protocol uses
+.Tn LOCAL
+domain stream sockets;
+.Ar filename
+can be specified to override
+the default file name
+.Pa nt_socket .
+.sp .5
+The
+.Li local
+protocol uses
+.Tn LOCAL
+domain datagram sockets;
+.Ar filename
+can be specified to override
+the default file name
+.Pa nt_dsocket .
+.sp .5
+For
+.Li pipe
+protocol connections, two named pipes are created when
+you specify
+.Ar filename ,
+one for reading and one for writing.  The
+.Nm nettest
+program creates
+the names of these files by appending
+.Li R
+and
+.Li W
+to
+.Ar filename .
+The default names are
+.Pa nt_pipeR
+and
+.Pa nt_pipeW .
+.sp .5
+For
+.Li file
+protocols,
+.Ar writefile
+is the name of the special file
+to which information is written;
+.Ar readfile
+is the name of the special file
+that is read.  The order of
+.Ar writefile
+and
+.Ar readfile
+is reversed between
+.Nm nettest
+and
+.Nm nettestd .
+This allows the same file names to be specified in the same order
+for both
+.Nm nettest
+and
+.Nm nettestd ,
+because the file to which
+.Nm nettest
+writes is the file from which
+.Nm nettestd
+reads, and vice versa.
+The intent of this option is to allow
+.Nm nettest
+to be run
+across arbitrary devices that have a character-device interface that
+can be accessed just by opening up a special character file for
+reading or writing.  It is not intended for for reading or writing to
+a regular file.
+.It Fl q
+Generate quieter output.
+This option may be specified more than once.
+The first instance drops the printing of the histograms and
+child synchronization information.  A second instance reduces
+the output to just the read/write summary, and only one line
+per child when the
+.Fl n
+option is used.
+The third instance drops all the per child information, printing
+only the aggregate statistics.
+.It Fl s Ar n
+Increases the maximum
+.Tn TCP
+window by a factor of 2 ^
+.Ar n ;
+1 \(<=
+.Ar n
+\(<= 14.
+.It Fl S Ar tos
+For
+.Tn TCP
+and
+.Tn UDP
+connections, the
+.Fl S
+option
+can be used to specify the Type-of-Service (TOS) value for the
+connection.
+.Pp
+A check for the symbolic name
+.Ar tos
+in
+.Pa /etc/iptos
+determines the actual order.
+(The
+.Fl t Ar tos
+option is a valid synonym, for historical
+compatibility.)
+.It Fl V
+Print out information about the version of the program.
+.It Fl w
+Use the
+.Dv MSG_WAITALL
+flag when calling
+.Xr recv 2 .
+This allows the kernel to accumulate incoming data so that
+the read buffer is filled before returning control to
+the application.
+The use of this option negates the
+need for the
+.Fl f
+option.
+.It Ar host
+For
+.Tn TCP ,
+.Tn UDP
+and
+.Tn OSI
+connections, 
+.Ar host is the name
+of the machine on which the server is running.
+.Pp
+If this is omitted or specified as
+.Fl - ,
+the name that
+.Xr gethostname 2
+returns is used.
+.It Ar count
+Specifies the number of read or write operations. 
+.Pp
+A value of
+.Fl -
+indicates that the default value must be used.  The default value is
+.Li 100.
+.It Ar size
+Specifies the number of bytes to be read or written. 
+.Pp
+A value of
+.Fl -
+indicates that the default value must be used.
+The default value is
+.Li 4096.
+.It Ar port
+For
+.Tn TCP
+and
+.Tn UDP
+connections, specify
+.Ar port
+to select an alternate port number.
+.Pp
+The
+.Ar port
+must be a decimal number.
+.El
+.Pp
+The output from
+.Nm nettest
+is timing information and a
+histogram of the various sizes that the read operations returned.
+System load affects the results because
+all throughput times are calculated from wall-clock times.
+The percentages listed for system and user times are
+percentages of wall-clock time.
+.Pp
+The write time is measured from the time
+at which the application starts its first write until the time
+it completes its last write.
+The read time begins when the last write is complete and ends when
+the last read is complete.
+Because the kernel may buffer outgoing data,
+if everything on the network is working correctly, it
+is normal for the write times to be slightly faster than the
+read times.  This difference in throughput represents the
+amount of buffering in the kernel and the network round-trip
+time.
+The read and write time is measured from the time the first write
+is started to the time the last read is completed; thus, if
+the speed of the network is the same in both directions and
+both machines have the same processing power and load,
+the read and write times are
+the most accurate.
+.Pp
+The histogram output shows the sizes that
+the read system calls return.
+These may not have any correlation to the size and number
+of packets that are actually sent and received over the network.
+This is especially true for
+.Tn TCP
+connections.
+.Sh FILES
+.Bl -tag -width "xxxxxxxxxxx"
+.It Pa /etc/iptos
+.Li IP Li TOS
+database
+.It Pa nt_socket
+Default name for stream
+.Tn LOCAL
+domain sockets
+.It Pa nt_dsocket
+Default name for datagram
+.Tn LOCAL
+domain sockets
+.It Pa nt_pipeW
+Default name for write side of named pipes
+.It Pa nt_pipeR
+Default name for read side of named pipes
+.El
+.Sh SEE ALSO
+.Xr gethostname 2 ,
+.Xr recv 2
+and
+.Xr send 2
+.Sh BUGS
+The
+.Fl p Li pipe ,
+.Fl p Li local
+and
+.Fl p Li locald
+options create named pipes
+and
+.Tn LOCAL
+domain sockets, respectively, that remain after
+the programs exit.
+.Pp
+If
+.Fl p Li pipe Ar filename
+is specified and
+.Ar filename
+is either a relative or absolute path name,
+neither
+.Nm nettest
+nor
+.Nm nettestd
+insert the
+.Li W
+and
+.Li R
+before the final component
+of the path name; they are always prepended to the entire
+file name.
+.\" KEY WORDS
+.\" Principal developer: D.Borman
+.UI "USMID @(#)man/man8/nettest.8	80.16	11/09/92 11:30:40"
+.FP

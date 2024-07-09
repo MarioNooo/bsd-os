@@ -1,0 +1,64 @@
+.\"	BSDI screenblank.8,v 1.1 1995/06/01 20:33:32 torek Exp
+.\"
+.\" Copyright 1992 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Copyright (C) 1989, 1990, 1991 by Jef Poskanzer.
+.\"
+.\" %sccs.include.redist.roff%
+.\"
+.\"	%W% (Berkeley) %G%
+.\"
+.\" from: Header: screenblank.8,v 1.3 92/08/03 02:19:31 leres Exp
+.\"
+.Dd June 1, 1995
+.Dt screenblank 8
+.Sh NAME
+.Nm screenblank
+.Nd screen blanking daemon
+.Sh SYNOPSIS
+.Nm screenblank
+.Op Fl delay Ar seconds
+.Op Fl mouse
+.Op Fl keyboard
+.Op Fl fb Ar framebuffer
+.Sh DESCRIPTION
+The
+.Nm screenblank
+program is similar to Sun's screenblank,
+with some added features from the
+.Em lockscreen
+program.
+Like Sun's
+.Nm screenblank ,
+it works automatically, starting itself up after a
+specified interval of idle time.
+And like Sun's
+.Nm screenblank ,
+it works no matter which window system you are running,
+or even if you aren't running any window system.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl delay
+Change the idle time interval that
+.Nm screenblank
+waits before starting itself up.
+The default interval is 600 seconds (10 minutes).
+.It Fl mouse
+Ignore the mouse when checking how long the workstation has been idle.
+.It Fl keyboard
+Ignore the keyboard when checking how long the workstation has been idle.
+.It Fl fb
+Specify an alternate frame buffer.
+More than one
+.Fl fb
+flag can be given, and all the specified displays
+will be blanked.
+If no
+.Fl fb
+flags are given, all connected displays will be blanked.
+.El
+.Pp
+All flags can be abbreviated to their shortest unique prefix.
+.Sh AUTHOR
+Copyright (C) 1989, 1990, 1991 by Jef Poskanzer.

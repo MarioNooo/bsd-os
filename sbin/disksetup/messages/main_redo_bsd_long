@@ -1,0 +1,7 @@
+You have aborted the BSD partition editor.  Any modifications made
+to the BSD partition table have been forgotten.  You now have the
+option to either exiting disksetup or restarting the editing of
+the BSD partition table for this disk.  If you aborted the editor
+because the table originally displayed was what you wanted, re-edit
+the BSD label and use <N> to go on to the next phase.
+

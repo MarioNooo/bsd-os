@@ -1,0 +1,7 @@
+config.log
+config.cache
+config.status
+Makefile
+tcpdump
+version.c
+tcpdump.0

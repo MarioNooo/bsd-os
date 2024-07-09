@@ -1,0 +1,8 @@
+At this point you should select the partition you wish to mark as active
+by pressing the number which corresponds to that partition.
+
+The standard master boot record (MBR) will boot from which ever
+partition is marked active.  If you use the BOOTANY bootstrap, the
+active partition determines the default partition to boot from.
+
+You may press <ESC> if you do not wish to set the active partition.

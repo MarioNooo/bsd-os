@@ -1,0 +1,29 @@
+.\" Copyright (c) 2000 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI mp.config.5,v 1.1 2000/03/17 21:36:36 polk Exp
+.\"
+.Dd March 17, 2000
+.Os
+.Dt MP.CONFIG 5
+.Sh NAME
+.Nm /etc/mp.config
+.Nd "config file for multiprocessor startup and overrides"
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+The
+.Nm
+config file is used to control multiprocessor aspects of BSD/OS.
+It may contain overrides as documented in the manual page for the 
+.Xr cpu 8
+command, or may be empty if no overrides are required but additional
+processors should be started automatically at boot time.
+.Sh SEE ALSO
+.Xr cpu 8
+.Sh HISTORY
+The 
+.Nm
+file first appeared in BSD/OS 4.0.

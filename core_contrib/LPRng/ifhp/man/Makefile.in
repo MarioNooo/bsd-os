@@ -1,0 +1,88 @@
+#**************************************************************************
+#* LPRng IFHP Filter
+#* Copyright 1994-1997 Patrick Powell, San Diego, CA <papowell@astart.com>
+#*
+#* $Id: Makefile.in,v 3.16 1999/09/30 20:37:11 papowell Exp papowell $
+#
+
+
+SRC=@srcdir@
+@SET_MAKE@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+sysconfdir=@sysconfdir@
+libexecdir=@libexecdir@
+INSTALLCMD=@INSTALL@
+FILTERDIR=@FILTERDIR@
+CONFIG_FILE=@CONFIG_FILE@
+
+MAN=@mandir@
+INSTALL_MAN=@INSTALL_MAN@
+
+#**************** configure does not change lines after this *********
+
+FONTDIR=${libexecdir}/filters/fonts/
+#GNU
+ifeq ($(FILTERDIR),)
+FILTERDIR=${libexecdir}/filters/
+endif
+ifeq ($(CONFIG_FILE),)
+CONFIG_FILE=${sysconfdir}/ifhp.conf
+endif
+
+#BSD
+#BSD .if $(FILTERDIR) == ""
+#BSD FILTERDIR=${libexecdir}/filters
+#BSD .endif
+#BSD .if $(CONFIG_FILE) == ""
+#BSD CONFIG_FILE=${sysconfdir}/ifhp.conf
+#BSD .endif
+
+
+.PHONY: install all clean distclean ci
+
+INSTALL= ifhp.8 textps.8
+all: $(INSTALL)
+
+install: all $(INSTALL)
+	${SRC}/mkinstalldirs $(MAN)/man8
+	for i in $(INSTALL) ; do \
+		$(INSTALL_MAN) -m 755 $$i $(MAN)/man8; \
+	done ;
+
+clean:
+	rm -f ifhp.8 textps.8
+
+ifhp.8: $(SRC)/ifhp.n Makefile
+	VERSION=`cat $(SRC)/../VERSION | sed 's/.* //'`; \
+		sed -e 's,_FONTDIR_,$(FONTDIR),g' \
+	    -e 's,_FILTERDIR_,$(FILTERDIR),g' \
+	    -e 's,_CONFIG_FILE_,$(CONFIG_FILE),g' \
+	    -e "s,_VERSION_,$${VERSION},g" \
+	    $(SRC)/ifhp.n >$@
+textps.8: $(SRC)/textps.n Makefile
+	VERSION=`cat $(SRC)/../VERSION | sed 's/.* //'`; \
+		sed -e 's,_FONTDIR_,$(FONTDIR),g' \
+	    -e 's,_FILTERDIR_,$(FILTERDIR),g' \
+	    -e 's,_CONFIG_FILE_,$(CONFIG_FILE),g' \
+	    -e "s,_VERSION_,$${VERSION},g" \
+	    $(SRC)/textps.n >$@
+
+distclean: clean
+	rm -f Makefile Makefile.bsd
+
+CI=
+#CO=-kv
+CO=-l
+ci:
+	if test ! -d RCS ; then mkdir RCS; fi;
+	checkin() { \
+		rcs -l $$1 ; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
+	}; \
+	for i in Makefile.in Makefile *.n; do \
+		checkin $$i; \
+	done;
+
+update:

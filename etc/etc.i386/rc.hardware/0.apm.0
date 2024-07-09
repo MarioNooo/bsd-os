@@ -1,0 +1,7 @@
+#	BSDI 0.apm.0,v 1.2 1996/10/08 19:55:15 prb Exp
+
+# Start APM manager
+if [ -f /sbin/apmstart ]; then
+	echo -n ' apm'
+	apmstart -q > /dev/null
+fi

@@ -1,0 +1,74 @@
+#! /bin/sh
+#	BSDI uname,v 2.1 1995/07/10 17:51:47 donn Exp
+
+#
+# Compatible version of SCO uname program.
+# We fake almost all of the data here.
+# Sure would be nice if we could report (e.g.) our own release number...
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+if [ $# -le 0 ]
+then
+	set -- -s
+fi
+
+while getopts aAmnrsvX c
+do
+	case $c in 
+	a)	# options s, n, r, v, m
+		name=$(expr "$(hostname)" : '\([^.]*\)')
+		echo $name $name 3.2 2 i386
+		;;
+
+	A)	# print number of permitted users; fake it
+		echo 999-user
+		;;
+
+	m)	# print architecture
+		echo i386
+		;;
+
+	n)	# print 'nodename'
+		expr "$(hostname)" : '\([^.]*\)'
+		;;
+
+	r)	# print current release level
+		echo 3.2
+		;;
+
+	s)	# print 'system name', same as node name on SCO
+		expr "$(hostname)" : '\([^.]*\)'
+		;;
+
+	v)	# print current version level
+		echo 2
+		;;
+
+	X)	# print an assortment of weird stuff; fake most of it
+		echo ""
+		name=$(expr "$(hostname)" : '\([^.]*\)')
+		echo "System = $name"
+		echo "Node = $name"
+		echo "Release = 3.2v4.2"
+		echo "KernelID = 94/09/12"
+		echo "Machine = i80486"
+		echo "BusType = ISA"
+		echo "Serial = 123456789"
+		echo "Users = 999-user"
+		echo "OEM# = 0"
+		echo "Origin# = 1"
+		echo "NumCPU = 1"
+		echo ""
+		;;
+
+	*)
+		echo 'usage: uname [-aAmnrsvX]'
+		exit 1
+		;;
+
+	esac
+done
+
+exit 0

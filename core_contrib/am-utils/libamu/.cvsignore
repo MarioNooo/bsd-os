@@ -1,0 +1,4 @@
+Makefile
+.libs
+libamu.la
+*.lo

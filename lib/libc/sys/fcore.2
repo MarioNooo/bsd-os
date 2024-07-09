@@ -1,0 +1,95 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI fcore.2,v 2.1 1997/12/12 20:41:46 donn Exp
+.\"
+.Dd December 8, 1997
+.Dt FCORE 2
+.Os
+.Sh NAME
+.Nm fcore
+.Nd write a core dump to a file
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/fcore.h>
+.Ft int
+.Fn fcore "int fd" "pid_t pid" "int flags"
+.Sh DESCRIPTION
+The
+.Fn fcore
+function causes the system to write a
+.Sq "core dump
+for the process with process ID
+.Fa pid
+starting at the beginning of the given open file
+.Fa fd .
+The
+.Fa flags
+argument must be zero.
+See
+.Xr core 5
+for details about the format of core dumps.
+.Pp
+The file descriptor
+.Fa fd
+must be open for writing.
+.Pp
+The process ID
+.Fa pid
+must either be the process ID of the currently running process,
+or it must be a child of the current process.
+If the process is a child of the current process,
+it must be traced
+.Pq see Xr ptrace 2
+and stopped,
+and the parent must have waited for it
+.Pq see Xr wait 2 .
+.Sh RETURN VALUES
+.Fn Fcore
+returns 0 on success.
+On failure,
+.Fn fcore
+returns \-1 and
+the global variable
+.Va errno
+is set to indicate the specific error condition.
+.Sh ERRORS
+.Fn Fcore
+will return the given error code
+for the given error condition:
+.Bl -tag -width ENAMETOOLONGA
+.It Bq Er EBADF
+.Va Fd
+is not open for writing.
+.It Bq Er EBUSY
+The process is not the current process, and
+either it is not stopped or the current process has not waited for it.
+.It Bq Er EOPNOTSUPP
+Core files are not supported on the given file type.
+.It Bq Er EFBIG
+The core file would be larger than the current file size limit.
+.It Bq Er EINVAL
+The
+.Fa flags
+parameter has an invalid value.
+.It Bq Er EIO
+An I/O error occurred while reading virtual memory or while writing the file.
+.It Bq Er EPERM
+The given process is not being traced.
+.It Bq Er EPERM
+The given process
+is neither the current process nor
+a child of the current process.
+.It Bq Er ESRCH
+The process ID
+.Fa pid
+does not correspond to an existing process.
+.Sh "SEE ALSO
+.Xr gcore 1 ,
+.Xr core 5
+.Sh HISTORY
+The
+.Nm fcore
+function first appeared in BSD/OS 4.0.

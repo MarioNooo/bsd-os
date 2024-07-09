@@ -1,0 +1,241 @@
+#
+# * Copyright (c) 2003 QUALCOMM Incorporated. All rights reserved.
+# * The file License.txt specifies the terms for use, modification,
+# * and redistribution.
+# *
+# * File        : popper/Makefile.in
+# * Project     : Qpopper Server
+# * Comments    : 
+# *
+# *
+# * Revisions   :
+# *
+# *
+# * 02/03/03    [rcg]
+# *       -  Pick up LDFLAGS.
+# *
+# * 04/22/01    [rcg]
+# *       -  Adding missing ";\" pair which caused a shell error on
+# *          poppassd install (thanks to Michael C Tiernan).
+# *
+# * 03/07/01    [rcg]
+# *        - Added poppassd.
+# *
+# * 01/23/01    [rcg]
+# *        - Moved genpath.[ch] from common/ to popper/ (since it takes
+# *          POP* parameter now).
+# *
+# *  12/29/00   [rcg]
+# *        - 'make install' now initializes the popauth db if apop
+# *          in use and the db doesn't already exist.
+# *
+# *  11/26/00   [rcg]
+# *        - Added 'install' rule, based on patch by Nick Burrett.
+# *
+# *  10/30/00   [rcg]
+# *        - Added pop_tls_openssl.c and pop_tls_sslplus.c
+# *
+# *  10/22/00   [rcg]
+# *        - Added SSL_INC and SSL_LIB.
+# *
+# *  10/13/00   [rcg]
+# *        - Added pop_tls.[ch] and sslplus_utils.[ch]
+# *
+# *  09/21/00   [rcg]
+# *        - Added pop_cache.c.
+# *
+# *  08/16/00   [rcg]
+# *        - Added main.c for use in standalone mode.
+# *
+# *  06/28/00   [rcg]
+# *        - Added pop_config.c
+# *
+# *  06/05/00   [rcg]
+# *        - Added drac.c
+# *
+# *  03/02/00   [rcg]
+# *        - Added msg_ptr file
+# *
+# *  11/22/99   [rcg]
+# *        - modified for flock.h in ../common instead of here (popper)
+# *
+# *  11/02/99   [rcg]
+# *        - added banner.h
+# *
+# *  06/25/99   [rcg]
+# *         - fixed realclean to remove popauth
+# *
+# *  04/22/99   [rcg]
+# *         - added POPAUTHOBJS to clean
+# *
+# *  02/12/99   [rcg]
+# *         - get_sub_opt added.
+# *
+# *  05/05/98   [py]
+# *         - File added.
+# *
+#
+SHELL           =   /bin/sh
+CC              =   @CC@
+GPERF           =   @GPERF@
+MAKEFILE        =   Makefile
+INSTALL         =   @INSTALL@
+
+@SET_MAKE@
+
+#                   Defines are described in the INSTALL document.
+top_srcdir      =   @top_srcdir@
+srcdir          =   @srcdir@
+VPATH           =   @srcdir@
+prefix          =   @prefix@
+exec_prefix     =   @exec_prefix@
+installdir      =   @sbindir@
+
+popper_srcdir   =   ${top_srcdir}/popper
+qd_srcdir       =   ${top_srcdir}/qd
+sievead_srcdir  =   ${top_srcdir}/sievead
+mmangle_srcdir  =   ${top_srcdir}/mmangle
+common_srcdir   =   ${top_srcdir}/common
+password_srcdir =   ${top_srcdir}/password
+
+base_dir        =   ..
+popper_dir      =   ${base_dir}/popper
+qd_dir          =   ${base_dir}/qd
+sievead_dir     =   ${base_dir}/sievead
+mmangle_dir     =   ${base_dir}/mmangle
+common_dir      =   ${base_dir}/common
+password_dir    =   ${base_dir}/password
+
+
+OBJS            =   pop_dele.o pop_dropcopy.o \
+                    pop_get_command.o pop_get_subcommand.o pop_init.o \
+                    pop_last.o pop_list.o pop_log.o pop_lower.o \
+                    pop_msg.o pop_parse.o pop_pass.o pop_quit.o \
+                    pop_rset.o pop_send.o pop_stat.o pop_updt.o \
+                    pop_user.o pop_xtnd.o pop_xmit.o popper.o \
+                    pop_bull.o xtnd_xlst.o pop_uidl.o mktemp.o \
+                    pop_rpop.o pop_apop.o md5.o pop_auth.o pop_pope.o \
+                    pop_extend.o scram.o hmac.o base64.o pop_util.o \
+                    get_sub_opt.o msg_ptr.o drac.o pop_config.o pop_tls.o \
+                    pop_tls_openssl.o pop_tls_sslplus.o sslplus_utils.o \
+                    main.o pop_cache.o genpath.o
+
+SRCS            =   pop_dele.c pop_dropcopy.c \
+                    pop_get_command.c pop_get_subcommand.c pop_init.c \
+                    pop_last.c pop_list.c pop_log.c pop_lower.c \
+                    pop_msg.c pop_parse.c pop_pass.c pop_quit.c \
+                    pop_rset.c pop_send.c pop_stat.c pop_updt.c \
+                    pop_user.c pop_xtnd.c pop_xmit.c popper.c \
+                    pop_bull.c xtnd_xlst.c pop_uidl.c mktemp.c \
+                    pop_rpop.c pop_apop.c md5.c pop_auth.c pop_pope.c \
+                    pop_extend.c scram.c hmac.c base64.c pop_util.c \
+                    get_sub_opt.c msg_ptr.c drac.c pop_config.c pop_tls.c \
+                    pop_tls_openssl.c pop_tls_sslplus.c sslplus_utils.c \
+                    main.c pop_cache.c genpath.c
+
+POPAUTHOBJS     =   base64.o scram.o md5.o \
+                    hmac.o popauth.o
+
+POPAUTHSRCS     =   base64.c scram.c md5.c \
+                    hmac.c popauth.c
+
+INCLUDES        =   ${srcdir}/popper.h \
+                    ${srcdir}/version.h \
+                    ${srcdir}/banner.h  \
+                    ${srcdir}/get_sub_opt.h \
+                    ${srcdir}/pop_tls.h \
+                    ${srcdir}/genpath.h \
+                    ${srcdir}/sslplus_utils.h \
+                    ${base_dir}/config.h \
+                    ${top_srcdir}/conf.h \
+                    ${common_dir}/flock.h \
+                    ${common_dir}/maillock.h \
+                    ${common_dir}/logit.h \
+                    ${common_dir}/string_util.h
+
+
+CFLAGS          =   @CFLAGS@
+CDEFS           =   @CDEFS@
+LDFLAGS         =   @LDFLAGS@
+OS_DEFS         =   @OS_DEFS@
+DEFS            =   @DEFS@
+pop_auth        =   @POPAUTH@
+apop_uid        =   @APOP_UID@
+poppassd        =   @POPPASSD@
+NETWORK_LIBS    =   @NETWORK_LIBS@
+KERBEROS_LIBS   =   @KERBEROS_LIBS@
+DBM_LIBS        =   @DBM_LIBS@
+LIBS            =   @NETWORK_LIBS@ @KERBEROS_LIBS@ @DBM_LIBS@ @LIBS@ @SSL_LIBS@
+AR_FLAG         =   @AR_FLAG@
+RANLIB_CMD      =   @RANLIB_CMD@
+
+SSL_INC         =   @SSL_DIR_INC@
+
+
+.SUFFIXES: .c .o
+
+all: popper ${pop_auth} mangler_library common_library ${poppassd}
+
+mangler_library: 
+	cd ${mmangle_dir} && ${MAKE} all
+
+common_library:
+	cd ${common_dir} && ${MAKE} all
+
+popper: ${OBJS} mangler_library common_library
+	${CC}   ${OBJS} -o popper ${mmangle_dir}/libmangle.a \
+	        -I${common_srcdir} ${common_dir}/libcommon.a \
+	        ${LIBS} ${LDFLAGS}
+
+popauth: ${POPAUTHOBJS}
+	${CC}  -o popauth ${POPAUTHOBJS} ${NETWORK_LIBS} ${DBM_LIBS} \
+		${common_dir}/libcommon.a
+
+poppassd: common_library
+	cd ${password_dir} && ${MAKE} all
+
+.c.o: 
+	${CC} -c -I${base_dir} -I${top_srcdir} -I${srcdir} \
+	        -I${mmangle_srcdir} -I${common_srcdir} ${SSL_INC} \
+	        ${CFLAGS} ${DEFS} ${CDEFS} ${OS_DEFS} $< -o $@
+
+${SRCS}:
+${POPAUTHSRCS}:
+
+install: popper ${pop_auth}
+	${INSTALL} -s -m 0755 -o root popper ${installdir}/popper
+	echo "Installed popper as ${installdir}/popper"
+	if [ "x${poppassd}" != "x" ]; then \
+	    cd ${password_dir} && ${MAKE} $@ ;\
+	fi
+	if [ "x${pop_auth}" != "x" ]; then \
+	    ${INSTALL} -s -m 4755 -o ${apop_uid} -g 0 ${pop_auth} \
+	               ${installdir}/${pop_auth}; \
+	    echo "Installed popauth as ${installdir}/${pop_auth} " \
+	         "with uid ${apop_uid}"; \
+	    ${installdir}/${pop_auth} -init -safe; \
+	fi
+
+clean:
+	rm -f core 
+	rm -f ${POPAUTHOBJS}
+	rm -f ${OBJS}
+	cd ${mmangle_dir}  && ${MAKE} $@
+	cd ${common_dir}   && ${MAKE} $@
+	cd ${password_dir} && ${MAKE} $@
+
+realclean: clean
+	rm -f popper
+	rm -f popauth
+	rm -f Makefile
+	rm -f *~
+	cd ${mmangle_dir}  && ${MAKE} $@
+	cd ${common_dir}   && ${MAKE} $@
+	cd ${password_dir} && ${MAKE} $@
+
+
+${OBJS}:    ${INCLUDES}
+pop_ssl.o: pop_ssl.h
+
+test: 
+	./tscript

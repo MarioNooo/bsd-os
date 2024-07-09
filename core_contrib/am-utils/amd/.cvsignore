@@ -1,0 +1,7 @@
+.libs
+Makefile
+build_version.h
+amd
+conf_parse.c
+conf_parse.h
+conf_tok.c

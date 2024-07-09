@@ -1,0 +1,161 @@
+---------------Implementation of LD_PRELOAD for ld.so-------------------
+
+This message is in NO way intended as a demonstration of how to fake hostid's
+on commercial machines to be able to run expired/single machine licenced
+software. I hope that clears me legally ;-) 
+
+This is a demonstration of the LD_PRELOAD functionality you see on
+SunOS/Slowaris etc, with our native DLL dynamic linker ld.so.
+
+As most of you know LD_PRELOAD can be used to fake hostid on Sun's, and the
+like, by replacing the libc functions with your own private copies. With
+PIC this is fairly trivial to add, but with fixed addressing DLL's it is
+slightly more complicated and actually turns out to be a ld_post_load,
+although the names have been retained for BC.
+
+Although this would give you a way of overriding functions in the library,
+and is useful for testing purposes, but the time required in performing even
+a couple of fixups after parsing the symtab for dup entries demonstrates why
+PIC is superior to DLL. In a real linux world, one use which springs
+immediately to mind is Alain L. Knaff's <Alain.Knaff@imag.fr> zlibc
+implementation which does make use of LD_PRELOAD.
+
+Differences between SunOS/Slowaris, linux LD_PRELOAD:
+
+	The current code uses a slow linear search algorithm for searching
+	the symtab. Hence some performance degredation is noticeable. This
+	may be changed in the future.
+
+	Because we don't have PIC, the preload objects must be loaded at
+	a specfic address. This is not a problem, because (for example) if you
+	are preloading NYS functions, (to override libc's routines), then you
+	can use NYS's already assigned start address. For libc I use 0x50000000
+	- but that is assuming I dont have dosemu running at the same time :-)
+
+	Due to lack of lazy-binding, symbols in the preload object must be
+	totally resolved - i.e. an executable. This goes hand in hand with
+	the previous requirement anyway.
+
+	Only a single object may be loaded with linux - i.e. no colon
+	separated lists in the environment LD_PRELOAD. This is not a problem
+	as multiple objects can be combined into a single executable with `ld'.
+	This may change.
+
+
+Here is an example.
+
+NOTE: Because linux libc has undergone several transformations, some functions
+are actually aliases, and thus you must first determine the "real" function
+name for your preload object. Example given below.
+
+Say I wish to preload the two functions gethostid() and gethostname(). I have
+a small c program like.
+
+	[linux:~/ld.so]% cat bar.c
+	gethostid() {
+	        return 12345;
+	}
+
+	gethostname(char *bar, int sz) {
+	        bcopy("foo", bar, sz);
+		return 0;
+	}
+
+	ding () {
+		write (2,"\toops\n");
+	}
+
+I guess it is clear what the functions do. The explanation for the ding()
+function is below. 
+
+Ok, now I compile and link the preload object:
+
+	[linux:~/ld.so]% gcc -c bar.c
+	[linux:~/ld.so]% ld -x -Ttext 0x50000000 bar.o -lc \
+		-defsym preload_gethostname=__PLT___gethostname \
+		-defsym preload_gethostid=__PLT__gethostid
+	text_start: 0x50000000  text_size: 0x00001000
+	data_start: 0x50001000  gap:  0x00000000
+
+The exectuable object is left in `a.out'. Note that gethostname is
+actually __gethostname() as the aforementioned is an alias. Yu need to do
+a "nm" on the respective stub to find out the real names. Always look for
+the functions begining with "__PLT_" . Here is a before and after scenario
+with a test file foo.c
+
+	[linux:~/ld.so]% cat foo.c
+	#include <stdio.h>
+	
+	main () {
+	char hn[10];
+
+	        gethostname(hn,10);
+	        printf("got hostid=%ld, hosname=%s\n",gethostid(), hn);
+	}
+
+Before:
+
+	[linux:~/ld.so]% ./foo 
+	got hostid=314605251, hosname=linux
+
+After:
+	[linux:~/ld.so]% setenv LD_PRELOAD a.out
+	[linux:~/ld.so]% ./foo
+	preload fixup _gethostid 0x60002140 -> 0x50000000 (jmp offset=0xefffdebb)
+	preload fixup ___gethostname 0x60001fb0 -> 0x50000020 (jmp offset=0xefffe06b)
+	got hostid=12345, hosname=foo
+
+The extra "preload fixup..." lines are because I left DEBUG on when compiling
+ld.so.
+
+If you have functions for different libraries you can still combine and
+use them as ld.so calculates whether or not the appropriate function will be
+relocated depending on if the library has been mapped. For example in the file
+bar.c above, the function ding() is actually only used within libreadline. So
+once you have a program which uses librl.so the ding() function (which rings
+the terminal bell) will now instead just print "oops". However you need to
+add librl to the LD_PRELOAD object so it knows where to relocate to. To do
+this you need to link in the readine library. Thus to build the preload object
+yo need to
+
+	[linux:~/ld.so]% gcc -c bar.c
+	[linux:~/ld.so]% ld -T 0x50000000 bar.o -lc -lreadline \
+		-u __PLT_ding
+		-defsym preload_ding=__PLT__ding
+	text_start: 0x50000000  text_size: 0x00001000
+	data_start: 0x50001000  gap:  0x00000000
+
+This forces the readline library to link in its symbols.
+
+To check what functions are being preloaded you can do (for example)
+
+	% ldd foo
+        libc.so.4 (DLL Jump 4.6pl10) => /lib/libc.so.4.6.10
+        /usr/src/ld.so/example/a.out
+                preload (gethostid)
+                preload (gethostname)
+
+Mitch
+m.dsouza@mrc-apu.cam.ac.uk
+
+NOTE:
+If the module preloaded contains a function called _preload_main_ (in fact
+__preload_main_), this function is called at preloading time.
+
+prototype: void callmefunc(int ver, int nlibs, char **libs,
+		 int nmod, char **mods, char *argv0, char **environ);
+
+VER is the version (actually 1). It is used to be sure about the next
+arguments:
+VER: version number
+NLIBS: number of libraries
+LIBS: array of the linked libraries path
+NMOD: number of modules (preloaded binaries)
+MODS: array of the modules name
+ARGV0: argv[0] of the program
+ENVIRON: n.c.
+
+For an example, see dispinfo.c
+
+Tristan.
+C/O gingold@amoko.saclay.cea.fr

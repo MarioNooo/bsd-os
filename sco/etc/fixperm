@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+
+require "getopts.pl";
+
+    do Getopts ('d:i');
+    if ($opt_i eq "") {
+	print "currently -i option must be specified\n";
+	exit 1;
+    }
+    if ($opt_d eq "") {
+	print "package name not specified\n";
+	exit 1;
+    }
+    if ($ARGV[0] eq "") {
+	print "perms file must be specified";
+    }
+    if (substr($ARGV[0],0,1) eq "/") {
+	$permsfile = substr($ARGV[0],1);
+    } else {
+	$permsfile = $ARGV[0];
+    }
+
+
+    open(permfile,"$permsfile") || die "cannot open $permsfile: $!";
+
+    #
+    # read through perms file and pull out all of the packages
+    #
+
+    $linecnt = 0;
+    $lastvol = 1;
+    while ($inline = <permfile>) {
+	chop $inline;
+	@words = split(' ',$inline);
+	if (@words == 0) {
+		next;
+	}
+	if (@words[0] eq "#") {
+		next;
+	}
+	if (@words[0] eq "uid") {
+		next;
+	}
+	if (@words[0] eq "gid") {
+		next;
+	}
+	if (@words[0] eq "PERM") {
+		$perms[$linecnt++] = $inline;
+		next;
+	}
+	#
+	# code to handle hash stuff goes here
+	#
+	if (substr($words[0],0,1) eq "#") {
+		next;
+	}
+
+	$perms[$linecnt++] = $inline;
+	
+	#
+	# skip links
+	#
+	$cnt = $words[3] -1;
+	while($cnt) {
+		$perms[$linecnt++] = <permfile>;
+		$cnt--;
+	}
+
+	#
+	# continue on packages we have already seen
+	#
+	if (@pkgs{@words[0]} ne "") {
+		next;
+	}
+	@pkgs{@words[0]} = 'unselected';
+    }
+    if (@pkgs{$opt_d} ne 'unselected') {
+	print "package $opt_d not in perm file\n";
+	exit 3;
+    }
+    $foundone=0;
+    $missedone=0;
+    for ($curline = 0; $curline < $linecnt; $curline++) {
+	@words = split(' ',$perms[$curline]);
+	if ($words[0] ne $opt_d) {
+	    $curline += $words[3] - 1;
+	    next;
+	}
+	#
+	# for now just see if file exists
+	#
+	if (-e $words[4]) {
+	    $foundone = 1;
+	} else {
+	    $missedone = 1;
+	}
+	$i = $words[3] - 1;
+	while ($i) {
+	    $curline++;
+	    @words = split(' ', $perms[$curline]);
+	    if (-e $words[0]) {
+		$foundone = 1;
+	    } else {
+		$missedone = 1;
+	    }
+	    $i--;
+	}
+    }
+    if ($foundone != 0) {
+	if ($missedone == 0) {
+	    exit (0);
+	}
+	exit (5);
+    }
+    exit (4);
+

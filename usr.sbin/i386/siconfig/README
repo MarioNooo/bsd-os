@@ -1,0 +1,22 @@
+$ Id: $
+
+This is the BSDI 1.0 driver for the Specialix/SLXOS range of asynchronous
+multiplexor controllers. Only the ISA version is currrently supported.
+The SLXOS mux is an intelligent PC-bus card with Zilog Z280 CPU. Ports
+are attached using out-board terminal adapters in 8-port chunks. Up to
+32 ports (4 TA) can be driven by one controller. The driver will
+support two controllers.
+
+The driver has been tested on the following controller/TA configurations:
+
+	SI Host 1.?	8 TA ports
+	SI Plus 2.0	8 TA ports
+	XIO-H		32 MTA ports
+
+The driver source is in <src>/sys/i386/isa and a configuration utility
+(siconfig) is in <src>/sys/sbin/siconfig. Sbin is used rather than /usr/sbin
+as the driver must be configured before netstart is called if a SLXOS
+port is used for PPP. Other directories on this distribution are for
+updated manual pages and an updated MAKEDEV.
+
+Mail to andy@acronym.co.uk if you have any questions or problems.

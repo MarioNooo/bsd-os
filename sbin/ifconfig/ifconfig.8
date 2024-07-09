@@ -1,0 +1,1190 @@
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
+.\"
+.Dd June 25, 1994
+.Dt IFCONFIG 8
+.Os BSD 4.4
+.Sh NAME
+.Nm ifconfig
+.Nd configure and display network interface parameters
+.Sh SYNOPSIS
+.Nm ifconfig
+.Fl a
+.Op Fl m
+.Op Ar address_family
+.Nm ifconfig
+.Op Fl m
+.Ar interface
+.Op Ar address_family
+.Nm ifconfig
+.Op Fl mv
+.Ar interface
+.Op Ar address_family
+.Op Ar address parameters
+.Op Ar link parameters
+.Sh DESCRIPTION
+.Nm Ifconfig
+is used to assign one or more addresses
+to a network interface and/or configure
+network interface parameters.
+.Nm Ifconfig
+must be used at boot time to define the network address
+of each interface present on a machine; it may also be used at
+a later time to redefine the address
+or other interface operating parameters.
+.Bl -tag -width XXXXXX
+.It Ar address_family
+Specifies the address family for the addresses being configured, or
+the address family for which configured information will be displayed.
+The default is
+.Xr inet 4 ;
+.Xr inet6 4 ,
+.Xr iso 4
+and
+.Xr ns 4
+are also recognized.
+.It Ar interface
+Specifies the name of the interface being configured.  The interface
+name is of the form
+.Dq name unit
+where 
+.Ar name
+describes the type of interface and
+.Ar unit
+identifies a particular instance of the given type of interface.
+Information about an interface of the given
+.Ar name
+can be found in section four of the manual.
+For example,
+.Cm ef0
+is the first instance of the
+.Cm ef
+family of interfaces as described in
+.Xr ef 4 .
+.El
+.Ss Displaying interface configuration
+In the first synopsis,
+.Nm
+displays the complete interface configuration for the system.
+An 
+.Ar address_family
+may be specified to restrict the output to those parameters related to
+a specific address family.
+.Pp
+If the
+.Fl m
+flag is supplied, a list of all possible network media configurations
+and media options (which may vary by interface) are listed.
+.Pp
+In the second synopsis,
+.Nm
+will display the interface configuration for the given 
+.Ar interface .
+Again, the output may be restricted to a given
+.Ar address_family
+if desired.
+.Pp
+A special address family,
+.Cm link ,
+is used to describe characteristics of the physical interface.  These
+characteristics included, in some cases like
+.Tn Ethernet ,
+a physical 
+.Pq or Dq link level
+address.
+An interface may also supply detailed media information, including the
+current media and options selected as well as the current state of
+the interface (ie: is it plugged into an operating network). Not all
+interfaces support this level of detailed information, those that
+do not simply do not include this information.
+.Ss Configuring Interface Addresses
+The third synopsis is used to change the interface configuration.
+.Nm Ifconfig
+may be used to configure both address family specific parameters and
+physical interface parameters.  If address family specific
+parameters are being configured and they are not
+.Xr inet 4
+addresses, the
+.Ar address_family
+must be specified immediately after the
+.Ar interface
+is specified.
+.Pp
+Only the super-user may modify the configuration of a network
+interface.
+.Pp
+One flag is available when configuring an interface:
+.Bl -tag -width XXv
+.It Fl v
+The configuration of the interface is displayed after the specified
+changes have been made.  Output is limited to the link level and the
+address family being configured.
+.El
+.Pp
+There are five operations that can be used to configure addresses on
+an interface;
+.Cm add , modify , remove ,
+.Fl remove
+and
+.Cm set .
+Only one operation can be performed per invocation of
+.Nm ifconfig .
+When only one address per address family is configured on an
+interface, the
+.Fl remove
+and
+.Cm set
+operations may be used.
+.Pp
+For compatibility, 
+if an address is specified without an operation,
+.Cm set
+is assumed.
+If address parameters
+.Po
+.Cm destination
+address,
+.Cm broadcast
+address and
+.Cm nsellength
+.Pc
+are specified with neither an operation nor an address, an operation
+of
+.Cm modify
+is assumed.
+Some address families
+.Pq namely inet6
+do not support this compatibility.
+.Pp
+.Bl -tag -width XXXXXX
+.It Fl remove
+If only one address is configured for the specified address family, that
+address is removed.
+.It [ Cm set ] Ar address
+The specified address is configured as the only
+address in this address family on the interface.  If
+only one address is configured on the interface, it is replaced by the
+specified address.
+.El
+.Pp
+When multiple addresses per address family are configured on an
+interface it is necessary to use the 
+.Cm add ,
+.Cm modify
+and
+.Cm remove
+operations:
+.Bl -tag -width XXXXXX
+.It Cm add Ar address
+The specified address is to be added to the list of addresses
+configured on the interface.  The specified address must not already
+exist.
+.It Cm modify Ar address
+The parameters
+.Ns ( Cm destination
+address,
+.Cm broadcast
+address,
+.Cm netmask
+and
+.Cm nsellength
+./"and
+./".Cm snpaoffset
+as appropriate for the address family) of the specified address will
+be changed.
+.It Cm remove Ar address
+The specified address is removed from the list of addresses configured
+on the interface.  No other address parameters need be specified.
+.El
+.Pp
+For compatibility the
+.Cm alias ,
+.Fl alias
+and
+.Cm delete
+parameters are recognized, but their use is discouraged.
+.Pp
+The following address configuration parameters can also be configured:
+.Bl -tag -width XXXXXX
+.It [ Cm destination ] Ar address
+The specified address is configured as the destination of the
+interface.  This only applies to point-to-point interfaces, i.e. those
+that have the
+.Dv POINTOPOINT
+flag set.  The
+.Cm destination
+keyword is optional for compatibility reason, it's use is encouraged.
+.It Cm netmask Ar mask
+.Pq inet and iso
+Specify how much of the address to reserve for subdividing
+networks into sub-networks.
+The
+.Ar mask
+includes the network part of the local address
+and the subnet part, which is taken from the host field of the
+address.
+The
+netmask is not used for packet forwarding on point-to-point and
+loopback interfaces, it only provides information for routing daemons.
+When not specified, a default is chosen.
+.El
+.Ss Internet IPv4 Address Parameters
+For the
+.Tn internet
+family
+.Pq see Xr inet 4 ,
+the address is either a host name present in the host name data
+base 
+.Pq see Xr hosts 5 ,
+the distributed domain name database
+.Po
+see 
+.Xr gethostbyname 3
+.Ns and
+.Xr resolver 3
+.Pc
+or an
+.Tn internet
+IPv4 address expressed in the 
+.Tn Internet
+standard
+.Dq dot notation .
+.Pp
+The 
+.Ar mask
+can be specified as a single hexadecimal number
+with a leading 0x, as a dot-notation 
+.Tn internet
+address,
+or as a pseudo-network name listed in the network table
+.Xr networks 5
+or in the
+.Tn Domain Name System .
+The mask contains 1's for the bit positions in the 32-bit address
+which are to be used for the network and subnet parts, and 0's for the
+host part.  The mask should contain at least the standard network
+portion, and the subnet field should be contiguous with the network
+portion.
+.Pp
+A shorthand notation is available for setting the address
+and netmask:
+.Ar address/mask_length ,
+where
+.Ar mask_length
+is the number
+of contiguous one bits in the network mask.  A value of 8 is
+equivalent to a class A network mask (255.0.0.0), 16 is the equivalent
+of a class B network mask (255.255.0.0) and 24 is the equivalent of a
+class C network mask (255.255.255.0).
+.Pp
+The following parameters only apply to the
+.Xr inet 4
+address family:
+.Bl -tag -width XXXXXX
+.It Cm broadcast Ar address
+The specified address is configured as the broadcast
+address of the interface.  This parameter is only
+applicable to broadcast interfaces, i.e. those that
+have the
+.Dv BROADCAST
+flag set.  If not specified, a
+default broadcast address is the
+interface address with a host part of all ones.
+For example,
+.Li 10.1.1.3/24
+will yield a broadcast address of
+.Li 10.1.1.255 .
+.El
+.Ss Internet IPv6 Address Parameters
+For the
+.Tn internet
+family
+.Pq see Xr inet6 4 ,
+the address is either a host name present in the host name data
+base 
+.Pq see Xr hosts 5 ,
+the distributed domain name database
+.Po
+see 
+.Xr gethostbyname 3
+.Ns and
+.Xr resolver 3
+.Pc
+or an IPv6 address express specified as
+a hexadecimal string with colons as separators.
+Duplicate address detection is always performed by the
+kernel, and verified by the
+.Nm
+command.
+.Pp
+The mask is specified using the same
+shorthand notation available for setting the address
+and netmask with IPv4 addresses:
+.Ar address/mask_length ,
+where
+.Ar mask_length
+is the number
+of contiguous one bits in the network mask.
+.Pp
+In addition to the parameters for
+.Xr inet 4
+address, the following parameters only apply to the
+.Xr inet6 4
+address family:
+.Bl -tag -width XXXXXXXXXX
+.It Cm prefixlen
+.It Cm scopeid
+.It Cm anycast
+.It Fl anycast
+.It Cm autoconf
+.It Fl autoconf
+.It Cm tentative
+.It Fl tentative
+.It Cm pltime
+.It Cm vltime
+.El
+.Ss ISO Address Parameters
+For the
+.Xr iso 4
+family, addresses are specified as a long hexadecimal string,
+as in the Xerox family.  However, two consecutive dots imply a zero
+byte, and the dots are optional, if the user wishes to (carefully)
+count out long strings of digits in network byte order.
+.Pp
+The following parameters only apply to the ISO address family:
+.Bl -tag -width XXXXXX
+.It Cm nsellength Ar length
+This specifies a trailing number of bytes for a received
+.Tn NSAP
+used for local identification, the remaining leading part of which is
+taken to be the
+.Tn NET
+(Network Entity Title).
+The default value is 1, which conforms to US
+.Tn GOSIP .
+When an iso address is set in an 
+.Nm
+command,
+it is really the
+.Tn NSAP
+which is being specified.
+For example, in
+.Tn US GOSIP ,
+20 hex digits should be
+specified in the
+.Tn iso NSAP
+to be assigned to the interface.
+There is some evidence that a number different from 1 may be useful
+for
+.Tn AFI
+37 type addresses.
+./".It Cm snpaoffset Ar offset
+.El
+.Ss Ethernet and IEEE 802.11 Address Parameters
+For ethernet and IEEE 802.11 Wireless LAN devices that support the
+setting of the link level address (MAC Address), the following
+parameter is available:
+.Bl -tag -width XXXXXX
+.It Cm linkaddr Ar address
+This specifies the ethernet address for the interface for devices
+that support the setting of the ethernet address.  It is specified
+as a series of 6 8 bit hexadecimal numbers separated by colons (i.e.,
+01:02:03:04:05:06).
+.El
+.Ss XNS Address Parameters
+For the Xerox Network Systems(tm) 
+.Pq see Xr ns 4
+family, addresses are 
+.Ar net:a.b.c.d.e.f ,
+where
+.Ar net
+is the assigned network number (in decimal),
+and each of the six bytes of the host number,
+.Ar a
+through
+.Ar f ,
+are specified in hexadecimal.
+The host number may be omitted on Ethernet interfaces,
+which use the hardware physical address,
+and on interfaces other than the first.
+.Pp
+The following parameter only applies to NS address family:
+.Bl -tag -width XXXXXX
+.It Cm ipdst Ar address
+This is used to specify an 
+.Tn internet
+host who is willing to receive
+NS packets encapsulated in IP packets bound for a remote network.
+An apparent point-to-point link is constructed, and
+the address specified will be taken as the NS address and network
+of the destination.
+.El
+.Ss Configuring AIF Parameters
+.Nm Ifconfig
+is used to configure Aggregating Interfaces (AIF).
+.Bl -tag -width XXXXXX
+.It Pf [-] Cm aif Ar aif-interface
+Attach (detach) an interface to (from) an aggregating interface.
+.El
+.Pp
+The following parameters only apply to AIF interfaces.
+.Bl -tag -width XXXXXX
+.It Pf [-] Cm aifaddr Ar inet-address
+This parameter is used in conjunction with
+.Cm aifether ,
+.Cm aifif ,
+or
+.Cm aifvid ,
+and is used to either add or delete an
+address mapping.
+.It Cm aifether Ar ethernet-address
+Specify an
+.Ar inet-address
+to
+.Ar ethernet-address
+mapping.
+Packets will not be sent until at least on packet
+has been received with an
+.Ar ethernet-address
+source address, so the
+.Ar inet-address
+to
+.Ar interface
+mapping can be established.
+.It Cm aifif Ar interface
+Specify an
+.Ar inet-address
+to
+.Ar interface
+mapping.
+.It Fl aifif Ar interface
+Remove all mappings for
+.Ar interface .
+(This also happens automatically when
+.Ar interface
+is detached from using the
+.Fl aif
+parameter).
+.It Cm aifvid Ar vlan-id
+Specify an
+.Ar inet-address
+to
+.Ar vlan-id
+mapping.  This will fail if there is more than
+one vlan with
+.Ar vlan-id
+attached to this AIF.
+.It Cm aifflags Ar option,option,option,...
+Enable or disable AIF flags on an interface.
+Valid options are:
+.Bl -tag -width XXXXXXXX
+.It Cm roaming
+Allow hosts to roam between attached interfaces.
+Normally once a host is associated with
+a particular interface, any packets from that host
+arriving on a different interface will be ignored.
+When the
+.Cm roaming
+flag is set, if packets arrive on a different interface,
+the mapping for that host will be updated to
+point to the new interface.
+.It Cm -roaming
+Turn off the
+.Cm roaming
+flag.
+.It Cm arpok
+Allow ARP requests from unknown hosts.
+Normally when ARP packets are received for a host
+for which an address mapping does not exist, the
+packet is dropped.
+When the
+.Cm arpok
+flag is set, ARP requests from unknown hosts will
+be processed.
+.It Cm -arpok
+Turn off the
+.Cm arpok
+flag.
+.It Cm default
+Set all flags to their default value
+(all flags off.)
+.It Cm 0x Ns Ar NNNN
+Specifies the entire flags field as a
+numeric value.
+.El
+.It Cm aifmap
+The
+.Cm aifmap
+command prints out the address mappings
+for all AIF interfaces.
+The protocol address, interface name, and
+hardware address are printed for each entry.
+.El
+.Ss Configuring Non-Address Interface Parameters
+.Nm Ifconfig
+is also used to configure interface parameters.  These
+parameters are used to configure the hardware and/or protocol
+independent attributes of the interface.  These parameters are:
+.Bl -tag -width XXXXXX
+.It Cm debug
+Enable driver dependent debugging code; usually, this turns on
+extra console error logging.
+.It Fl debug
+Disable driver dependent debugging code.
+.It Cm down
+Mark an interface 
+.Dq down .
+When an interface is
+marked 
+.Dq down ,
+the system will not attempt to
+transmit messages through that interface. 
+If possible, the interface will be reset to disable reception as well.
+This action does not automatically disable routes using the interface.
+.It Cm ifcap Ar option,option,option,...
+This option is used to turn on and off hardware
+capabilities, such as checksum offload.
+It is a comma separated list of options as described below.
+Attempts to turn on capabilities not supported by the interface
+will be ignored (after generating a warning message.)
+.It Pf [-] Cm link Ns [ Cm 0-2 ]
+Used by some interfaces to select debug or other options. Some interfaces
+use link flags to select media options, however this such usage deprecated
+in favor of the media selection method described below.
+See the manual page for the specific network
+interface in manual section four for more information.
+.It Cm linktype Ar type
+Set the link level protocol of the physical interface to be
+.Ar type .
+More common types are
+.Ar ppp ,
+.Ar chdlc ,
+and
+.Ar frelay .
+Generally, only point-to-point interfaces support setting the link
+type; the exception is interfaces that can run as either
+.Ar token_ring
+or
+.Ar ether .
+Some types understood by
+.Nm
+may not be compiled into or understood by the kernel.
+.It Cm media Ar option,option,option,...
+Specifies a comma separated list of media options as described below.
+.It Cm metric Ar metric
+Set the routing metric of the interface to
+.Ar metric ,
+the default is 0.
+The routing metric is used by the routing daemons
+.Po
+.Xr routed 8
+and
+.Xr gated 8
+.Pc .
+Higher metrics have the effect of making a route
+less favorable; metrics are counted as addition hops
+to the destination network or host.
+.It Cm mtu Ar mtu
+Set the maximum transmission unit (mtu) of the interface to
+.Ar mtu .
+Not all interfaces allow the mtu to be modified, and
+those that do may have limitations on what range of values
+is valid.
+Note that this only changes the mtu associated
+with the interface, not the mtu in any routes pointing at
+that interface.
+Thus, the mtu should be set before assigning the address
+to the interface, or the interface address should be reassigned
+after changing the mtu.
+.It Pf [-] Cm pif Ar pif-interface
+Attach (detach) an interface to (from) a parallel interface.
+.It Cm pifflags Ar option,option,option,...
+This option only applies to parallel interfaces, and is
+a comma separated list of options as described below.
+.It Cm up
+Mark an interface 
+.Dq up . 
+This may be used to enable an interface after an 
+.Dq ifconfig down .
+It happens automatically when setting the first address on an
+interface.
+If the interface was reset when previously marked down,
+the hardware will be re-initialized.
+.It Cm vid
+Specify the VLAN id to be used for a
+.Xr vlan 4
+interface.
+If specified without
+.Cm vparent
+only the VLAN ID will be changed.
+.It Cm vparent Ar parent_if
+Specifies the physical interface (parent) to use for a
+.Xr vlan 4
+interface.
+If 
+.Cm vid
+is not also specified the default (id 1) will be used.  
+If the
+.Xr vlan 4
+interface is already configured with a parent, it will be unconfigured
+and reconfigured with the specified parent.
+.It Fl vparent
+Specifies that the
+.Xr vlan 4
+interface should be detached from it's physical (parent) interface.
+.El
+.Pp
+The
+.Cm arp , Fl arp , Cm trailers
+and
+.Fl trailers
+parameters no longer change the interface
+configuration, instead a warning message is generated.
+It is no longer possible to
+disable the
+.Tn "Address Resolution Protocol"
+on interfaces that require it and
+packets using trailer encapsulation can still be received,
+but no longer generated.
+.Ss Selecting media and related options
+Broadcast media
+.Po
+currently 
+.Tn Ethernet ,
+.Tn IEEE802.11 ,
+.Tn FDDI ,
+and 
+.Tn "Token Ring"
+.Pc
+support a driver
+independent method of selecting media and media related options via
+.Nm ifconfig .
+The currently selected media configuration is always displayed.  In some
+cases (such as a media configuration of
+.Cm auto )
+the actual configuration is displayed in parentheses.
+The carrier detect, or in-ring, status is also displayed if available.
+.Pp
+A given interface exports a list of valid media options which can
+be enumerated with the
+.Fl m
+flag.
+In the resulting display global options (if any) and a list of
+supported combinations of media flags are displayed.  Only the given
+combinations of media flags (as modified by the listed options) are
+valid for an interface.
+Attempting to set media or options that are not valid for a particular
+interface results in an error.
+.Pp
+Media options are manipulated in much the same manner as tty settings
+via the
+.Xr stty 1
+program: the current settings are first read from the interface, user
+changes are applied, then the settings are written back to the interface.
+Flags are turned on by naming them, and off by naming them with a leading
+hyphen (-).
+Case is not significant in keyword recognition. In many cases
+several aliases for the same parameter exist.
+.Pp
+Keep in mind that not all the following keywords will be available,
+generally only a small subset are available on a given interface.
+.Pp
+Keywords used for Ethernet interfaces:
+.Bl -tag -width XXXXXX
+.It Cm aui, 10base5
+Select the DB15 AUI connector.
+.It Cm bnc, 10base2
+Selects 10base2 media (sometimes called Thinnet or Cheapernet).
+.It Cm 10baseT, utp
+Select unshielded twisted pair media.
+.It Cm 10baseFL, fl
+Select 10 Mbit Ethernet over multimode fiber.
+.It Cm 100baseTX, tx
+Select 100 Mbit Ethernet over 2 category 5 cable pairs, this is the
+most common form of 100 Mbit Ethernet.
+.It Cm 100baseFX, fx
+Select 100 Mbit Ethernet over multimode fiber.
+.It Cm 100baseT4, t4
+Select 100 Mbit Ethernet over 4 pair category 3 cable.
+.It Cm 100baseT2, t2
+Select 100 Mbit T2 standard.
+.It Cm 100VgAnyLAN, vg, anylan
+Select 100 Mbit over 4 pair category 3 cable (an alternate standard).
+.It Cm 1000baseX
+Select 1000 Mbit over fiber (and STP).
+.It Cm 1000baseT
+Select 1000 Mbit over copper.
+.El
+.Pp
+.Tn IEEE802.11
+.Pq (Wireless LAN)
+interfaces support the following media and options:
+.Bl -tag -width XXXXXX
+.It Cm auto
+Automatically determine best available data rate.
+.It Cm 1Mb
+1Mb data rate.
+.It Cm 2Mb
+2Mb data rate.
+.It Cm 5.5Mb
+5.5Mb data rate.
+.It Cm 11Mb
+11Mb data rate.
+.It Cm ibss, ad-hoc
+Operate in IBSS (Independent Basic Service Set) mode, that is,
+without a base station or access point.
+.It Cm ess, infrastructure
+Operate in ESS (Extended Service Set), that is, with a base station or
+access point.
+.It Cm authmode
+Set the authentication mode to one of
+.Cm none ,
+.Cm open ,
+.Cm shared ,
+or
+.Cm encrypted .
+.It Cm wep
+Turn on Wire Equivalency Protocol.
+.It Cm Fl wep
+Turn off Wire Equivalency Protocol.
+.It Cm wepkey Ar key
+Set the Wire Equivalency Protocol key.
+The
+.Ar key
+typically should be
+either 40 or 102 bytes long.
+(128 bit WEP keys are specified with 102 bits.)
+The key is either presented in hexadecimal by preceeding 10 or 26
+digits with
+.Li 0x .
+If the key is does not start with
+.Li 0x
+then it should be 5 or 13 bytes representing the actual key.
+Setting the key to a dash (-) clears the key.
+802.11 specifies there are 4 keys.  By default key number 0 is
+set.  Other keys may be set by preceeding the key with the key number
+followed by a colon (i.e.,
+.Li 1:0x1234567890 ) .
+Some cards have multiple sets of keys.  In general, the first 4 keys
+are the ones normally used.  If a card has both volatile and non-volatile
+key storage then the first 4 keys should be volatile and the second
+4 keys (keys 4 - 7) are the non-volatile versions.
+.It Cm wektxkey Ar index
+Use WEP key number
+.Ar index
+as the transmit key.
+.It Cm station Ar name
+Sets the station name to
+.Ar name .
+.It Cm ssid Ar name
+Sets the desired Service Set Identifier to
+.Ar ssid .
+.It Cm channel Ar number
+Set the channel to
+.Ar number .
+The channel number that you are authorized to use is dependent on your
+geographic location.  Some cards may only allow you to set the channel
+when in ad-hoc mode.
+.El
+.Pp
+.Tn Token ring 
+.Pq Tn IEEE802.5
+interfaces support the following media and options:
+.Bl -tag -width XXXXXX
+.It Cm utp16
+Select unshielded twisted pair media (RJ454) at 16 Mbit ring speed.
+.It Cm utp4
+Select unshielded twisted pair media (RJ454) at 4 Mbit ring speed.
+.It Cm stp16
+Select shielded twisted pair media (DB9) at 16 Mbit ring speed.
+.It Cm stp4
+Select shielded twisted pair media (DB9) at 4 Mbit ring speed.
+.It Cm early_token_release, early, etr, Fl early_token_release, early, etr
+Enable/disable early token release feature, this increases performance on
+16 Mbit 
+.Tn Token Ring
+networks for adapters which support the option.
+.It Cm source_route, srt, Fl source_route, srt
+Enable/disable source route bridging with IP, this causes the ARP protocol
+to transmit discovery requests across source route bridges.
+.It Cm all_broadcast, allbc, Fl all_broadcast, allbc
+Enable/disable all rings broadcast on source routed networks. This causes
+ARP (and other broadcasts) to be sent as 'all-routes' instead of 
+'single-route'. Note that all routers copy all-routes broadcasts whereas only
+certain routers (as configured at the router) copy single-route broadcasts.
+.It Cm mulcast_functional_address, mfa, Fl mulcast_functional_address, mfa
+If enabled, use RFC1469 functional address to transmit multicast packets.
+If disabled, send multicast packets using the token ring broadcast address.
+.El
+.Pp
+.Tn FDDI
+interfaces support the following media and options:
+.Bl -tag -width XXXXXX
+.It Cm multimode, fiber, mmf
+Select
+.Tn FDDI
+over multi-mode fiber.
+.It Cm singlemode, smf
+Select
+.Tn FDDI
+over single mode fiber.
+.It Cm utp, cddi
+Select
+.Tn FDDI
+over category 5 twisted pair cabling.
+.It Cm dual_attach, dual, da, Fl dual_attach, dual, da
+Enable/disable dual attach feature (dual counter rotating rings); with this
+option cleared single attach mode is selected. This is intended for diagnostics
+and debugging.
+.El
+.Pp
+The following selections and options can apply to any type of media:
+.Bl -tag -width XXXXXX
+.It Cm auto, automedia
+This option causes the interface to automatically select an appropriate media
+type (either the currently active one or one it considers best if multiple 
+are possible).  Some
+interfaces only determine their media automatically when the option is
+initially set, for these it may be necessary to configure the interface
+down then back up again when media is changed.
+.It Cm disc, nomedia
+Disconnects the interface from its media completely (sometimes referred
+to as isolating the interface).
+.It Cm manual
+Selects the media configured by manual means (jumpers, dip switches, DOS
+configuration utilities, etc...). Many older interface drivers advertise
+manual mode since it is not possible for the driver to determine what
+type of media is supported by the card.
+.It Cm full_duplex, fdx, Fl full_duplex, fdx
+This flag forces full duplex operation.
+Note that it is possible for an
+interface to be running in full duplex mode without this flag set if
+the interface supports automatic negotiation of full duplex mode.
+.It Cm half_duplex, hdx, Fl half_duplex, hdx
+This flag forces half duplex mode, it is mutually exclusive with the
+full duplex flag. As with full duplex, some interfaces may automatically
+negotiate half duplex mode (or run only in that mode); this flag is typically
+advertised by an interface to allow automatic negotiation of full duplex
+mode to be overridden.
+.It Cm loopback, Fl loopback
+Forces outgoing network data to be looped back
+at the hardware level (usually in the ENDEC). Used for diagnosis and
+debugging.
+.It Cm flag0, flag1, flag2, Fl flag0, flag1, flag2
+Used for debugging or driver specific options, see the section 4 man page
+on specific device drivers for details on the usage of these flags
+(note: most interfaces do not use these flags).
+.It Xo Cm inst Ns Ar n ,
+.No Cm instance Ns Ar n
+.Xc
+Selects a given instance of a media type. Some interfaces may have
+multiple media interfaces that are identical in terms of the flags
+and options above, this keyword allows instances of these
+interfaces to be differentiated. An example would be an Ethernet
+chip with an internal ENDEC and an external MII based PHY: both
+might advertise themselves to the driver as a 10baseT physical
+interface.  Most interfaces have only one instance
+.Pq Cm inst0 .
+.It Cm rx_flow, tx_flow, Fl rx_flow, tx_flow
+Enable/disable 802.3x/802.3z flow control support on 
+receiver and transmitter, respectively.
+.El
+.Pp
+Interfaces may report media status to ifconfig when it is called
+to print link level status. If direct status of the media is
+possible an additional keyword (dependent on the media type) is printed.
+Ethernet interfaces may report 'active' or 'no-carrier',
+.Tn Token Ring
+and 
+.Tn FDDI
+interfaces report 'inserted' or 'no-ring'.
+.Ss Parallel Interface related options
+Parallel interfaces are logical interfaces, not
+associated with any particular physical interface.
+They are used to link several physical interfaces
+into a single logical interface.
+A parallel interface has a
+.Ar name
+of
+.Cm pif ,
+such as
+.Cm pif0 .
+Physical interfaces may be manually linked to
+a logical interface using the
+.Cm pif
+.Ar pif-interface
+command.
+This 
+should only be used for link types other than
+.Ar ppp ,
+such as a
+.Ar chdlc ,
+or
+.Ar frelay .
+To link multiple physical PPP interfaces together, the
+PPP Multilink Protocol should be used.  The
+.Xr ppp 8
+command automatically takes care of allocating a
+.Cm pif
+interface.
+.Pp
+The
+.Cm pifflags
+option can be used to set parallel interface specific flags.
+Currently, it is only used to specify one of four
+methods of selecting which interface should be used
+to output any given packet.
+The values for this option are:
+.Bl -tag -width XXXXXX
+.It Cm first-idle
+Use the first idle interface for output.
+.It Cm first-up
+Use the first interface that is up for output.
+.It Cm next-idle
+Use a round-robin technique to find the next idle interface for output.
+.It Cm next-up
+Use a round-robin technique to find the next interface for output.
+.It Cm default
+Sets the flags to their default value.
+(Currently this is the same as
+.Cm next-idle)
+.It Cm 0x Ns Ar NNNN
+Specifies the entire flags field as a
+numeric value.
+.El
+.Ss Interface Capabilities related options
+The
+.Cm ifcap
+option controls interface hardware capabilities.
+Not all interfaces support all capabilities.
+Capabilites are disabled by preceeding them
+with a minus, e.g.
+.Ar -capability .
+.Bl -tag -width XXXXXXXXX
+.It Cm txcsum
+Enable transmit checksum offload for IPv4 packets.
+.It Cm rxcsum
+Enable receive checksum offload for IPv4 packets.
+.It Cm tcpseg
+Enable TCP/IPv4 segmentation offload for large packets.
+.It Cm txcsum6
+Enable transmit checksum offload for IPv6 packets.
+.It Cm rxcsum6
+Enable receive checksum offload for IPv6 packets.
+.It Cm tcpseg6
+Enable TCP/IPv6 segmentation offload for large packets.
+.It Cm netcons
+Enable the interface to be used as a network console.
+.It Cm jumbo_mtu
+Enable sending and receiving of Ethernet Jumbograms.
+.It Cm ipsec
+Enable IPsec offload.
+.It Cm ipcomp
+Enable IP compression offload.
+.It Cm capN
+Enable vendor specific capability
+.Cm cap0 ,
+.Cm cap1 ,
+.Cm cap2
+or
+.Cm cap3
+.It Cm all
+Enable all supported hardware capabilities.
+.El
+.Ss gif interface related options
+The following operations are available for 
+.Xr gif 4
+interfaces.
+.Bl -tag -width XXXXXX
+.It Cm tunnel Ar physsrc Ar physdst
+Assign physical (encapsulating) source and destination address to a
+.Xr gif 4
+interface.
+.It Cm deletetunnel
+Clear physical address pair.
+.El
+.Sh EXAMPLES
+.Bl -tag -width XXXXXX
+.It Cm ifconfig -a
+Display the interface configuration for all address family parameters
+on all configured interfaces.
+.It Cm ifconfig -a inet
+Display the interface configuration for all
+.Xr inet 4
+addresses on all configured interfaces.
+.It Cm ifconfig ef0
+Display all address family parameters on interface
+.Cm ef0
+.It Cm ifconfig -m ef0
+Display all available media sections on interface
+.Cm ef0.
+.It Cm ifconfig ef0 media 100basetx,full_duplex
+Set full duplex 100 Mbit operation on interface
+.Cm ef0.
+.It Cm ifconfig tl0 media instance1,100basetx,full_duplex
+Set full duplex 100 Mbit operation on the second physical interface on
+an interface card with an MII bus.
+.It Cm ifconfig le0 inet
+Display on the the
+.Xr inet 4
+addresses configured on
+.Cm le0 .
+.It Cm ifconfig ef0 set 10.2.3.4/26
+Assign the
+.Xr inet 4
+address of
+.Cm 10.2.3.4
+with a network mask of
+.Cm 255.255.255.192
+to
+.Cm ef0 .
+If ef0 is a
+.Dv BROADCAST
+interface, the broadcast address will default to
+.Cm 10.2.3.191 .
+.It Cm ifconfig ef0 add 10.1.1.1 netmask 255.255.255.0
+Add the additional
+.Xr inet 4
+address of
+.Cm 10.1.1.1
+with a network mask of
+.Cm 255.255.255.0
+to
+.Cm ef0 .
+.It Cm ifconfig ef0 remove 10.2.3.4
+Remove the previously configured
+.Xr inet 4
+address of
+.Cm 10.2.3.4
+from interface
+.Cm ef0 .
+.It Cm ifconfig ntwo0 linktype ppp
+Configure the
+.Cm ntwo0
+interface to use the
+.Xr ppp 4
+protocol.
+.It Cm ifconfig ntwo0 down
+Disable the
+.Cm ntwo0
+interface from sending packets.
+.It Cm ifconfig ntwo0 pif pif0 up
+.It Cm ifconfig ntwo1 pif pif0 up
+Link the
+.Cm ntwo0
+and
+.Cm ntwo1
+interfaces to
+.Cm pif0
+and mark them as up.
+The assignment of an address would then be done using the
+.Cm pif0
+interface, not the individual
+.Cm ntwo0
+and
+.Cm ntwo1
+interfaces.
+.It Cm ifconfig exp0 up
+.It Cm ifconfig vlan0 10.0.0.254/24 vparent exp0 vid 2
+.It Cm ifconfig vlan1 10.0.1.254/24 vparent exp0 vid 3
+Configure
+.Cm exp0
+as vlan trunk, and
+.Cm vlan0
+as virtual interface to
+VLAN 2, and
+.Cm vlan1
+for VLAN 3, respectively.
+.It Cm ifconfig vlan0 -remove -vparent
+Unconfigure vlan0 and remove its address.
+.It Cm ifconfig lo0 set localhost
+Configure the loopback interface with the symbolic name for the
+loopback host.
+.It Cm ifconfig lo0 add pophost
+Add an alias on the loopback interface using a symbolic name.
+.It Cm ifconfig vlan0 vparent ne0 vid 1
+.It Cm ifconfig vlan0 aif aif0 up
+.It Cm ifconfig aif0 10.0.0.2/24
+.It Cm ifconfig aif0 aifaddr 10.0.0.1 aifif vlan0
+.It Cm ifconfig aif0 aifaddr 10.0.0.3 aifvid 1
+.It Cm ifconfig aif0 aifaddr 10.0.0.5 aifether 0:90:27:37:16:75
+Configure
+.Cm ne0
+as vlan trunk, and
+.Cm vlan0
+as virtual interface to VLAN 1.
+Attach
+.Cm vlan0
+to
+.Cm aif0 .
+Assign 10.0.0.2/24 to
+.Cm aif0 .
+Three specific mappings are then set up;
+10.0.0.1 is assigned to
+.Cm vlan0,
+10.0.0.3 is assigned to VLAN 1, which the
+kernel maps to
+.Cm vlan0 ,
+and
+10.0.0.5 is assigned to the ethernet address 0:90:27:37:16:75.
+When a packet is received from that host (on
+.Cm vlan0 ) ,
+10.0.0.5 will be mapped to
+the interface on which it was received
+.Cm ( vlan0 ) .
+.El
+.Sh DIAGNOSTICS
+Messages indicating the specified interface does not exit, the
+requested address is unknown, or the user is not privileged and
+tried to alter an interface's configuration.
+.Sh SEE ALSO
+.Xr netstat 1 ,
+.Xr arp 4 ,
+.Xr inet 4 ,
+.Xr iso 4 ,
+.Xr netintro 4 ,
+.Xr ns 4 ,
+.Xr pif 4 ,
+.Xr ppp 4 ,
+.Xr vlan 4 ,
+.Xr ppp.sys 5 ,
+.Xr gated 8 ,
+.Xr rc 8 ,
+.Xr route 8 ,
+.Xr routed 8
+.\" .Xr eon 5
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .

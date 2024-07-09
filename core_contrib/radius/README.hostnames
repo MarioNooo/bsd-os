@@ -1,0 +1,29 @@
+The Merit AAA Server uses calls to gethostname(3) to determine the name
+of the machine on which it is running.  If the name returned by this call
+is not one of the names for this machine found in your local DNS server's
+database of hostnames and IP addresses, you will experience problems when
+you attempt to configure your authfile, clients and users files.
+
+Make sure that your DNS is configured correctly (with both forward and
+reverse entries) for your Merit AAA Server machine(s).  If you don't know
+what some of these terms mean, you might reference the excellent book
+entitled "DNS and BIND" by Paul Albitz and Cricket Liu which is published
+by O'Reilly and Associates (IBSN 1-56592-010-4).
+
+Later on during the running of the Merit AAA Server, the name returned by
+the above call to gethostname(3) is used in a call to the standard library
+subroutine gethostbyname(3).  From now on, all comparisons on and lookups
+of DNS names are resolved into true IP addresses.  The IP addresses are
+compared rather than using the DNS names, since the IP address are stored
+as numbers and therefore are less prone to mis-interpretation.
+
+The Merit AAA Server does the DNS name-to-address and address-to-name
+lookup processing in a child process to insulate the time-critical task
+of authentication from the mundane and time-consuming task of determining
+the IP addresses and the DNS names of various RADIUS clients and servers.
+
+The dnscheck(8) utility is provided with the Merit AAA Server distribution
+to help assist you in determining if your DNS and Merit AAA Server machine
+are configured correctly.  You don't need this utility for the actual day
+to day operation of the Merit AAA Server.  In fact, you need not even build
+it (if you have source).  Think of it as a helpful, administrative utility.

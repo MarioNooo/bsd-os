@@ -1,0 +1,81 @@
+Introductory README
+===================
+
+This is a brief overview of the default configuration files that can
+be copied into a new user's directory from /usr/share/skel.  We've
+tried to provide defaults that fit most new users needs and hopefully
+existing users will find a few new tricks.
+
+dot.README
+	This file.
+
+dot.cshrc
+	The csh and tcsh per-shell configuration file.
+dot.login
+dot.login.locale
+	The csh and tcsh per-login configuration file.  The locale file
+	has examples for configuration a login for non-English usage.
+	The locale file is automatically read in by the configuration file
+	if it exists in the user's home directory.
+dot.logout
+	The csh and tcsh per-logout configuration file.
+
+dot.profile
+dot.profile.locale
+dot.shellrc
+	The sh, ksh, zsh and bash configuration files.  The locale file
+	sets environmental variables for non-English usage.  The locale
+	file is automatically read in by the configuration file if it
+	exists in the user's home directory.
+
+dot.inputrc.locale
+	The general GNU (emacs, readline, etc.) configuration file, with
+	sample setup for non-English usage.
+
+dot.mailrc
+	The configuration file for the Berkeley mail reader.  See mail(1)
+	for more information.
+
+dot.rhosts
+	The access control file for rsh and rlogin.  See hosts.equiv(5)
+	for more information.
+
+dot.xinitrc
+	A startup script for the X Window System.  You'll want to
+	customize this to start the X programs you use.
+
+dot.Xmodmap
+dot.xmodmap.USKBD
+	The dot.Xmodmap file is used by .xinitrc to configure the keyboard
+	mappings (e.g., you can swap caps lock and control).  The sample
+	file does not perform any mappings, but has examples of how to do
+	so.  In particular, dot.Xmodmap.USKBD contains mappings for entering
+	non-English keys on English keyboards.
+
+dot.Xresources
+dot.Xincludes/Colors
+dot.Xincludes/Config
+dot.Xincludes/Fonts
+dot.Xincludes/mosaic
+dot.Xincludes/xterm
+	The dot.Xresources* files configure different application
+	behaviors.  The supplied files are "smart" and will try to adapt
+	to your screen size to give you a reasonable display. These files,
+	like dot.xinitrc, are largely a starting place for creating your
+	own environment.
+
+dot.fvwmrc
+	The .fvwmrc file configures the fvwm window manager (you can
+	configure most of the behaviors of the window manager, including
+	key and mouse mappings). This is the best window manager we have
+	found, so it is now the default.  Try it, if you don't like it
+	you might try twm.  The window manager is run as the last thing
+	in the .xinitrc file.
+
+dot.fvwmfmgr
+	The .fvwmfmgr file is for the fvwm file manager, it's not really
+	a very good file manager but you might have fun playing with it
+	anyway (it's just part of the fvwm package).
+
+dot.twmrc
+	The .twmrc file is the configuration file for the twm window manager.

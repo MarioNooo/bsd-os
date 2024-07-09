@@ -1,0 +1,156 @@
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)ttys.5	8.1 (Berkeley) 6/4/93
+.\"
+.Dd Aug 1, 1995
+.Dt TTYS 5
+.Os
+.Sh NAME
+.Nm ttys
+.Nd terminal initialization information
+.Sh DESCRIPTION
+The file
+.Nm ttys
+contains information that is used by various routines to initialize
+and control the use of terminal special files.
+There is one line in the 
+.Nm ttys
+file per special device file.
+Fields are separated by tabs and/or spaces.
+Fields composed of more than one word should be enclosed in double
+quotes (``"'').
+Blank lines and comments may appear anywhere in the file; comments
+are delimited by hash marks (``#'') and new lines.
+.Pp
+The first field is always the
+name of the terminal special file as it is found in
+.Pa /dev .
+The following fields are normally taken as tags to entries in the
+.Pa /etc/ttys.conf.local
+and
+.Pa /etc/ttys.conf files.
+(See
+.Xr ttys.conf 5 )
+If the field is of the form
+.Ar name=value
+then it is the same as specifying the name of a tag in the
+.Pa ttys.conf
+files which contain just
+.Ar :name=value: .
+By convention there is a field for the type of line (e.g., "com"),
+the type of modem (e.g., "Generic144"), and one or more fields
+describing the status of the line.  Some of the standard fields
+describing status are:
+.Bl -tag -width networkxx
+.It bidir
+This line is managed by
+.Xr gettyd 8
+and is available for both incoming calls and outgoing requests.
+.It in
+This line is managed by
+.Xr gettyd 8
+and is available for incoming calls.
+.It init
+This line is managed by
+.Xr init 8
+and available for incoming calls.  (Identical to "on")
+.It network
+This line is accessed via the network (i.e, ptys).
+.It off
+This line is not available for use.
+.It on
+This line is managed by
+.Xr init 8
+and available for incoming calls.  (Identical to "init")
+.It out
+This line is managed by
+.Xr gettyd 8
+and is available for outgoing requests.
+.It secure
+Allow root logins on this line.
+.El
+.Pp
+For backwards compatibility, if the second field starts with a
+.Sq /
+it is presumed to be the path name to the command to execute, typically
+.Xr getty 8 .  This is the same as specifying
+.Li command= Ns Ar command-path .
+.Pp
+The third field, in backwards compatibility mode,
+is taken as the type of terminal
+usually connected to the line, normally the one found in the
+.Xr termcap 5
+data base file.  This is the same as specifying
+.Li term= Ns Ar terminal-type .
+.Pp
+The string
+.Dq auth=
+may be followed by an authentication type to use for this line.
+(See
+.Xr login.conf 5
+for additional information.)
+.Sh EXAMPLES
+.Bd -literal
+# root login on ibm pc console, using init
+console "/usr/libexec/getty pccons"     bsdos-pc  on secure
+# Mike's terminal: hp2621
+ttyh0	std.9600 term=hp2621-nl on	# 457 Evans
+# John's terminal: vt100
+ttyh1	std.9600 term=vt100 on		# 459 Evans
+ttyA0	digi Generic288 out		# dialout only line
+ttyA1	digi Generic288 in		# dialin only line
+ttyA2	digi Generic288 bidir		# bi-directional line
+# Network pseudo ttys
+ttyp0	network
+.Ed
+.Sh FILES
+.Bl -tag -width /etc/ttys -compact
+.It Pa /etc/ttys
+.It Pa /etc/ttys.conf
+.It Pa /etc/ttys.conf.local
+.El
+.Sh SEE ALSO
+.Xr getttyent 3 ,
+.Xr ttyslot 3 ,
+.Xr dialer.conf 5 ,
+.Xr gettytab 5 ,
+.Xr login.conf 5 ,
+.Xr termcap 5 ,
+.Xr getty 8 ,
+.Xr gettyd 8 ,
+.Xr init 8 ,
+.Xr login 8
+.Sh HISTORY
+A
+.Nm
+file appeared in
+.At v6 .

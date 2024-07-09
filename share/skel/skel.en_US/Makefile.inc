@@ -1,0 +1,37 @@
+SKEL_EN_US_FILES= \
+	Makefile \
+	class.staff.cshrc \
+	class.staff.profile \
+	dot.README \
+	dot.Xincludes/dotColors \
+	dot.Xincludes/dotConfig \
+	dot.Xincludes/dotFonts \
+	dot.Xincludes/dotNetscape \
+	dot.Xincludes/dotxterm \
+	dot.Xmodmap \
+	dot.Xmodmap.USKBD \
+	dot.Xresources \
+	dot.cshrc \
+	dot.exmh-defaults \
+	dot.fvwmfmgr \
+	dot.fvwmrc \
+	dot.inputrc.locale \
+	dot.login \
+	dot.login.locale \
+	dot.logout \
+	dot.mailrc \
+	dot.mh_profile \
+	dot.profile \
+	dot.profile.locale \
+	dot.rhosts \
+	dot.shellrc \
+	dot.twmrc \
+	dot.xfm/dotxfm-apps \
+	dot.xfm/dotxfm-games \
+	dot.xfm/dotxfm-internet \
+	dot.xfm/dotxfm-system \
+	dot.xfm/dotxfm-tools \
+	dot.xfm/dotxfmdev \
+	dot.xfm/dotxfmrc \
+	dot.xinitrc \
+	dot.xserverrc

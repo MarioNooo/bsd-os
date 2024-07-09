@@ -1,0 +1,214 @@
+.\"	BSDI ppp.8,v 2.14 1997/01/16 23:22:12 prb Exp
+.Dd January 16, 1997
+.Dt PPP 8
+.Os BSD/OS
+.Sh NAME
+.Nm ppp
+.Nd establish PPP connections
+.Sh SYNOPSIS
+.Nm ppp
+.Op Fl bdix
+.Op Fl s Ar sysfile
+.Op Fl X Ar level
+.Op Ar system\-name
+.Sh DESCRIPTION
+The
+.Nm ppp
+command
+is used to establish network connections with Point-to-Point
+Protocol (PPP)
+over dial-up asynchronous and dedicated synchronous lines.
+.Pp
+When used with asynchronous lines,
+the program can be used in both
+.Em originating
+and
+.Em answering
+modes.
+The
+.Nm ppp
+command
+in originating mode dials the number, performs any required login sequence
+(see
+.Xr ppp_proxy 8 ) ,
+attaches the line to a network interface and waits until
+the session is terminated.
+In answering mode
+.Nm ppp
+is called as login shell from
+.Xr login 8
+and attaches the line to a network interface for the duration
+of the session.
+To operate in answering mode
+.Nm ppp
+should be called with no arguments or with the
+.Fl i
+flag.
+.Pp
+When used with synchronous lines, PPP must always be used in
+.Dq originating
+mode.  This is simply an artifact of the program's history.
+.Pp
+.Nm Ppp
+obtains the parameters of remote systems from a single
+configuration file (which will further be called the
+system file).
+The name of the system file is
+.Pa /etc/ppp.sys .
+See
+.Xr ppp.sys 5
+for the detailed description of the system file format.
+.Pp
+The following operands are supported by
+.Nm ppp :
+.Bl -tag -width indent
+.It Fl b
+.Nm ppp
+puts itself into the background after the link is established.
+.It Fl d
+Invokes originating
+.Nm ppp
+in
+.Em daemon
+mode \- if the connection is dropped it will be redialed, possibly
+waiting for an outgoing data packet to be routed through the interface
+before doing so.
+.It Fl i
+Mark this line as dialin even if
+.Ar system\-name
+is provided.
+This is mainly used for dialin sessions called directly from
+.Xr gettyd 8
+rather than from
+.Xr login 8 .
+To invoke
+.Nm ppp
+directly from
+.Xr gettyd 8 ,
+the
+.Pa /etc/ttys
+entry for the line should contain
+.Li ppp-only .
+.It Fl s Ar sysfile
+If
+.Ar sysfile
+is the name of a file then use it instead of
+.Pa /etc/ppp.sys
+as the system file.
+If
+.Ar sysfile
+is not the name of a file then it must be a complete entry of the type
+found in
+.Pa /etc/ppp.sys .
+It will be searched prior to searching
+.Pa /etc/ppp.sys .
+This is typically used to create a dialout entry "on the fly" and then
+dial from it.  For example:
+.br
+.Li ppp -s site:dialout:device=ntwo0:immediate: site
+.It Fl x
+Provides debugging information about the progress of
+dialing and login sequences.
+.It Fl X Ar level
+Enable protocol debugging for
+.Ar level.
+The following levels are available:
+.Bl -tag -width XXXXXXXXXXXX
+.It Li debug-all
+Turn on all debugging.
+.It Li debug-int
+Turn on internal debugging messages.
+.It Li debug-packet
+Turn on one line control packet tracing.
+.It Li debug-phase
+Turn on major phase change debugging.
+.It Li debug-state
+Turn on state change debugging.
+.It Li packet-dump
+Print hex dump of every control packet.
+.It Li trace
+Print a detailed trace of control packets.
+.El
+.It Ar system\-name
+specifies the system to call.
+.\" if omitted and
+.\" Fl d
+.\" is present
+.\" .Nm ppp
+.\" will spawn background processes for every system entry
+.\" in system file which is marked as dial-out.
+If not present,
+.Nm ppp
+uses the login user name as the system name.
+.El
+.Pp
+.Nm Ppp
+requires super-user privileges.
+Normally
+.Nm ppp
+will clear the environment and reset it (and the process's priorities)
+to the path defined for the
+.Li daemon
+class (see
+.Xr login.conf 5 ) .
+However, if the
+.Fl s
+option is used by a non-root account, the scripts will be run as the
+user in their current environment with their current priorities.
+.Pp
+Since
+.Nm ppp
+can configure the interface and PPP parameters there is
+no need to use
+.Nm ifconfig .
+.Pp
+Although
+.Nm ppp
+is intended to be used on dial-up links it can be used on
+dedicated synchronous and asynchronous circuits as well.
+.Sh FILES
+.Bl -tag -width /etc/netscripts/Default.login -compact
+.It Pa /etc/ppp.sys
+The system file
+.It Pa /var/log/daemon.log
+Standard ppp warning and informational messages
+(along with other daemons)
+.It Pa /var/log/ppp.debug
+Debugging and trace output from dialin sessions
+.It Pa /etc/netscripts/Demand.login
+Default LOGIN script for dial on demand
+.It Pa /etc/netscripts/Demand.up
+Default UP script for dial on demand
+.It Pa /etc/netscripts/Demand.down
+Default DOWN script for dial on demand
+.It Pa /etc/netscripts/Dialin.login
+Default LOGIN script for dialin
+.It Pa /etc/netscripts/Dialin.up
+Default UP script for dialin
+.It Pa /etc/netscripts/Dialin.down
+Default DOWN script for dialin
+.It Pa /etc/netscripts/Dialout.login
+Default LOGIN script for dialout
+.It Pa /etc/netscripts/Dialout.up
+Default UP script for dialout
+.It Pa /etc/netscripts/Dialout.down
+Default DOWN script for dialout
+.El
+.Sh DIAGNOSTICS
+Diagnostics are, hopefully, self explanatory.
+.Sh SEE ALSO
+.Xr ppp.sys 5 ,
+.Xr chap_md5 8 ,
+.Xr gettyd 8 ,
+.Xr ifconfig 8 ,
+.Xr ppp_proxy 8 ,
+.Xr pppstat 8 ,
+.Xr appp 4 ,
+.Xr ppp 4
+.Sh HISTORY
+The
+.Nm ppp
+command appeared in BSD/OS.
+.\" .Sh BUGS
+.\" The daemon mode with no system specified is not
+.\" implemented yet.

@@ -1,0 +1,13 @@
+Makefile
+timestamp
+.libs
+alist.lo
+base64.lo
+cc.lo
+ccmsg.lo
+lib.lo
+result.lo
+sexpr.lo
+symtab.lo
+version.lo
+libisccc.la

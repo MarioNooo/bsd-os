@@ -1,0 +1,8 @@
+Makefile
+xterm
+xterm.0
+resize
+resize.0
+.depend
+xterm._man
+resize._man

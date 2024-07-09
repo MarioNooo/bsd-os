@@ -1,0 +1,375 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI boot.8,v 1.2 1997/08/06 22:03:31 cp Exp
+.Dd March 15, 1995
+.Dt BOOT 8
+.Os
+.Sh NAME
+.Nm boot
+.Nd bootstrap procedures for
+.Tn BSD Ns /OS
+.Sh DESCRIPTION
+.Tn BSD Ns /OS
+is normally booted by simply turning on the power to the
+computer and waiting.  Under normal conditions, the PROM
+will read and execute the boot block from the
+hard disk, which will read and execute the program
+.Pa /boot .
+In turn,
+.Pa /boot
+will load the kernel
+.Pa /bsd .
+Next, the kernel does a series of probes to determine what hardware is
+present, then executes the program
+.Xr init 8 .
+Init then runs the shell script
+.Pa /etc/rc .
+This script checks the file systems, configures the network hardware
+and starts background system tasks.  If it completes normally, init
+will spawn getty processes for the terminals listed in
+.Pa /etc/ttys ,
+to allow users to log in.
+If 
+.Pa /etc/rc
+exits with an error code, init will instead run a single user shell.
+.Pp
+A number of these steps may be configured or modified
+during a single execution, or in configuration files.
+.Pp
+During the normal loading procedure, you will be presented with
+the option to press any key to interrupt the standard boot sequence.
+A counter will then start to count down backwards.  If you strike a
+key during this countdown the normal boot sequence will be aborted
+and you will be prompted with:
+.Pp
+.Dl Boot:
+.Pp
+At this point, you can specify an alternate kernel to boot,
+potentially on a different device.
+If the kernel named has a suffix of
+.Pa gz
+(e.g.,
+.Pa bsd.gz )
+it is assumed to be compressed by
+.Xr gzip 1
+using the deflate compression method.
+The
+.Nm
+program will decompress the file as it is read.
+The default boot flags for the kernel are changed
+to request a boot to single user, possibly asking for a root filesystem
+location (see below).
+.Pp
+The complete boot command is:
+.Pp
+.Bd -ragged -offset indent
+.Ar dev\| Ns ( Ar adapter , Ar controller , " "
+.Ar unit , Ar partition ) Ns Ar pathname
+.Op Fl adrsw | Ar howto
+.Ed
+.Pp
+or
+.Pp
+.Bd -ragged -offset indent
+.Fl \& Ns Ar bootcommand
+.Ed
+.Pp
+If the command begins with
+.Fl \&
+the line is treated as a boot command (see below),
+otherwise the line is used as a boot specification.
+The device specification
+.Pf ( Ar dev
+through the closing parenthesis) is optional;
+if omitted, the kernel is loaded from the device and partition from which
+the bootstrap was loaded.
+.Pp
+The pathname identifies the desired file to be booted.
+If no device specification or pathname is present
+(that is, only a RETURN is typed),
+the default boot sequence is initiated.
+The default boot command is
+.Dq Li /bsd .
+.Pp
+The following options to the loaded kernel are available.
+With no options, the default is the same as specifying the 
+.Fl as
+options if the boot was interrupted, and no options if the bootstrap was
+automatic.
+If any options are present, only those present are actually used; a
+.Fl \&
+alone explicitly disables all options.
+.Bl -tag -width indent
+.It Fl a
+Askname; if loading a generic kernel, the kernel will prompt
+for the name of the root filesystem device.
+If loading a bootstrap program, prompt for a boot command.
+.It Fl d
+Enable debugging.
+Currently, this enables diagnostic output during the startup operations
+of the kernel.
+.It Fl r
+Use the default (compiled-in) root filesystem
+rather than using the load device as the root.
+.It Fl s
+Boot to a single-user shell rather than checking filesystems
+and going into multiuser operation.
+Also, if specified to the bootstrap using the
+.Fl bootflags
+command (below)
+or implicitly by interrupting the boot sequence,
+the bootstrap prompts for commands rather than booting automatically.
+.It Fl w
+Mount the root filesystem read/write rather than read-only (not yet
+implemented in the kernel).
+.El
+.Pp
+The boot flags may also be set using the
+.Ar howto
+parameter, which is a decimal, octal or hex number that sets the
+boot flags\(em see the RB_* constants in
+.Pa sys/reboot.h .
+The use of the flags above is generally recommended rather than a numeric value.
+.Pp
+If a bootstrap command line begins with
+.Fl \& ,
+it is treated as an internal boot command.
+.Pp
+If the file
+.Pa /etc/boot.default
+exists, the
+.Pa /boot
+program reads this as a series of commands to be executed, one
+command per line, just as if they were typed from the keyboard.
+This can be used to boot the kernel from a different device than
+the proms uses to boot, or to change various parameters listed
+in the next section.
+.Pp
+The commonly-used boot commands are the following:
+.Bl -tag -width noflushcachex
+.It Fl cat Ar filename
+Display the contents of the file named by
+.Ar filename .
+For example:
+.Li -cat /etc/boot.default
+.It Fl help
+Display list of available commands.
+.It Fl parm Ar recipient Ar parameter=value
+Pass in a parameter for subsystem or device 
+.Ar recipient.
+Typically the
+.Ar recipient
+field is used to specify a hardware device(s) such as
+.Ar ncr1
+or
+.Ar ncr* .
+The value part
+of the
+.Ar parameter=value
+pair can be a comma separated list. For example:
+.Pp
+.Li -parm ncr0 disconnect=target1,target2
+.Pp
+It is also possible to specify a class answer such as:
+.Pp
+.Li -parm ncr0 disconnect=all
+.Pp
+When a class is used it is then possible to subtract one or more
+individuals from the class. An example of this would be:
+.Pp
+.Li -parm ncr0 disconnect=all-target1
+.Pp
+or:
+.Pp
+.Li -parm ncr0 disconnect=all-target1-target2
+.Pp
+Specific legal values for the
+.Ar parameter=value 
+pair
+are not discussed here because they are
+are specific to the
+.Ar recipient .
+These are discussed in the man
+page associated with the 
+.Ar recipient .
+.Pp
+If multiple 
+.Fl parm
+commands are issued with same 
+.Ar recipient
+and 
+.Ar parameter ,
+but different
+.Ar values ,
+the last one will be used. If an error is made entering a 
+.Fl parm 
+command it can be correctly by simply re-entering it correctly.
+.Pp
+No priority is given to 
+.Ar recipients
+specified specifically over
+.Ar recipients 
+specified with wildcards. Specific
+.Ar recipients
+should be entered after wild cards
+for them to override wild card specifications.
+.El
+.Pp
+The following boot commands are used to modify the level of output
+from autoconfiguration and for debugging problems:
+.Bl -tag -width noflushcachex
+.It Fl autodebug Ar flag ...
+Modify output and/or enable debugging of autoconfiguration in the kernel.
+The available values for
+.Ar val
+are:
+.Bl -tag -width XXX
+.It Fl q
+Quieter output, suppresses addressing details.
+.It Fl v
+Verbose output, prints additional device configuration information.
+.It Fl d
+Print information about each device and location probed and the result,
+pausing after each screenful.
+.It Fl a
+Print information as in
+.Fl d ,
+but confirm whether each device should be probed.
+This is useful if probing some device location causes a failure.
+.It Fl p
+Page output if using the standard console (default with
+.Fl a ) .
+.El
+.It Fl bootdebug Ar val
+Enable debugging of the boot procedure.
+The available values for
+.Ar val
+are:
+.Bl -tag -width XXX
+.It Li 0
+No debugging.
+.It Li 1
+Print additional information about memory sizing and unusual events.
+.It Li 2
+Very verbose messaging, depending on the device type used.
+.El
+.Pp
+.El
+.Pp
+The following boot commands are used primarily in scripts in
+.Pa /etc/boot.default :
+.Bl -tag -width noflushcachex
+.It Fl bootflags Op Fl adrsw | Ar howto
+Set the boot flags
+.Op Fl adrsw | Ar howto .
+Note that specifying the bootflags on the load line will override
+the bootflags set by
+.Fl bootflags .
+.It Fl default_kernel Ar file
+Specify an alternate default kernel pathname (the default is
+.Pa /bsd
+). This can be useful when a compressed kernel is used (by setting
+the default to
+.Pa /bsd.gz
+).
+.It Xo
+.Fl echo
+.Op Fl n
+.Ar str
+.Xc
+Print
+.Ar str
+to the console.
+If
+.Fl n
+is specified then do not append a newline to
+.Ar str .
+.It Fl echoon
+Turn on echoing of commands.
+.It Fl echooff
+Turn off echoing of commands.
+.It Fl estopon
+Stop parsing from file on error. This is the default.
+.It Fl estopoff
+Do no stop parsing from file on error.
+.It Fl include Ar file
+Read boot commands from
+.Ar file .
+.It Xo Fl kdebug 
+.Op Fl i
+.Xc
+Set kernel debugging flags.
+The
+.Fl i
+flag requests the kernel attach to the kgdb port as soon as that
+port is attached.
+.It Fl kernspace Ar mem
+Supply an estimate of how much memory will be used by the kernel.
+This value is used to calculate the size of the buffer cache, and can be useful
+on small memory machines (to make the buffer pool smaller than the
+default).
+Appending a
+.Li K
+or
+.Li M
+specifies an amount in kilobytes or megabytes respectively.
+This option is primarily intended for use with installation floppies,
+reserving additional space for memory-based filesystems.
+.It Xo Fl load
+.Ar file
+.Op Fl adrsw | Ar howto
+.Xc
+Load the program
+.Ar file
+(which may include a device specification),
+optionally setting the boot flags to
+.Op Fl adrsw | Ar howto .
+.It Fl pause Ar sec
+Pause for up to
+.Ar sec
+seconds, counting the seconds down.
+Prompt the user to press any key to abort reading of the
+.Pa /etc/boot.default
+file.
+If the user presses a key and aborts the reading of
+.Pa /etc/boot.default
+, the boot flags are reset to
+.Fl as .
+.It Fl ramdisk Ar size
+Create a ramdisk of
+.Ar size
+bytes at the end of memory.
+Currently only one ramdisk may be specified.
+.It Fl ramdiskimage Ar file
+Load a ramdisk image from
+.Ar file.
+The ramdisk must first be allocated by the
+.Fl ramdisk
+command.
+.It Fl show
+Show the boot parameters that are currently set.
+.It Fl start Op Fl adrsw | Ar howto
+Execute the program previously loaded with the
+.Fl load
+command,
+optionally setting the boot flags to
+.Op Fl adrsw | Ar howto .
+.It Fl waitnl
+Wait for the user to press <ENTER> on the keyboard.
+.El
+.Sh FILES
+.Bl -tag -width /sbin/init
+.It Pa /boot
+Second stage boot
+.It Pa /sbin/init
+The first user program
+.It Pa /etc/rc
+.El
+Startup shell script
+.Sh SEE ALSO
+.Xr disksetup 8 ,
+.Xr init 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8

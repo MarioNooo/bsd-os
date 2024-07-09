@@ -1,0 +1,440 @@
+#	   user: bostic
+#	machine: forge.BSDI.COM
+#	   tree: /var
+
+# .
+/set type=dir gname=wheel uname=root mode=0755
+.
+
+# ./account
+account
+
+# ./account/radius
+radius
+# ./account/radius
+..
+
+# ./account
+..
+
+
+# ./backups
+backups
+# ./backups
+..
+
+
+# ./cron
+cron            mode=0700
+
+# ./cron/tabs
+tabs            mode=0700
+# ./cron/tabs
+..
+
+# ./cron
+..
+
+
+# ./db
+db
+# ./db
+..
+
+
+# ./emacs
+emacs
+
+# ./emacs/lock
+lock            mode=01777
+# ./emacs/lock
+..
+
+# ./emacs
+..
+
+# ./empty
+empty
+
+# ./empty
+..
+
+# ./games
+games		uname=games
+
+# ./games/hackdir
+hackdir		uname=games
+
+# ./games/hackdir/save
+save		uname=games
+# ./games/hackdir/save
+..
+
+# ./games/hackdir
+..
+
+
+# ./games/larn
+larn		uname=games
+# ./games/larn
+..
+
+
+# ./games/phantasia
+phantasia	uname=games
+# ./games/phantasia
+..
+
+# ./games
+..
+
+
+# ./log
+log
+
+# ./log/ftpd
+ftpd
+# ./log/ftpd
+..
+
+# ./log/httpd
+httpd		uname=www gname=www mode=775
+# ./log/httpd
+..
+
+
+# ./log/news
+news		uname=news gname=news mode=775
+
+# ./log/news/OLD
+OLD		uname=news gname=news mode=775
+# ./log/news/OLD
+..
+
+# ./log/news
+..
+
+
+# ./log/uucp
+uucp		uname=uucp gname=uucp
+
+# ./log/uucp/audit
+audit		uname=uucp gname=uucp
+# ./log/uucp/audit
+..
+
+# ./log/uucp/status
+status		uname=uucp gname=uucp
+# ./log/uucp/status
+..
+
+# ./log/uucp/uucico
+uucico		uname=uucp gname=uucp
+# ./log/uucp/uucico
+..
+
+# ./log/uucp/uucp
+uucp		uname=uucp gname=uucp
+# ./log/uucp/uucp
+..
+
+# ./log/uucp/uux
+uux		uname=uucp gname=uucp
+# ./log/uucp/uux
+..
+
+# ./log/uucp/uuxqt
+uuxqt		uname=uucp gname=uucp
+# ./log/uucp/status
+..
+
+# ./log/uucp/xferstats
+xferstats	uname=uucp gname=uucp
+# ./log/uucp/xferstats
+..
+
+# ./log/uucp
+..
+
+# ./log
+..
+
+
+# ./mail
+mail            gname=mail mode=0775
+# ./mail
+..
+
+
+# ./msgs
+msgs		mode=0755
+# ./msgs
+..
+
+
+# ./news
+news		uname=news gname=news
+
+# ./news/etc
+etc		uname=news gname=news
+# ./news/etc
+..
+
+
+# ./news/locks
+locks		uname=news gname=news
+# ./news/locks
+..
+
+
+# ./news/run
+run		uname=news gname=news
+# ./news/run
+..
+
+
+# ./news/spool
+spool		uname=news gname=news
+
+# ./news/spool
+..
+
+# ./news
+..
+
+
+# ./preserve
+preserve
+# ./preserve
+..
+
+
+# ./quotas
+quotas
+# ./quotas
+..
+
+
+# ./run
+run
+# ./run
+..
+
+# ./rwho
+rwho
+# ./rwho
+..
+
+
+# ./samba
+samba
+# ./samba
+..
+
+
+# ./spool
+spool
+
+# ./spool/at
+at
+
+# ./spool/at/past
+past
+# ./spool/at/past
+..
+
+# ./spool/at
+..
+
+# ./spool/clientmqueue
+clientmqueue	uname=smmsp gname=smmsp mode=0770
+# ./spool/clientmqueue
+..
+
+
+# ./spool/fax
+fax		uname=uucp gname=dialer
+
+# ./spool/fax/bin
+bin		uname=uucp gname=dialer
+# ./spool/fax/bin
+..
+
+
+# ./spool/fax/config
+config		uname=uucp gname=dialer
+# ./spool/fax/config
+..
+
+
+# ./spool/fax/docq
+docq		uname=uucp gname=dialer mode=0700
+# ./spool/fax/docq
+..
+
+
+# ./spool/fax/etc
+etc		uname=uucp gname=dialer
+# ./spool/fax/etc
+..
+
+
+# ./spool/fax/info
+info		uname=uucp gname=dialer
+# ./spool/fax/info
+..
+
+
+# ./spool/fax/log
+log		uname=uucp gname=dialer
+# ./spool/fax/log
+..
+
+
+# ./spool/fax/recvq
+recvq		uname=uucp gname=dialer
+# ./spool/fax/recvq
+..
+
+
+# ./spool/fax/sendq
+sendq		uname=uucp gname=dialer
+# ./spool/fax/sendq
+..
+
+
+# ./spool/fax/status
+status		uname=uucp gname=dialer
+# ./spool/fax/status
+..
+
+
+# ./spool/fax/tmp
+tmp             uname=uucp gname=dialer
+# ./spool/fax/tmp
+..
+
+# ./spool/fax
+..
+
+
+# ./spool/ftp
+ftp
+
+# ./spool/ftp/hidden
+hidden          mode=0111
+# ./spool/ftp/hidden
+..
+
+# ./spool/ftp/pub
+pub
+# ./spool/ftp/pub
+..
+
+# ./spool/ftp
+..
+
+
+# ./spool/mqueue
+mqueue
+# ./spool/mqueue
+..
+
+
+# ./spool/output
+output
+# ./spool/output
+..
+
+
+# ./spool/secretmail
+secretmail
+# ./spool/secretmail
+..
+
+
+# ./spool/uucp
+uucp		uname=uucp gname=uucp mode=0775
+
+# ./spool/uucp/.Xqtdir
+.Xqtdir		uname=uucp gname=uucp mode=0775
+# ./spool/uucp/.Xqtdir
+..
+
+# ./spool/uucp
+..
+
+
+# ./spool/uucppublic
+uucppublic      uname=uucp gname=uucp mode=01777
+# ./spool/uucppublic
+..
+
+# ./spool
+..
+
+
+# ./tmp
+tmp		mode=01777
+
+# ./tmp/vi.recover
+vi.recover	mode=01777
+# ./tmp/vi.recover
+..
+
+# ./tmp
+..
+
+
+# ./www
+www
+
+
+/set type=dir gname=wheel uname=root mode=0755
+# ./www/bin
+bin
+# ./www/bin
+..
+
+# ./www/cgi-bin
+cgi-bin
+# ./www/cgi-bin
+..
+
+# ./www/cgi-disabled
+cgi-disabled
+# ./www/cgi-disabled
+..
+
+# ./www/cgi-private
+cgi-private
+# ./www/cgi-private
+..
+
+# ./www/conf
+conf
+# ./www/conf
+..
+
+# ./www/docs
+docs
+# ./www/docs
+..
+
+# ./www/icons
+icons
+# ./www/icons
+..
+
+# ./www/images
+images
+# ./www/images
+..
+
+# ./www/virtual
+virtual
+# ./www/virtual
+..
+
+# ./www
+..

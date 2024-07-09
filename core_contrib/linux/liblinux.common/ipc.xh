@@ -1,0 +1,120 @@
+/*	BSDI ipc.xh,v 1.2 2001/10/16 05:34:58 donn Exp	*/
+
+%{
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+%}
+
+cookie int ipc_ctl_t {
+	IPC_RMID        0;
+	IPC_SET         1;
+	IPC_STAT        2;
+	LINUX_IPC_INFO	3;
+
+	/* semctl()-specific values */
+	GETPID          11;
+	GETVAL          12;
+	GETALL          13;
+	GETNCNT         14;
+	GETZCNT         15;
+	SETVAL          16;
+	SETALL          17;
+};
+
+struct ipc_perm {
+	key_t	key;
+	u_short	uid;
+	u_short	gid;
+	u_short	cuid;
+	u_short	cgid;
+	u_short	mode;
+	u_short	seq;
+};
+
+struct sem {
+        u_short semval;
+        u_short sempid;
+        u_short semncnt;
+        u_short semzcnt;
+};
+
+struct semid_ds {
+	struct linux_ipc_perm linux_sem_perm;
+	time_t sem_otime;
+	time_t sem_ctime;
+	struct sem *sem_base;
+	void *linux_sem_pending;
+	void *linux_sem_pending_last;
+	void *linux_sem_undo;
+	u_short sem_nsems;
+	in(f, n, len) {
+		ipc_perm_in(&f->linux_sem_perm, &n->sem_perm,
+		    sizeof (n->sem_perm));
+	}
+	out(n, f, len) {
+		ipc_perm_out(&n->sem_perm, &f->linux_sem_perm,
+		    sizeof (f->linux_sem_perm));
+	}
+};
+
+struct msg {
+	struct	msg *msg_next;
+	long	msg_type;
+	char	*linux_msg_spot;
+	time_t	linux_msg_stime;
+	short	msg_ts;
+	in (f, n, len) {
+		n->msg_spot = f->linux_msg_spot - (char *)0;
+	}
+	out (n, f, len) {
+		f->linux_msg_spot = (char *)0 + n->msg_spot;
+	}
+};
+
+struct msqid_ds {
+	struct linux_ipc_perm linux_msg_perm;
+	struct msg *msg_first;
+	struct msg *msg_last;
+	time_t msg_stime;
+	time_t msg_rtime;
+	time_t msg_ctime;
+	void *linux_wwait;
+	void *linux_rwait;
+	u_short msg_cbytes;
+	u_short msg_qnum;
+	u_short msg_qbytes;
+	u_short msg_lspid;
+	u_short msg_lrpid;
+	in(f, n, len) {
+		ipc_perm_in(&f->linux_msg_perm, &n->msg_perm,
+		    sizeof (n->msg_perm));
+	}
+	out(n, f, len) {
+		ipc_perm_out(&n->msg_perm, &f->linux_msg_perm,
+		    sizeof (f->linux_msg_perm));
+	}
+};
+
+struct shmid_ds {
+	struct	linux_ipc_perm linux_shm_perm;
+	int	shm_segsz;
+	time_t	shm_atime;
+	time_t	shm_dtime;
+	time_t	shm_ctime;
+	u_short	shm_cpid;
+	u_short	shm_lpid;
+	u_short	shm_nattch;
+	u_short	linux_shm_npages;
+	u_long	*linux_shm_pages;
+    	void	*linux_attaches;
+	in(f, n, len) {
+		ipc_perm_in(&f->linux_shm_perm, &n->shm_perm,
+		    sizeof (n->shm_perm));
+	}
+	out(n, f, len) {
+		ipc_perm_out(&n->shm_perm, &f->linux_shm_perm,
+		    sizeof (f->linux_shm_perm));
+	}
+};

@@ -1,0 +1,7 @@
+po2tbl.sed
+Makefile
+libgnuintl.h
+libintl.h
+charset.alias
+ref-add.sed
+ref-del.sed

@@ -1,0 +1,4 @@
+The geometry of the drive must now be determined.  If this disk was
+previously labeled, you should try using the [I]nternal geometry.
+A new disk typically should be [P]robed.  Problem disks should be
+entered by hand.

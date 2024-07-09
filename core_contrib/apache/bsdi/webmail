@@ -1,0 +1,156 @@
+#!/usr/bin/perl5
+#
+#	BSDI	webmail,v 1.2 1996/08/30 21:10:39 sanders Exp
+# 
+# webmail -- Process and email CGI forms data
+#
+# V0.1
+#
+# by Tony Sanders <sanders@earth.com>, Feb 1996
+#
+# WARNING:::::
+#     Do *not* place this in an accessable cgi-bin directory on your server.
+#     That would allow anyone on the internet to cause your machine to
+#     send a mail message that appeared to come only from your machine.
+#
+# Place webmail in an inaccessable CGI directory on your server
+# (that is, a cgi directory where it cannot be accessed except via
+# explicit ScriptAlias lines in your configuration, see below for details).
+#
+# Apache/NCSA-style Server Config:
+#     ScriptAlias /form-admin /var/www/cgi-private/webmail/ARG1/ARG2/ARG3;
+# Where: ARG1 is the destination email address [debug mode if null]
+#        ARG2 is a subject (w/spaces converted to +'s)
+#        ARG3... is the verify data [optional]
+#        Terminated by a semi-colon (;)
+# In your HTML use: <FORM ACTION="/form-admin">
+# Since only the explicitly provided ScriptAlias'es can access webmail
+# the extra path info is securely passed into the webmail process.
+#
+# If ARG1 is empty it goes into a debug mode and the form data is
+# returned to the web browser and not posted anywhere.  This can be
+# used to test forms and debug the program.
+#
+# The CGI form paramater named ``email'' (if it exists) is used
+# as the return email address.
+
+### SITE CONFIGURATION ###
+##########################
+$mailer = "/usr/sbin/sendmail";
+##########################
+
+use CGI;    # http://www-genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html
+
+emailto();
+exit 0;
+
+sub sendmail {
+    local(*MAILER, @args) = @_;
+    local($pid) = open(MAILER, "|-");
+    die "open of mailer pipe failed\n" unless defined($pid);
+    if ($pid == 0) {
+	exec $mailer, @args;
+	die "exec $mailer failed\n";
+    }
+}
+
+# This function takes a form and it's format information and tries
+# to make sure it meets the designers specifications:
+#     item=[rn]/item=[rn]/...    required and/or numeric fields
+sub verify {
+    local($query, @formats) = @_;
+    local($item, $who, $how, $value);
+    local($errors) = "";
+    foreach $item (@formats) {
+	($who, $how) = split('=', $item, 2);
+	$value = $query->param($who);
+	if ($how =~ /r/) {			# required field
+	    $errors .= "<P>field `$who' is required;"
+		unless $value !~ /^\s*$/;
+	}
+	if ($how =~ /n/) {			# numeric field
+	    $errors .= "<P>field `$who' must be numeric;"
+		unless $value =~ /[^0-9.,()+-]/;
+	}
+    }
+    $errors;
+}
+
+sub error {
+    local($query, $msg) = @_;
+    print $query->header('text/html', '400', 'Bad Request');
+    print "<TITLE>Error Processing Form</TITLE>\n";
+    print "$msg\n";
+    exit(0);
+}
+
+# To use in test mode leave $whom undefined.
+sub emailto {
+    local(*form);
+    my $old;
+
+    my $query = new CGI;
+
+    my $junk = $query->path_info;
+    $junk =~ s/;.*//;			# ignore unsecured data
+    $junk =~ s/^\///;
+    my($whom, $subject, @verify_data) = split("/", $junk);
+
+    # XXX: should do full decode, but this is enough for now
+    $subject =~ s/\+/ /g;
+
+    my $admin = $ENV{'SERVER_ADMIN'} || "webmaster";
+
+    &error($query, 'No form data') unless $query->param;
+    $error = &verify($query, @verify_data);
+    &error($query, $error) if $error;
+
+    my $FROM = ($query->param('email') || $query->param('EMail') || "SENDER_UNKNOWN");
+    $FROM =~ s/[\r\n]*//;		# we just don't allow them
+
+    local(*MAILER);
+    if ($whom) {
+        &sendmail(*MAILER, "-odb", "-oi", "-oem", "-t");
+	$old = select(MAILER);
+        print "From: $FROM\n";
+        print "Reply-To: $FROM\n";
+        print "To: $whom\n";
+        print "Subject: FORM: $subject\n";
+        print "Errors-To: $admin\n";
+        # print "Precedence: bulk\n";
+        print "\n";
+    } else {
+        print $query->header('text/html');
+	print "<TITLE>Form debug results</TITLE>\n";
+	print "<PRE>\n";
+    }
+
+    print "Form: $subject\n";
+    print "Referer: $ENV{'HTTP_REFERER'}\n" if $ENV{'HTTP_REFERER'};
+    print "User-Agent: $ENV{'HTTP_USER_AGENT'}\n" if $ENV{'HTTP_USER_AGENT'};
+    print "Remote: ";
+    print "$ENV{'REMOTE_USER'}@" if $ENV{'REMOTE_USER'};
+    print "$ENV{'REMOTE_HOST'} [$ENV{'REMOTE_ADDR'}]\n";
+    print "----------------\n";
+    foreach $junk ($query->param) {
+	# XXX: make printable???
+	$_ = $query->param($junk);
+	s/[\r\n]+/\n\t/g;   # indent data after newline
+	print $junk, " = ", $_, "\n";
+    }
+    print "----------------\n";
+
+    if ($whom) {
+	close(MAILER);
+	select($old);
+
+	&error($query, 'failed sending mail') if ($? >> 8);
+
+	# If you store the document you should return a URL: header
+	print $query->header('text/html');
+	print "<TITLE>Form \"$subject\" sent</TITLE>\n";
+	print "Form data sent to $whom\n";
+    } else {
+	print "</PRE>\n";
+    }
+}

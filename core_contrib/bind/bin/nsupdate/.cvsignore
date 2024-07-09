@@ -1,0 +1,4 @@
+Makefile
+nsupdate
+.libs
+nsupdate.lo

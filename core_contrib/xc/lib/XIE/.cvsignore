@@ -1,0 +1,4 @@
+Makefile
+unshared
+libXIE.so.6.0
+.depend

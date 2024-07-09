@@ -1,0 +1,428 @@
+.\" Copyright (c) 1994,1995,1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI shlib.8,v 2.5 1999/10/08 19:58:31 donn Exp
+.\"
+.Dd October 8, 1999
+.Dt SHLIB 8
+.Os BSD/OS
+.Sh NAME
+.Nm shlib
+.Nd "create statically linked shared libraries from library archives
+.Sh SYNOPSIS
+.Nm shlib
+.Op Fl Oo DIOU Oc Ns Ar *
+.Op Fl E
+.Op Fl L Ns Ar *
+.Op Fl X Ar excluded-file
+.Op Fl b Ar bootstrap-source
+.Op Fl d Ar data-address
+.Op Fl e Ar except-file
+.Op Fl i Ar old-shared-image
+.Op Fl l Ns Ar archive
+.Op Fl l Ar archive-file
+.Op Fl m Ar shlib.map
+.Op Fl n Ar new-shared-image
+.Op Fl s Ar new-stub-archive
+.Fl t Ar text-address
+.Ar archive
+.Sh DESCRIPTION
+The
+.Nm shlib
+utility builds statically linked shared libraries
+from library archive files.
+It is a low-level interface for shared library construction;
+for a high-level, more standardized interface, see
+.Xr mkshlib 8 .
+.Pp
+Statically linked shared libraries are binary files created
+by linking together all of the objects in a normal archive library,
+along with a jump table and an initialization routine.
+Programs that use shared libraries can load each required library binary
+into memory and use it to execute library functions.
+Since the library binary is loaded on demand and
+is shared between all processes that use it,
+both disk space in the program and memory in running processes can
+be conserved.
+Programs are linked against
+.Em "stub library archives" ,
+which are empty except for symbol table entries
+describing the fixed addresses of the
+entry points and data in the shared library binary.
+The library binary uses indirect entry points grouped into a
+.Em "jump table" ,
+so that internal addresses of library functions
+are hidden from programs that use them,
+and hence may be changed without penalty
+when updating the shared library binary.
+.Pp
+The flags and other arguments to
+.Nm shlib
+have the following form and meaning:
+.Bl -tag -width indent
+.It Fl Op DIOU Ns Ar *
+These C compile flags are passed to the C compiler
+when compiling the bootstrap source.
+.It Fl E
+Ignore the exceptions file
+(see
+.Fl e
+below) and
+don't hide any symbols.
+This feature is useful for libraries
+that require widespread access to
+.Sq hidden
+symbols from user code via macros or other tricks,
+such as the
+.Em X11
+and
+.Em C++
+libraries.
+Use of this feature can reduce the likelihood
+that a library will be compatible with the previous
+version when it gets rebuilt.
+.It Fl L Ns Ar *
+This link path argument is passed to the linker
+when linking the shared library.
+.It Fl X Ar file
+Exclude the named archive member from the shared library.
+In rare cases, an object file in an archive may
+cause problems for a shared library.
+This flag allows such files to be excluded selectively.
+.It Fl b Ar file
+The given
+.Ar file
+is a pathname to the bootstrap source code
+for the given library.
+The default bootstrap source is
+.Pa /usr/lib/loader.c .
+.It Fl d Ar address
+The
+.Ar address
+of the data segment of the shared library image
+is given in hexadecimal (no
+.Li 0x
+prefix).
+If this option is omitted, it defaults to the text address plus
+.Li 400000
+hex.
+.It Fl e Ar file
+The given file contains a list of symbols that are
+.Em exceptions
+to the usual conventions for exporting names,
+one name per line.
+The usual conventions are that names in the file
+that do not begin with an underscore are all exported,
+while all other names are suppressed.
+If programs must link against a library name that starts
+with an underscore,
+or must be protected from a name that does not start
+with an underscore,
+that name must appear in the exceptions list.
+This flag is ignored when using the
+.Fl E
+flag.
+.It Fl i Ar file
+Produce a shared library image that is as compatible as possible
+with a given older shared library image
+.Ar file .
+The
+.Nm shlib
+utility will arrange the jump table and exported data
+in the new image so that all the initial jump table slots
+and exported data items are in the same order
+as in the old image.
+This maximizes the likelihood that
+programs linked for the old image
+will still work with the new image.
+New jump table entries and exported data
+are appended to the old ones.
+If this option is omitted,
+.Nm shlib
+will choose its own order for jump table entries
+and exported data, which might not be compatible
+with older images.
+.It Fl l Ns Ar archive
+When linking the new shared library image,
+.Nm shlib
+will link against the given shared library stub
+.Ar archive
+to resolve symbols that aren't defined by the library image
+it is building.
+It is an error for a library to have unresolved symbols.
+.Nm Shlib
+looks up the given
+.Fl l Ns Ar archive
+flag in the
+.Pa shlib.map
+file to identify the standard shared library
+that it corresponds to.
+The stub library is found in the same directory
+as the source archive for the shared library,
+but its name is the same as the library image
+with a
+.Pa .a
+suffix.
+.It Fl l Ar archive
+The stub library
+.Ar archive
+may also be named by an explicit pathname.
+.It Fl m Ar file
+The given
+.Ar file
+is a pathname for an alternate
+.Pa shlib.map
+file containing specifications for standard shared libraries.
+.Nm Shlib
+uses this file only to get the default stub archive name;
+see
+.Xr mkshlib 8
+for more details about it.
+.It Fl n Ar file
+The new shared library image will be placed in the given
+.Ar file .
+By default, the image will be placed in the current directory
+with a name that is the same as the source archive's name
+with the
+.Pa .a
+suffix removed and
+.Pa _s
+appended.
+.It Fl s Ar file
+The new shared library stub archive will be placed in the given
+.Ar file .
+By default, the stub archive will be placed in the current directory
+with a name that is the same as the source archive's name with
+.Pa _s
+inserted before the
+.Pa .a
+suffix.
+A source archive
+.Pa libfoo.a
+will yield by default an image named
+.Pa libfoo_s
+and a stub archive named
+.Pa libfoo_s.a .
+.It Fl t Ar address
+The
+.Ar address
+of the text segment of the shared library image
+is given in hexadecimal (no
+.Li 0x
+prefix).
+This flag and argument are mandatory.
+.It Ar archive
+The given source
+.Ar archive
+is linked together to form the shared library image.
+This argument is mandatory.
+.El
+.Pp
+The
+.Nm shlib
+utility prints messages about unexpected,
+undesirable or erroneous features of libraries that
+it constructs.
+Some of the messages come from
+.Nm shlib
+itself, while other messages may be printed by programs that
+.Nm shlib
+invokes, such as
+.Xr cc 1
+to build the initialization code,
+.Xr as 1
+to build the stub library or
+.Xr ld 1
+to link the shared library image.
+The error messages should be self-explanatory;
+they report fatal problems in building the library,
+such as unresolved symbols (undefined functions or data).
+The warnings may suggest ways to improve a library
+to promote (or achieve) compatibility.
+Here is a list of some of the more important warnings:
+.Bl -tag -width indent
+.It Em "Deleted entry points"
+This warning lists exported functions that were in a previous version
+of a library which will not be present or exported in the new version.
+If you replace the old library with the new one,
+existing programs that use the deleted entry points will
+fail, dumping core files.
+If the functions were omitted by mistake,
+for example due to an error in the exception file,
+then you should fix the error and try again.
+If you really do want to remove exported functions, it is often best to
+create a new version of the shared library
+and let old programs use the old library.
+.It Em "Added entry points"
+This warning lists newly present or exported functions.
+Check the list to be sure that you really did want to export
+all of these functions.
+If you did not, then you can edit the exception file
+to suppress some or all of them.
+.It Em "Deleted exported const data"
+.It Em "New exported const data"
+.It Em "Deleted exported data"
+.It Em "New exported data"
+Exported data is the primary cause of incompatibility between
+versions of a shared library.
+Because it must stay at the same address when you update a library,
+you must take a great deal of care when changing library files
+that export data.
+Deleting exported data is often fatal,
+while adding exported data greatly increases the chances
+that new library updates will be incompatible.
+If you see any warnings about new or deleted exported data
+or const data,
+you should look at the listed names and
+consider changes to restore the status quo.
+.Pp
+You should also check exported data to be sure
+that you are not polluting the namespace of programs.
+Exported names that do not begin with an underscore
+should all be documented parts of the programming interface.
+Undocumented symbols should not be exported.
+.It Em "WARNING: incompatibilities in global data addresses"
+.It Em "Check [files] for changes in sizes or layout"
+These warnings are very serious.
+They list the names of exported data and const data that
+will have an incompatible address in the updated shared library.
+Any data that is at a different address in the updated shared library
+will not be accessed correctly by programs that were
+built with the previous library.
+You should almost never install a library
+that has these problems.
+The
+.Nm shlib
+utility will provide the names of a couple of library files
+where you can start looking for incompatible changes.
+.Pp
+Note that you can take defensive programming measures that
+greatly decrease the risk of incompatibility.
+.Bl -bullet -width indent
+.It
+Find ways to avoid exporting data.
+If some helper program needs access to internal library data,
+then you should return a pointer to that data using
+a function call, rather than exporting the data directly.
+.It
+Put each exported data item in its own source file.
+.It
+Put padding at the end of data to allow for expansion
+that won't change the size of the data.
+.It
+Try to avoid mixing variable length character strings
+with exported const data.
+Character strings are allocated into the const data section,
+and changing the length of a string may change
+the addresses of exported const data items.
+Note that files that don't export any const data
+are not affected by this problem;
+you can change their variable length character strings without a penalty.
+Thus a file that contains (say) a const array of character strings
+may often be improved by making the array non-const.
+.El
+.El
+.Pp
+The
+.Nm shlib
+utility treats the C library specially.
+If the name of the source library is
+.Pa libc.a ,
+.Nm shlib
+links in a special version of the shared library
+initialization routine which sets some well-known global variables
+such as
+.Va environ ,
+loads a list of other shared libraries
+passed in from the program,
+and executes the program's
+.Fn main
+routine.
+.Sh FILES
+.Bl -tag -width /usr/lib/lib*.except -compact
+.It Pa /shlib
+directory for shared libraries used by root binaries
+.It Pa /shlib/lib*_s*
+typical shared library images
+.It Pa /usr/lib/lib*_s*.a
+typical stub libraries
+.It Pa /usr/lib/lib*.except
+typical standard exception symbol list
+.It Pa /usr/lib/shlicrt0.o
+private data used for bootstrapping
+.It Pa /usr/lib/loader.c
+generic shared library initialization routine
+.It Pa /etc/shlib.map
+map of standard shared libraries
+.El
+.Sh "SEE ALSO
+.Xr mkshlib 8 ,
+.Xr ld 1 ,
+.Xr shlicc 1
+.Sh BUGS
+Don't be confused \(em this program has nothing to do
+with dynamic shared libraries, whose names end in
+.Sq Pa \&.so .
+See the
+.Xr ld 1
+manual page for information on building dynamic shared libraries.
+.Pp
+In BSD/OS 4.1, the format of the exception file changed.
+Older versions of
+.Nm shlib
+required
+.Xr a.out 5 Ns -style
+initial underscores; these are no longer used.
+This change is
+.Em "a major incompatibility" ,
+but it also removes a significant source of error.
+.Pp
+In BSD/OS 4.1, the
+.Fl c
+flag disappeared.
+The
+.Nm shlib
+utility can now identify const data using
+.Xr elf 5
+features.
+.Pp
+The file format for statically linked shared libraries starting with BSD/OS 4.0
+has switched to
+.Xr elf 5 .
+Older
+.Xr a.out 5
+format shared libraries cannot be updated using the new software.
+.Pp
+.Nm Shlib
+won't take extraordinary measures
+to ensure that exported data
+appears at the same offset in a new image;
+it simply arranges for all the objects containing
+exported data to be loaded at the beginning
+in the same order as in the original image.
+If data address mismatches appear,
+you must insert padding or trim data yourself.
+.Pp
+In exceptional circumstances, a library may need
+to match the address of an exported function
+with the address seen by a user program.
+(The
+.Pa Xt
+library is an example.)
+To defeat jump table indirection for a function,
+you should declare the function using the GCC extension
+.Li "__attribute__ ((__section__ "".rodata""))
+so that its code goes into the
+.Li \&.rodata
+read-only data section.
+This is bad because any change in the size
+of the function may ruin compatibility,
+but it's better than failing code.
+.Pp
+See the
+.Em BUGS
+section of the
+.Xr shlicc 1
+page for more problems with shared libraries.

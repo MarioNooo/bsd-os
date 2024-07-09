@@ -1,0 +1,178 @@
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH RADCHECK 8 "25 August 1997"
+.SH NAME
+radcheck \- determines whether a Merit \s-2AAA\s+2 server is operational.
+.SH SYNOPSIS
+.B radcheck
+[
+.BI \-d directory
+]
+[
+.BI \-p port
+]
+[
+.BI \-r retries
+]
+.if n .ti +5
+[
+.BI \-t timeout
+]
+.if t .ti +5
+[
+.BI \-g huntgroup_name
+]
+[
+.BI \-s subgroup_name
+]
+.if n .ti +5
+.if t .ti +5
+[
+.B \-x
+]
+[
+.B \-v
+]
+[
+.B \-n
+]
+.I servername
+.SH DESCRIPTION
+.LP
+.B Radcheck
+determines whether a given Merit \s-2AAA\s+2 server is operational.
+The
+.I servername
+is required on the command line.
+This is the \s-2DNS\s+2 name of a machine running a Merit \s-2AAA\s+2 server.
+See
+.BR authfile (5)
+for more information.
+.B Radcheck
+may be executed on any host, not just one registered in the
+.I clients
+file, however, in those cases, all lines but the last line of the
+.B radcheck
+output (the "\f2servername\fP (\f2port-number\fP) ..." line, see below) are
+omitted.
+.LP
+If the server is found to be operational,
+.B radcheck
+displays
+.IP
+auth queue: \f2a/b(a/b)\fP, acct queue: \f2c/d(c/d)\fP, maxtime: \f2t\fP (\f2date\fP)
+.IP
+authfile: \f2x\fP, clients: \f2y\fP, users: \f2z\fP, fsmid: \f2f\fP, \f2date\fP
+.IP
+cleanup_delay: \f2u\fP, avg-delay \f2v\fP, (of \f2w\fP)
+.IP
+Version  \f2version\fP  \f2config codes\fP
+.sp
+.IP
+"\f2servername\fP (\f2port-number\fP)" is responding
+.LP
+on standard output.
+If the number of retries is greater than zero,
+.B radcheck
+will additionally display
+.IP
+(\f2n\fP retries)
+.LP
+otherwise,
+.B radcheck
+displays
+.IP
+"\f2servername\fP (\f2port-number\fP)"
+.I "some message"
+.LP
+where
+.I "some message"
+may be one of the following (amongst others):
+.IP
+No reply from \s-2RADIUS\s+2 server "\f2<hostname>\fP(\f2port\fP)"
+.IP
+Received non-matching id in server response
+.IP
+Received invalid reply digest from server
+.IP
+No such server: "\f2<hostname>\fP"
+.LP
+For the enhanced Merit \s-2AAA\s+2 server the above output is preceded by
+the following information:
+.IP
+Status: \f2g\fP authen, \f2h\fP unconfirmed, \f2i\fP connected, \f2j\fP suspended, \f2k\fP unknown
+.IP
+Status: \f2l\fP disconn, \f2m\fP reject, \f2n\fP no-token, \f2o\fP cancel, \f2p\fP collision
+.LP
+and if any token pools are configured there will be one line for each such pool
+and the total number of pools displayed in the following manner:
+.IP
+\f2some-pool-name\fP: \f2q/r/s\-date/t\-timestamp\fP
+.IP
+number of pools: \f2n\fP
+.LP
+where \f2q\fP is the total number of tokens configured in \f2some-pool-name\fP,
+\f2r\fP is the current number of tokens in use, \f2s\fP is the token
+high-water-mark recorded at \f2date\fP and \f2t\fP is the high-water-mark
+recorded at \f2timestamp\fP, some time since the previous midnight.
+.LP
+The above discussion of tokens and token pools does not apply to the enhanced
+Merit \s-2AAA\s+2 server per se, but are features of the full Merit
+\s-2AAA\s+2 server as operated within MichNet.
+.SH OPTIONS
+.TP
+.BI \-d " directory"
+allows the user to specify an alternate directory which is different from
+the default choices
+.I ../raddb
+or
+.IR /usr/private/etc/raddb .
+.TP
+.BI \-p " port"
+allows the user to specify an alternate port number instead of the default
+port
+.IR 1645 .
+.TP
+.BI \-r " retries"
+allows the user to specify a number of retries different from the default
+.IR 10 .
+.TP
+.BI \-t " timeout"
+allows the user to specify a maximum timeout different from the default
+.I 3
+seconds.
+.TP
+.BI \-g " huntgroup_name"
+allows the user to query a MichNet huntgroup server about the named huntgroup.
+.TP
+.BI \-s " subgroup_name"
+allows the user to query a MichNet huntgroup server about the named subgroup.
+.TP
+.B \-x
+allows the user to turn on debugging output.
+.TP
+.B \-v
+prints the version of the Merit \s-2AAA\s+2 distribution used in building
+the program.
+.TP
+.B \-n
+specifies that the \s-2RADIUS\s+2 packet type Status-Server should be used.
+.PD
+.SH EXIT STATUS
+.LP
+Normal successful completion returns zero to the system.
+If the response from the Merit \s-2AAA\s+2 server had errors,
+.B radcheck
+returns -2,
+local errors return -1, and timeout errors return 1 as status.
+.PD
+.SH SEE ALSO
+.LP
+.BR radpwtst (8),
+.BR radiusd (8),
+.BR authfile (5),
+.BR clients (5),
+.BR dictionary (5),
+.BR users (5)
+.SH AUTHOR
+Allan C. Rubens, Merit Network, Incorporated.

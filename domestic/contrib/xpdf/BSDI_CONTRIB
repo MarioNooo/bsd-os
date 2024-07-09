@@ -1,0 +1,21 @@
+Software Package:       
+        xpdf
+
+Release/Version:
+        0.91
+
+Retrieved from:
+	http://www.foolabs.com/xpdf
+
+Bug reports:
+        This software package is maintained by the software author,
+        not BSDI.  Please send any bug reports to both support@BSDI.COM
+        and the author.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added makefile to build things our way.
+

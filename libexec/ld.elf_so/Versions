@@ -1,0 +1,7 @@
+LD_BSDI_SO_DUMMY_VERSION {
+global:
+	_r_debug_state;
+	_rtld*;
+local:
+	*;
+};

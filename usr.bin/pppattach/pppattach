@@ -1,0 +1,127 @@
+#!/bin/ksh
+#	BSDI pppattach,v 1.4 1998/04/08 17:05:04 chrisk Exp
+
+name=tmp-$$
+interface=
+speed=
+device=
+peerid=
+passwd=
+verbose=
+x=
+ARGS=
+EXTRA=""
+USAGE="usage: pppattach [-bdvx] [-i interface] [-s speed] [-n peerid] [-p passwd] device [local-ipaddr remote-ipaddr]"
+
+while getopts "bdvxi:s:n:p:X:" o; do
+    case "$o" in
+    \?)	echo >&2 $USAGE
+	exit 1
+	;;
+    i)	interface="$OPTARG"
+	case $interface in
+	[0-9]*)	;;
+	*)	echo >&2 "pppattach: invalid interface: $interface"
+		exit 1
+		;;
+	esac
+	;;
+    s)	speed="$OPTARG"
+	case $speed in
+	[0-9]*) ;;
+	*)	echo "pppattach: invalid speed: $speed" 1>&2
+		exit 1 ;;
+	esac
+	;;
+    n)	peerid=$(echo $OPTARG | sed -e s/:/\\\\C/g -e s/\'/\\\'/g)
+	;;
+    p)	passwd=$(echo $OPTARG | sed -e s/:/\\\\C/g -e s/\'/\\\'/g)
+	;;
+    [bd]) ARGS="$ARGS$o" ;;
+    x)	x="-x " ;;
+    v)	verbose="YES" ;;
+    X)	EXTRA="$EXTRA$OPTARG" ;;
+    esac
+done
+
+if [ "X$ARGS" != "X" ] ; then
+	ARGS="-$ARGS"
+fi
+
+shift $(expr $OPTIND - 1)
+
+while [ $# -gt 0 ] ; do
+	if [ -n "$device" ] ; then
+		if [ -n "$localaddr" ] ; then
+			if [ -n "$remoteaddr" ] ; then
+				echo $USAGE 1>&2
+				exit 1
+			fi
+			remoteaddr=$1;
+		else
+			localaddr=$1;
+		fi
+	else
+		device=${1#/dev/};
+	fi
+	shift
+done
+
+if [ -z "$device" ] ; then
+	echo $USAGE 1>&2
+	exit 1
+fi
+
+CMD="ppp $ARGS -s '$name:immediate:dialout:direct:"
+if [ ! -e /dev/$device ] ; then
+	if [ -n "$interface" ] ; then
+		echo "pppattach: -i not available for sync ppp devices" 1>&2
+		exit 1
+	fi
+	if [ -n "$speed" ] ; then
+		echo "pppattach: -s not available for sync ppp devices" 1>&2
+		exit 1
+	fi
+	CMD="${CMD}-pfc:-acfc:-tcpc:device=$device:"
+else
+	if ! echo ${EXTRA} | grep -q stty-modes ; then
+		CMD="${CMD}stty-modes=raw,cts_oflow,rts_iflow:";
+	fi
+	if [ -n "$interface" ] ; then
+		CMD="${CMD}interface=$interface:"
+	fi
+	if [ -n "$speed" ] ; then
+		CMD="${CMD}speed=$speed:"
+	fi
+	CMD="${CMD}device=/dev/$device:"
+fi
+if [ -n "$peerid" ] ; then
+	CMD="${CMD}pap-peerid=$peerid:"
+	if [ -z "$passwd" ] ; then
+		echo "pppattach: -n requires -p as well" 1>&2
+		exit 1
+	fi
+fi
+if [ -n "$passwd" ] ; then
+	CMD="${CMD}pap-passwd=$passwd:"
+	if [ -z "$peerid" ] ; then
+		echo "pppattach: -p requires -n as well" 1>&2
+		exit 1
+	fi
+fi
+if [ -n "$localaddr" ] ; then
+	CMD="${CMD}local-addr=$localaddr:"
+	if [ -z "$remoteaddr" ] ; then
+		echo $USAGE 1>&2
+		exit 1
+	fi
+fi
+if [ -n "$remoteaddr" ] ; then
+	CMD="${CMD}remote-addr=$remoteaddr:"
+fi
+CMD="${CMD}${EXTRA}' $x$name"
+if [ $verbose ] ; then
+	echo $CMD
+else
+	eval $CMD
+fi

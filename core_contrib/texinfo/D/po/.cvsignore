@@ -1,0 +1,5 @@
+cat-id-tbl.c
+texinfo.pot
+POTFILES
+Makefile.in
+Makefile

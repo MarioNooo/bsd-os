@@ -1,0 +1,10 @@
+At this point you should select the partition entry you wish to delete
+by pressing the number which corresponds to that partition.  The
+partition numbers are displayed in the far left column of the partition
+table.
+
+                           ** WARNING **
+You will lose all data stored on a partition you delete.  If you do not
+want to delete any partition, press <ESC> now.
+
+You may press <ESC> if you do not wish to delete any partition.

@@ -1,0 +1,2 @@
+export LC_CTYPE=ISO8859-1
+export LESSCHARSET=latin1

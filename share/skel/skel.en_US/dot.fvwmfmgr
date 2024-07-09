@@ -1,0 +1,60 @@
+#
+# This is the file-name to icon/application mapping file.
+#
+# The line format is:
+#  name,type,permissions:application,icon
+#
+#  the first three arguments must match the target file's type in order for
+#  a match to be declared. 
+#  The first three arguments may contain wildcards (* and ? only).
+#  name = file name
+#  type = unused now
+#  permissions = the file's permissions when viewed with ls -l.
+#                match a directory with d*. Match an executable with *x*
+#
+# NOTES: 
+# the referenced icons are included in the fvwm_icons directory, but
+# you have to copy them to your icon and pixmap directories for
+# FvwmFileMgr to find them.
+
+*.c,,:xterm -e vi,ccode.icon
+*.h,,:xterm -e vi,hcode.icon
+*.c~,,:xterm -e vi,ccode.icon
+*.h~,,:xterm -e vi,hcode.icon
+Make*,,:xterm -e vi,flow_chart.xpm
+make*,,:xterm -e vi,flow_chart.xpm
+Imake*,,:xterm -e xmkmf; make,editres.xpm
+*.o,,:,ocode.icon
+core,,:xterm -e gdb,bomb.xpm
+*xmh*,,:xmh -font fixed,mail2.xpm
+Mail,,:xmh -font fixed, mail2.xpm
+mbox,,:xterm -e vi, mail1.xpm
+*.txt,,:xterm -e vi, page.xpm
+*.tex,,:xterm -e vi, page.xpm
+*.text,,:xterm -e vi, page.xpm
+*.TXT,,:xterm -e vi, page.xpm
+*.README,,:xterm -e vi, page.xpm
+*.readme,,:xterm -e vi, page.xpm
+*.fm,,:/local/tools/framemaker_4.0/bin/maker -file, word_processor.xpm
+*.mif,,:/local/tools/framemaker_4.0/bin/maker -file, word_processor.xpm
+*.log,,:xterm -e vi, page2.xpm
+*.d,,:sppeed6 ,math4.xpm
+*.dvi,,:xdvi ,wierd_page3.xpm
+*.man,,:xterm -e sh -c "nroff -man $file | more" ,xman.xpm
+*.1,,:xterm -e sh -c "nroff -man $file | more" ,xman.xpm
+
+*.tar*,,:,xpm/folder.xpm
+*.tgz,,:,xpm/folder.xpm
+*.ps,,:xterm -e gs ,ps.xpm
+*.eps,,:xterm -e gs ,eps.xpm
+*.tiff,,:xv,tiff2.xpm
+*.gif,,:xv,tiff2.xpm
+*.xbm,,:xv,tiff2.xpm
+*.xpm,,:sxpm -in,tiff2.xpm
+*.mpg,,:mpeg_play -quiet -loop -dither gray,tiff2.xpm
+*.rf,,:xv,graphs.xpm
+db*.d,,:sppeed6 -ic bearcolor, math4.xpm
+
+,,d*: ,xpm/dir.xpm
+,,*x*:xterm -e,dialog_box.xpm
+,,:xterm -e vi,xpm/scroll.xpm

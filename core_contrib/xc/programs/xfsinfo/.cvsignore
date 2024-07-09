@@ -1,0 +1,5 @@
+Makefile
+.depend
+xfsinfo
+xfsinfo._man
+xfsinfo.0

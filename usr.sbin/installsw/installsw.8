@@ -1,0 +1,792 @@
+.\"	BSDI installsw.8,v 2.18 1999/09/24 19:07:45 polk Exp
+.\"
+.\" Copyright (c) 1993, 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd "May 12, 1995"
+.Dt INSTALLSW 8
+.Os BSDI 4
+.Sh NAME
+.Nm installsw
+.Nd install software packages to disk from installation media
+.Sh SYNOPSIS
+.Nm installsw
+.Op Fl DELU
+.Op Fl c Ar path
+.Op Fl d Ar root_dir
+.Oo
+.Fl h
+.Ar remote_host
+.Op Fl l Ar remote_user
+.Oc
+.Op Fl m Ar "cdrom | floppy | tape"
+.Op Fl s Ar "d | o | r"
+.Sh DESCRIPTION
+The
+.Nm installsw
+utility is an interactive program for installing software packages
+from floppy disk, tape, or CDROM to a filesystem.
+The floppy disk, tape and CDROM may be either on the local computer
+or on a remote host.
+In addition,
+.Nm installsw
+can be used to delete software packages that were previously installed.
+.Pp
+If no command-line arguments are specified,
+.Nm installsw
+prompts the user for all necessary information.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+The
+.Fl c
+option specifies the mount point for installation from CDROM and floppy
+disks, and the name of the special device when installing from a tape
+drive.
+.It Fl D
+The
+.Fl D
+option specifies that selected packages should be deleted,
+not installed.
+As the programs that perform the deletion are part of the original
+software archive, this mode differs little from the installation mode
+of the program.
+.It Fl d
+The
+.Fl d
+option specifies all software packages are installed as if
+.Ar root_dir
+were the root of the filesystem, i.e. if no
+.Ar root_dir
+is specified,
+.Nm installsw
+behaves as if a
+.Ar root_dir
+of
+.Pa \&/
+was specified.
+.It Fl E
+Treat the user as an expert, minimizing explanations and questions.
+.It Fl h
+The
+.Fl h
+option specifies that the installation is being done from the remote
+host
+.Ar remote_host ,
+i.e. that the CDROM or floppy is mounted on a filesystem on the
+remote host, or that the tape drive belongs to the remote host.
+.It Fl L
+The
+.Fl L
+option specifies that the installation is being done from a local
+host, i.e. that the CDROM or floppy is mounted on a filesystem on
+the local machine, or that the tape drive is a device on the local
+machine.
+.It Fl l
+By default,
+.Nm installsw
+uses the current user ID for all commands executed on the remote host.
+The
+.Fl l
+option permits you to specify an alternate user ID for this purpose.
+.It Fl m
+The
+.Fl m
+option specifies the media type: the supported types are
+.Dq cdrom ,
+.Dq floppy
+and
+.Dq tape .
+.It Fl s
+The
+.Fl s
+option specifies the packages to be installed, as follows:
+.Pp
+.Bl -tag -width Ds -compact
+.It \&r
+Install the required packages.
+.It \&d
+Install the required and desirable packages.
+.It \&o
+Install the required, desirable and optional packages.
+.It \&u
+Install the packages which are candidates for updating.
+.El
+.Pp
+If the
+.Fl s
+option is specified,
+there is no further interaction with the user,
+and all necessary information must be specified on the command line,
+i.e., the
+.Fl s
+option requires the
+.Fl c
+and
+.Fl m
+options.
+In addition, if the
+.Fl s
+option is specified and the
+.Fl h
+option is not specified,
+.Nm installsw
+expects the media to be available on the local machine, as specified by the
+.Fl c
+option.
+.\".It Fl t
+.\"The
+.\".Fl t
+.\"option specifies that the software archive is in
+.\".Xr tar 1
+.\"format.
+.\"By default, the
+.\".Xr pax 1
+.\"utility is used to read all software archives.
+.It Fl U
+The
+.Fl U
+option specifies that the user is doing an update, not an initial install.
+This causes
+.Nm installsw
+to pre-select packages that are candidates for upgrades in the initial
+screen,
+and to warn the user if they select a package which would not normally
+be installed during an update.
+\.".It Fl v
+\."The
+\.".Fl v
+\."(verbose) option specifies that
+\.".Nm installsw
+\."should display each file that is extracted from the software archive.
+.El
+.Pp
+If the
+.Fl s
+option was not specified,
+and any necessary information is not specified by command-line options,
+.Nm installsw
+first prompts the user for it.
+.Pp
+All questions asked by
+.Nm installsw
+are shown as a question, a default (between square brackets),
+and then a colon.
+Replies are entered on the same line as the question.
+If the user types a return (with no other characters entered),
+the default is used.
+Otherwise, the user should specify a case-insensitive prefix of a
+possible alternative, e.g.
+.Dq cd
+and
+.Dq CDROM
+are both acceptable responses when
+.Dq cdrom
+is a possible answer.
+If
+.Nm installsw
+is unable to determine the answer intended by the user, the user is
+re-prompted for another answer to the same question.
+.Pp
+To exit
+.Nm installsw
+at any time, enter an interrupt from the keyboard, usually
+.Li \&^C
+(i.e. control-C, the key generated by entering the control key and
+the
+.Li \&C
+key simultaneously).
+This should only be used if absolutely necessary once installation or
+deletion has started,
+as packages may be left partially installed or deleted.
+.Pp
+Questions asked by
+.Nm installsw
+include:
+.Pp
+.Bl -enum
+.It
+The media type for the installation.
+The possible answers are
+.Dq cdrom ,
+.Dq floppy
+and
+.Dq tape .
+.It
+If the installation is from a remote host, or from the local computer.
+The possible answers are
+.Dq local
+and
+.Dq remote .
+.It
+If the installation is from a remote host, the hostname of the remote
+host, for example,
+.Dq mysystem.bsdi.com .
+Note, the user is not prompted for a user ID to be used on the remote
+system.
+If the user wishes to use a user ID other than their own, the
+.Fl l
+option should be specified.
+.It
+The mount directory (for CDROM or floppy archives) or special device
+filename (for tape archives).
+If installation is from a cdrom or floppy disk, the pathname is the
+place where the cdrom or floppy is mounted, for example
+.Pa /cdrom
+or
+.Pa /mnt .
+If installation is from a tape drive, the name of the special device
+where the
+.Em no-rewind
+tape drive can be found, for example
+.Pa /dev/nrst0 .
+.El
+.Pp
+The user is not prompted for a non-standard root directory.
+If the installation is not intended for the normal filesystem hierarchy,
+i.e. under
+.Pa / ,
+the
+.Fl d
+option should be specified.
+.Pp
+During the question/response process,
+.Nm installsw
+will check the information given.
+For example, when a remote host is specified,
+.Nm installsw
+will attempt to contact the remote host.
+Or, if a CDROM on a remote host is specified,
+.Nm installsw
+will attempt to retrieve the
+.Dq TRANS.TBL
+file from the remote host.
+If these tests fail,
+the user will be reprompted for the information that caused the failure.
+.Pp
+After the environment has been specified,
+.Nm installsw
+provides a full-screen interactive display of the packages that are
+available to be installed (or deleted).
+The name of each package is displayed preceded by three fields.
+The first field is a selection letter, from
+.Dq \&a
+to
+.Dq \&z ,
+and from
+.Dq \&1
+to
+.Dq \&9 .
+By entering this letter, the user can select/deselect an individual package.
+.Pp
+The second field is a status letter.
+If the package has been selected, it is a
+.Dq Li \&+
+sign.
+Otherwise, it is blank.
+.Pp
+The third field is a status letter, as follows:
+.Pp
+.Bl -tag -width "XXX" -compact
+.It \&*
+The software package is already installed on the system.
+.It D
+The package is not installed, and is considered desirable.
+.It R
+The package is not installed, and is required for BSD/OS
+to run.
+.El
+.Pp
+If the third field is empty, it means that the package is not currently
+installed,
+and is completely optional.
+.Pp
+The commands that may be entered are:
+.Pp
+.Bl -tag -width "XXX"
+.It \&A
+Select all normally installed packages.
+If
+.Nm installsw
+is upgrading the system,
+(the
+.Fl U
+option or the
+.Fl s
+option with the
+.Dq u
+argument was specified),
+packages which should only be installed during initial installation will
+not be selected by the
+.Dq A
+command.
+.It \&C
+Deselect all selected packages.
+.It \&D
+Select/Deselect the
+.Dq desirable
+packages, i.e. those marked with an
+.Dq \&D
+in the status field.
+This command is a toggle: if it is used to add the desirable packages
+to the list of selected packages, entering it again will remove the
+desirable packages from the list of selected packages.
+.It \&R
+Select/Deselect the
+.Dq required
+packages, i.e. those marked with an
+.Dq \&R
+in the status field.
+This command is a toggle: if it is used to add the required packages
+to the list of selected packages, entering it again will remove the
+required packages from the list of selected packages.
+.It \&N
+Move to the next phrase, and attempt to either install or delete the
+selected packages.
+.It \&U
+Select/Deselect the packages which are candidates for updating.
+This command is a toggle: if it is used to add the update packages
+to the list of selected packages, entering it again will remove the
+update packages from the list of selected packages.
+.It \&X
+Exit
+.Nm installsw
+without further action.
+.It \&?
+Display information on a selected package.
+After entering
+.Dq \&? ,
+the user will be prompted for the letter field of the package for
+which information is desired.
+If information for that package is available, it will be displayed.
+.It \&^L
+Control-L (i.e., the key generated by entering the control key and
+the
+.Dq Li \&L
+key simultaneously) will refresh the screen.
+.El
+.Pp
+If the user is deleting packages, i.e. the
+.Fl D
+option was specified,
+the
+.Dq \&D ,
+.Dq \&R
+and
+.Dq \&U
+commands may not be entered.
+.Pp
+If the user is not deleting packages
+and the
+.Fl U
+option was specified,
+any packages on the system which are candidates for updating will be
+automatically selected before the initial selection screen is displayed.
+.Pp
+If the user is not deleting packages and the
+.Fl U
+option was not specified,
+any required and desirable packages not already present on the system will
+be automatically selected before the initial selection screen is displayed.
+.Pp
+As packages are selected, the name of the package will be highlighted
+in reverse video (if the monitor supports that functionality),
+and a
+.Dq Li \&+
+sign will appear in the second field.
+As packages are deselected, package names will return to normal display
+and the 
+.Dq Li \&+
+sign will disappear.
+.Pp
+There is one other feature in the display.
+As packages are selected (or deselected) a running total of the kilobytes
+of disk space required by them is maintained in order to assist the user
+in deciding what packages to install (or which packages to delete to free
+the appropriate amount of disk space).
+.Pp
+When selection is complete,
+.Nm installsw
+proceeds with package deletion or installation.
+As it is possible for the screen to be overwritten by other utilities,
+the
+.Dq \&^L
+key may continue to be used during installation to refresh the screen.
+.Pp
+Various utilities are used by
+.Nm installsw
+to pre-process and extract software packages from the archives,
+and their normal and error output messages are displayed on the screen
+as they execute.
+For more information as to the meaning of these messages,
+see the referenced commands' manual pages.
+.Pp
+If the file
+.Pa /var/db/install.log
+already exists or can be created in the root tree specified (i.e.
+.Pa \&/ ,
+or the path specified by the
+.Fl d
+option),
+the attempt to delete or install a package is logged into that file.
+If the file is created,
+it will be created readable and writable by the owner and group
+(as modified by the user's umask).
+.Pp
+The four possible log messages are as follows:
+.Pp
+.Dl "package <name> deleted <timestamp>"
+.Dl "package <name> delete FAILED <timestamp>"
+.Dl "package <name> installed <timestamp>"
+.Dl "package <name> install FAILED <timestamp>"
+.Pp
+In all cases, 
+.Dq <name>
+is the package name as specified by the second field of the archive file,
+and
+.Dq <timestamp>
+is the time of deletion or installation as returned by
+.Xr ctime 3 .
+.Pp
+Any errors occurring during package deletion or installation cause
+.Nm installsw
+to exit without further action,
+except that end_install scripts for any packages that were successfully
+installed will still be executed.
+.Pp
+The
+.Nm installsw
+utility exits 0 on success, and >0 if an error occurs.
+.Sh ARCHIVE FORMAT
+The following information is intended to permit users to create their
+own software archives for use with the
+.Nm installsw
+utility.
+.Pp
+If installing from a cdrom or floppy, the
+.Nm installsw
+utility reads the file
+.Pa PACKAGES/PACKAGES ,
+which must exist in the directory specified by the user
+(either using the
+.Fl c
+option or as a response to a prompt).
+If installing from a tape archive,
+.Nm installsw
+interprets the first file of the archive as this file.
+Each line of the file has eight, blank separated fields,
+which are interpreted as follows:
+.Pp
+.Bl -enum
+.It
+The number of the file.
+This field is used as the number of the file on in a tape archive,
+as well as the order of installation.
+The
+.Nm installsw
+utility will seek forward (or rewind and then seek forward) to move
+to the specified file on the tape.
+Any entries numbered 0 will be ignored.
+.It
+The name of the file.
+This field is largely ignored by
+.Nm installsw
+with one exception,
+.Dq INSTALLSW-SCRIPTS .
+See below for more information on these files.
+.It
+The kilobytes of disk space required to install the software package.
+.It
+The type of the file.
+Currently supported types are:
+.Pp
+.Bl -tag -width "XXX" -compact
+.It N
+Normal.
+.It Z
+Compressed using the
+.Xr compress 1
+utility.
+.It z
+Compressed using the
+.Xr gzip 1
+utility.
+.El
+.Pp
+.It
+The
+.Dq preference
+of the file.
+Currently supported preferences are:
+.Pp
+.Bl -tag -width "XXX"
+.It D
+Desirable.
+.It H
+Hidden.
+Any software package flagged as hidden will not be displayed to the user
+during package selection.
+.It I
+Initial.
+Any software package that should be installed only during an initial
+installation and not during an upgrade.
+If
+.Nm installsw
+is upgrading the system,
+(the
+.Fl U
+option or the
+.Fl s
+option with the
+.Dq u
+argument was specified),
+any software package marked as an initial package will be treated as
+already installed.
+If
+.Nm installsw
+is not upgrading the system,
+any software package marked as an initial package will be treated as
+a required package.
+.It O
+Optional.
+.It R
+Required.
+.El
+.Pp
+.It
+The root of the installation for this software package.
+.It
+A sentinel file that indicates that the software package has already
+been installed.
+.Pp
+For a software package to be flagged during package selection as already
+installed,
+the sentinel file must exist,
+there must be a reference to the package in the
+.Pa /var/db/install.log
+file,
+and the last reference in that file must be a record of its installation.
+.Pp
+For a software package to be flagged before and during package selection
+as a candidate for updating,
+the sentinel file must exist,
+and the last reference for the package in the
+.Pa /var/db/install.log
+file not be a record of its installation.
+.Pp
+Note, the
+.Pa /var/db/install.log
+file relative to the root tree specified (i.e.
+.Pa \&/ ,
+or the path specified by the
+.Fl d
+option) is checked.
+.Pp
+As a special case,
+if installation of a package fails and the sentinel file did not exist
+before the installation was attempted,
+the sentinel file is removed.
+.It
+A
+.Em short
+description of the package for display to the user.
+.El
+.Pp
+Once the file has been read in and interpreted,
+.Nm installsw
+takes special actions for an entry in the archive named
+.Dq INSTALLSW-SCRIPTS .
+If this entry exists, it is immediately retrieved and extracted into
+the directory
+.Pa /var/tmp/installsw.script .
+It is expected to be a directory hierarchy, with subdirectories named
+by the second field of the entries in the PACKAGES file.
+There are six files that
+.Nm installsw
+treats specially when they are found in these subdirectories:
+.Pp
+.Bl -tag -width "delete" -compact
+.It delete
+If this file exists, and the user specifies the
+.Fl D
+option to
+.Nm installsw ,
+the corresponding entry in the software archive is displayed to the user
+as part of package selection.
+If the user then selects the package, this file is executed.
+The program may read from stdin and write to stdout,
+including terminal control information.
+Any non-zero exit status by this script will be reflected in the final exit
+status of
+.Nm installsw .
+.It information
+If this file exists, and the user requests information on a package
+by using the
+.Li \&?
+key during package selection, its contents are displayed to the user.
+No text formatting or pre-processing is performed before this display.
+.It begin_install
+If this file exists, the user is doing package installation,
+and the user selects its corresponding entry during package selection,
+this file is executed after the user has finished package selection but
+before any packages have been installed.
+The program may read from stdin and write to stdout,
+including terminal control information.
+Any non-zero exit status by this script will stop packages from being
+installed,
+and will be reflected in the final exit status of
+.Nm installsw .
+.It end_install
+If this file exists, the user is doing package installation,
+the user selects its corresponding entry during package selection,
+and the package is successfully installed,
+this file is executed after all selected packages have been installed.
+The program may read from stdin and write to stdout,
+including terminal control information.
+Any non-zero exit status by this script will be reflected in the final
+exit status of
+.Nm installsw .
+.It pre_install
+If this file exists, the user is doing package installation,
+and the user selects its corresponding entry during package selection,
+this file is executed before installing the selected package.
+The program may write to stdout,
+but should not attempt to read from the terminal or send terminal
+control information.
+If this script exits non-zero, the software package is not installed,
+and the non-zero exit status will be reflected in the final exit status of
+.Nm installsw .
+.It post_install
+If this file exists, the user is doing package installation,
+the user selects its corresponding entry during package selection,
+and the package is successfully installed,
+this file is executed after the package is installed.
+The program may write to the terminal,
+but should not attempt to read from the terminal or send terminal
+control information.
+Any non-zero exit status by this script will be reflected in the final
+exit status of
+.Nm installsw .
+.El
+.Pp
+All of the programs are executed with the current directory set to
+the directory in which they reside.
+They may execute other programs, however,
+those programs must obey the same guidelines for accessing the terminal
+as they do.
+.Pp
+Before any special files are executed, the environment variable
+.Ev INSTROOT
+is set to the root of the installation (i.e.
+.Pa \&/ ,
+or the path specified by the
+.Fl d
+option).
+.Pp
+If the user is installing software packages, once the user has completed
+the selection phase of
+.Nm installsw ,
+the selected packages are installed in file number order.
+To install a selected package, the following steps occur:
+.Pp
+.Bl -enum
+.It
+If a pre-install script exists, it is run.
+.It
+If the directory named by a path constructed of the user-specified root
+directory,
+suffixed by the root path of the software package (field 6) doesn't exist,
+it is created.
+Any intermediate directories created as part of this process are created
+with file permissions as specified by
+.Xr mkdir 1 ,
+using the
+.Fl p
+option.
+.It
+The
+.Nm installsw
+utility changes its current working directory to the directory specified
+in step 2.
+.It
+If the software archive is being extracted from a cdrom or floppy filesystem,
+the archive file is named based on the type of the file as specified in
+field 4 of the PACKAGES file.
+.Pp
+.Bl -tag -width "XXX" -compact
+.It N
+If the archive type is
+.Li N ,
+the file is named by field 2 followed by the suffix
+.Dq .tar .
+.It Z
+If the archive type is
+.Li Z ,
+the file is named by field 2 followed by the suffix
+.Dq .tar.Z .
+.It z
+If the archive type is
+.Li z ,
+the file is named by field 2 followed by the suffix
+.Dq .tar.gz .
+.El
+.Pp
+If the software archive is being extracted from a tape,
+the archive file is retrieved based on the file number as specified
+in field 1 of the PACKAGES file.
+.Pp
+The archive file is appropriately pre-processed based on its type,
+and its contents extracted.
+.It
+If a post-install script exists, it is run.
+.El
+.Sh FILES
+.Bl -tag -width "XXX" -compact
+.It Pa /var/tmp/installsw.maptmp
+The copy of the
+.Dq TRANS.TBL
+file from the remote system.
+.It Pa /var/tmp/installsw.packages
+The copy of the
+.Dq PACKAGES
+file from the remote system.
+.It Pa /var/tmp/installsw.status
+The status of commands executed on both the local and remote host.
+.It Pa /var/tmp/installsw.script
+The directory where the
+.Dq INSTALLSW-SCRIPTS
+archive entry is extracted.
+.It Pa /var/tmp/installsw.script/<package>/begin_install
+The name of the software package script run before any deletion or installation.
+.It Pa /var/tmp/installsw.script/<package>/end_install
+The name of the software package script run after all deletion or installation.
+.It Pa /var/tmp/installsw.script/<package>/delete
+The name of the software package deletion script.
+.It Pa /var/tmp/installsw.script/<package>/information
+The name of the software package information file.
+.It Pa /var/tmp/installsw.script/<package>/post_install
+The name of the software package post-installation script.
+.It Pa /var/tmp/installsw.script/<package>/pre_install
+The name of the software package pre-installation script.
+.It Pa <rootdir>/var/db/install.log
+The file where successful installation or deletion is logged.
+.Sh BUGS
+.Pp
+Access to remote media by
+.Nm installsw
+requires that the current (or specified user) have remote access
+to the remote host.
+.Pp
+The archive format is baroque and unwieldy.
+.Sh "SEE ALSO"
+.Xr compress 1 ,
+.Xr dd 1 ,
+.Xr mt 1 ,
+.Xr pax 1 ,
+.Xr zcat 1
+.Sh HISTORY
+The
+.I installsw
+utility first appeared in BSD/OS release 0.9.3.

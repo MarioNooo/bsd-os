@@ -1,0 +1,13 @@
+Disksetup was not able to determine the type of this disk.  This
+may be because you are running disksetup on a regular file or
+you do not have fully configured /dev directory for this device
+type.  The types of disks are:
+
+	SCSI	Any SCSI disk
+	IDE	Any IDE or ST506 disk
+	ST506	Synonym for IDE
+	ESDI	Any ESDI disk
+	FLOPPY	Any Floppy disk
+	COMPAQ	Compaq Smart 2 raid
+	PSEUDO	Splice or vnode driver
+

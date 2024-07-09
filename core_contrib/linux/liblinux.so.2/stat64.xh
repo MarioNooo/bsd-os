@@ -1,0 +1,42 @@
+/*	BSDI stat64.xh,v 1.1 2000/02/12 18:12:28 donn Exp	*/
+
+/*
+ * Transforms for stat.h, 64-bit version.
+ */
+
+%{
+/* Don't use timespecs. */
+#define	_POSIX_SOURCE		1
+#include <sys/stat.h>
+#undef _POSIX_SOURCE
+#define	stat64		stat
+%}
+
+cookie int linux_stat_ver_t {
+	_STAT_VER_LINUX_OLD	1;
+	_STAT_VER_SVR4		2;
+	_STAT_VER_LINUX		3;
+};
+
+struct stat64 {
+	dev_t st_dev;
+	unsigned short linux_pad1;
+	ino64_t st_ino;
+	mode_t st_mode;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	dev_t st_rdev;
+	unsigned short linux_pad2;
+	off64_t st_size;
+	unsigned long st_blksize;
+	blkcnt64_t st_blocks;
+	time_t st_atime;
+	unsigned long linux_unused1;
+	time_t st_mtime;
+	unsigned long linux_unused2;
+	time_t st_ctime;
+	unsigned long linux_unused3;
+	unsigned long linux_unused4;
+	unsigned long linux_unused5;
+};

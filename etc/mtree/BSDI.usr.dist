@@ -1,0 +1,2229 @@
+#	   user: bostic
+#	machine: forge.BSDI.COM
+#	   tree: /usr
+
+# .
+/set type=dir gname=wheel uname=root mode=0755
+.
+
+# ./X11R6
+X11R6
+
+# ./X11R6/lib
+lib	type=dir
+
+# ./X11R6/lib/X11
+X11	type=dir
+
+# ./X11R6/lib/X11/xinit
+xinit	type=dir
+
+# ./X11R6/lib/X11/xinit
+..
+
+# ./X11R6/lib/X11/config
+config	type=dir
+
+# ./X11R6/lib/X11/config
+..
+
+# ./X11R6/lib/X11/locale
+locale	type=dir
+
+# ./X11R6/lib/X11/locale/C
+C	type=dir
+
+# ./X11R6/lib/X11/locale/C
+..
+
+# ./X11R6/lib/X11/locale/iso8859-1
+iso8859-1	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-1
+..
+
+# ./X11R6/lib/X11/locale/iso8859-2
+iso8859-2	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-2
+..
+
+# ./X11R6/lib/X11/locale/iso8859-3
+iso8859-3	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-3
+..
+
+# ./X11R6/lib/X11/locale/iso8859-4
+iso8859-4	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-4
+..
+
+# ./X11R6/lib/X11/locale/iso8859-5
+iso8859-5	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-5
+..
+
+# ./X11R6/lib/X11/locale/iso8859-6
+iso8859-6	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-6
+..
+
+# ./X11R6/lib/X11/locale/iso8859-7
+iso8859-7	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-7
+..
+
+# ./X11R6/lib/X11/locale/iso8859-8
+iso8859-8	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-8
+..
+
+# ./X11R6/lib/X11/locale/iso8859-9
+iso8859-9	type=dir
+
+# ./X11R6/lib/X11/locale/iso8859-9
+..
+
+# ./X11R6/lib/X11/locale/ja
+ja	type=dir
+
+# ./X11R6/lib/X11/locale/ja
+..
+
+# ./X11R6/lib/X11/locale/ja.JIS
+ja.JIS	type=dir
+
+# ./X11R6/lib/X11/locale/ja.JIS
+..
+
+# ./X11R6/lib/X11/locale/ja.SJIS
+ja.SJIS	type=dir
+
+# ./X11R6/lib/X11/locale/ja.SJIS
+..
+
+# ./X11R6/lib/X11/locale/ko
+ko	type=dir
+
+# ./X11R6/lib/X11/locale/ko
+..
+
+# ./X11R6/lib/X11/locale/zh
+zh	type=dir
+
+# ./X11R6/lib/X11/locale/zh
+..
+
+# ./X11R6/lib/X11/locale/zh_TW
+zh_TW	type=dir
+
+# ./X11R6/lib/X11/locale/zh_TW
+..
+
+# ./X11R6/lib/X11/locale
+..
+
+# ./X11R6/lib/X11/app-defaults
+app-defaults	type=dir
+
+# ./X11R6/lib/X11/app-defaults
+..
+
+# ./X11R6/lib/X11/rstart
+rstart	type=dir
+
+# ./X11R6/lib/X11/rstart/commands
+commands	type=dir
+
+# ./X11R6/lib/X11/rstart/commands/x11r6
+x11r6	type=dir
+
+# ./X11R6/lib/X11/rstart/commands/x11r6
+..
+
+# ./X11R6/lib/X11/rstart/commands
+..
+
+# ./X11R6/lib/X11/rstart/contexts
+contexts	type=dir
+
+# ./X11R6/lib/X11/rstart/contexts
+..
+
+# ./X11R6/lib/X11/rstart
+..
+
+# ./X11R6/lib/X11/twm
+twm	type=dir
+
+# ./X11R6/lib/X11/twm
+..
+
+# ./X11R6/lib/X11/x11perfcomp
+x11perfcomp	type=dir
+
+# ./X11R6/lib/X11/x11perfcomp
+..
+
+# ./X11R6/lib/X11/xdm
+xdm	type=dir
+
+# ./X11R6/lib/X11/xdm
+..
+
+# ./X11R6/lib/X11/fonts
+fonts	type=dir
+
+# ./X11R6/lib/X11/fonts/75dpi
+75dpi	type=dir
+
+# ./X11R6/lib/X11/fonts/75dpi
+..
+
+# ./X11R6/lib/X11/fonts/100dpi
+100dpi	type=dir
+
+# ./X11R6/lib/X11/fonts/100dpi
+..
+
+# ./X11R6/lib/X11/fonts/cyrillic
+cyrillic	type=dir
+
+# ./X11R6/lib/X11/fonts/cyrillic
+..
+
+# ./X11R6/lib/X11/fonts/Speedo
+Speedo	type=dir
+
+# ./X11R6/lib/X11/fonts/Speedo
+..
+
+# ./X11R6/lib/X11/fonts/Type1
+Type1	type=dir
+
+# ./X11R6/lib/X11/fonts/Type1
+..
+
+# ./X11R6/lib/X11/fonts/PEX
+PEX	type=dir
+
+# ./X11R6/lib/X11/fonts/PEX
+..
+
+# ./X11R6/lib/X11/fonts
+..
+
+# ./X11R6/lib/X11/fs
+fs	type=dir
+
+# ./X11R6/lib/X11/fs
+..
+
+# ./X11R6/lib/X11/doc
+doc	type=dir
+
+# ./X11R6/lib/X11/doc/html
+html	type=dir
+
+# ./X11R6/lib/X11/doc/html
+..
+
+# ./X11R6/lib/X11/doc
+..
+
+# ./X11R6/lib/X11/etc
+etc	type=dir
+
+# ./X11R6/lib/X11/etc
+..
+
+# ./X11R6/lib/X11/xsm
+xsm	type=dir
+
+# ./X11R6/lib/X11/xsm
+..
+
+# ./X11R6/lib/X11
+..
+
+# ./X11R6/lib
+..
+
+# ./X11R6/bin
+bin	type=dir
+
+# ./X11R6/bin
+..
+
+# ./X11R6/include
+include
+
+# ./X11R6/include/X11
+X11	type=dir
+
+# ./X11R6/include/X11/bitmaps
+bitmaps	type=dir
+
+# ./X11R6/include/X11/bitmaps
+..
+
+# ./X11R6/include/X11/extensions
+extensions	type=dir
+
+# ./X11R6/include/X11/extensions
+..
+
+# ./X11R6/include/X11/fonts
+fonts	type=dir
+
+# ./X11R6/include/X11/fonts
+..
+
+# ./X11R6/include/X11/ICE
+ICE	type=dir
+
+# ./X11R6/include/X11/ICE
+..
+
+# ./X11R6/include/X11/SM
+SM	type=dir
+
+# ./X11R6/include/X11/SM
+..
+
+# ./X11R6/include/X11/Xmu
+Xmu	type=dir
+
+# ./X11R6/include/X11/Xmu
+..
+
+# ./X11R6/include/X11/Xaw
+Xaw	type=dir
+
+# ./X11R6/include/X11/Xaw
+..
+
+# ./X11R6/include/X11/PEX5
+PEX5	type=dir
+
+# ./X11R6/include/X11/PEX5
+..
+
+# ./X11R6/include/X11/pixmaps
+pixmaps	type=dir
+
+# ./X11R6/include/X11/pixmaps
+..
+
+# ./X11R6/include/X11
+..
+
+# ./X11R6/include
+..
+
+# ./X11R6/man
+man	type=dir
+
+# ./X11R6/man/cat1
+cat1	type=dir
+
+# ./X11R6/man/cat1
+..
+
+# ./X11R6/man/cat5
+cat5	type=dir
+
+# ./X11R6/man/cat5
+..
+
+# ./X11R6/man/cat3
+cat3	type=dir
+
+# ./X11R6/man/cat3
+..
+
+# ./X11R6/man
+..
+
+# ./X11R6
+..
+
+
+# ./bin
+bin
+# ./bin
+..
+
+
+# ./bootstraps
+bootstraps
+# ./bootstraps
+..
+
+
+# ./contrib
+contrib         ignore
+# ./contrib
+..
+
+
+# ./games
+games
+
+# ./games/hide
+hide            uname=games mode=700
+# ./games/hide
+..
+
+
+# ./games/lib
+lib
+# ./games/lib
+..
+
+# ./games
+..
+
+# ./home
+home
+# ./home
+..
+
+# ./include
+include
+
+# ./include/arpa
+arpa
+# ./include/arpa
+..
+
+
+# ./include/dev
+dev
+
+# ./include/dev/atm
+atm
+
+# ./include/dev/atm/eni
+eni
+# ./include/dev/atm/eni
+..
+
+# ./include/dev/atm/fore
+fore
+# ./include/dev/atm/fore
+..
+
+# ./include/dev/atm
+..
+
+# ./include/dev/ctrl
+ctrl
+
+# ./include/dev/ctrl/cpc700
+cpc700
+# ./include/dev/ctrl/cpc700
+..
+
+# ./include/dev/ctrl/gt64260
+gt64260
+# ./include/dev/ctrl/gt64260
+..
+
+# ./include/dev/ctrl
+..
+
+# ./include/dev/evtlog
+evtlog
+# ./include/dev/evtlog
+..
+
+# ./include/dev/hid
+hid
+
+# ./include/dev/hid/cons
+cons
+# ./include/dev/hid/cons
+..
+
+# ./include/dev/hid
+..
+
+# ./include/dev/ic
+ic
+# ./include/dev/ic
+..
+
+# ./include/dev/intr
+intr
+
+# ./include/dev/intr/cpc700
+cpc700
+# ./include/dev/intr/cpc700
+..
+
+# ./include/dev/intr/gt64260
+gt64260
+# ./include/dev/intr/gt64260
+..
+
+# ./include/dev/intr/mpc107
+mpc107
+# ./include/dev/intr/mpc107
+..
+
+# ./include/dev/intr/mpc8260ic
+mpc8260ic
+# ./include/dev/intr/mpc8260ic
+..
+
+# ./include/dev/intr
+..
+
+# ./include/dev/mii
+mii
+# ./include/dev/mii
+..
+
+# ./include/dev/netif
+netif
+
+# ./include/dev/netif/ether
+ether
+
+# ./include/dev/netif/ether/cs8900
+cs8900
+# ./include/dev/netif/ether/cs8900
+..
+
+# ./include/dev/netif/ether/gt64260
+gt64260
+# ./include/dev/netif/ether/gt64260
+..
+
+# ./include/dev/netif/ether/i8255x
+i8255x
+# ./include/dev/netif/ether/i8255x
+..
+
+# ./include/dev/netif/ether/mpc8260fcc
+mpc8260fcc
+# ./include/dev/netif/ether/mpc8260fcc
+..
+
+# ./include/dev/netif/ether
+..
+
+# ./include/dev/netif
+..
+
+# ./include/dev/pci
+pci
+# ./include/dev/pci
+..
+
+# ./include/dev/rtc
+rtc
+
+# ./include/dev/rtc/ds1643
+ds1643
+# ./include/dev/rtc/ds1643
+..
+
+# ./include/dev/rtc/ds17485
+ds17485
+# ./include/dev/rtc/ds17485
+..
+
+# ./include/dev/rtc
+..
+
+# ./include/dev/scsi
+scsi
+# ./include/dev/scsi
+..
+
+# ./include/dev/serial
+serial
+
+# ./include/dev/serial/gtmpsc
+gtmpsc
+# ./include/dev/serial/gtmpsc
+..
+
+# ./include/dev/serial/mpc8260smc
+mpc8260smc
+# ./include/dev/serial/mpc8260smc
+..
+
+# ./include/dev/serial/ns16550
+ns16550
+# ./include/dev/serial/ns16550
+..
+
+# ./include/dev/serial
+..
+
+# ./include/dev/storage
+storage
+
+# ./include/dev/storage/ata
+ata
+# ./include/dev/storage/ata
+..
+
+# ./include/dev/storage
+..
+
+# ./include/dev
+..
+
+
+# ./include/g++
+g++
+
+# ./include/g++/std
+std
+# ./include/g++/std
+..
+
+# ./include/g++
+..
+
+# ./include/isc
+isc
+# ./include/isc
+..
+
+# ./include/kerberosIV
+kerberosIV
+# ./include/kerberosIV
+..
+
+
+# ./include/machine
+machine
+# ./include/machine
+..
+
+
+# ./include/net
+net
+# ./include/net
+..
+
+# ./include/netinet
+netinet
+# ./include/netinet
+..
+
+# ./include/nfs
+nfs
+# ./include/nfs
+..
+
+
+# ./include/protocols
+protocols
+# ./include/protocols
+..
+
+
+# ./include/rpc
+rpc
+# ./include/rpc
+..
+
+
+# ./include/rpcsvc
+rpcsvc
+# ./include/rpcsvc
+..
+
+
+# ./include/sys
+sys
+# ./include/sys
+..
+
+
+# ./include/ufs
+ufs
+# ./include/ufs
+..
+
+
+# ./include/vm
+vm
+# ./include/vm
+..
+
+# ./include
+..
+
+# ./lib
+lib
+
+# ./lib/ldscripts
+ldscripts
+# ./lib/ldscripts
+..
+
+# ./lib
+..
+
+
+# ./libdata
+libdata
+
+# ./libdata/adm
+adm
+# ./libdata/adm
+..
+
+# ./libdata/keyboard
+keyboard
+# ./libdata/keyboard
+..
+
+# ./libdata/perl
+perl
+
+# ./libdata/perl/sys
+sys
+# ./libdata/perl/sys
+..
+
+# ./libdata/perl
+..
+
+# ./libdata/perl5
+perl5
+
+# ./libdata/perl5
+..
+
+# ./libdata/stallion
+stallion
+# ./libdata/stallion
+..
+
+# ./libdata
+..
+
+
+# ./libexec
+libexec
+
+# ./libexec/awk
+awk
+# ./libexec/awk
+..
+
+# ./libexec/lpr
+lpr
+# ./libexec/lpr
+..
+
+
+# ./libexec/tcpd_bin
+tcpd_bin
+# ./libexec/tcpd_bin
+..
+
+# ./libexec
+..
+
+# ./linux
+linux
+
+# ./linux/lib
+lib
+
+# ./linux/lib
+..
+
+# ./linux/usr
+usr
+
+# ./linux/usr/lib
+lib
+
+# ./linux/usr/lib
+..
+
+# ./linux/usr/X11R6
+X11R6
+
+# ./linux/usr/X11R6/lib
+lib
+
+# ./linux/usr/X11R6/lib
+..
+
+# ./linux/usr/X11R6
+..
+
+# ./linux/usr
+..
+
+# ./linux
+..
+
+# ./local
+local
+
+# ./local/bin
+bin
+# ./local/bin
+..
+
+
+# ./local/etc
+etc
+# ./local/etc
+..
+
+
+# ./local/lib
+lib
+# ./local/lib
+..
+
+
+# ./local/man
+man
+
+# ./local/man/cat1
+cat1
+# ./local/man/cat1
+..
+
+
+# ./local/man/cat2
+cat2
+# ./local/man/cat2
+..
+
+
+# ./local/man/cat3
+cat3
+# ./local/man/cat3
+..
+
+
+# ./local/man/cat4
+cat4
+# ./local/man/cat4
+..
+
+
+# ./local/man/cat5
+cat5
+# ./local/man/cat5
+..
+
+
+# ./local/man/cat6
+cat6
+# ./local/man/cat6
+..
+
+
+# ./local/man/cat7
+cat7
+# ./local/man/cat7
+..
+
+
+# ./local/man/cat8
+cat8
+# ./local/man/cat8
+..
+
+
+# ./local/man/cat9
+cat9
+# ./local/man/cat9
+..
+
+
+# ./local/man/man1
+man1
+# ./local/man/man1
+..
+
+
+# ./local/man/man2
+man2
+# ./local/man/man2
+..
+
+
+# ./local/man/man3
+man3
+# ./local/man/man3
+..
+
+
+# ./local/man/man4
+man4
+# ./local/man/man4
+..
+
+
+# ./local/man/man5
+man5
+# ./local/man/man5
+..
+
+
+# ./local/man/man6
+man6
+# ./local/man/man6
+..
+
+
+# ./local/man/man7
+man7
+# ./local/man/man7
+..
+
+
+# ./local/man/man8
+man8
+# ./local/man/man8
+..
+
+# ./local/man/man9
+man9
+# ./local/man/man9
+..
+
+
+# ./local/man
+..
+
+# ./local
+..
+
+
+# ./obj
+obj		mode=0775
+# ./obj
+..
+
+
+# ./old
+old
+# ./old
+..
+
+
+# ./sbin
+sbin
+# ./sbin
+..
+
+
+# ./share
+share
+
+# ./share/awk
+awk
+# ./share/awk
+..
+
+# ./share/calendar
+calendar
+# ./share/calendar
+..
+
+# ./share/core_contrib
+core_contrib
+
+# ./share/core_contrib/man
+man
+
+# ./share/core_contrib/man/cat1
+cat1
+# ./share/core_contrib/man/cat1
+..
+
+# ./share/core_contrib/man/cat2
+cat2
+# ./share/core_contrib/man/cat2
+..
+
+# ./share/core_contrib/man/cat3
+cat3
+# ./share/core_contrib/man/cat3
+..
+
+# ./share/core_contrib/man/cat4
+cat4
+# ./share/core_contrib/man/cat4
+..
+
+# ./share/core_contrib/man/cat5
+cat5
+# ./share/core_contrib/man/cat5
+..
+
+# ./share/core_contrib/man/cat6
+cat6
+# ./share/core_contrib/man/cat6
+..
+
+# ./share/core_contrib/man/cat7
+cat7
+# ./share/core_contrib/man/cat7
+..
+
+# ./share/core_contrib/man/cat8
+cat8
+# ./share/core_contrib/man/cat8
+..
+
+# ./share/core_contrib/man/man1
+man1
+# ./share/core_contrib/man/man1
+..
+
+# ./share/core_contrib/man/man2
+man2
+# ./share/core_contrib/man/man2
+..
+
+# ./share/core_contrib/man/man3
+man3
+# ./share/core_contrib/man/man3
+..
+
+# ./share/core_contrib/man/man4
+man4
+# ./share/core_contrib/man/man4
+..
+
+# ./share/core_contrib/man/man5
+man5
+# ./share/core_contrib/man/man5
+..
+
+# ./share/core_contrib/man/man6
+man6
+# ./share/core_contrib/man/man6
+..
+
+# ./share/core_contrib/man/man7
+man7
+# ./share/core_contrib/man/man7
+..
+
+# ./share/core_contrib/man/man8
+man8
+# ./share/core_contrib/man/man8
+..
+
+# ./share/core_contrib/man
+..
+
+# ./share/core_contrib
+..
+
+# ./share/dict
+dict
+
+# ./share/dict
+..
+
+
+# ./share/doc
+doc
+
+# ./share/doc/apache
+apache
+
+# ./share/doc/apache
+..
+
+
+# ./share/doc/equinox
+equinox
+# ./share/doc/equinox
+..
+
+# ./share/doc/psd
+psd
+
+# ./share/doc/psd/05.sysman
+05.sysman
+# ./share/doc/psd/05.sysman
+..
+
+
+# ./share/doc/psd/12.make
+12.make
+# ./share/doc/psd/12.make
+..
+
+
+# ./share/doc/psd/18.gprof
+18.gprof
+# ./share/doc/psd/18.gprof
+..
+
+
+# ./share/doc/psd/20.ipctut
+20.ipctut
+# ./share/doc/psd/20.ipctut
+..
+
+
+# ./share/doc/psd/21.ipc
+21.ipc
+# ./share/doc/psd/21.ipc
+..
+
+# ./share/doc/psd
+..
+
+
+# ./share/doc/sendmail
+sendmail
+
+# ./share/doc/sendmail/op
+op
+# ./share/doc/sendmail/op
+..
+
+# ./share/doc/sendmail
+..
+
+
+# ./share/doc/smm
+smm
+
+# ./share/doc/smm/03.fsck
+03.fsck
+# ./share/doc/smm/03.fsck
+..
+
+
+# ./share/doc/smm/04.quotas
+04.quotas
+# ./share/doc/smm/04.quotas
+..
+
+
+# ./share/doc/smm/05.fastfs
+05.fastfs
+# ./share/doc/smm/05.fastfs
+..
+
+
+# ./share/doc/smm/06.nfs
+06.nfs
+# ./share/doc/smm/06.nfs
+..
+
+
+# ./share/doc/smm/11.timedop
+11.timedop
+# ./share/doc/smm/11.timedop
+..
+
+
+# ./share/doc/smm/12.timed
+12.timed
+# ./share/doc/smm/12.timed
+..
+
+
+# ./share/doc/smm/18.net
+18.net
+# ./share/doc/smm/18.net
+..
+
+
+# ./share/doc/smm/19.perl
+19.perl
+# ./share/doc/smm/19.perl
+..
+
+# ./share/doc/smm
+..
+
+
+# ./share/doc/usd
+usd
+
+# ./share/doc/usd/04.csh
+04.csh
+# ./share/doc/usd/04.csh
+..
+
+
+# ./share/doc/usd/07.mail
+07.mail
+# ./share/doc/usd/07.mail
+..
+
+
+# ./share/doc/usd/18.msdiffs
+18.msdiffs
+# ./share/doc/usd/18.msdiffs
+..
+
+
+# ./share/doc/usd/19.memacros
+19.memacros
+# ./share/doc/usd/19.memacros
+..
+
+
+# ./share/doc/usd/20.meref
+20.meref
+# ./share/doc/usd/20.meref
+..
+
+
+# ./share/doc/usd/30.rogue
+30.rogue
+# ./share/doc/usd/30.rogue
+..
+
+
+# ./share/doc/usd/31.trek
+31.trek
+# ./share/doc/usd/31.trek
+..
+
+# ./share/doc/usd
+..
+
+# ./share/doc
+..
+
+
+# ./share/games
+games
+
+# ./share/games/atc
+atc             uname=games
+# ./share/games/atc
+..
+
+
+# ./share/games/fortune
+fortune         uname=games
+# ./share/games/fortune
+..
+
+
+# ./share/games/larn
+larn            uname=games
+# ./share/games/larn
+..
+
+
+# ./share/games/quiz.db
+quiz.db         uname=games
+# ./share/games/quiz.db
+..
+
+# ./share/games
+..
+
+
+# ./share/groff_font
+groff_font
+
+# ./share/groff_font/devX100
+devX100
+# ./share/groff_font/devX100
+..
+
+
+# ./share/groff_font/devX100-12
+devX100-12
+# ./share/groff_font/devX100-12
+..
+
+
+# ./share/groff_font/devX75
+devX75
+# ./share/groff_font/devX75
+..
+
+
+# ./share/groff_font/devX75-12
+devX75-12
+# ./share/groff_font/devX75-12
+..
+
+
+# ./share/groff_font/devascii
+devascii
+# ./share/groff_font/devascii
+..
+
+
+# ./share/groff_font/devdvi
+devdvi
+
+# ./share/groff_font/devdvi/generate
+generate
+# ./share/groff_font/devdvi/generate
+..
+
+# ./share/groff_font/devdvi
+..
+
+# ./share/groff_font/devlj4
+devlj4
+
+# ./share/groff_font/devlj4/generate
+generate
+# ./share/groff_font/devlj4/generate
+..
+
+# ./share/groff_font/devlj4
+..
+
+
+# ./share/groff_font/devlatin1
+devlatin1
+# ./share/groff_font/devlatin1
+..
+
+
+# ./share/groff_font/devps
+devps
+
+# ./share/groff_font/devps/generate
+generate
+# ./share/groff_font/devps/generate
+..
+
+# ./share/groff_font/devps
+..
+
+# ./share/groff_font
+..
+
+# ./share/info
+info
+
+# ./share/info
+..
+
+# ./share/locale
+locale
+
+#./share/locale/ISO8859-1
+ISO8859-1
+#./share/locale/ISO8859-1
+..
+
+
+#./share/locale/Japanese-EUC
+Japanese-EUC
+#./share/locale/Japanese-EUC
+..
+
+
+#./share/locale/POSIX-UTF2
+POSIX-UTF2
+#./share/locale/POSIX-UTF2
+..
+
+
+# ./share/locale
+..
+
+
+# ./share/man
+man
+
+# ./share/man/cat1
+cat1
+
+# ./share/man/cat1/i386
+i386
+# ./share/man/cat1/i386
+..
+
+
+# ./share/man/cat1
+..
+
+
+# ./share/man/cat2
+cat2
+# ./share/man/cat2
+..
+
+
+# ./share/man/cat3
+cat3
+# ./share/man/cat3
+..
+
+
+# ./share/man/cat4
+cat4
+
+# ./share/man/cat4/i386
+i386
+# ./share/man/cat4/i386
+..
+
+# ./share/man/cat4/powerpc
+powerpc
+# ./share/man/cat4/powerpc
+..
+
+# ./share/man/cat4/sparc
+sparc
+# ./share/man/cat4/sparc
+..
+
+
+# ./share/man/cat4
+..
+
+
+# ./share/man/cat5
+cat5
+
+# ./share/man/cat5/i386
+i386
+# ./share/man/cat5/i386
+..
+
+# ./share/man/cat5/powerpc
+powerpc
+# ./share/man/cat5/powerpc
+..
+
+# ./share/man/cat5
+..
+
+
+# ./share/man/cat6
+cat6
+
+# ./share/man/cat6
+..
+
+
+# ./share/man/cat7
+cat7
+# ./share/man/cat7
+..
+
+
+# ./share/man/cat8
+cat8
+
+# ./share/man/cat8/i386
+i386
+# ./share/man/cat8/i386
+..
+
+# ./share/man/cat8/powerpc
+powerpc
+# ./share/man/cat8/powerpc
+..
+
+# ./share/man/cat8
+..
+
+# ./share/man/cat9
+cat9
+
+# ./share/man/cat9/i386
+i386
+# ./share/man/cat9/i386
+..
+
+# ./share/man/cat9
+..
+
+# ./share/man/man1
+man1
+
+# ./share/man/man1/i386
+i386
+# ./share/man/man1/i386
+..
+
+
+# ./share/man/man1
+..
+
+
+# ./share/man/man2
+man2
+# ./share/man/man2
+..
+
+
+# ./share/man/man3
+man3
+# ./share/man/man3
+..
+
+
+# ./share/man/man3f
+man3f
+# ./share/man/man3f
+..
+
+
+# ./share/man/man4
+man4
+
+# ./share/man/man4/hp300
+hp300
+# ./share/man/man4/hp300
+..
+
+
+# ./share/man/man4/i386
+i386
+# ./share/man/man4/i386
+..
+
+# ./share/man/man4/powerpc
+powerpc
+# ./share/man/man4/powerpc
+..
+
+# ./share/man/man4/sparc
+sparc
+# ./share/man/man4/sparc
+..
+
+# ./share/man/man4/tahoe
+tahoe
+# ./share/man/man4/tahoe
+..
+
+
+# ./share/man/man4/vax
+vax
+# ./share/man/man4/vax
+..
+
+# ./share/man/man4
+..
+
+
+# ./share/man/man5
+man5
+
+# ./share/man/man5/i386
+i386
+# ./share/man/man5/i386
+..
+
+# ./share/man/man5/powerpc
+powerpc
+# ./share/man/man5/powerpc
+..
+
+# ./share/man/man5/sparc
+sparc
+# ./share/man/man5/sparc
+..
+
+# ./share/man/man5/sparc_v9
+sparc_v9
+# ./share/man/man5/sparc_v9
+..
+
+# ./share/man/man5
+..
+
+
+# ./share/man/man6
+man6
+
+# ./share/man/man6/i386
+i386
+# ./share/man/man6/i386
+..
+
+
+# ./share/man/man6/tahoe
+tahoe
+# ./share/man/man6/tahoe
+..
+
+
+# ./share/man/man6/vax
+vax
+# ./share/man/man6/vax
+..
+
+# ./share/man/man6
+..
+
+
+# ./share/man/man7
+man7
+# ./share/man/man7
+..
+
+
+# ./share/man/man8
+man8
+
+# ./share/man/man8/i386
+i386
+# ./share/man/man8/i386
+..
+
+# ./share/man/man8/powerpc
+powerpc
+# ./share/man/man8/powerpc
+..
+
+# ./share/man/man8/sparc
+sparc
+# ./share/man/man8/sparc
+..
+
+# ./share/man/man8/sparc_v9
+sparc_v9
+# ./share/man/man8/sparc_v9
+..
+
+
+# ./share/man/man8
+..
+
+# ./share/man/man9
+man9
+
+# ./share/man/man9/i386
+i386
+# ./share/man/man9/i386
+..
+
+# ./share/man/man9
+..
+
+# ./share/man/old
+old
+
+# ./share/man/old/cat1
+cat1
+# ./share/man/old/cat1
+..
+
+
+# ./share/man/old/cat2
+cat2
+# ./share/man/old/cat2
+..
+
+
+# ./share/man/old/cat3
+cat3
+# ./share/man/old/cat3
+..
+
+
+# ./share/man/old/cat4
+cat4
+# ./share/man/old/cat4
+..
+
+
+# ./share/man/old/cat5
+cat5
+# ./share/man/old/cat5
+..
+
+
+# ./share/man/old/cat6
+cat6
+# ./share/man/old/cat6
+..
+
+
+# ./share/man/old/cat7
+cat7
+# ./share/man/old/cat7
+..
+
+
+# ./share/man/old/cat8
+cat8
+# ./share/man/old/cat8
+..
+
+
+# ./share/man/old/man1
+man1
+# ./share/man/old/man1
+..
+
+
+# ./share/man/old/man2
+man2
+# ./share/man/old/man2
+..
+
+
+# ./share/man/old/man3
+man3
+# ./share/man/old/man3
+..
+
+
+# ./share/man/old/man4
+man4
+# ./share/man/old/man4
+..
+
+
+# ./share/man/old/man5
+man5
+# ./share/man/old/man5
+..
+
+
+# ./share/man/old/man6
+man6
+# ./share/man/old/man6
+..
+
+
+# ./share/man/old/man7
+man7
+# ./share/man/old/man7
+..
+
+
+# ./share/man/old/man8
+man8
+# ./share/man/old/man8
+..
+
+
+# ./share/man/old
+..
+
+# ./share/man
+..
+
+
+# ./share/me
+me
+# ./share/me
+..
+
+
+# ./share/misc
+misc
+# ./share/misc
+..
+
+
+# ./share/mk
+mk
+# ./share/mk
+..
+
+
+# ./share/sendmail
+sendmail
+
+# ./share/sendmail/cf
+cf
+# ./share/sendmail/cf
+..
+
+
+# ./share/sendmail/domain
+domain
+# ./share/sendmail/domain
+..
+
+
+# ./share/sendmail/feature
+feature
+# ./share/sendmail/feature
+..
+
+
+# ./share/sendmail/hack
+hack
+# ./share/sendmail/hack
+..
+
+
+# ./share/sendmail/m4
+m4
+# ./share/sendmail/m4
+..
+
+
+# ./share/sendmail/mailer
+mailer
+# ./share/sendmail/mailer
+..
+
+
+# ./share/sendmail/ostype
+ostype
+# ./share/sendmail/ostype
+..
+
+
+# ./share/sendmail/sh
+sh
+# ./share/sendmail/sh
+..
+
+
+# ./share/sendmail/siteconfig
+siteconfig
+# ./share/sendmail/siteconfig
+..
+
+# ./share/sendmail
+..
+
+
+# ./share/skel
+skel
+
+# ./share/skel/skel.en_US
+skel.en_US
+
+# ./share/skel/skel.en_US/dot.Xincludes
+dot.Xincludes
+
+# ./share/skel/skel.en_US/dot.Xincludes
+..
+
+# ./share/skel/skel.en_US/dot.xfm
+dot.xfm
+
+# ./share/skel/skel.en_US/dot.xfm
+..
+
+# ./share/skel/skel.en_US
+..
+
+# ./share/skel
+..
+
+# ./share/tabset
+tabset
+# ./share/tabset
+..
+
+
+# ./share/tmac
+tmac
+
+# ./share/tmac/mm
+mm
+# ./share/tmac/mm
+..
+
+# ./share/tmac
+..
+
+
+# ./share/vgafont
+vgafont
+# ./share/vgafont
+..
+
+
+# ./share/vi
+vi
+
+# ./share/vi/catalog
+catalog
+# ./share/vi/catalog
+..
+
+
+# ./share/vi
+..
+
+
+# ./share/zoneinfo
+zoneinfo
+
+# ./share/zoneinfo/Africa
+Africa
+# ./share/zoneinfo/Africa
+..
+
+
+# ./share/zoneinfo/America
+America
+# ./share/zoneinfo/America/Indiana
+Indiana
+# ./share/zoneinfo/America/Indiana
+..
+# ./share/zoneinfo/America/Kentucky
+Kentucky
+# ./share/zoneinfo/America/Kentucky
+..
+# ./share/zoneinfo/America
+..
+
+
+# ./share/zoneinfo/Antarctica
+Antarctica
+# ./share/zoneinfo/Antarctica
+..
+
+
+# ./share/zoneinfo/Arctic
+Arctic
+# ./share/zoneinfo/Arctic
+..
+
+
+# ./share/zoneinfo/Asia
+Asia
+# ./share/zoneinfo/Asia
+..
+
+
+# ./share/zoneinfo/Atlantic
+Atlantic
+# ./share/zoneinfo/Atlantic
+..
+
+
+# ./share/zoneinfo/Australia
+Australia
+# ./share/zoneinfo/Australia
+..
+
+
+# ./share/zoneinfo/Brazil
+Brazil
+# ./share/zoneinfo/Brazil
+..
+
+
+# ./share/zoneinfo/Canada
+Canada
+# ./share/zoneinfo/Canada
+..
+
+
+# ./share/zoneinfo/Chile
+Chile
+# ./share/zoneinfo/Chile
+..
+
+
+# ./share/zoneinfo/Etc
+Etc
+# ./share/zoneinfo/Etc
+..
+
+
+# ./share/zoneinfo/Europe
+Europe
+# ./share/zoneinfo/Europe
+..
+
+
+# ./share/zoneinfo/Indian
+Indian
+# ./share/zoneinfo/Indian
+..
+
+
+# ./share/zoneinfo/Mexico
+Mexico
+# ./share/zoneinfo/Mexico
+..
+
+
+# ./share/zoneinfo/Pacific
+Pacific
+# ./share/zoneinfo/Pacific
+..
+
+
+# ./share/zoneinfo/SystemV
+SystemV
+# ./share/zoneinfo/SystemV
+..
+
+
+# ./share/zoneinfo/US
+US
+# ./share/zoneinfo/US
+..
+
+
+# ./share/zoneinfo/posix
+posix
+
+# ./share/zoneinfo/posix/Africa
+Africa
+# ./share/zoneinfo/posix/Africa
+..
+
+
+# ./share/zoneinfo/posix/America
+America
+# ./share/zoneinfo/posix/America/Indiana
+Indiana
+# ./share/zoneinfo/posix/America/Indiana
+..
+# ./share/zoneinfo/posix/America/Kentucky
+Kentucky
+# ./share/zoneinfo/posix/America/Kentucky
+..
+# ./share/zoneinfo/posix/America
+..
+
+
+# ./share/zoneinfo/posix/Antarctica
+Antarctica
+# ./share/zoneinfo/posix/Antarctica
+..
+
+
+# ./share/zoneinfo/posix/Arctic
+Arctic
+# ./share/zoneinfo/posix/Arctic
+..
+
+
+# ./share/zoneinfo/posix/Asia
+Asia
+# ./share/zoneinfo/posix/Asia
+..
+
+
+# ./share/zoneinfo/posix/Atlantic
+Atlantic
+# ./share/zoneinfo/posix/Atlantic
+..
+
+
+# ./share/zoneinfo/posix/Australia
+Australia
+# ./share/zoneinfo/posix/Australia
+..
+
+
+# ./share/zoneinfo/posix/Brazil
+Brazil
+# ./share/zoneinfo/posix/Brazil
+..
+
+
+# ./share/zoneinfo/posix/Canada
+Canada
+# ./share/zoneinfo/posix/Canada
+..
+
+
+# ./share/zoneinfo/posix/Chile
+Chile
+# ./share/zoneinfo/posix/Chile
+..
+
+
+# ./share/zoneinfo/posix/Etc
+Etc
+# ./share/zoneinfo/posix/Etc
+..
+
+
+# ./share/zoneinfo/posix/Europe
+Europe
+# ./share/zoneinfo/posix/Europe
+..
+
+
+# ./share/zoneinfo/posix/Indian
+Indian
+# ./share/zoneinfo/posix/Indian
+..
+
+
+# ./share/zoneinfo/posix/Mexico
+Mexico
+# ./share/zoneinfo/posix/Mexico
+..
+
+
+# ./share/zoneinfo/posix/Pacific
+Pacific
+# ./share/zoneinfo/posix/Pacific
+..
+
+
+# ./share/zoneinfo/posix/SystemV
+SystemV
+# ./share/zoneinfo/posix/SystemV
+..
+
+
+# ./share/zoneinfo/posix/US
+US
+# ./share/zoneinfo/posix/US
+..
+
+# ./share/zoneinfo/posix
+..
+
+
+# ./share/zoneinfo/right
+right
+
+# ./share/zoneinfo/right/Africa
+Africa
+# ./share/zoneinfo/right/Africa
+..
+
+
+# ./share/zoneinfo/right/America
+America
+# ./share/zoneinfo/right/America/Indiana
+Indiana
+# ./share/zoneinfo/right/America/Indiana
+..
+# ./share/zoneinfo/right/America/Kentucky
+Kentucky
+# ./share/zoneinfo/right/America/Kentucky
+..
+# ./share/zoneinfo/right/America
+..
+
+
+# ./share/zoneinfo/right/Antarctica
+Antarctica
+# ./share/zoneinfo/right/Antarctica
+..
+
+
+# ./share/zoneinfo/right/Arctic
+Arctic
+# ./share/zoneinfo/right/Arctic
+..
+
+
+# ./share/zoneinfo/right/Asia
+Asia
+# ./share/zoneinfo/right/Asia
+..
+
+
+# ./share/zoneinfo/right/Atlantic
+Atlantic
+# ./share/zoneinfo/right/Atlantic
+..
+
+
+# ./share/zoneinfo/right/Australia
+Australia
+# ./share/zoneinfo/right/Australia
+..
+
+
+# ./share/zoneinfo/right/Brazil
+Brazil
+# ./share/zoneinfo/right/Brazil
+..
+
+
+# ./share/zoneinfo/right/Canada
+Canada
+# ./share/zoneinfo/right/Canada
+..
+
+
+# ./share/zoneinfo/right/Chile
+Chile
+# ./share/zoneinfo/right/Chile
+..
+
+
+# ./share/zoneinfo/right/Etc
+Etc
+# ./share/zoneinfo/right/Etc
+..
+
+
+# ./share/zoneinfo/right/Europe
+Europe
+# ./share/zoneinfo/right/Europe
+..
+
+
+# ./share/zoneinfo/right/Indian
+Indian
+# ./share/zoneinfo/right/Indian
+..
+
+
+# ./share/zoneinfo/right/Mexico
+Mexico
+# ./share/zoneinfo/right/Mexico
+..
+
+
+# ./share/zoneinfo/right/Pacific
+Pacific
+# ./share/zoneinfo/right/Pacific
+..
+
+
+# ./share/zoneinfo/right/SystemV
+SystemV
+# ./share/zoneinfo/right/SystemV
+..
+
+
+# ./share/zoneinfo/right/US
+US
+# ./share/zoneinfo/right/US
+..
+
+# ./share/zoneinfo/right
+..
+
+
+# ./share/zoneinfo
+..
+
+# ./share
+..
+
+# ./shlib
+shlib
+#./shlib
+..
+
+# ./src
+src             mode=0775 ignore
+# ./src
+..

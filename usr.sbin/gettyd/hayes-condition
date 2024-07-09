@@ -1,0 +1,280 @@
+#!/bin/sh
+
+# Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI hayes-condition,v 1.18 1998/07/16 19:32:00 chrisk Exp
+
+# hayes-condition / hayes-watcher / hayes-hangup / hayes-call
+
+EXPECT=/usr/libexec/mexpect
+PROG=$0
+COMMAND=/usr/bin/login		# default command, if not specified
+DEV=				# device to setup
+DTE=				# DTE rate
+MODES=				# default stty modes if not specified
+TERM=unknown			# default terminal type if not specified
+HCONDITION='ATE0S0=1S2=255'
+HDIAL='ATDT$1'
+HHANGUP='ATH'
+HINIT='ATS2=255'
+HQUIET='ATQ1'
+HRESET='ATZ'
+ECHOLINE=:
+
+# Process the command line arguments.
+# Arguments are supposed to be of the format: -argument [value [value ...]]
+
+while [ $# -gt 0 ] ; do
+	ARG0=			# will be the first value found
+	ARGV=			# start with an empty value vector
+	DONE=			# This is set when we are done with the values
+	ARG=$1 ; shift		# shift off the argument name
+
+	# scan through the remaining arguments, looking for an entry that
+	# starts with a -.  Once we find one (or hit the end of the argument
+	# list) then we will have collected all the values for this argument.
+
+	while [ $# -gt 0 -a X$DONE = X ] ; do
+		case "$1" in
+		-*)	DONE=Done ;;		# new argument, terminate loop
+		*)	if [ $ARG0 ] ; then	# If this is not the first value
+				ARGV="$ARGV $1"	# tack it on with a space
+			else
+				ARG0=$1
+				ARGV=$1		# otherwise it is the value list
+			fi
+			shift ;;
+		esac
+	done
+
+	# now check the argument
+
+	case "$ARG" in
+	-command)		# the command to execute
+		COMMAND=$ARGV ;;
+	-dte-speeds)		# the dte rate for the serial port
+		DTE=$ARG0 ;;
+	-f)			# the file descriptor open to the serial port
+		DEV=$ARG0 ;;
+	-number)		# number(s) to dial
+		NUMBER="$ARGV" ;;
+	-stty-modes)		# the modes to send stty
+		MODES=$ARGV ;;
+	-term)			# the terminal type
+		TERM=$ARG0 ;;
+	-verbose)		# operate in verbose mode
+		ECHOLINE=echoline
+		EXPECT="$EXPECT -d" ;;
+	-*)	;;		# Just ignore unknown -arguments
+	*)	echo "Invalid argument: $ARG" 1>&2 ;;
+	esac
+done
+
+# send a string, maybe expect a response
+expect()
+{
+	eval $($EXPECT -s -f $DEV "$@")
+	if [ X$MINDEX = X-1 ] ; then
+		return 1
+	fi
+	return 0
+}
+
+# send a string and require a positive response
+require()
+{
+	eval $($EXPECT -s -f $DEV "$@")
+	if [ X$MINDEX = X-1 ] ; then
+		echo "AD_ERROR:$MSTRING"
+		stty -f $DEV -clocal
+		exit 1
+	fi
+}
+
+play()
+{
+	PROG=$1 ; shift
+	VAR=$1 ; shift
+	DEF=$1 ; shift
+	n=0
+	H=$(ttydesc <> $DEV $VAR $n)
+	if [ X"$H" = X ] ; then
+		$PROG $DEF'\r' $@
+	else
+		while [ ! X"$H" = X ] ; do
+			$PROG $H'\r' $@
+			n=$(expr $n + 1)
+			H=$(ttydesc <> $DEV $VAR $n)
+		done
+	fi
+}
+
+getvalue()
+{
+	H=$(ttydesc <> $DEV $1)
+	if [ X"$H" = X ] ; then
+		echo $2
+	else
+		echo $H
+	fi
+}
+
+echoline()
+{
+	echo "Port: /dev/$(ttydesc <> $DEV | sed 's/:.*//')"
+}
+
+# Require that a device is specified
+
+if [ X"$DEV" = X ] ; then
+	echo "Missing device" 1>&2
+	exit 1
+fi
+
+if [ X"$DTE" = X ] ; then DTE=$(ttydesc <> $DEV dte-speeds 0) ; fi
+
+if [ X"$TERM" = X ] ; then
+	TERM=$(ttydesc <> $DEV term 0)
+	if [ X"$TERM" = X ] ; then
+		TERM=$DEFTERM
+	fi
+fi
+if [ X"$MODES" = X ] ; then
+	MODES=$(ttydesc <> $DEV stty-modes)
+fi
+
+stty -f $DEV $(stty -D -g < $DEV)	# reset device to default stty modes
+
+case $PROG in
+*-condition)
+	stty -f $DEV clocal -cts_oflow -rts_iflow $DTE
+	stty -f $DEV -noclocal -echo -echoe -echoke -echoctl
+	stty -f $DEV raw flushout
+
+	play "require -t 5 -c 2" hreset "$HRESET" OK
+	play "require -t 5" hcondition "$HCONDITION" OK
+	play expect hquiet "$HQUIET"
+	stty -f $DEV $(stty -D -g < $DEV)
+	stty -f $DEV flushin $DTE hupcl $MODES noclocal -clocal
+	;;
+*-watcher)
+	export TERM		# make sure the TERM variable is exported
+
+	stty -f $DEV -noclocal $DTE $MODES clocal -echo
+
+	# set up the modem for incoming calls, then wait for a ring and answer
+
+	play "require -t 5 -c 2" hreset "$HRESET" OK
+	play "require -t 5" hinit "$HINIT" OK
+	require "ATS0=0"'\r' RING
+	require -t 60 "ATA"'\r' 'CONNECT.*$'
+
+	# we can now turn of clocal and turn on echo
+
+	stty -f $DEV noclocal -clocal echo
+
+	# finally exec the specified command
+	# make sure file descriptors 0, 1 and 2 are opened for both
+	# reading and writing and point to the serial port
+
+	exec $COMMAND <> $DEV 1<> $DEV 2<> $DEV
+	;;
+*-hangup)
+	stty -f $DEV -clocal -cts_oflow -rts_iflow -noclocal
+	stty -f $DEV clocal -echo -echoe -echoke -echoctl
+	stty -f $DEV raw flushout
+	if ! expect -t 5 -c 2 'AT\r' OK ; then
+		if ! play "expect -t 5" hreset "$HRESET" OK ; then
+			sleep 2
+			if ! expect -t 5 -c 2 '+++' OK ; then
+				echo "AD_ERROR:Cannot contact modem"
+				stty -f $DEV -clocal
+				exit 1
+			fi
+		fi
+	fi
+	if ! play "expect -t 5" hhangup "$HHANGUP" OK ; then
+		echo "AD_ERROR:Cannot hangup modem"
+		stty -f $DEV -clocal
+		exit 1
+	fi
+	if ! play "expect -t 5 -c 2" hinit "$HINIT" OK ; then
+		echo "AD_ERROR:$MSTRING"
+		stty -f $DEV -clocal
+		exit 1
+	fi
+	;;
+*-call | *-dialer)
+	$ECHOLINE
+	HDIAL=$(getvalue hdial "$HDIAL")
+
+	stty -f $DEV $MODES -noclocal clocal -echo -echoe -echok $DTE
+	stty -f $DEV raw
+
+	play "require -t 5 -c 2" hreset "$HRESET" OK
+	play "require -t 5 -c 2" hinit "$HINIT" OK
+
+	if [ "X$NUMBER" = X ] ; then
+		echo "AD_ERROR:no number specified"
+		stty -f $DEV noclocal -clocal $MODES
+		exit 0
+	fi
+
+	while true ; do 
+	    set - $NUMBER
+
+	    while [ $# -gt 0 ] ; do
+		DS="$(eval echo $HDIAL)"'\r'
+		require -t 120 "$DS" 'CONNECT.*$' 'BUSY' 'NO DIAL.*$' 'NO .*$'
+		case $MSTRING in
+		CONNECT*)
+			echo "AD_NUMBER:$1"
+			echo "$MSTRING"
+			#
+			# Some ISDN modems do not assert DCD in a timely
+			# fashion. If we don't allready have DCD, give then
+			# a second to set up DCD before we depend on it.
+			#
+			if ! stty -f $DEV | grep -q " dcd " ; then
+				sleep 1
+			fi
+			stty -f $DEV noclocal -clocal $MODES
+			exit 0
+			;;
+		"NO DIAL*")
+			echo "AD_ERROR:$MSTRING"
+			stty -f $DEV -clocal
+			exit 1
+			;;
+		BUSY* | NO*)
+			echo "$MSTRING"
+			if [ $# -eq 1 ] ; then
+				echo "sleeping for 1 minute"
+				sleep 60
+			else	sleep 1 # give the modem time to recover
+			fi
+			;;
+		*)
+			echo "$MSTRING"
+			;;
+		esac
+		shift
+		if [ $# -eq 0 ] ; then
+			CNT="x$CNT"
+			if [ $CNT = xxx ] ; then
+				echo "AD_ERROR:call failed"
+				stty -f $DEV -clocal
+				exit 1
+			fi
+			set - $NUMBER
+		fi
+	    done
+	done
+	echo "AD_ERROR:$MSTRING"
+	stty -f $DEV -clocal
+	exit 1
+	;;
+esac
+exit 0

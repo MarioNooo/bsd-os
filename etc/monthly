@@ -1,0 +1,26 @@
+#!/bin/sh -
+#
+#	BSDI	monthly,v 2.5 1998/04/09 00:07:17 jch Exp
+#	from @(#)monthly	8.1 (Berkeley) 6/9/93
+#
+
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec:/usr/contrib/bin
+export PATH
+
+# echo ""; echo "Doing login accounting:"
+# ac -p | sort -nr +1
+
+echo ""; echo -n "Rotating log files:"
+for i in kerberos.log lpd-errs wtmp; do
+	echo -n " $i"
+	rotate -z -r 5 /var/log/$i
+done
+echo -n " ftp.log"
+rotate -z -r 5 /var/log/ftpd/ftp.log
+kill -1 `cat /var/run/syslog.pid`
+echo ""
+
+[ -f /etc/monthly.local ] && sh /etc/monthly.local
+
+exit 0

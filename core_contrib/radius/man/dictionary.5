@@ -1,0 +1,173 @@
+'\" t
+.\" Copyright [C] The Regents of the University of Michigan and Merit Network,
+.\" Inc. 1992, 1993, 1994, 1995, 1996, 1997, 1998 All Rights Reserved.
+.TH DICTIONARY 5 "9 December 1997"
+.SH NAME
+dictionary \- dictionary translations for parsing \s-2RADIUS\s+2 requests
+.SH SYNOPSIS
+.B ../raddb/dictionary
+.SH DESCRIPTION
+.LP
+The
+.I dictionary
+file resides in the Merit \s-2AAA\s+2 server configuration directory (named
+.I .../raddb
+somewhere).  It contains a list of dictionary translations which the
+Merit \s-2AAA\s+2 server will use to parse incoming requests and to generate
+outgoing responses.
+Comments are indicated by leading pound sign
+.RB (' # ')
+characters.
+All such comment lines are ignored (as are blank lines).
+.LP
+All transactions are composed of Attribute/Value Pairs.
+The value of each attribute is specified as one of four data
+.IR <type> s.
+.LP
+Valid
+.I <types>
+include:
+.sp
+.TS
+;
+l l.
+string	\- \s-20\-253\s+2 octets
+vendor	\- octet #\s-20\s+2 is zero, then three octets \s-2IANA\s+2 #, then the rest
+octets	\- \s-20\-253\s+2 undistinguished octets
+abinary	\- \s-20\-254\s+2 Ascend binary filter octets
+ipaddr	\- \s-24\s+2 octets in network byte order
+octet	\- \s-28\s+2 bit integer value
+short	\- \s-216\s+2 bit integer value in big endian order (high byte first)
+integer	\- \s-232\s+2 bit integer value in big endian order (high byte first)
+date	\- \s-232\s+2 bit value in big endian order \- seconds since \s-200:00:00 GMT,  J\s+2an.  \s-21,  1970\s+2
+.TE
+.PD 1.0v
+.LP
+The \s-2ATTRIBUTE\s+2 entries consist of four required fields and one
+optional fifth field:
+.IP
+.I "       \s-2ATTRIBUTE\s+2" "   <attribute-name>" "   <integer-encoding>" "   <type>" "  <pruning>"
+.LP
+The \s-2VALUE\s+2 entries consist of four fields:
+.IP
+.I "       \s-2VALUE\s+2" "        <attribute-name>" "    <value-name>" "         <integer-encoding>"
+.LP
+For example:
+.IP
+.ft B
+\s-2ATTRIBUTE\s+2       \s-2F\s+2ramed-\s-2P\s+2rotocol         \s-27\s+2       integer  (1,0)
+.LP
+and
+.IP
+.ft B
+\s-2VALUE\s+2             \s-2F\s+2ramed-\s-2P\s+2rotocol         \s-2PPP\s+2    \s-21\s+2
+.LP
+The optional
+.I <pruning>
+field on attribute lines controls two features of the Merit \s-2AAA\s+2 server:
+.RS 0.5i
+.IP a) 10
+whether the attribute is ever sent to the \s-2NAS\s+2
+.IP b) 10
+how the \s-2NAS\s+2 reacts to a reply which contains the attribute
+.RE
+.LP
+The syntax of the
+.I <pruning>
+expressions is as folows:
+.IP
+.I "[ ( [<ack>] [ [ [,] [<nak>] ] [ [,] [ \s-2MAY\s+2 \(bv \s-2MUST\s+2 \(bv \s-2CONFIG\s+2 ] ] ] ) ]"
+.br
+.nf
+.I "    \\\\__feature 'a)' above__/\0\0\0\0\0\0\\\\__feature 'b)' above__/  "
+.fi
+.LP
+In 'a)' above,
+.I <ack>
+and
+.I <nak>
+are one of '0', '1' or '*'.
+The
+.I <ack>
+and
+.I <nak>
+values affect Access-Accept and Access-Reject replies, respectively.
+These values represent:
+.RS 0.5i
+.IP 0 10
+no attributes of this kind are part of the final reply (\s-2DEFAULT\s+2)
+.IP 1 10
+at most, one attribute of this kind may be part of the final reply
+.IP * 10
+any number of attributes of this kind may be part of the final reply
+.RE
+.LP
+The default values for both
+.I <ack>
+and
+.I <nak>
+are '0'!
+Keep this in mind when adding vendor specific attributes since they will not be
+returned to the \s-2NAS\s+2 in any replies unless this expression exists.
+.LP
+In 'b)' above, the keywords define how the \s-2NAS\s+2 reacts to the attribute:
+.RS 0.5i
+.IP \s-2MUST\s+2 10
+the \s-2NAS\s+2 must reject the request if it does not recognize this attribute
+.IP \s-2MAY\s+2 10
+the \s-2NAS\s+2 may ignore the attribute if not recognized (\s-2DEFAULT\s+2)
+.IP \s-2CONFIG\s+2 10
+the attribute is a configuration item
+.RE
+.LP
+The \s-2CONFIG\s+2 keyword is only for the internal use of this
+Merit \s-2AAA\s+2 server and must be given by itself (i.e.,
+.B "(config)"
+at the end of the attribute line).
+.LP
+If any value is omitted, but the comma is present for that value,
+then just that value takes on the default.
+The keywords \s-2MAY\s+2 and \s-2MUST\s+2 only are meaningful
+for \s-2RADIUS\s+2 version two.
+.LP
+A new syntax for handling vendor specific attributes is supported:
+.IP
+.I "<vendor>:<attribute-string>"
+.LP
+where
+.I <vendor>
+is the vendor's name and
+.I <attribute-string>
+is a unique string (for that vendor).
+This syntax may be used here and in the
+.I users
+file.
+There is an alternate syntax available for specifying vendor specific
+attributes and values.
+Vendor specific attribute and value identifier strings may be defined in the
+.I vendors
+file which may be used in place of the default strings \s-2ATTRIBUTE\s+2
+and \s-2VALUE\s+2.
+.LP
+The
+.I dictionary
+file is read by
+.B radiusd
+at startup and whenever a \s-2HUP\s+2 signal is received by
+.BR radiusd .
+The Merit \s-2AAA\s+2 server detects any out-of-date configuration files
+upon receipt of a Status-Server (or Management-Poll) request and re-reads
+all the configuration files.
+This file is maintained by the system administrator using a text editor.
+.SH FILES
+.PD 0
+.TP
+.I ../raddb/dictionary
+.PD
+.SH "SEE ALSO"
+.BR signal (3),
+.BR users (5),
+.BR vendors (5),
+.BR radiusd (8),
+.BR radcheck (8),
+.BR radpwtst (8)

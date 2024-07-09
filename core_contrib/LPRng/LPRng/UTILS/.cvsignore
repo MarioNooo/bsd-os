@@ -1,0 +1,13 @@
+LPRng.pm
+Makefile
+Makefile.bsd
+accounting.pl
+fixid
+fixupdate
+lpq_in_perl
+lpr_in_perl
+lprm_in_perl
+make_printcap_use
+read_conf
+remote_active
+test_read

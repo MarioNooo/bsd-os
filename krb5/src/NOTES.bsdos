@@ -1,0 +1,162 @@
+12-July-2003
+
+Some build/integration notes on krb5...
+---------------------------------------
+
+These need to be specified in a top-level Makefile.config file,
+currently they are scattered through the various Makefiles.
+
+Common defines:
+	-DKRB5_KRB4_COMPAT -DKERBEROS
+Option defines:
+	-DKRB5_DNS_LOOKUP_KDC=1 -DKRB5_DNS_LOOKUP_REALM=1 -DKRB5_DNS_LOOKUP=1
+
+
+MIT's krb5 builds in this order:
+--------------------------------
+util/{et, dyn, ss, profile, pty, db2}
+
+	These utilities/libraries/headers are used by the rest of the
+	build process.
+
+	util/et has both libcom_err and the compile_et program
+	util/profile builds a library and header file
+	util/db2
+		this is a modified version of a post-1.86 db release,
+		but not yet 2.0 alpha-ish db code release.  Sigh.
+		It's incompatible with both prior versions and
+		future versions of db, at a record storage level.
+		Even worse, it has some header files that conflict
+		with the system header files.  The worst of these
+		is the db-queue.h file, which is similar to
+		<sys/queue.h>.  I think that the BSD/OS 4.3/5.0
+		<sys/queue.h> is a superset of functionality, so
+		I'm changing the includes for db-queue.h into
+		sys/queue.h.  The macros in <sys/queue.h> ought to
+		work OK for this.
+
+		Because this version of the db library is incompatible
+		with both the system db and the later releases of
+		the Sleepycat Software db library, the Makefile
+		has been changed to NOT install this db library
+		and header file anywhere on the system.  They will
+		be made in the build tree, any only used from that
+		location.
+
+include
+	The krb5.h include file is generated here, through a
+	torturious path of awk invocations and catting together
+	the resulting files.  For some inscrutable reason, the
+	include directory used to install the util/profile/profile.h
+	library, which was copied into the working directory for
+	"include" when profile was made.  The profile.h file now
+	gets installed from util/profile.
+
+	There are various static headers in the krb5 and kerberosIV
+	sub-directories. These files get installed from the "include"
+	directory now, and not from the subdirectories.
+
+	The osconf.h file normally gets substituted with a bunch of
+	values from autoconf.  This is how it gets set now:
+
+		@LOCALSTATEDIR=/etc/krb5
+		@SYSCONFDIR=/etc/krb5
+		@EXEC_PREFIX=/usr
+		@PREFIX=/usr
+		@KRB5RCTMPDIR=/tmp	# where the replay cache is stored
+
+lib/{crypto, krb5, des425, krb4, krb5util, kdb, gssapi, rpc, kadm5}
+
+	lib/crypto actually builds the libk5crypto libraries
+	The (new) single Makefile just builds all the component pieces
+	directly.  This is amazingly clean compared to the crap that
+	was done with configure.
+
+	lib/krb5 -- this is built with a single Makefile now, as opposed
+	to the many little Makefiles that autoconf used.
+
+	lib/gssapi lib/rpc lib/kadm5
+	This is a little ugly.  Many of the files include
+	"gssapi/some_header", which doesn't exist in the source
+	tree.  The solution that was implemented to work around
+	this is to symlink the gssapi, gssrpc, kadm5 directories
+	into the various created obj directories as needed.  This
+	gives warnings when running "make depend" but allows the
+	build to work without the header files already being
+	installed on the system.
+
+krb524
+	The library only gets built in this directory.
+
+kdc
+	The krb5kdc binary gets built here
+
+kadmin slave clients appl tests
+
+	None of these directories are used to build the binaries.
+
+bsdos
+	This is a directory that was added for building various
+	binaries and their manpages on BSD/OS.
+
+	For the most part this directory tree just has Makefiles
+	to build the various binaries that are needed.   The
+	exception are the login_krb5 and login_krb5-or-pwd directories,
+	which actually has the sources to these programs.
+
+	Versions of the older BSD/OS kerberosIV-only commands: rcp/rlogin/rlogind/rsh/rshd
+	are included as rcp.krb4, etc.  They are not built
+	by default, but have been modified to compile when linked
+	against the krb5 libraries.
+
+	Likewise, the MIT versions of these commands can be built
+	in the rcp.mit, rlogin.mit, rlogind.mit, rsh.mit, and rshd.mit
+	directories.  This is not done by default, as these commands,
+	while they do support krb5 and krb4, will not fall back to
+	non-kerberos operation in the same binary.
+
+----
+
+Decisions/Questions:
+
+The compile_et script (from util/et) that gets created needs two
+awk scripts installed into the system.  A /usr/share/krb5 directory
+was created.  Copies of these awk files are placed in this directory.
+
+Likewise, the "mk_cmd" script (from util/ss), and its associated
+sed and awk files are installed into this directory.
+
+What about integration with the BSD/OS "passwd" command?
+	Currently a kpasswd command exists, and that will change
+	a user's password in the krb5kdc database.
+
+The login_krb5 and login_krb5-or-pwd commands are NOT currently
+installed with INSTALLFLAGS set to -fschg, as this aides in the
+development process.
+
+
+--------------------
+Building cheatsheet:
+--------------------
+
+Building as non-root...
+
+The following directories should be made writable by the build user:
+
+root# mkdir /usr/share/krb5 /usr/include/krb5
+root# chmod 1775 /usr/share/krb5 /usr/include/krb5
+
+The "make install" commands will need to be run as root.
+
+user# cd ~krb
+user# make obj
+user# make depend
+user# cd util
+user# make && make install
+user# cd ../lib
+user# make && make install
+user# cd ../krb524
+user# make && make install
+user# cd ..
+user# make && make install
+

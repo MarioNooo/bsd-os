@@ -1,0 +1,129 @@
+Definitions:
+
+ACK    - (positive) acknowledgement
+NAK    - negative acknowledgement
+NAS    - Network Access Server
+RADIUS - Remote Authentication Dial In User Service
+CHAP   - Challenge Handshake Authentication Protocol
+
+
+History:
+
+Merit Network has maintained modem-based, dial-in network connectivity
+in Michigan for many years.  This service is part of a joint cooperative
+association of academic institutions in Michigan.  Early authentication
+procedures were implemented on custom-built, PDP-11 based, terminal
+controllers.  Several few years ago, it became clear these older facilities
+would need to be replaced.  A number of leading third party communication
+server manufacturers were encouraged to give Merit quotes on their NAS
+products.  During an industry conference, a chance meeting with some
+representatives from Livingston Enterprises (now Lucent) eventually led to
+an early version of RADIUS running between Livingston hardware and a local
+UNIX RADIUS server to answer Merit's authentication needs.
+
+Since that time, both Merit and Livingston have developed several major
+changes and improvements in the RADIUS server software.  The first Merit
+RADIUS server was originally based on the Livingston 1.5 server release.
+
+
+Overview:
+
+The providers of connectivity to telecommunication networks have a need to
+verify the identity of their users.  The reasons for this are many, but the
+most important reason is accountability.  Authentication gives these service
+providers the ability to ensure their users are, in fact, who they claim to be.
+
+Users dial a well-known phone number and the modems on both ends (user and
+provider) establish a connection.  The modems are typically connected to a
+NAS or a communication server.  The NAS requires each user to identify
+themselves before granting access to its network.  This is done by asking
+for user name (accessID) and a password in order to authenticate the user.
+
+This is where RADIUS comes in.  RADIUS is a standard communications protocol
+using a client/server model.  The NAS (client) uses the RADIUS protocol to
+communicate over the network with a RADIUS server.  The "remote" RADIUS server
+is asked by the NAS to authenticate the user who is dialing into one of its
+modem ports.  The RADIUS server collects the information about the user which
+the NAS has forwarded to it (login name, password, asynchronous serial port
+number, etc.) then the server attempts to "look up" the user's credentials
+in whatever way it knows how and is so directed by the user or the NAS.
+
+The Merit AAA Server is an enhanced version of the reference RADIUS server
+which adds a way to relay authentication requests to a remote RADIUS server.
+This is called proxying or relaying.  This is normally accomplished using the
+concept of authenticating realms.  Using realms the user enters an accessID
+such as john.doe@foobah.org when prompted for a user name.  If realms are not
+needed, just the users's name, in this case john.doe, would be entered where
+prompted for a user name.  The Merit AAA Server includes a configuration file
+called the authfile which may contain one or more entries indicating how the
+user is to be authenticated by realms.  If realm names are used, these entries
+map a realm name to an authentication type for that realm.  If realm names are
+not used, a NULL entry indicates how all users are to be authenticated.  This
+user authentication may be done either locally or using several remote methods.
+
+The result of the verification of the user's identity may be either good (ACK)
+or bad (NAK).  This result is sent back to the NAS where it results in either
+the user being connected to the NAS's serial port for further communication
+or being refused and the modem session terminated.
+
+
+Details:
+
+The RADIUS protocol is a set of rules for communicating between a NAS and a
+RADIUS server; it may also be used to communicate between two RADIUS servers.
+The protocol defines the questions which may be asked and the form the answers
+must take.  The NAS, for example, may ask: "Is this user allowed to connect to
+this network?  Here are the user's name, password and the method (protocol)
+being used to connect with the network".  The RADIUS server then takes this
+information and determines whether or not the user is allowed to connect.
+Once determined, the answer is sent back to the NAS for final processing.
+
+Because of the sensitive nature of passwords, they are always transmitted in
+an obscured form.  Passwords are hidden by a hashing technique using a secret
+known only to both ends of the RADIUS protocol link.  This secret is never
+sent over the network.  It is configured, manually, in an out-of-band fashion.
+
+In some cases, the authentication information may not be available to the
+local RADIUS server, but a pointer exists which indicates the user should be
+authenticated using a different RADIUS server.  In this case, the original
+RADIUS server acts as a relay and passes the authentication information on
+to the remote RADIUS server.  When a reply comes back, it is passed along to
+the NAS.
+
+There are almost 50 standard attribute-value pairs currently defined (refer
+to RFC2058 on RADIUS) and more may be defined by various organizations and by
+vendors.  Each attribute-value pair contains a number or string value for such
+things as user names, user passwords, IP addresses, etc.  The shared secrets
+between the two ends of a RADIUS connection are used to obscure the user's
+password (so as to render it unknowable in a computationally infeasible amount
+of time).  The receiving end unwraps the password using the shared secret and
+then uses the real password value to check the user's credentials using the
+specified authentication procedure.  This may involve checking a normal UNIX
+password database, communicating with a remote Kerberos server, or possibly
+communicating with a RADIUS-modified TACACS server.  When the method results
+in a match, a positive reply is returned in a RADIUS protocol packet to the
+originating NAS.  If no match is found, a negative reply is returned.
+
+All the values sent by the NAS serve to identify the user.  Additional values
+may be added by the RADIUS server as it attempts to verify the user's identity.
+Some of these same values may be returned to the NAS (along with others, such
+as which packet filter to use for this user's session) to allow the NAS to set
+up the user's session properly, according to the service provider's policies.
+
+Because the ACK or NAK reply sent to the NAS by the RADIUS server contains a
+"signature" of the sending machine, the NAS may verify the reply it has just
+received is valid and not some random network packet.  The signature is based
+on the mutually held secret between the client and server, and also the data
+contained in the reply.  If the NAS finds a positive acknowledgement present,
+it connects the user to the serial port for further communications activity.
+If it finds a negative acknowledgement, the user's session is terminated even
+before it begins.
+
+
+Appendix:
+
+See ./doc/radius-desc.txt for a brief technical overview of the RADIUS
+protocol by Allan Rubens.  This document is somewhat dated, now, however.
+
+See ./doc/rfc2138.txt for a copy of the RADIUS RFC produced by the RADIUS
+Working Group of the IETF.

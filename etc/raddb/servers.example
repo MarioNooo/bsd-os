@@ -1,0 +1,12 @@
+#
+#	This file contains a list of servers which we are allowed to
+#	make authentication requests of and their encryption key.
+#	The first field is a valid hostname for the server.
+#	The second field (seperated by blanks or tabs) is the 
+#	encryption key.
+#
+#	Any line starting with a '#' is a comment
+#
+#Server Name		Key
+#----------------	-------------------
+#radiusserver1		testing123

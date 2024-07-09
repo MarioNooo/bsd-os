@@ -1,0 +1,41 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI login_passwd.8,v 1.2 1997/01/15 20:51:04 bostic Exp
+.Dd August 1, 1996
+.Dt LOGIN_PASSWD 8
+.Os BSD/OS
+.Sh NAME
+.Nm login_passwd
+.Nd standard password authentication
+.Sh SYNOPSIS
+.Nm login_passwd
+.Op Fl s Ar service
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+.Pp
+The
+.Nm login_passwd
+utility implements the standard password authentication mechanism.
+The
+.Ar user
+argument is the users name to be authenticated.
+If
+.Ar user
+is of the form
+.Ar name. Ns Li root
+and
+.Ar name. Ns Li root
+is not found in the password file, the entry for
+.Li root
+is used.
+This is in support of the
+.Xr su 1
+program.
+.Sh SEE ALSO
+.Xr passwd 1 ,
+.Xr su 1 ,
+.Xr login.conf 5 ,
+.Xr login 8

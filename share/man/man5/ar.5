@@ -1,0 +1,206 @@
+.\"	BSDI ar.5,v 2.1 1997/12/16 20:27:44 donn Exp
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)ar.5.5	8.1 (Berkeley) 6/9/93
+.\"
+.Dd December 16, 1997
+.Dt AR 5
+.Os
+.Sh NAME
+.Nm ar
+.Nd archive (library) file format
+.Sh SYNOPSIS
+.Fd #include <ar.h>
+.Sh DESCRIPTION
+The archive command
+.Nm ar
+combines several files into one.
+Archives are mainly used as libraries of object files intended to be
+loaded using the link-editor
+.Xr ld 1 .
+.Pp
+A file created with
+.Nm ar
+begins with the
+.Sq magic
+string
+.Sq Li !<arch>\en .
+The rest of the archive is made up of objects, each of which is composed
+of a header for a file and the file contents.
+The header is portable between machine architectures, and, if the file
+contents are printable, the archive is itself printable.
+.Pp
+The header is made up of six
+.Tn ASCII
+fields, followed by a
+two character trailer:
+.Bd -literal -offset indent
+struct ar_hdr {
+	char ar_name[16];
+	char ar_date[12];
+	char ar_uid[6];	
+	char ar_gid[6];
+	char ar_mode[8];
+	char ar_size[10];
+	char ar_fmag[2];
+};
+.Ed
+.Pp
+The fields are the object name
+.Fa ar_name ,
+the file last modification time
+.Fa ar_date ,
+the user and group IDs
+.Fa ar_uid
+and
+.Fa ar_gid ,
+the file mode
+.Fa ar_mode
+and the file size
+.Fa ar_size .
+The trailing magic number field
+.Fa ar_fmag
+always contains the two bytes
+.Sq Li \&\`\en .
+All numeric fields are in decimal, except for the file mode which is in
+octal.
+.Pp
+Object names are file names without directory prefixes.
+If the object name is 15 bytes long or less,
+the object name field contains the object name and an appended
+.Sq Li /
+character, padded with spaces.
+If the object name is longer than 15 bytes,
+then the object name field contains a string consisting of an initial
+.Sq Li /
+character followed immediately by a decimal number, padded with spaces.
+The decimal number is the byte offset of the full object name
+in the special long name dictionary object
+.Pq see below .
+.Pp
+The modification time is the file
+.Fa st_mtime
+field, that is,
+seconds since the epoch.
+The user and group id's are the file
+.Fa st_uid
+and
+.Fa st_gid
+fields.
+The file mode is the file
+.Fa st_mode
+field.
+The file size is the file
+.Fa st_size
+field.
+See
+.Xr stat 2
+for details about these values.
+.Pp
+Any unused characters in any of these fields are written as space
+characters.
+If any fields are their particular maximum number of characters in
+length, there will be no separation between the fields.
+.Pp
+Objects in the archive are always an even number of bytes long; files
+which are an odd number of bytes long are padded with a newline
+.Pq Sq Li \en
+character, although the size in the header does not reflect this.
+.Pp
+Two special objects may appear in an archive.
+In an archive of relocatable binary files, the
+.Em symbol cross-reference
+object contains a mapping between symbol names and file offsets.
+The object consists of an array of pairs of offsets,
+followed by a series of nul-terminated symbol names.
+The first offset in each pair is the offset to a symbol name string,
+while the second offset is the file offset of
+an object header that describes a relocatable binary file
+that defines the symbol.
+The object name field for the cross-reference object contains a single
+.Sq Li /
+(padded with spaces).
+The
+.Em long name dictionary
+object contains a list of long object names.
+Each name in the dictionary is a filename without a path prefix,
+followed by a single
+.Sq Li /
+character and a newline.
+The object name field for this object contains
+.Sq Li // ,
+padded with spaces.
+.Sh SEE ALSO
+.Xr ar 1 ,
+.Xr ld 1 ,
+.Xr ranlib 1 ,
+.Xr stat 2 ,
+.Xr a.out 5 ,
+.Xr elf 5
+.Sh HISTORY
+There have been at least five
+.Nm ar
+formats.
+The first was denoted by the leading ``magic'' number 0177555 (stored as
+type int).
+These archives were almost certainly created on a 16-bit machine, and
+contain headers made up of five fields.
+The fields are the object name (8 characters), the file last modification
+time (type long), the user id (type char), the file mode (type char) and
+the file size (type unsigned int).
+Files were padded to an even number of bytes.
+.Pp
+The second was denoted by the leading ``magic'' number 0177545 (stored as
+type int).
+These archives may have been created on either 16 or 32-bit machines, and
+contain headers made up of six fields.
+The fields are the object name (14 characters), the file last modification
+time (type long), the user and group id's (each type char), the file mode
+(type int) and the file size (type long).
+Files were padded to an even number of bytes.
+.Pp
+The next archive format (without support for long character names and
+names with embedded spaces) was introduced in
+.Bx 4.0 .
+The headers were the same as the current format, with the exception that
+names longer than 16 characters were truncated, and names with embedded
+spaces (and often trailing spaces) were not supported.
+It has been extended for these reasons,
+as described above.
+.Pp
+A format that supported long names appeared in 4.4BSD,
+but it was never supported by the linker and archive tools,
+so it was discontinued.
+.Pp
+The current archive format is believed to be identical to
+.At V.4 .

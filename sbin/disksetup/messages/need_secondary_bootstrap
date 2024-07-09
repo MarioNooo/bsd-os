@@ -1,0 +1,3 @@
+Disksetup cannot write just the primary bootstrap when the
+BSD/OS FDISK partition being labeled is at the start of the
+disk.

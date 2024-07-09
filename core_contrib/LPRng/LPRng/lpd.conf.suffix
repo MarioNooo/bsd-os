@@ -1,0 +1,25 @@
+#	BSDI lpd.conf.suffix,v 1.1 2000/04/19 03:16:34 jch Exp
+#
+#	These changes were appened to /etc/lpd.conf by BSDI during
+#	installation to change LPRng defaults.
+#
+
+#
+#	Run with a userid of ``lpd'' and a group of ``lpd''.  The use
+#	of daemon opens LPRng to potential security problems.
+#
+group=lpd
+user=lpd
+
+#
+#	Use /var/spool/lpd-PRINTERNAME as the default spool directory
+# 
+sd=/var/spool/lpd-%P
+
+#
+#	Change the default tmp directory to /var/tmp.  The configured
+#	is /tmp but that is usually a memory based filesystem with
+#	limited capacity.
+#
+default_tmp_dir=/var/tmp
+server_tmp_dir=/var/tmp

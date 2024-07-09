@@ -1,0 +1,59 @@
+.\" Copyright (c) 2003
+.\"	Wind River.  All rights reserved.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY WIND RIVER AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)semaphore.3	1.1 (Wind River) 5/6/03
+.\"
+.Dd May, 2003
+.Dt SEMAPHORE 3
+.Os
+.Sh NAME
+.Nm semaphore
+.Nd Operate on semaphores
+.Sh SYNOPSIS
+.Fd #include <stdlib.h>
+#.Ft int
+#.Fn system "const char *string"
+.Ft int
+.Fn sem_close "sem_t *"
+.Ft int 
+.Fn sem_destroy "sem_t *"
+.Ft int
+.Fn sem_getvalue "sem_t *" "int *"
+.Ft int
+.Fn sem_init "sem_t *" "int" "unsigned"
+.Ft sem_t *
+.Fn sem_open "const char *" "int" "..."
+.Ft int
+.Fn sem_post "sem_t *"
+.Ft int
+.Fn sem_timedwait "sem_t *" "const struct timespec *"
+.Ft int
+.Fn sem_trywait "sem_t *"
+.Ft int
+.Fn sem_unlink "const char *"
+.Ft int
+.Fn sem_wait "sem_t *"
+.Sh DESCRIPTION
+A
+.Fn semaphore
+allows a set of cooperating threads and processes the ability to share a
+resource that they agree is controlled by the
+.Fn semaphore
+.
+.Sh STANDARDS
+The
+.Fn semaphore
+code conforms to
+.St POSIX .

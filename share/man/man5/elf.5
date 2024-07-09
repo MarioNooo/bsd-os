@@ -1,0 +1,659 @@
+.\"	BSDI elf.5,v 1.2 1997/12/22 21:05:04 donn Exp
+.\"
+.Dd December 9, 1997
+.Dt ELF 5
+.Os
+.Sh NAME
+.Nm elf
+.Nd format of ELF binary files
+.Sh SYNOPSIS
+.Fd #include <sys/elf.h>
+.Sh DESCRIPTION
+The header file
+.Aq Pa sys/elf.h
+defines the format of ELF executable binary files.
+These files include ordinary executable files,
+relocatable object files, core files and shared libraries.
+.Pp
+ELF files contain an
+.Em "ELF header" ,
+plus a
+.Em "program header table"
+or a
+.Em "section header table" ,
+or both.
+The ELF header appears at the beginning of
+the file and provides information
+about the entire file;
+the tables appear in other locations in the file
+(specified in the ELF header)
+and describe specific pieces of the file.
+.Pp
+The headers are defined as C structures that
+contain members with specific defined types.
+The 32-bit ELF specification uses the following types:
+.Pp
+.Bl -tag -width Elf32_Sword\0 -compact -offset indent
+.It Fa Elf32_Addr
+Program addresses.
+.It Fa Elf32_Half
+Halfword fields.
+.It Fa Elf32_Off
+File offsets.
+.It Fa Elf32_Sword
+Signed integers.
+.It Fa Elf32_Word
+Fields or unsigned integers.
+.El
+.Pp
+The ELF header is described by the type
+.Fa Elf32_Ehdr :
+.Bd -literal -offset indent
+typedef {
+	unsigned char	e_ident[EI_NIDENT];
+	Elf32_Half	e_type;
+	Elf32_Half	e_machine;
+	Elf32_Word	e_version;
+	Elf32_Addr	e_entry;
+	Elf32_Off	e_phoff;
+	Elf32_Off	e_shoff;
+	Elf32_Word	e_flags;
+	Elf32_Half	e_ehsize;
+	Elf32_Half	e_phentsize;
+	Elf32_Half	e_phnum;
+	Elf32_Half	e_shentsize;
+	Elf32_Half	e_shnum;
+	Elf32_Half	e_shstrndx;
+} Elf32_Ehdr;
+.Ed
+.Pp
+The fields have the following meanings:
+.Bl -tag -width sh_addralign\0
+.It Fa e_ident
+A machine-independent prologue, represented in an array of bytes.
+The rest of the ELF file uses the byte order and word size
+specified by
+.Fa e_ident
+values.
+Bytes in
+.Fa e_ident
+are named by macros
+.Pq Dv EI_* ,
+and have values that are also encoded by macros
+.Pq Dv ELF* .
+The bytes have the following names and values:
+.Pp
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv EI_MAG0
+The first byte of the magic number;
+it must have the value
+.Dv ELFMAG0 .
+.It Dv EI_MAG1
+The second byte, with value
+.Dv ELFMAG1 .
+.It Dv EI_MAG2
+The third byte, with value
+.Dv ELFMAG2 .
+.It Dv EI_MAG3
+The fourth byte, with value
+.Dv ELFMAG3 .
+.It Dv EI_CLASS
+The architecture that corresponds to this binary:
+.Bl -tag -width ELFDATA2LSB\0 -compact
+.It Dv ELFCLASS32
+A 32-bit architecture.
+.It Dv ELFCLASS64
+A 64-bit architecture.
+A 64-bit ELF specification is under development;
+this class is reserved.
+.El
+.It Dv EI_DATA
+The byte order or data configuration that corresponds
+to this binary:
+.Bl -tag -width ELFDATA2LSB\0 -compact
+.It Dv ELFDATA2LSB
+2's-complement, little-endian.
+.It Dv ELFDATA2MSB
+2's-complement, big-endian.
+.El
+.It Dv EI_VERSION
+The version number of the ELF specification;
+it must have the value
+.Dv EV_CURRENT .
+.El
+.It Fa e_type
+The type of the ELF file:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv ET_REL
+A relocatable object file.
+.It Dv ET_EXEC
+An executable file.
+.It Dv ET_DYN
+A dynamically linked shared library
+.Pq Sq shared object .
+.It Dv ET_CORE
+A core file.
+.El
+.It Fa e_machine
+The instruction architecture.
+Some examples:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv EM_SPARC
+The Sun SPARC architecture.
+.It Dv EM_386
+The Intel x86 architecture.
+.It Dv EM_PPC
+The PowerPC architecture.
+.El
+.It Fa e_version
+Must be
+.Dv EV_CURRENT .
+.It Fa e_entry
+The virtual address of the entry point,
+if the file type is
+.Dv ET_EXEC
+or
+.Dv ET_DYN ;
+otherwise zero.
+.It Fa e_phoff
+The file offset of the program header table.
+.It Fa e_shoff
+The file offset of the section header table.
+.It Fa e_flags
+Machine-specific flag bits
+.Pq Dv EF_* .
+Not used on the x86 architecture,
+and many others.
+.It Fa e_ehsize
+The ELF header size in bytes.
+.It Fa e_phentsize
+The size of a program header, in bytes.
+.It Fa e_phnum
+The number of program headers
+in the program header table.
+.It Fa e_shentsize
+The size of a section header, in bytes.
+.It Fa e_shnum
+The number of section headers
+in the section header table.
+.It Fa e_shstrndx
+The index of the section header
+in the section header table
+that contains the section name string table.
+.El
+.Pp
+The program header table describes the mapping
+from the contents of an ELF file onto virtual memory.
+For example, when the system runs a program,
+it reads the program header table to locate
+the text, data and other segments in the executable file
+and to find out where to load them into memory.
+In a core file, the program header table
+describes the locations and protections
+of the segments of the dead process,
+in the file and in memory.
+The program header table is mandatory
+except in relocatable object files.
+Program headers have the type
+.Fa Elf32_Phdr :
+.Bd -literal -offset indent
+typedef {
+	Elf32_Word	p_type;
+	Elf32_Off	p_offset;
+	Elf32_Addr	p_vaddr;
+	Elf32_Addr	p_paddr;
+	Elf32_Word	p_filesz;
+	Elf32_Word	p_memsz;
+	Elf32_Word	p_flags;
+	Elf32_Word	p_align;
+} Elf32_Phdr;
+.Ed
+.Pp
+The fields have the following meanings:
+.Bl -tag -width sh_addralign\0
+.It Fa p_type
+The type of the information described by this header:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv PT_NULL
+A placeholder entry.  The contents are ignored.
+.It Dv PT_LOAD
+A loadable segment.
+This header describes a part of the file that
+corresponds to memory contents in a process,
+such as a text or data segment.
+Only loadable segments are considered when
+the system loads a program into memory.
+Program headers for loadable segments
+are ordered by virtual address, and the segments don't overlap.
+The other segments don't have these restrictions.
+.It Dv PT_DYNAMIC
+Dynamic linking information.
+The dynamic linking structures are intricate and varied,
+and are beyond the scope of this manual page.
+.It Dv PT_INTERP
+The name of an interpreter program.
+The system loads interpreted programs with the interpreter
+and passes control to the interpreter at start-up;
+the interpreter is responsible for any remaining
+loading or relocation that must be performed
+before the program may run.
+The typical interpreter is the dynamic linker,
+.Pa /shlib/ld-bsdi.so .
+.It Dv PT_NOTE
+Miscellaneous run-time information.
+This includes material such as 
+.Sq brands ,
+which describe the operating system environment
+that the program requires.
+.Em "Core notes
+are described in
+.Xr core 5 .
+.It Dv PT_PHDR
+The program header table itself.
+Some programs, such as the dynamic linker,
+need to access information in the program header
+table at run time.
+.El
+.It Fa p_offset
+The byte offset in the ELF file at which
+the segment starts.
+.It Fa p_vaddr
+The virtual address where the segment is or was loaded.
+.It Fa p_paddr
+An unused field; must be zero.
+.It Fa p_filesz
+The extent of the segment in the executable file, in bytes.
+.It Fa p_memsz
+The extent of the segment in memory, in bytes.
+If
+.Fa p_memsz
+is greater than
+.Fa p_filesz ,
+the
+.Sq missing
+data is filled with zeroes in memory.
+.It Fa p_flags
+Protection bits:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv PF_X
+An executable segment.
+.It Dv PF_W
+A writable segment.
+.It Dv PF_R
+A readable segment.
+.El
+.It Fa p_align
+If nonzero, the alignment in bytes of the segment;
+it must be a power of two,
+and the
+.Fa p_vaddr
+field must match this alignment modulo the page size.
+If zero, the segment need not be aligned.
+.El
+.Pp
+A section header table describes the file
+from the linker's point of view.
+A section header table is mandatory in relocatable objects and
+shared objects, and is optional in other ELF files.
+The linker
+.Xr ld 1
+uses the section header table to determine
+how to combine ELF files.
+Sections of the same name are merged
+in the linking process;
+for example, all sections named
+.Sq Li \&.text
+are relocated and concatenated into a single text segment.
+Different sections that have similar protections
+are sorted and merged into common segments.
+The first section
+.Pq index 0
+in the section header table is reserved as a
+.Sq null
+section.
+Section headers have the type
+.Fa Elf32_Shdr :
+.Bd -literal -offset indent
+typedef struct {
+	Elf32_Word	sh_name;
+	Elf32_Word	sh_type;
+	Elf32_Word	sh_flags;
+	Elf32_Addr	sh_addr;
+	Elf32_Off	sh_offset;
+	Elf32_Word	sh_size;
+	Elf32_Word	sh_link;
+	Elf32_Word	sh_info;
+	Elf32_Word	sh_addralign;
+	Elf32_Word	sh_entsize;
+} Elf32_Shdr;
+.Ed
+.Pp
+The fields have the following meanings:
+.Bl -tag -width sh_addralign\0
+.It Fa sh_name
+The name of the section,
+given as a byte offset into the section header string table.
+The index of the section header string table in the section header table
+is provided in the ELF header
+.Pq Fa e_shstrndx .
+.It Fa sh_type
+The type of the contents:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv SHT_NULL
+An unused section header.
+.It Dv SHT_PROGBITS
+Information specific to this ELF file.
+Typically, text or data from a program.
+.It Dv SHT_SYMTAB
+A symbol table (see below).
+.It Dv SHT_STRTAB
+A string table (see below).
+.It Dv SHT_RELA
+A table of relocations with addends.
+.It Dv SHT_HASH
+A symbol hash table;
+usually used to speed up dynamic linking.
+Not described here.
+.It Dv SHT_DYNAMIC
+Dynamic linking information.
+.It Dv SHT_NOTE
+Miscellaneous information about the file.
+.It Dv SHT_NOBITS
+Like
+.Dv SHT_PROGBITS ,
+but for zero-filled memory; the section occupies
+no space in the file.
+It is typically used for bss in a program.
+.It Dv SHT_REL
+A table of relocations that don't require addends.
+.It Dv SHT_DYNSYM
+A reduced symbol table for dynamic linking.
+.El
+.It Fa sh_flags
+Protection bits:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv SHF_WRITE
+A writable section.
+Sections are readable by default.
+.It Dv SHF_ALLOC
+A section that corresponds to virtual memory;
+typically, part of a loadable segment.
+.It Dv SHF_EXECINSTR
+An executable section;
+typically, program text.
+.El
+.It Fa sh_addr
+The address of the section in virtual memory, if it has one;
+otherwise 0.
+.It Fa sh_offset
+The byte offset of the section in the file.
+.It Fa sh_size
+The length in bytes of the section.
+.It Fa sh_link
+A section header index that means something different depending
+on the type of the section.
+It is defined to be
+.Dv SHN_UNDEF
+for those sections that don't use it.
+For
+.Dv SHT_DYNAMIC ,
+.Dv SHT_SYMTAB
+and
+.Dv SHT_DYNSYM
+sections, it is the index
+of the corresponding string table.
+For
+.Dv SHT_HASH ,
+.Dv SHT_REL
+and
+.Dv SHT_RELA
+sections, it is the index
+of the corresponding symbol table.
+.It Fa sh_info
+A cookie that holds a value specific to certain sections.
+Sections that don't use it give it as 0.
+For
+.Dv SHT_SYMTAB
+and
+.Dv SHT_DYNSYM
+sections, it contains
+the symbol table index of the first non-local symbol table entry,
+or one greater than the index of the last entry
+if all entries are local
+.Pq Dv STB_LOCAL .
+For
+.Dv SHT_REL
+and
+.Dv SHT_RELA
+sections, it contains
+the section header index of the section
+to which these relocations apply.
+.It Fa sh_addralign
+The maximum alignment of the section,
+given in bytes.
+It must be a power of two,
+or zero to indicate no alignment requirements.
+.It Fa sh_entsize
+The size of the elements in this section,
+if they all have the same size.
+For example, in a symbol table section,
+this field would give the size of a symbol table entry.
+.El
+.Pp
+There are several sections that have standard names.
+These include the
+.Li \&.text
+section, the
+.Li \&.data
+section and the
+.Li \&.bss
+section, which respectively contain
+machine instructions, initialized data and uninitialized (zero-filled) data.
+There are read-only data sections,
+debugging sections and dynamic linking sections as well;
+the details will not be described here.
+.Pp
+Sections typically do not have a fixed virtual address.
+The linker assigns a final virtual address to a section
+only after all sections have been linked.
+.Em Symbols
+are strings that serve to identify information in sections;
+they stand in for addresses until the linker assigns final addresses.
+For example, a global variable name or a function name in C
+typically becomes a symbol name in an ELF file.
+.Pp
+Symbols are described by their name,
+which appears in a
+.Em string table ,
+and by a structure called a
+.Em symbol table entry .
+An ELF symbol table entry has the type
+.Fa Elf32_Shdr :
+.Bd -literal -offset indent
+typedef {
+	Elf32_Word	st_name;
+	Elf32_Addr	st_value;
+	Elf32_Word	st_size;
+	unsigned char	st_info;
+	unsigned char	st_other;
+	Elf32_Half	st_shndx;
+} Elf32_Sym;
+.Ed
+.Pp
+The fields have the following meanings:
+.Bl -tag -width sh_addralign\0
+.It Fa st_name
+The index of the nul-terminated symbol name string
+in the corresponding string table.
+.It Fa st_value
+The value of the symbol.
+This is typically an offset within a section
+that contains the data corresponding to the symbol,
+but it may be any arbitrary number.
+The
+.Fa st_shndx
+field controls the interpretation (see below).
+.It Fa st_size
+The size of the object that the symbol describes,
+if the object has a size and that size is known;
+otherwise 0.
+.It Fa st_info
+A cookie that encodes the
+.Em binding
+.Pq scope
+and
+.Em type
+.Pq format
+of the object that the symbol references.
+Bindings and types are numbers,
+as opposed to bits.
+The available bindings are:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv STB_LOCAL
+A local symbol.
+Local symbols have file scope \(em
+symbols in other files in a link may have the same name.
+.It Dv STB_GLOBAL
+A global symbol.
+All instances of a given global symbol in a link
+refer to the same object.
+There must be at most one definition of the global symbol
+across all files in the link;
+other occurrences of the symbol must be
+.Sq undefined
+references
+(see
+.Fa st_shndx
+below).
+.It Dv STB_WEAK
+A
+.Sq weak
+symbol.
+A weak symbol is similar to a global symbol, but with lower precedence.
+There are two cases: a weak symbol definition, and an undefined weak symbol.
+Weak symbol definitions have global scope,
+but there may be more than one definition
+of a weak symbol in a link, and a weak symbol definition
+may duplicate a global symbol definition.
+If a global definition of a symbol is found during a link,
+the linker ignores all weak definitions.
+In the absence of a global definition,
+the first weak definition in the link wins.
+A weak undefined symbol is like a global undefined symbol,
+but it is not an error if a definition for that symbol
+does not appear in the link.
+Also, the linker won't extract an object file from an archive
+merely to satisfy an undefined weak symbol.
+Unresolved weak symbols have the value 0.
+A global or weak definition is sufficient to resolve
+an undefined weak symbol.
+.El
+.Pp
+The available types are:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv STT_NOTYPE
+No type information was provided.
+.It Dv STT_OBJECT
+A data object, such as a variable or a structure.
+.It Dv STT_FUNC
+A function.
+.It Dv STT_SECTION
+A section.
+These symbols have local binding
+and are used for relocation.
+.It Dv STT_FILE
+A file name.
+Symbols with this type conventionally appear first in the symbol table;
+they have local binding and absolute linkage.
+.El
+.Pp
+There are macros for packing and unpacking the binding and type fields:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv ELF32_ST_INFO ( Fa bind , Fa type )
+Convert a binding and a type into an
+.Fa st_info
+value.
+.It Dv ELF32_ST_BIND ( Fa info )
+Extract a binding from an
+.Fa st_info
+value.
+.It Dv ELF32_ST_TYPE ( Fa info )
+Extract a type from an
+.Fa st_info
+value.
+.El
+.It Fa st_other
+An unused field.
+.It Fa st_shndx
+The section header index.
+In most cases, this refers to a section header
+in the section header table,
+in which case the location of the object
+to which the symbol refers is
+.Fa st_value
+bytes from the start of that section.
+There are three reserved pseudo-indexes:
+.Bl -tag -width SHF_EXECINSTR\0 -compact
+.It Dv SHN_UNDEF
+Symbols in this pseudo-section are
+.Em undefined .
+The linker must locate a definition in some other file.
+The linker reports an error if it cannot find a definition
+.Pq except for weak symbols .
+.It Dv SHN_ABS
+These symbols have absolute addresses.
+The value in the
+.Fa st_value
+field is not modified by the linker;
+it is effectively a constant.
+.It Dv SHN_COMMON
+These symbols are similar to undefined symbols,
+but if at the end of the link, no definition has been found,
+then the linker allocates zero-filled space in the bss segment
+for a definition.
+The object that the linker creates will have the maximum size
+and alignment found among the common symbols with this name.
+.El
+.El
+.Pp
+A
+.Em string table
+section stores the names of symbols or sections.
+A symbol or a section header will provide
+a byte offset into a string table,
+or zero to indicate a null string.
+All strings in the string table are nul-terminated.
+(Thus, the first byte of a non-empty string table is always a nul.)
+Strings may overlap; they also need not be unique.
+.Pp
+A
+.Em note
+section contains miscellaneous information
+that is of interest to the system or to the compiler tools.
+It is structured into 12-byte, 32-bit aligned headers,
+each of which may be followed by note-specific data.
+The data is in turn structured into two 32-bit aligned sections.
+The first two header words give the sizes of the two
+data sections in bytes, not including any padding for alignment;
+the third word provides an integer type value.
+Conventionally, the first section of data holds
+a nul-terminated name of an operating system or vendor;
+the length includes the nul byte.
+The second section and the type word
+have any value that the vendor cares to give them.
+.Pp
+Relocation and dynamic sections are beyond the scope of this document.
+See the System V Application Binary Interface for details.
+.Sh SEE ALSO
+.Xr ld 1 ,
+.Xr ld.so 8 ,
+.Xr execve 2 ,
+.Xr core 5
+.Sh HISTORY
+ELF first appeared in Unix System V.
+It is a published standard.
+.Sh BUGS
+Many tools on the system are still oriented toward
+.Xr a.out 5
+format binary files,
+even when they support ELF internally.

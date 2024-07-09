@@ -1,0 +1,15 @@
+#!/bin/sh
+#	BSDI tokenctl,v 1.1 1996/08/26 20:27:26 prb Exp
+PROG=$(basename $0 ctl)adm
+echo 1>&2 "$(basename $0) depricated, please use $PROG in the future"
+if [ $# -lt 2 ] ; then
+	echo "Usage: $(basename $0) -[deu] user [...]" 1>&2
+	exit 1
+fi
+FLAG=$1
+shift
+for i ; do
+	ARGS=" $FLAG $i"
+done
+echo 1>&2 "Executing: $PROG$ARGS"
+exec $PROG$ARGS

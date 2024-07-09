@@ -1,0 +1,50 @@
+#	BSDI shlib.map,v 2.25 2003/07/10 23:08:44 polk Exp
+
+#
+# The master table of static shared library addresses and dependencies.
+#
+# BSD/OS process address space currently looks like this:
+#
+# 00000000-9fffffff:	user text, data and mmap() segments
+# a0000000-a07fffff:	reserved for BSD/OS static shared libraries
+# a0800000-bfffefff:	reserved for customer and third party shared libraries
+# bffff000-c7ffffff:	reserved for SCO emulation
+# c8000000-efbfdfff:	user stack segment
+# efbfe000-ffffffff:	reserved for operating system
+#
+# This file is processed by the shell (sh(1)); use the MAP directive
+# to describe a shared library, following the guidelines in mkshlib(8).
+# The shlib(8) command builds individual shared libraries.
+# The shlicc(1) command links programs to use shared libraries.
+#
+
+VER=${SHLIB_VER-5.1.0}
+GL=${SHLIB_GL-/usr/lib/gcc-lib/i386-unknown-bsdi5.1/3.2.2}
+UL=${SHLIB_UL-/usr/lib}
+SL=${SHLIB_SL-/shlib}
+XL=${SHLIB_XL-/usr/X11R6/lib}
+
+#    -lX       text     data      source archive   shared image          params
+MAP  -lc       a0000000 a0098000  $UL/libc.a       $SL/libc_s.$VER
+MAP  -lcompat  a00c0000 a00cc000  $UL/libcompat.a  $SL/libcompat_s.$VER  -lc
+MAP  -lkvm     a00d0000 a00dc000  $UL/libkvm.a     $SL/libkvm_s.$VER     -lc
+MAP  -lm       a00e0000 a00fc000  $UL/libm.a       $SL/libm_s.$VER       -lc
+MAP  -lmstd    a00e0000 a00fc000  $UL/libmstd.a    $SL/libmstd_s.$VER    -lc
+MAP  -lmi386   a00e0000 a00fc000  $UL/libmi386.a   $SL/libmi386_s.$VER   -lc
+MAP  -lutil    a0100000 a0110000  $UL/libutil.a    $SL/libutil_s.$VER    -lc
+
+# The following libraries are in the second page table page:
+
+#    -lX       text     data      source archive   shared image          params
+MAP  -lcurses  a0500000 a0540000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -lncurses a0500000 a0540000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermcap a0500000 a0540000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermlib a0500000 a0540000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+
+# C++ related libraries
+#MAP  -lgcc     a0200000 a0208000  $GL/libgcc.a     $SL/libgcc_s.$VER \
+#	-X __main.o -X _ctors.o -E -L$GL -lgcc_eh -lc
+#MAP  -lgcc_eh     a0210000 a0218000  $GL/libgcc_eh.a  $SL/libgcc_eh_s.$VER \
+#	-E -lc
+#MAP  -lstdc++  a0220000 a0280000  $UL/libstdc++.a  $UL/libstdc++_s.$VER \
+#	-E -L$GL -lgcc -lgcc_eh -lm -lc

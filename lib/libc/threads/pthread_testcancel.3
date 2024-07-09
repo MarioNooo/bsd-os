@@ -1,0 +1,108 @@
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_testcancel.3,v 1.1 1999/10/04 18:16:10 jch Exp
+.\" 
+.Dd Oct 1, 1999
+.Dt PTHREAD_TESTCANCEL 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_testcancel
+.Nd request that the specified thread be canceled
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_setcancelstate "int state, int *oldstate"
+.Ft int
+.Fn pthread_setcanceltype "int type, int *oldtype"
+.Ft void
+.Fn pthread_testcancel "void"
+.Sh DESCRIPTION
+The
+.Fn pthread_setcancelstate
+function sets the cancelability state of the calling thread to
+.Fa state Ns .
+If 
+.Fa oldstate
+is non-NULL the previous cancelability state is return in the
+referenced location.
+Valid values for
+.Fa state
+are
+.Dv PTHREAD_CANCEL_ENABLE Pq the default
+and
+.Dv PTHREAD_CANCEL_DISABLE.
+.Pp
+The
+.Fn pthread_setcanceltype
+function sets the cancelability type of the calling thread to
+.Fa type Ns .
+If
+.Fa oldtype
+is non-NULL the previous cancelability type is returned in the
+referenced location.
+Valid values for 
+.Fa type
+are
+.Dv PTHREAD_CANCEL_DEFERRED Pq the default
+and
+.Dv PTHREAD_CANCEL_ASYNCHRONOUS Ns .
+.Pp
+The
+.Fn pthread_testcancel
+function creates a cancellation point in the calling thread.
+This cancellation point will only have an effect if cancelability is
+enabled.
+.Sh RETURN VALUES
+If successful, the
+.Fn pthread_setcancelstate
+and 
+.Fn pthread_setcanceltype
+functions return zero.
+Otherwise, an error number is returned to indicate the error.
+.Sh ERRORS
+For each of the following conditions, if the condition is detected, the
+.Fn pthread_setcancelstate
+function shall return the corresponding error number:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The specified state is not
+.Dv PTHREAD_CANCEL_ENABLE
+or
+.Dv PTHREAD_CANCEL_DISABLE Ns .
+.El
+.Pp
+For each of the following conditions, if the condition is detected, the
+.Fn pthread_setcanceltype
+function shall return the corresponding error number:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The specified type is not
+.Dv PTHREAD_CANCEL_DEFERRED
+or
+.Dv PTHREAD_CANCEL_ASYNCHRONOUS Ns .
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_cancel 3 ,
+.Xr pthread_cond_timedwait 3 ,
+.Xr pthread_cond_wait 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_join 3
+.Sh STANDARDS
+The
+.Fn pthread_setcancelstate Ns ,
+.Fn pthread_setcanceltype Ns ,
+and
+.Fn pthread_testcancel
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Fn pthread_setcancelstate Ns ,
+.Fn pthread_setcanceltype Ns ,
+and
+.Fn pthread_testcancel
+function first appeared in BSD/OS 4.1.

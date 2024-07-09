@@ -1,0 +1,121 @@
+/*	BSDI ldscript.sparc.shlib,v 2.2 2000/01/14 23:01:52 donn Exp	*/
+
+/*
+ * This linker script exists solely to create static shared libraries.
+ * We require that certain sections from certain files appear in
+ * a specific order, so that we can keep static addresses from changing.
+ */
+
+OUTPUT_FORMAT("elf32-sparc", "elf32-sparc",
+	      "elf32-sparc")
+OUTPUT_ARCH(sparc)
+ENTRY(_start)
+SEARCH_DIR(/shlib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/X11/lib); SEARCH_DIR(/usr/contrib/lib); SEARCH_DIR(/lib); SEARCH_DIR(/usr/local/lib);
+/* Do we need any of these for elf?
+   __DYNAMIC = 0;    */
+SECTIONS
+{
+  /* Read-only sections, merged into text segment: */
+  . = 0x10000 + SIZEOF_HEADERS;
+  .interp     : { *(.interp) 	}
+  .init       :
+  {
+    loader.o(.init)
+    loader.o(.text)
+    loader.o(.rodata)
+    loader.o(.rodata1)
+    . = ALIGN(0x1000);		/* not a true page alignment, just padding */
+    jump_table.o(.init)
+    jump_table.o(.text)
+    jump_table.o(.rodata)
+    jump_table.o(.rodata1)
+  } =0x0
+  . = ALIGN(0x2000);
+  .rodata     : { *(.rodata) *(.gnu.linkonce.r*) }
+  .rodata1    : { *(.rodata1) }
+  .plt        : { *(.plt)	}
+  .text       :
+  {
+    *(.init)
+    *(.text)
+    /* .gnu.warning sections are handled specially by elf32.em.  */
+    *(.gnu.warning)
+    *(.gnu.linkonce.t*)
+  } =0x0
+  _etext = .;
+  PROVIDE (etext = .);
+  .fini      : { *(.fini)    } =0x0
+  /* Adjust the address for the data segment.  We want to adjust up to
+     the same address within the page on the next page up.  */
+  . = ALIGN(0x10000) + (. & (0x10000 - 1));
+  . = ALIGN(8);
+  .data    :
+  {
+    *(.data)
+    *(.gnu.linkonce.d*)
+    CONSTRUCTORS
+  }
+  .data1   : { *(.data1) }
+  .ctors         :
+  {
+    *(.ctors)
+  }
+  .dtors         :
+  {
+    *(.dtors)
+  }
+  .got           : { *(.got.plt) *(.got) }
+  .dynamic       : { *(.dynamic) }
+  /* We want the small data sections together, so single-instruction offsets
+     can access them all, and initialized data all before uninitialized, so
+     we can shorten the on-disk segment size.  */
+  .sdata     : { *(.sdata) }
+  . = ALIGN(8);
+  _edata  =  .;
+  PROVIDE (edata = .);
+  __bss_start = .;
+  .sbss      : { *(.sbss) *(.scommon) }
+  .bss       :
+  {
+   *(.dynbss)
+   *(.bss)
+   *(COMMON)
+  }
+  . = ALIGN(8);
+  _end = . ;
+  PROVIDE (end = .);
+  /* Stabs debugging sections.  */
+  .stab 0 : { *(.stab) }
+  .stabstr 0 : { *(.stabstr) }
+  .stab.excl 0 : { *(.stab.excl) }
+  .stab.exclstr 0 : { *(.stab.exclstr) }
+  .stab.index 0 : { *(.stab.index) }
+  .stab.indexstr 0 : { *(.stab.indexstr) }
+  .comment 0 : { *(.comment) }
+  /* DWARF debug sections.
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section so we begin them at 0.  */
+  /* DWARF 1 */
+  .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo  0 : { *(.debug_srcinfo) }
+  .debug_sfnames  0 : { *(.debug_sfnames) }
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges  0 : { *(.debug_aranges) }
+  .debug_pubnames 0 : { *(.debug_pubnames) }
+  /* DWARF 2 */
+  .debug_info     0 : { *(.debug_info) }
+  .debug_abbrev   0 : { *(.debug_abbrev) }
+  .debug_line     0 : { *(.debug_line) }
+  .debug_frame    0 : { *(.debug_frame) }
+  .debug_str      0 : { *(.debug_str) }
+  .debug_loc      0 : { *(.debug_loc) }
+  .debug_macinfo  0 : { *(.debug_macinfo) }
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames) }
+  /* These must appear regardless of  .  */
+}

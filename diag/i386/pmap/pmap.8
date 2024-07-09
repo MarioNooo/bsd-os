@@ -1,0 +1,369 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI pmap.8,v 1.1.1.1 1997/12/08 21:05:05 ewv Exp
+.\"
+.Dd February 28, 1997
+.Dt PMAP 8
+.Os BSD/OS
+.Sh NAME
+.Nm PMAP
+.Nd "Display kernel physical/virtual address mappings (Intel only)
+.Sh SYNOPSIS
+.Nm pmap
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Fl d Ar pdir
+.Op Fl i Ar pid
+.Op Fl v Ar vaddr
+.Op Fl p Ar paddr
+.Op Fl s Ar string-data
+.Op Fl l Ar bin-data
+.Op Fl m Ar bin-mask
+.Op Fl S Ar memsize
+.Op Fl x
+.Op Fl b
+.Op Fl V
+.Op Fl D
+.Sh DESCRIPTION
+The
+.Nm pmap
+utility extracts data from the physical address mapping tables used by
+the virtual memory system on the Intel architecture.
+.Nm
+can also search for binary or string data in physical memory and translate
+the physical addresses located to virtual mappings.
+.Pp
+In the options described below, all numeric data may be input in decimal,
+hex, or octal using the C convention (leading 0 or 0x).
+.Bl -tag -width string-data
+
+.It Fl M Ar core
+Specifies physical memory image; this could be a core dump or
+.Pa /dev/mem
+(to access live system memory). Default:
+.Pa /dev/mem
+
+.It Fl M Ar system
+Specifies location of kernel executable used to extract symbol tables. This
+kernel must be the kernel that corresponds to the physical memory image
+being debugged. Default:
+.Pa /bsd
+
+.It Fl d Ar pdir
+Dumps all address mappings for a given page table directory (give the
+value that would be put into CR3 to activate the address space). If the
+.Fl D
+flag is given not-present entries are displayed, otherwise only pages with
+the valid bit set are displayed. See below for a description of the output.
+
+.It Fl i Ar pid
+Dumps virtual memory mappings (same format as
+.Fl d
+output) for a given pid. This is simply the
+.Fl d
+option but it first finds the named process and extracts its saved
+CR3 register.
+
+.It Fl v Ar vaddr
+Shows all physical pages mapped to a given virtual address in any process. If
+the
+.Fl i
+flag is given then output will be restricted to pages mapped from the named
+process.
+
+.It Fl p Ar paddr
+Displays all virtual addresses mapped to a given physical address. If the
+.Fl i
+flag is given then output will be restricted to virtual addresses from the
+named process.
+
+.It Fl s Ar string-data
+Searches all of physical memory for the specified string (the search does
+not include the trailing NULL and does not parse any special escapes
+other than what the shell does).
+
+.It Fl l Ar bin-data
+Searches all of physical memory for the specified binary data word (4 bytes
+in little endian order). The search will find data on any byte boundary (this
+sometimes results in unexpected matches).
+
+.It Fl m Ar bin-mask
+Masks parts of 
+.Ar bin-data
+during a search. This can be used to find data less than 4 bytes long or
+data with some bits wildcarded. Any 1 bits in this mask are compared
+during a search, 0 bits are ignored. It is not permitted to mask any of
+the first 8 bits of a word (low order byte). Default: 0xffffffff
+
+.It Fl S Ar memsize
+When the size of memory isn't known (
+.Ar M
+points at a character device such as
+.Pa /dev/kmem
+instead of a regular file) this option must be specified when running in any
+search mode.
+.Ar Memsize
+is a number of megabytes (2^20 bytes) of memory to search.
+
+.It Fl x
+Enable reporting of duplicate kernel addresses per process.
+
+.It Fl b
+Performs some consistency checks on the address mappings in the system. Aside
+from mappings in the APTD area (described below) there should be no output
+from this command on a normal system.
+
+.It Fl V
+Set verbose operation mode. This displays details on each process in the image
+as well as other more detailed information depending on the mode the program
+is run in.
+
+.It Fl D
+Set debug operation mode. Displays some very detailed data, generally only
+useful if debugging
+.Nm
+itself. The one option that may be useful in general is specifying
+.Fl D
+in conjunction with
+.Fl i
+or
+.Fl d
+; this causes the full dump of a given address space map to include information
+on pages that are not marked valid.
+
+.El
+
+.Sh ADDRESS SPACE DUMP
+When using the
+.Fl d
+or
+.Fl i
+options the output will look something like the following:
+.Bd -literal
+./pmap -i 136 | head
+D  02cd8000: [00000000] 02ce8000 P Wr User             Acc Dirty
+ P 02ce8004: [00001000] 02ca6000 P    User             Acc      
+ P 02ce8008: [00002000] 02dbf000 P    User             Acc      
+ P 02ce800c: [00003000] 02db4000 P    User             Acc      
+[...]
+.Ed
+.Pp
+The
+.Em D
+or
+.Em P
+tags indicate the line is describing a page directory entry (D) or a page
+table entry (P). The first address is the physical address of the entry
+itself (in the page table directory or a page table page). The second
+address (in square brackets) is the virtual address this entry maps.
+The third address is the page (physical) this entry points to. The
+remaining data are a decode of the entry bits:
+.Bl -tag -width WrThru
+.It P
+Page valid (present) bit.
+.It Wr
+Page writable
+.It User
+Page accessible from CPL3 (user mode)
+.It WrThru
+Page uses write thru cache protocol (instead of write-back).
+.It CDis
+Caching disabled on this page.
+.It Acc
+Page was accessed.
+.It Dirty
+Page was modified.
+.El
+.Pp
+If the
+.Fl D
+flag was given then entries not marked as valid are displayed and
+decoded; otherwise only pages marked valid are displayed.
+.Sh VIRTUAL TO PHYSICAL DUMP
+The
+.Fl v
+flag generates a listing of all physical pages mapped to the given virtual
+address. By default mappings in any process are found, however if the
+.Fl i
+flag is given the output is restricted to a single process.
+.Pp
+.Bd -literal
+kes# ./pmap -v 0x3030
+Paddr      Pid Command
+======== ===== ==============
+025e9030    52 gettyd               P    User             Acc      
+01b98030    79 syslogd              P    User             Acc      
+01d7c030    86 named                P    User             Acc      
+01ebc030    89 mountd               P    User             Acc      
+02db4030   136 cron                 P    User             Acc      
+0375e030   173 amd                  P    User             Acc      
+03d5c030   181 squid                P    User             Acc      
+[...]
+.Ed
+The example above shows physical addresses mapped to virtual address 0x3030.
+Note that it is not possible to request mappings to virtual address zero,
+to see all mappings to virtual page 0 ask for mappings on byte 1 (or any other
+byte in page 0).
+.Sh PHYSICAL TO VIRTUAL DUMP
+The
+.Fl p
+flag generates a listing of all virtual addresses mapped to a given physical
+address. 
+By default mappings from any process are found, however if the
+.Fl i
+flag is given the output is restricted to a single process.
+.Pp
+.Bd -literal
+kes# ./pmap -p 0x03526030
+Vaddr      Pid Command
+======== ===== ==============
+00003030   190 smbd                 P    User             Acc      
+00003030 14934 smbd                 P    User             Acc      
+.Ed
+.Pp
+This example shows all mappings to physical address 0x3526030. In this
+case there are two smbd processes (one is no doubt a child of the
+other and has not modified this page since forking).
+.Pp
+If the
+.Fl V
+flag is given some additional detail is printed given ptd and ptp indices.
+.Sh SEARCHING
+There are two search modes: string and binary. The string mode allows
+searching for a character string of any reasonable length (upper limit
+is 256 bytes). Any characters that can be passed in from the shell (on
+the command line) can be searched for, however a NULL will always terminate
+the string (and will not take part in the search).
+.Pp
+The binary mode allows a search for a 4 byte
+numeric value from
+ and allows any bits after the first 8 to be wildcarded (which allows
+searches for 1, 2, or 3 byte values). The numeric value given is
+searched for in little-endian order, the wildcard mask is also interpreted in
+little endian order; thus search for 0x12345678 will look for the sequence
+of bytes 0x78 0x56 0x34 0x12 (in order of ascending addresses).
+.Pp
+Bits
+set to zero in the mask are ignored except for the low order 8 which are
+always significant. Searching for 0x1234 with a mask of 0xffff will
+scan for a 0x1234 written to memory as a little endian short. To look for
+a 4 byte value with 0xaa as the first byte (lowest address) and 0xbb as
+the last byte (highest address) search for 0xbb0000aa with a mask of
+0xff0000ff.
+.Pp
+When matches are found during a search a small hex dump of the general
+area of the match (64 bytes starting at nearest 64 byte boundary below
+the match) is printed along with the match address. In addition, the first
+time a new physical page is the target of a match all virtual mappings
+to that page are displayed (as with the
+.Fl p
+flag).
+.Pp
+If searching a character device (such as
+.Pa /dev/mem
+), the total memory size must be specified with the
+.Fl S
+flag.
+.Bd -literal
+kes# pmap -s "hello there" -S 64
+Finding "hello there" (64 Mb)
+
+=========> 00385d8b
+  00385d80: 2e 2f 70 6d 61 70 20 2d   73 20 22 68 65 6c 6c 6f  ./pmap - s "hello
+  00385d90: 20 74 68 65 72 65 22 20   2d 53 20 36 34 20 3e 20   there"  -S 64 >
+  00385da0: 2f 74 6d 70 2f 78 78 00   00 00 00 00 00 00 00 00  /tmp/xx_ ________
+  00385db0: 00 00 00 00 00 00 00 00   00 00 00 00 00 00 00 00  ________ ________
+
+Virtual mappings to phys addr 00385d8b:
+
+Vaddr      Pid Command
+======== ===== ==============
+00097d8b  4878 xterm_color          P Wr User             Acc Dirty
+
+[...]
+.Ed
+.Pp
+The above shows the first hit for the string "hello there", in this case
+it was found in a memory page of the xterm I was using to type the
+command in (there were many other hits as well).
+.Pp
+To find all reference to the kernel routine 'exp_intr' one might:
+.Bd -literal
+kes# nm -g /bsd | grep exp_intr
+f00b76b0 T _exp_intr
+kes# ./pmap -l 0xf00b76b0 -S 64
+Finding f00b76b0 (mask=ffffffff) (64 Mb)
+
+=========> 00118f01
+  00118f00: 30 b0 76 0b f0 89 5b 34   6a 03 8d 43 30 50 8b 55  0_v___[4 j__C0P_U
+  00118f10: 10 ff 72 04 e8 6f 35 ff   ff c7 83 4c 01 00 00 2c  __r__o5_ ___L___,
+  00118f20: 73 0b f0 89 9b 50 01 00   00 6a 00 8d 83 4c 01 00  s____P__ _j___L__
+  00118f30: 00 50 e8 95 22 f6 ff 83   c4 24 6a 01 6a 02 68 00  _P__"___ _$j_j_h_
+
+Virtual mappings to phys addr 00118f01:
+
+Vaddr      Pid Command
+======== ===== ==============
+f00b6f01     0 swapper              P Wr                  Acc
+f00b6f01     1 init                 P Wr                  Acc
+f00b6f01     2 pagedaemon           P Wr                  Acc
+[...]
+.Ed
+.Pp
+There will be a translation for each process when addresses in kernel
+space are found.
+.Pp
+It is fairly common to find data in pages that are not mapped anywhere
+(these can be the result of programs that terminated for instance).
+.Pp
+The search process does not find values that span 128K boundaries; since
+physical memory is being searched this is typically not a problem.
+.Sh NOTES
+Small shared programs run with a valid page mapped at virtual address 0,
+this is normal and implies that while one of these is running the kernel
+will not detect reads from the NULL pointer.
+.Pp
+The 4M chunk of virtual memory (for all processes)
+running from 0xefc00000 through 0xefffffff sparsely maps the
+page tables for the current process. The first entry in this range
+corresponds to the page table page entry mapping virtual address 0 for
+the current process, the mapping for any address in the current process
+can be found by shifting the virtual address right 12 bits (to get a
+linear page address) and then (word) indexing into this 4M region. Since
+this area is sparse it is normal to find areas that do not have pages
+backing them. This area is mapped by PTD entry 0x3bf, this PTD entry
+points at the PTD itself (which then gets interpreted as a page table page
+instead of the directory): this trick generates the 4M region (and saves
+a page table page as a bonus).
+.Pp
+There is another region of virtual memory that works in a manner similar
+to the above region, this region is mapped at 0xff800000 through 0xffc00000.
+This region is mapped by the PTD entry at 0x3fe and points at a PTD to
+generate the virtual 4M linear array of page table page entries; this area
+(called the alternate page table directory) points at the page directory
+of another process. It is used by the VM code to access the page tables
+of other processes (if the page tables for every other process were
+mapped into kernel virtual space simultaneously it would be fairly easy
+to run out of kernel virtual space). The code that uses this area just
+pokes PTD entry 0x3fe as needed and does not invalidate it when done, thus
+sometimes irrational or transitory mappings are detected by pmap in this
+address range - these may be mappings that result from pointing the
+APTD region at a random page of data. The
+.Fl b
+flag may sometimes detect these mappings as being in error - this can safely
+be ignored.
+.Pp
+One should use caution searching a live system as the ISA I/O hole is searched
+and this may cause trouble with some devices.
+
+.Sh "FILES
+.Bl -tag -width /dev/kmem -compact
+.It Pa /bsd
+Default kernel namelist.
+.It Pa /dev/kmem
+Default memory file.
+.El
+.Sh "SEE ALSO
+.Xr gdb 1

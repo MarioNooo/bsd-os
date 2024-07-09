@@ -1,0 +1,71 @@
+Software Package:       
+	OpenSSH -- Secure Shell client, server, and support programs
+
+Release/Version:
+	openssh 3.7p1 + buffer.c and channels.c fixes
+
+Retrieved from:
+	http://www.openssh.org/portable.html (not the OpenBSD version)
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and to openssh-unix-dev@mindrot.org.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to call Makefile for our configuration
+
+Index: openbsd-compat/mktemp.c
+===================================================================
+RCS file: /master/core_contrib/openssh/openbsd-compat/mktemp.c,v
+retrieving revision 1.5
+diff -c -r1.5 mktemp.c
+*** openbsd-compat/mktemp.c	16 Sep 2003 17:30:32 -0000	1.5
+--- openbsd-compat/mktemp.c	17 Sep 2003 22:18:50 -0000
+***************
+*** 55,60 ****
+--- 55,61 ----
+  	return (_gettemp(path, &fd, 0, slen) ? fd : -1);
+  }
+  
++ #ifndef __bsdi__
+  int
+  mkstemp(path)
+  	char *path;
+***************
+*** 63,68 ****
+--- 64,70 ----
+  
+  	return (_gettemp(path, &fd, 0, 0) ? fd : -1);
+  }
++ #endif
+  
+  char *
+  mkdtemp(path)
+Index: configure
+===================================================================
+RCS file: /master/core_contrib/openssh/configure,v
+retrieving revision 1.9
+diff -c -r1.9 configure
+*** configure	16 Sep 2003 17:30:18 -0000	1.9
+--- configure	17 Sep 2003 22:38:56 -0000
+***************
+*** 14586,14592 ****
+  cat conftest.$ac_ext >&5
+   echo "$as_me:14587: result: no" >&5
+  echo "${ECHO_T}no" >&6
+!                                          K5LIBS="-lkrb5 -lk5crypto -lcom_err"
+  
+  fi
+  rm -f conftest.$ac_objext conftest.$ac_ext
+--- 14586,14592 ----
+  cat conftest.$ac_ext >&5
+   echo "$as_me:14587: result: no" >&5
+  echo "${ECHO_T}no" >&6
+!                                          K5LIBS="-lkrb5 -lk5crypto -lcom_err -lprofile"
+  
+  fi
+  rm -f conftest.$ac_objext conftest.$ac_ext

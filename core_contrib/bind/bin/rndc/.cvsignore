@@ -1,0 +1,7 @@
+Makefile
+rndc
+rndc-confgen
+.libs
+rndc.lo
+util.lo
+rndc-confgen.lo

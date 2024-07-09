@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> IFHP-HOWTO: Debugging and Problem Solving</TITLE>
+ <LINK HREF="IFHP-HOWTO-11.html" REL=next>
+ <LINK HREF="IFHP-HOWTO-9.html" REL=previous>
+ <LINK HREF="IFHP-HOWTO.html#toc10" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="IFHP-HOWTO-11.html">Next</A>
+<A HREF="IFHP-HOWTO-9.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc10">Contents</A>
+<HR>
+<H2><A NAME="s10">10. Debugging and Problem Solving</A></H2>
+
+<P>If you are reading this section,
+then most likely you have had a problem using <CODE>ifhp</CODE> with LPRng.
+Before going any further,
+please read 
+<A HREF="IFHP-HOWTO-3.html#rfc1179pc">RFC1179 (BSD or TCP/IP) Job Transfer Printcap Entry</A>,
+and make sure that your printcap entry has the
+<CODE>lpd_bounce</CODE> flag set.
+This is the <I>Most Frequently Asked Question</I> and the
+<I>Most Frequently Provided Answer</I> on the LPRng mailing list.
+<P>The following section outlines a method to debug problems with the
+<CODE>ifhp</CODE> filter.
+It will make use of some <CODE>diagnostic</CODE> options that are normally
+not used in a printcap entry.
+First,
+let us start with a typical printcap entry and a problem.
+<BLOCKQUOTE><CODE>
+<PRE>
+lw4:
+  :lp=10.0.0.14%9100
+  :sd=/var/spool/lpd/%P
+  :ifhp=/usr/local/lib/filters/ifhp
+
+Command:
+  lpr -Plw4 -V /etc/motd
+
+LPR output:
+
+sending job 'papowell@h4+223' to lw4@localhost
+connecting to 'localhost', attempt 1
+connected to 'localhost'
+requesting printer lw4@localhost
+sending control file 'cfA223h4.private' to lw4@localhost
+completed sending 'cfA223h4.private' to lw4@localhost
+sending data file 'dfA223h4.private' to lw4@localhost
+completed sending 'dfA223h4.private' to lw4@localhost
+done job 'papowell@h4+223' transfer to lw4@localhost
+Version LPRng-3.6.14
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>When trying to print to the print queue,
+the user discovers that no output comes out of the printer.
+The immediate suspicion is that the filter is not working.
+You should make sure that the <CODE>lpr</CODE> command is actually sending
+the job to the print queue.
+You can then use <CODE>lpq</CODE> to discover what happened:
+<BLOCKQUOTE><CODE>
+<PRE>
+# lpq -llll
+Printer: lw4@h4  'Hp : Laserwriter'
+ Queue: no printable jobs in queue
+ Status: subserver pid 27251 starting at 15:34:09.350
+ Status: accounting at start at 15:34:09.357
+ Status: opening device 'h14.private%9100' at 15:34:09.366
+ Status: printing job 'root@h4+223' at 15:34:09.375
+ Status: printing data file 'dfA223h4.private', size 3, IF filter 'ifhp' at 15:34:09.376
+ Status: IF filter finished at 15:34:35.012
+ Status: printing done 'root@h4+223' at 15:34:35.012
+ Status: accounting at end at 15:34:35.014
+ Status: finished 'root@h4+223', status 'JSUCC' at 15:34:35.014
+ Status: subserver pid 27251 exit status 'JSUCC' at 15:34:35.018
+ Status: lw4@h4.private: job 'root@h4+223' printed at 15:34:35.020
+ Status: job 'root@h4+223' removed at 15:34:35.101
+ Filter_status: accounting at start, pagecount 89696, pages 0 at 15:34:13.304
+ Filter_status: sending job file at 15:34:13.306
+ Filter_status: starting transfer at 15:34:13.306
+ Filter_status: initial job type 'text' at 15:34:13.306
+ Filter_status: job type 'pcl' at 15:34:13.306
+ Filter_status: transferring 3 bytes at 15:34:13.308
+ Filter_status: 100 percent done at 15:34:13.308
+ Filter_status: finished writing file, cleaning up at 15:34:13.308
+ Filter_status: sent job file at 15:34:13.308
+ Filter_status: doing cleanup at 15:34:13.308
+ Filter_status: getting end using 'pjl job/eoj' at 15:34:13.309
+ Filter_status: end of job detected at 15:34:33.219
+ Filter_status: getting pagecount using 'pjl info pagecount' at 15:34:33.219
+ Filter_status: final pagecount 89697 at 15:34:35.009
+ Filter_status: accounting at end, pagecount 89697, pages 1 at 15:34:35.010
+ Filter_status: done at 15:34:35.010
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>As you can see from the <CODE>lpq</CODE> output,
+the <CODE>Status</CODE> section shows what <CODE>lpd</CODE> is doing,
+and the <CODE>Filter_status</CODE> section shows what <CODE>ifhp</CODE>
+is doing.
+This is the first line of defence - make sure that the information
+and errors reported here are for the correct filter.
+<P>If this does not help,
+then we will start with the basic filter tests and work our way
+<I>back</I> to the print server.
+First,  you will need a couple of test files.
+If you have a PostScript printer,
+find a simple PostScript file - the <CODE>ellipse.ps</CODE>
+file is included in the <CODE>ifhp</CODE> distribution in the
+<CODE>testscripts</CODE> directory.
+You will also need a short text file - <CODE>/etc/motd</CODE>
+is usually handy to use.
+<P>Create the <CODE>/tmp/send</CODE> file with the following contents:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+cp /dev/null /tmp/t
+/usr/local/libexec/filters/ifhp -Tdev=/tmp/t,trace,debug=1 &lt;/etc/motd 2&gt;/tmp/trace
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This will create the <CODE>/tmp/t</CODE> file,
+run the <CODE>ifhp</CODE> filter,
+and put the trace and debugging information into the <CODE>/tmp/trace</CODE>
+file.
+Run this command using:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+sh -x /tmp/send
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Examine the output in <CODE>/tmp/trace</CODE>.
+It will look like:
+<BLOCKQUOTE><CODE>
+<PRE>
+ifhp 15:46:14.402 [27307] main: Debug '1'
+ifhp 15:46:14.403 [27307] main: dump &lt;NULL>
+ifhp 15:46:14.403 [27307] main: Model_id '&lt;NULL>'
+ifhp 15:46:14.440 [27307] main: scanning Raw for default, then model '&lt;NULL>'
+ifhp 15:46:14.441 [27307] Select_model_info: id 'default', list->count 1940, model->count 0, init 0
+ifhp 15:46:14.448 [27307] Dump_line_list: main: Model information - count 156, max 204, list 0x806e000
+ifhp 15:46:14.448 [27307]   [ 0]='T=dev=/tmp/g,trace,debug=1'
+ifhp 15:46:14.448 [27307]   [ 1]='banner@'
+ifhp 15:46:14.448 [27307]   [ 2]='banner_file=/usr/local/libexec/filters/psbanner.ps'
+ifhp 15:46:14.448 [27307]   [ 3]='converter='
+ifhp 15:46:14.448 [27307]   [ 4]='debug=1'
+ifhp 15:46:14.449 [27307]   [ 5]='default_language=text'
+ifhp 15:46:14.449 [27307]   [ 6]='dev=/tmp/g'
+ifhp 15:46:14.449 [27307]   [ 7]='duplex_select=1'
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Most of the information with debug level 1 is simply showing the details of
+options,
+command execution, and error status.
+This will,
+however,
+help with the majority of problems.
+<P>You can now modify the <CODE>/tmp/send</CODE> file to better reflect your
+printer.
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+cp /dev/null /tmp/t
+# substitute your ifhp options here
+ifhp=model=hp4,status@
+/usr/local/libexec/filters/ifhp -Tdev=/tmp/t,trace,debug=1,${ifhp} &lt;/etc/motd 2&gt;/tmp/trace
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Now run this again and examine the trace and output in <CODE>/tmp/t</CODE>.
+If this looks correct,
+we move on to the interactive tests.
+<P>If your printer is a network based printer and you are using RFC1179 transfers,
+then you can use the following <CODE>lpr</CODE> command to
+send the <CODE>/tmp/t</CODE> file
+directly to the printer:
+<BLOCKQUOTE><CODE>
+<PRE>
+  lpr -Ppr@host /tmp/t
+Example: 
+  print queue 'raw'
+
+  lpr -Praw@10.1.1.1 /tmp/t
+</PRE>
+</CODE></BLOCKQUOTE>
+<P> This form of the command causes <CODE>lpr</CODE> to send the job directly
+to the printer.
+If this works correctly then we know that there is no problem with <CODE>ifhp</CODE>
+formatting the file,
+and that the problem must be with the <CODE>lpd</CODE> print spooler.
+<P>If your printer is network based and uses a socket connection,
+then you can have <CODE>ifhp</CODE> connect to the printer by using the <CODE>dev=host%port</CODE>
+connection option.
+This is only used for testing or when you want to use the AppSocket protocol.
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# substitute your ifhp options here
+#  this should always work
+#ifhp=model=hp4,status@
+#  this does status checking, no pagecount
+#ifhp=model=hp4,pagecount@
+#  this does status checking and pagecount
+#ifhp=model=hp4
+/usr/local/libexec/filters/ifhp -Tdev=10.1.1.1%9100,trace,debug=1,${ifhp} &lt;/etc/motd 2&gt;/tmp/trace
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you have a windowing system, run this command from one window and
+in another window use the <CODE>tail -f /tmp/trace</CODE> command to view status.
+Most of the time you will discover that the system is failing to print
+because either the
+<CODE>sync</CODE>,
+<CODE>pagecount</CODE>,
+or
+<CODE>waitidle</CODE>
+step of the printing process is not completing correctly.
+If there is insufficient detail for you to decide  the failure mechanism,
+set <CODE>debug=3</CODE>, or even <CODE>debug=4</CODE> and explore what is happening.
+<P>If you have a parallel port connected printer on <CODE>/dev/lptxx</CODE>,
+then you can simply use <CODE>cat /tmp/t /dev/lptxx</CODE> and see what happens.
+If this works, then use:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# substitute your ifhp options here
+ifhp=model=hp4,status@
+/usr/local/libexec/filters/ifhp -Tdev=/dev/lptxxx,trace,debug=1,${ifhp} &lt;/etc/motd 2&gt;/tmp/trace
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If you have a serial port printer,
+then you can use a similar method for setting up a connection.
+You will need to use the undocumented <CODE>stty</CODE> option to set the speed and
+other parameters.
+These are identical to those used by LPRng, so you should have no problems.
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+# substitute your ifhp options here
+#  this should always work
+#ifhp=model=hp4,status@
+#  this does status checking, no pagecount
+#ifhp=model=hp4,pagecount@
+#  this does status checking and pagecount
+#ifhp="model=hp4,stty= 9600 -parity crtscts raw"
+stty="9600 -parity crtscts raw"
+/usr/local/libexec/filters/ifhp -Tdev=/dev/tty00,trace,debug=1,${ifhp},stty=\"${stty}\" &lt;/etc/motd 2&gt;/tmp/trace
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If all this does not help,
+then subscribe to the <CODE>LPRng</CODE> mailing list and ask for help.
+<P>
+<HR>
+<A HREF="IFHP-HOWTO-11.html">Next</A>
+<A HREF="IFHP-HOWTO-9.html">Previous</A>
+<A HREF="IFHP-HOWTO.html#toc10">Contents</A>
+</BODY>
+</HTML>

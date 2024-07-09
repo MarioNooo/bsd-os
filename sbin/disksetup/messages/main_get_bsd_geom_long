@@ -1,0 +1,4 @@
+The geometry (number of heads, sectors per track and number of
+cylinders) of the disk that will be used by BSD/OS must be known in
+order to properly create a disk label.
+

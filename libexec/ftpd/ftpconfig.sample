@@ -1,0 +1,87 @@
+#
+# This file contains the default settings for the various configuration
+# options.
+#
+
+#
+# Please see the bottom of this file for adding virtual hosts
+#
+
+#
+# Set the flags for normal users.
+# We will reset the guest flags below.
+#
+AllowAnonymous		On		# Allow anonymous ftp
+AnonymousOnly		Off		# Allow non-anonymous ftp
+BuiltinLS		On		# Use the builtin versoin of ls
+Debug			Off		# Do not have debugging turned on
+ExtraLogging		Off		# Do not log the commands
+KeepAlive		Off		# Eventually timeout dead sessions 
+Logging			Off		# Do not log login attempts
+Proxy			On		# Enable third party transfers
+RestrictedDataPorts	On		# Allow any data port
+Stats			Off		# Keep track of all transfers
+UseHighPorts		On		# Use high numbers ports
+UseRFC931		Off		# Try to ident the user
+VirtualOnly		Off		# Allow non-virtual hosts
+
+AnonymousDir		/var/spool/ftp
+AnonymousUser		ftp
+BannedUserList		/etc/ftpd/banned
+ChrootUserList		/etc/ftpd/chroot
+# GroupFile		/etc/ftpd/group
+LogFormat		%{time} %{duration} %{remote} %{size} %{path} %{type} %{action} %{direction} %{session} %{user} %{authtype} %{authuser}"
+# LoginMessage		/etc/ftpd/motd
+MessageFile		.message	# Display .message files
+MaxTimeout		7200
+# PermittedUserList	/etc/ftpd/permitted
+# ServerName
+StatFile		/var/log/ftpd/xferlog
+Timeout			900
+Umask			027
+WelcomeMessage		/etc/ftpd/welcome
+
+#
+# Guest settings and restrictions
+#
+<Guest>
+    APPE		Off		# Do not allow appends
+    RNFR		Off		# Do not allow rename
+    RNTO		Off		# Do not allow rename
+    DELE		Off		# Do not allow deletes
+    MKD			Off		# Do not allow directory creation
+    XMKD		Off		# Do not allow directory creation
+    RMD			Off		# Do not allow directory removal
+    XRMD		Off		# Do not allow directory removal
+
+    SITE-UMASK		Off		# Do not allow the umask to be changed
+    SITE-IDLE		Off		# Do not allow idle time to be changed
+    SITE-CHMOD		Off		# Do not allow chmods
+
+    Proxy		Off		# Do not allow third party transfers
+
+    # Limit incoming files to the incoming directory.
+    # Make any received file owned by root.wheel mode rw-------
+
+    # Incoming		/incoming root wheel 600
+
+    # Only allow alphanumeric, '.', '_', and '-' in filenames to be stored
+    # Do not allow filesnames to start with '.' or '-'.
+    # PathFilter	^[A-Za-z0-9_][-A-Za-z0-9._]*$
+</Guest>
+
+# For each virtual host you should add an entry similar to:
+#
+# <VirtualHost ftp.mycompany.com>
+#   AnonymousDir	/var/spool/ftp.mycompany.com
+#   StatFile		/var/log/ftpd/xferlog-ftp.mycompany.com
+#   <Guest>
+#	MKD		On		# We allow subdirs
+#	Incoming	/incoming root wheel 600	# no subdirs here
+#	Incoming	/support root wheel 600 733	# subdirs allowed
+#	MaxUsers	50		# Only allow 50 guest sessions
+#   </Guest>
+# </VirtualHost>
+#
+# You need to create the appropriate directories and reset any parameters
+# you wish to have changed for this virtual host.

@@ -1,0 +1,23 @@
+#
+# Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.equinox,v 1.2 1995/12/07 21:33:40 cp Exp
+#
+
+echo -n " equinox"
+
+[ ! -c /dev/eqnx ] || [ ! -c /dev/eqn ] && {
+	rm -f /dev/eqnx /dev/eqn
+	mknod /dev/eqnx c 31 0 0
+	ln /dev/eqnx /dev/eqn
+	chmod u=rw,go=r /dev/eqnx
+}
+
+[ ! -d /var/db/equinox ] && {
+	rm -f /var/db/equinox
+	mkdir /var/db/equinox
+	chmod u=rwx,go=rx /var/db/equinox
+}
+ssmkn

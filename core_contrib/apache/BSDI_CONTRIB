@@ -1,0 +1,568 @@
+Software Package:
+	apache
+
+Release/Version:
+	1.3.26
+
+Retrieved from:
+	ftp://www.apache.org/apache/dist/
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and the Apache Project at either apache-bugs@apache.org
+	or via the web at http://www.apache.org/bug_report
+
+Comments:
+	Included previous icons for compatibility with older
+	configuration files.  Added BSDI specific files.
+
+	Source changes were made to fit into the BSD/OS environment
+	(pathnames, etc).  mod_auth_syspw.c was written at BSDI
+	for the AdminWEB server and was contributed to the Apache
+	project.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+NOTE FOR SSL:
+	After updating and merging the other changes for the new 
+	version, you have to (potentially after updating mod_ssl)
+	go to the mod_ssl directory and run:
+		./configure --with-eapi-only --with-apache=<apache_src_path>
+	and then add the files it adds and commit the additional EAPI 
+	changes in the apache sources.
+
+diff -c -r ./Makefile.tmpl ../apache/Makefile.tmpl
+*** ./Makefile.tmpl	Fri Aug 13 00:58:18 1999
+--- ../apache/Makefile.tmpl	Tue Sep 28 13:12:12 1999
+***************
+*** 462,469 ****
+  		done; \
+  	fi
+  	@echo "Copying tree $(TOP)/icons/ -> $(root)$(iconsdir)/"; \
+! 	(cd $(TOP)/icons/ && $(TAR) $(TAROPT) - *) |\
+! 	(cd $(root)$(iconsdir)/ && $(TAR) -xf -); \
+  	find $(root)$(iconsdir)/ -type d -exec chmod a+rx {} \; ;\
+  	find $(root)$(iconsdir)/ -type f -exec chmod a+r {} \;
+  	@echo "<=== [data]"
+--- 462,469 ----
+  		done; \
+  	fi
+  	@echo "Copying tree $(TOP)/icons/ -> $(root)$(iconsdir)/"; \
+! 	(cd $(TOP)/icons/ && pax -r -w -s ";.*/CVS$$;;" -s ";.*/CVS/.*;;" . \
+! 		$(root)$(iconsdir)/); \
+  	find $(root)$(iconsdir)/ -type d -exec chmod a+rx {} \; ;\
+  	find $(root)$(iconsdir)/ -type f -exec chmod a+r {} \;
+  	@echo "<=== [data]"
+
+*** conf/httpd.conf-dist.orig	Tue Mar  5 10:19:12 2002
+--- conf/httpd.conf-dist	Tue Jun 18 17:20:41 2002
+***************
+*** 73,79 ****
+  # PidFile: The file in which the server should record its process
+  # identification number when it starts.
+  #
+! PidFile logs/httpd.pid
+  
+  #
+  # ScoreBoardFile: File used to store internal server process information.
+--- 73,79 ----
+  # PidFile: The file in which the server should record its process
+  # identification number when it starts.
+  #
+! PidFile /var/run/httpd.pid
+  
+  #
+  # ScoreBoardFile: File used to store internal server process information.
+***************
+*** 81,87 ****
+  # this file will be  created when you run Apache) then you *must* ensure that
+  # no two invocations of Apache share the same scoreboard file.
+  #
+! ScoreBoardFile logs/apache_runtime_status
+  
+  #
+  # In the standard configuration, the server will process httpd.conf (this 
+--- 81,87 ----
+  # this file will be  created when you run Apache) then you *must* ensure that
+  # no two invocations of Apache share the same scoreboard file.
+  #
+! ScoreBoardFile /var/run/apache_runtime_status
+  
+  #
+  # In the standard configuration, the server will process httpd.conf (this 
+***************
+*** 98,104 ****
+  #
+  # Timeout: The number of seconds before receives and sends time out.
+  #
+! Timeout 300
+  
+  #
+  # KeepAlive: Whether or not to allow persistent connections (more than
+--- 98,104 ----
+  #
+  # Timeout: The number of seconds before receives and sends time out.
+  #
+! Timeout 600
+  
+  #
+  # KeepAlive: Whether or not to allow persistent connections (more than
+***************
+*** 132,145 ****
+  # a new spare.  If there are more than MaxSpareServers, some of the
+  # spares die off.  The default values are probably OK for most sites.
+  #
+! MinSpareServers 5
+! MaxSpareServers 10
+  
+  #
+  # Number of servers to start initially --- should be a reasonable ballpark
+  # figure.
+  #
+! StartServers 5
+  
+  #
+  # Limit on total number of servers running, i.e., limit on the number
+--- 132,145 ----
+  # a new spare.  If there are more than MaxSpareServers, some of the
+  # spares die off.  The default values are probably OK for most sites.
+  #
+! MinSpareServers 2
+! MaxSpareServers 5
+  
+  #
+  # Number of servers to start initially --- should be a reasonable ballpark
+  # figure.
+  #
+! StartServers 2
+  
+  #
+  # Limit on total number of servers running, i.e., limit on the number
+***************
+*** 148,154 ****
+  # It is intended mainly as a brake to keep a runaway server from taking
+  # the system with it as it spirals down...
+  #
+! MaxClients 150
+  
+  #
+  # MaxRequestsPerChild: the number of requests each child process is
+--- 148,154 ----
+  # It is intended mainly as a brake to keep a runaway server from taking
+  # the system with it as it spirals down...
+  #
+! MaxClients 32
+  
+  #
+  # MaxRequestsPerChild: the number of requests each child process is
+***************
+*** 164,170 ****
+  #       an initial request and 10 subsequent "keptalive" requests, it
+  #       would only count as 1 request towards this limit.
+  #
+! MaxRequestsPerChild 0
+  
+  #
+  # Listen: Allows you to bind Apache to specific IP addresses and/or
+--- 164,170 ----
+  #       an initial request and 10 subsequent "keptalive" requests, it
+  #       would only count as 1 request towards this limit.
+  #
+! MaxRequestsPerChild 4096
+  
+  #
+  # Listen: Allows you to bind Apache to specific IP addresses and/or
+***************
+*** 243,257 ****
+  #  when the value of (unsigned)Group is above 60000; 
+  #  don't use Group "#-1" on these systems!
+  #
+! User nobody
+! Group "#-1"
+  
+  #
+  # ServerAdmin: Your address, where problems with the server should be
+  # e-mailed.  This address appears on some server-generated pages, such
+  # as error documents.
+  #
+! ServerAdmin you@your.address
+  
+  #
+  # ServerName allows you to set a host name which is sent back to clients for
+--- 243,257 ----
+  #  when the value of (unsigned)Group is above 60000; 
+  #  don't use Group "#-1" on these systems!
+  #
+! User www
+! Group www
+  
+  #
+  # ServerAdmin: Your address, where problems with the server should be
+  # e-mailed.  This address appears on some server-generated pages, such
+  # as error documents.
+  #
+! ServerAdmin webmaster
+  
+  #
+  # ServerName allows you to set a host name which is sent back to clients for
+***************
+*** 276,282 ****
+  # documents. By default, all requests are taken from this directory, but
+  # symbolic links and aliases may be used to point to other locations.
+  #
+! DocumentRoot "@@ServerRoot@@/htdocs"
+  
+  #
+  # Each directory to which Apache has access, can be configured with respect
+--- 276,282 ----
+  # documents. By default, all requests are taken from this directory, but
+  # symbolic links and aliases may be used to point to other locations.
+  #
+! DocumentRoot "@@ServerRoot@@/docs"
+  
+  #
+  # Each directory to which Apache has access, can be configured with respect
+***************
+*** 301,307 ****
+  #
+  # This should be changed to whatever you set DocumentRoot to.
+  #
+! <Directory "@@ServerRoot@@/htdocs">
+  
+  #
+  # This may also be "None", "All", or any combination of "Indexes",
+--- 301,307 ----
+  #
+  # This should be changed to whatever you set DocumentRoot to.
+  #
+! <Directory "@@ServerRoot@@/docs">
+  
+  #
+  # This may also be "None", "All", or any combination of "Indexes",
+***************
+*** 356,362 ****
+  # directory index.  Separate multiple entries with spaces.
+  #
+  <IfModule mod_dir.c>
+!     DirectoryIndex index.html
+  </IfModule>
+  
+  #
+--- 356,362 ----
+  # directory index.  Separate multiple entries with spaces.
+  #
+  <IfModule mod_dir.c>
+!     DirectoryIndex index.html index
+  </IfModule>
+  
+  #
+***************
+*** 451,457 ****
+  # logged here.  If you *do* define an error logfile for a <VirtualHost>
+  # container, that host's errors will be logged there and not here.
+  #
+! ErrorLog logs/error_log
+  
+  #
+  # LogLevel: Control the number of messages logged to the error_log.
+--- 451,457 ----
+  # logged here.  If you *do* define an error logfile for a <VirtualHost>
+  # container, that host's errors will be logged there and not here.
+  #
+! ErrorLog /var/log/httpd/error_log
+  
+  #
+  # LogLevel: Control the number of messages logged to the error_log.
+***************
+*** 476,482 ****
+  # define per-<VirtualHost> access logfiles, transactions will be
+  # logged therein and *not* in this file.
+  #
+! CustomLog logs/access_log common
+  
+  #
+  # If you would like to have agent and referer logfiles, uncomment the
+--- 476,482 ----
+  # define per-<VirtualHost> access logfiles, transactions will be
+  # logged therein and *not* in this file.
+  #
+! CustomLog /var/log/httpd/access_log common
+  
+  #
+  # If you would like to have agent and referer logfiles, uncomment the
+***************
+*** 582,587 ****
+--- 582,596 ----
+  </IfModule>
+  # End of aliases.
+  
++ # Enable the HTTP server side of the squid management interface.  By
++ # default access is limited to browsers running on the local machine.
++ # See the <Location squid-status> section in access.conf to change this.
++ # Squid also imposes restrictions on where it will accept management
++ # connections from, by default they must come from an HTTP server running
++ # on the same machine as squid.  See /var/www/conf/squid.conf to change
++ # this.
++ ScriptAlias /squid-status /var/www/squid/bin/cachemgr.cgi
++ 
+  #
+  # Redirect allows you to tell clients about documents which used to exist in
+  # your server's namespace, but do not anymore. This allows you to tell the
+***************
+*** 673,678 ****
+--- 682,690 ----
+  </IfModule>
+  # End of indexing directives.
+  
++ # Allow Netscape browsers to use "Automatic Proxy Configuration"
++ AddType application/x-ns-proxy-autoconfig .pac
++ 
+  #
+  # Document types.
+  #
+***************
+*** 876,899 ****
+  # Allow server status reports, with the URL of http://servername/server-status
+  # Change the ".your-domain.com" to match your domain to enable.
+  #
+! #<Location /server-status>
+! #    SetHandler server-status
+! #    Order deny,allow
+! #    Deny from all
+! #    Allow from .your-domain.com
+! #</Location>
+  
+  #
+  # Allow remote server configuration reports, with the URL of
+  # http://servername/server-info (requires that mod_info.c be loaded).
+  # Change the ".your-domain.com" to match your domain to enable.
+  #
+! #<Location /server-info>
+! #    SetHandler server-info
+! #    Order deny,allow
+! #    Deny from all
+! #    Allow from .your-domain.com
+! #</Location>
+  
+  #
+  # There have been reports of people trying to abuse an old bug from pre-1.1
+--- 888,911 ----
+  # Allow server status reports, with the URL of http://servername/server-status
+  # Change the ".your-domain.com" to match your domain to enable.
+  #
+! <Location /server-status>
+!     SetHandler server-status
+!     Order deny,allow
+!     Deny from all
+!     Allow from 127.0.0.1
+! </Location>
+  
+  #
+  # Allow remote server configuration reports, with the URL of
+  # http://servername/server-info (requires that mod_info.c be loaded).
+  # Change the ".your-domain.com" to match your domain to enable.
+  #
+! <Location /server-info>
+!     SetHandler server-info
+!     Order deny,allow
+!     Deny from all
+!     Allow from 127.0.0.1
+! </Location>
+  
+  #
+  # There have been reports of people trying to abuse an old bug from pre-1.1
+***************
+*** 908,913 ****
+--- 920,938 ----
+  #</Location>
+  
+  #
++ # Allow squid status reports, with the URL of http://servername/squid-status
++ # Change the "127.0.0.1" to match your needs.  Squid also imposes
++ # restrictions on where it will accept management connections from.
++ # See /var/www/conf/squid.conf to change this.
++ #
++ <Location /squid-status>
++     Order deny,allow
++     Deny from all
++     Allow from 127.0.0.1
++ </Location>
++ 
++ #
++ # BSDI Note: See squid(8) for a proxy/cache.
+  # Proxy Server directives. Uncomment the following lines to
+  # enable the proxy server:
+  #
+diff -c -r ./src/modules/extra/Makefile.tmpl ../apache/src/modules/extra/Makefile.tmpl
+*** ./src/modules/extra/Makefile.tmpl	Sun May 10 07:04:33 1998
+--- ../apache/src/modules/extra/Makefile.tmpl	Tue Sep 28 10:22:18 1999
+***************
+*** 4,6 ****
+--- 4,9 ----
+  $(OBJS) $(OBJS_PIC): Makefile
+  
+  # DO NOT REMOVE
++ mod_auth_syspw.o: mod_auth_syspw.c $(INCDIR)/httpd.h \
++  $(INCDIR)/http_config.h $(INCDIR)/http_core.h \
++  $(INCDIR)/http_log.h $(INCDIR)/http_protocol.h
+diff -c -r ./src/support/Makefile.tmpl ../apache/src/support/Makefile.tmpl
+*** ./src/support/Makefile.tmpl	Tue Aug 10 08:37:18 1999
+--- ../apache/src/support/Makefile.tmpl	Tue Sep 28 10:20:30 1999
+***************
+*** 30,35 ****
+--- 30,36 ----
+  
+  apxs: apxs.pl
+  	sed <apxs.pl >apxs \
++ 	    -e 's%@PERL@%$(PERL)%g' \
+  	    -e 's%@TARGET@%$(TARGET)%g' \
+  	    -e 's%@CC@%$(CC)%g' \
+  	    -e 's%@CFLAGS@%$(CFLAGS)%g' \
+diff -c -r ./src/support/apachectl ../apache/src/support/apachectl
+*** ./src/support/apachectl	Tue Apr  6 14:36:33 1999
+--- ../apache/src/support/apachectl	Tue Sep 28 10:15:43 1999
+***************
+*** 75,80 ****
+--- 75,89 ----
+  	    ERROR=3
+  	fi
+  	;;
++     startq)
++ 	if [ $RUNNING -eq 1 ]; then
++ 	    continue
++ 	fi
++ 	if ! $HTTPD ; then
++ 	    echo "$0 $ARG: httpd could not be started"
++ 	    ERROR=3
++ 	fi
++ 	;;
+      stop)
+  	if [ $RUNNING -eq 0 ]; then
+  	    echo "$0 $ARG: $STATUS"
+diff -c -r ./src/support/apxs.pl ../apache/src/support/apxs.pl
+*** ./src/support/apxs.pl	Sat Jul 24 12:05:02 1999
+--- ../apache/src/support/apxs.pl	Tue Sep 28 10:15:51 1999
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  ## ====================================================================
+  ## Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
+  ##
+--- 1,4 ----
+! #!/usr/bin/perl
+  ## ====================================================================
+  ## Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
+  ##
+diff -c -r ./src/support/log_server_status ../apache/src/support/log_server_status
+*** ./src/support/log_server_status	Fri Jun  4 09:54:19 1999
+--- ../apache/src/support/log_server_status	Tue Sep 28 10:16:10 1999
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+--- 1,4 ----
+! #!/usr/bin/perl5
+  
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+diff -c -r ./src/support/phf_abuse_log.cgi ../apache/src/support/phf_abuse_log.cgi
+*** ./src/support/phf_abuse_log.cgi	Tue Oct  8 15:14:49 1996
+--- ../apache/src/support/phf_abuse_log.cgi	Tue Sep 28 10:16:24 1999
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  
+  # This script can be used to detect people trying to abuse the security hole which
+  # existed in A CGI script direstributed with Apache 1.0.3 and earlier versions.
+--- 1,4 ----
+! #!/usr/bin/perl5
+  
+  # This script can be used to detect people trying to abuse the security hole which
+  # existed in A CGI script direstributed with Apache 1.0.3 and earlier versions.
+diff -c -r ./src/support/split-logfile ../apache/src/support/split-logfile
+*** ./src/support/split-logfile	Fri Jan  1 12:05:35 1999
+--- ../apache/src/support/split-logfile	Tue Sep 28 10:17:00 1999
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  #
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+--- 1,4 ----
+! #!/usr/bin/perl5
+  #
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+
+*** logresolve.pl.orig	Thu Apr 27 16:35:29 2000
+--- logresolve.pl	Thu Apr 27 16:35:40 2000
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+--- 1,4 ----
+! #!/usr/bin/perl5
+  
+  # ====================================================================
+  # Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+*** dbmmanage.orig	Tue Jun 18 17:17:22 2002
+--- dbmmanage	Tue Jun 18 17:17:32 2002
+***************
+*** 1,4 ****
+! #!/usr/local/bin/perl
+  
+  # ====================================================================
+  # The Apache Software License, Version 1.1
+--- 1,4 ----
+! #!/usr/bin/perl5
+  
+  # ====================================================================
+  # The Apache Software License, Version 1.1
+Index: config.layout
+===================================================================
+RCS file: /master/core_contrib/apache/config.layout,v
+retrieving revision 1.5
+diff -c -r1.5 config.layout
+*** config.layout	2002/06/19 21:35:32	1.5
+--- config.layout	2002/06/20 21:45:41
+***************
+*** 202,217 ****
+  #   BSD/OS layout
+  <Layout BSDI>
+      prefix:        /var/www
+!     exec_prefix:   /usr/contrib
+      bindir:        $exec_prefix/bin
+!     sbindir:       $exec_prefix/bin
+!     libexecdir:    $exec_prefix/libexec/apache
+!     mandir:        $exec_prefix/man
+      sysconfdir:    $prefix/conf
+      datadir:       $prefix
+      iconsdir:      $datadir/icons
+      htdocsdir:     $datadir/htdocs
+!     manualdir:     $htdocsdir/manual
+      cgidir:        $datadir/cgi-bin
+      includedir:    $exec_prefix/include/apache
+      localstatedir: /var
+--- 202,217 ----
+  #   BSD/OS layout
+  <Layout BSDI>
+      prefix:        /var/www
+!     exec_prefix:   /usr
+      bindir:        $exec_prefix/bin
+!     sbindir:       $exec_prefix/sbin
+!     libexecdir:    $exec_prefix/lib/apache
+!     mandir:        $exec_prefix/share/man
+      sysconfdir:    $prefix/conf
+      datadir:       $prefix
+      iconsdir:      $datadir/icons
+      htdocsdir:     $datadir/htdocs
+!     manualdir:     $exec_prefix/share/doc/apache/manual
+      cgidir:        $datadir/cgi-bin
+      includedir:    $exec_prefix/include/apache
+      localstatedir: /var

@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: System Specific Notes</TITLE>
+ <LINK HREF="LPRng-HOWTO-4.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-2.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-4.html">Next</A>
+<A HREF="LPRng-HOWTO-2.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="sysdep"></A> <A NAME="s3">3. System Specific Notes</A></H2>
+
+<P>The following are a set of suggestions and recommendations for
+specific systems.
+<H2><A NAME="ss3.1">3.1 Solaris 2.4, 2.5, 2.6, 2.7, 2.8</A>
+</H2>
+
+<P>The Sun Solaris operating system is derived from the System V UNIX baseline.
+Please see the
+<A HREF="LPRng-HOWTO-2.html#solarisinstall">Solaris</A>
+installation information for a detailed description of how
+to install LPRng and remove the Solaris Print Services.
+<H2><A NAME="ss3.2">3.2 Linux</A>
+</H2>
+
+<P>As of March 17, 2000,
+there is no universal way to install LPRng cleanly on all of the different
+Linux systems.
+The major difficulty is the fragmentation in the various libraries,
+location of files,
+and so forth.
+<P>However,
+the good news is that most of the printcap files that are produced by the
+GUI interface tools are compatible with LPRng.
+The bad news is that the directory and file permissions that they generate
+are erroneous.
+<P>Here is an outline of how to install LPRng on most of the major LINUX systems.
+<OL>
+<LI>Check the LPRng web site
+<A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A>
+and see if there is a Linux Release specific version RPM or other distribution
+media for your version of Linux.
+If there is not,
+then you will have to do a source install.</LI>
+<LI>Obtain the source code and do a source code level install.
+I strongly recommend using the following configuration options
+which will match all the currently know Linux distribution configurations.
+<BLOCKQUOTE><CODE>
+<PRE>
+./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>After doing the <CODE>make install</CODE>,
+run <CODE>checkpc -f</CODE> and make sure that you eliminate the errors.</LI>
+<LI>If you have an existing printcap,
+then check to see if it has filter entries and modify them as shown
+below:
+<BLOCKQUOTE><CODE>
+<PRE>
+lp:\
+  :if=/usr/local/libexec/lpr/hplaserjet3:\
+  :bk:\      &lt;&lt;&lt;&lt; added to the printcap by hand
+  :...
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>Test the configuration and see if it works by sending a file to the queue.</LI>
+<LI>If this does not work,
+then you will have to determine if the problem is in the print spooling
+software or in the filter.
+See the section on <CODE>ifhp</CODE> for directions on how to replace the vendor
+supplied filters with <CODE>ifhp</CODE>.</LI>
+</OL>
+<H2><A NAME="ss3.3">3.3 AIX</A>
+</H2>
+
+<P>This information was supplied by
+<A HREF="mailto:nitschke@math.unihamburg.de">Dirk Nitschke</A>,
+as of August 1997,
+and describes how to install the LPRng package on a workstation
+running AIX 4.1.x and possibly 3.x.x as well.
+Dirk would be interested in any comments or corrections.
+<P>Printing on AIX systems is different. AIX provides a general
+queueing facility and printing is only one way to use it. You submit a
+print job to a print queue using one of the commands
+<CODE>qprt</CODE>, <CODE>enq</CODE>. You can use the BSD or
+System V printing commands <CODE>lpr</CODE> or <CODE>lp</CODE>, too. The
+qdaemon watches all (general) queues and knows how to handle your
+job. A (general) queue is defined in the file
+<CODE>/etc/qconfig</CODE>. The format of this file is different from
+the <CODE>printcap</CODE> format.
+<P>OK, how to replace the AIX printing system? There is no group
+<CODE>daemon</CODE> on AIX. Therefore you have to change the default
+group for file ownership and process permissions. We decided to use
+the <CODE>printq</CODE> group. The user <CODE>daemon</CODE> exists on
+AIX but we have chosen <CODE>lpd</CODE> as the user who runs
+<CODE>lpd</CODE> and all filters and owns the spooling directories.
+You can change the values for <CODE>group</CODE>
+and <CODE>user</CODE> in your
+<CODE>lpd.conf</CODE> file or in the sources
+<CODE>src/common/vars.c</CODE>. This is an example for
+<CODE>lpd.conf</CODE>:
+<BLOCKQUOTE><CODE>
+<PRE>
+# Purpose: group to run SUID ROOT programs
+#   default group=daemon
+group=printq
+# Purpose: server user for SUID purposes
+#   default user=daemon
+user=lpd
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Compile and install the LPRng package. Create your
+<CODE>printcap</CODE>, spooling directories, accounting and logfiles
+and so on.
+Don't forget to use
+<A HREF="LPRng-HOWTO-9.html#checkpc">checkpc</A> to make sure that all the
+permissions are set correctly and the necessary files
+are created.
+<P>Then stop all print queues defined on your workstation. Use
+<BLOCKQUOTE><CODE>
+<PRE>
+# chque -q queuename -a "up = FALSE"
+</PRE>
+</CODE></BLOCKQUOTE>
+
+for this (yes, blanks around <CODE>=</CODE> are needed).
+<P>If you have local printers attached to your system you will have an
+<CODE>lpd</CODE> running. Stop this daemon using SMIT (Print Spooling,
+Manage Print Server, Stop the Print Server Subsystem). Choosing
+<CODE>both</CODE> also removes <CODE>lpd</CODE> from
+<CODE>/etc/inittab</CODE>. Maybe it's faster to do this by hand:
+<BLOCKQUOTE><CODE>
+<PRE>
+# stopsrc -p'pid of /usr/sbin/lpd'
+# rmitab "lpd"
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Now delete all print queues (managed by qdaemon) defined on your
+system. You can use SMIT for this or the commands
+<CODE>{mk,ch,rm}que</CODE>, <CODE>{mk,ch,rm}quedev</CODE>,
+<CODE>{mk,ch,rm}virprt</CODE>. The SMIT fast path is <CODE>smit
+rmpq</CODE>.
+<P>To start the new <CODE>lpd</CODE> at system startup you have to add
+an entry to <CODE>/etc/inittab</CODE>:
+<BLOCKQUOTE><CODE>
+<PRE>
+# mkitab "lpd:2:once:/full/path/lpd"
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Some work has to be done if have have a local printer attached to
+your workstation. You have to create a device file like
+<CODE>/dev/lp0</CODE>. The SMIT fast path for this is <CODE>smit
+mkdev</CODE>. Choose <CODE>Printer/Plotter</CODE> and then
+<CODE>Printer/Plotter Devices</CODE>. Now <CODE>Add a
+Printer/Plotter</CODE>. To create a parallel
+printer device select the following:
+<BLOCKQUOTE><CODE>
+<PRE>
+Plotter type:              opp Other parallel printer
+Printer/Plotter Interface: parallel
+Parent Adapter:            ppa0 Available
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Now define the characteristics of the device:
+<BLOCKQUOTE><CODE>
+<PRE>
+Port Number: p
+</PRE>
+</CODE></BLOCKQUOTE>
+
+(<CODE>p</CODE> is for parallel).
+Go to the field
+<BLOCKQUOTE><CODE>
+<PRE>
+Send all characters to printer UNMODIFIED   no
+</PRE>
+</CODE></BLOCKQUOTE>
+
+and select <CODE>yes</CODE>! We have had a lot of trouble with
+<CODE>no</CODE>.  This is very important! Expect erroneous output if
+you choose <CODE>no</CODE>. If you have already created a device
+file, change the characteristics! SMIT's fast path is <CODE>smit
+chdev</CODE>.
+<P>Finally remove all AIX printing commands like <CODE>qprt</CODE>,
+<CODE>lp</CODE>, <CODE>cancel</CODE>, <CODE>lpr</CODE>,
+<CODE>lprm</CODE>. You will find a lot of them in
+<CODE>/usr/bin</CODE>. Do not remove <CODE>enq</CODE> and friends if
+you want to use the general queueing facility.
+<P>Now you can start your new <CODE>lpd</CODE>.
+<H2><A NAME="appletalk"></A> <A NAME="ss3.4">3.4 AppleTalk Support</A>
+</H2>
+
+<P>Netatalk is used to communicate from TCP/IP to
+AppleTalk printers and vice versa.
+The Netatalk distribution FAQ is at:
+<A HREF="http://www.umich.edu/~rsug/netatalk">http://www.umich.edu/~rsug/netatalk</A>.
+Also,
+The University of Melbourne web site
+<A HREF="http://www.cs.mu.oz.au/appletalk/">http://www.cs.mu.oz.au/appletalk/</A>
+has additional tutorial and installation information.
+<P>After you have installed and gotten netatalk working,
+you can use the following AppleTalk configuration file to print
+from a Macintosh to an LPRng printer.
+<BLOCKQUOTE><CODE>
+<PRE>
+Your 32 Character Printer Name:\
+        :pr=|/your/path/to/lpr -Pprintername
+        :ppd=/your/path/to/ppd/files/yourprinter.ppd
+</PRE>
+</CODE></BLOCKQUOTE>
+<HR>
+<A HREF="LPRng-HOWTO-4.html">Next</A>
+<A HREF="LPRng-HOWTO-2.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc3">Contents</A>
+</BODY>
+</HTML>

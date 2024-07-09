@@ -1,0 +1,13 @@
+Makefile
+config.cache
+config.h
+config.log
+config.status
+nvi
+nex
+pathnames.h
+port.h
+recover
+vi.0
+VI.pm
+

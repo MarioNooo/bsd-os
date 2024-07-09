@@ -1,0 +1,5 @@
+The geometry of the drive that will be used by BSD/OS must now be determined.
+If this disk was previously labeled, you should try using the [I]nternal
+geometry.  A new disk typically should be [P]robed.  You may wish to enter
+the BIOS geometry (if defined)  if you want the geometry to match that of
+your other operating system.

@@ -1,0 +1,19 @@
+#
+# xfm applications file
+# written by xfm  Thu Aug 29 19:46:36 1996
+#
+##########################################
+
+Main Apps::.xfm/xfm-apps:xfm_appmgr.xpm:LOAD:
+Who:::question.xpm:exec who | xless -title who:
+w::::exec /usr/bin/w | xless -title w:
+top:::top.xpm:exec xterm -e /usr/contrib/bin/top:
+dmesg::::exec /sbin/dmesg | xless -title dmesg:
+xnetload:::bargraph.xpm:exec xnetload %Network load on which host?%:
+xwhom::::exec xwhom :
+ruptime::::exec /usr/bin/ruptime 2>&1 | xless -title ruptime:
+Swap Space::::exec /usr/sbin/pstat -s | xless -title swap_space:
+Net interfaces::::exec /sbin/ifconfig -a | xless -title Net_Interfaces:
+Net Routes::::exec /usr/sbin/netstat -nr | xless -title Net_Routes:
+df::::exec /bin/df | xless -title df:
+amq::::exec /usr/sbin/amq | xless -title amq:

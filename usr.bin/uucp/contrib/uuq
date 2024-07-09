@@ -1,0 +1,149 @@
+BSDI uuq,v 2.2 1996/06/11 19:26:50 vixie Exp
+
+Path: vixie!redstone.interpath.net!bsdi-users-request
+From: nerd@percy.rain.com (Michael Galassi)
+Newsgroups: local.mail.bsdi.users
+Subject: Re: INN sendbatch problem
+Date: 6 Jun 1994 07:25:48 -0700
+Organization: Vixie Enterprises
+Lines: 122
+Sender: daemon@vix.com
+Distribution: local
+Message-ID: <m0qAf1u-000Cp9C@percy.rain.com>
+NNTP-Posting-Host: gw.home.vix.com
+X-Received: by gw.home.vix.com id AA17630; Mon, 6 Jun 94 07:25:45 -0700
+X-Received: (from list@localhost) by redstone.interpath.net (8.6.9/8.6.9) id JAA12036 for bsdi-users-dist@mail-hub.interpath.net; Mon, 6 Jun 1994 09:48:19 -0400
+X-Resent-Date: Mon, 6 Jun 1994 09:48:19 -0400
+X-Resent-Message-Id: <199406061348.JAA12036@redstone.interpath.net>
+X-To: Samson Luk <samson@iohk.com>
+X-Cc: BSDI Mailing List <bsdi-users@redstone.interpath.net>
+X-In-Reply-To: Your message of "Mon, 06 Jun 1994 16:18:39 +0800."
+             <Pine.3.88.9406061604.A3899-0100000@igate.iohk.com> 
+X-Resent-From: bsdi-users@mail-hub.interpath.net
+X-Mailing-List: <bsdi-users@mail-hub.interpath.net> archive/latest/1788
+X-Loop: bsdi-users@mail-hub.interpath.net
+X-Precedence: list
+X-Resent-Sender: bsdi-users-request@mail-hub.interpath.net
+
+>Any idea how to fix this? I use the ported version of inn from ftp.bsdi.com.
+>sendbatch require uuq but uuq seems doesn't come with BSDI, will it be 
+>the cause of trouble...
+
+I use this uuq written by a friend of mine, no problems with it for me.
+
+-michael
+
+#!/usr/contrib/bin/perl
+#
+# UUQ - By:  Jeff Beadles  <jeff@neon.rain.com>
+#
+# Beta quality.  Still needs a man page though.
+#
+# Options:
+#          -b baud  Use baud for calculations, defaults to 9600
+#          -D       Debug mode.
+#        X -d job   Delete 'job'
+#          -h       Display Summary only
+#          -l       Long listing
+#          -r sdir  Use sdir as spool directory.
+#          -s sys   Only list for system sys
+#        X -u user  Only list for user user.
+#
+# Options marked with 'X' are not implimented (yet?)
+
+# If either of the two lines below fail, then your perl is not
+# installed properly.
+require 'stat.pl';
+require 'getopts.pl';
+
+($PROGRAM = $0) =~ s#^.*/##;
+$USAGE = "$PROGRAM [-b baud] [-h] [-l] [-r spooldir] [-s system]";
+
+$opt_D = 0;
+$opt_b = 9600;
+$opt_d = 0;
+$opt_h = 0;
+$opt_l = 0;
+$opt_r = "/var/spool/uucp";
+$opt_r = "/usr/spool/uucp" unless -d $opt_r;
+$opt_s = 0;
+$opt_u = 0;
+
+&Getopts("Db:d:hlr:s:u:");
+
+# If not root, and no write permission to the spooldir then force -h
+# (The check is really to see if the user can read the spool files)
+$opt_h = 1  if (! -w $opt_r || $>);
+
+chdir($opt_r) || die "Can't change to spool directory $opt_r $!\n";
+
+if ($opt_s) {
+    @hosts = ($opt_s);
+} else {
+    opendir(SPOOLDIR, ".") || die "Can't open spool directory $opt_r $!\n";
+    @hosts = sort(grep (!/^\.\.?$/, readdir(SPOOLDIR)));
+    closedir(SPOOLDIR);
+}
+
+HOST:
+foreach $host (@hosts) {
+    next unless (-d "$opt_r/$host");
+    chdir ("$opt_r/$host") || die "Can't change directory to $opt_r/$host $!\n";
+    opendir(HOSTDIR, ".") || die "Can't open directory $opt_r/$host $!\n";
+    @jobs = grep (/^D\.[a-z]+X....$/, readdir(HOSTDIR));
+    closedir(HOSTDIR);
+    next HOST if ($#jobs eq -1);    # No jobs for this site.
+    printf("%8.8s: %3d job%s", $host, $#jobs + 1, $#jobs ? "s" : " " );
+    if ($opt_l || !$opt_h) {
+        opendir(HOSTDIR, ".") || die "Can't open directory $opt_r/$host $!\n";
+        @datafiles = grep (/^D\.[a-z]+B....$/, readdir(HOSTDIR));
+        closedir(HOSTDIR);
+    }
+    if ($opt_l) {
+        $subtotal = 0;
+        foreach $job (@datafiles) {
+            @s = stat($job);
+            $subtotal +=  @s[$ST_SIZE];
+        }
+        $minutes = int($subtotal / $opt_b * 10 / 60 + 0.99999);
+        printf(" %8.8s bytes, %4s minute%s (@ effective baudrate of $opt_b)", $subtotal, $minutes, $minutes eq 1 ? " " : "s" );
+    }
+    print ("\n");
+    if (! $opt_h) {
+        # Do the long stuff here.
+        XQTFILE:
+        foreach $job (@datafiles) {
+            ($xfile = $job) =~ s/B(...)2$/X${1}0/;
+            print "Job   = $job\n" if $opt_D;
+            print "Xfile = $xfile\n" if $opt_D;
+            ($jobid = $job) =~ s/^D\.[a-z]+B//;
+            open(XQTFILE, "<$xfile") || do { warn "Can't open $xfile  $!\n"; next XQTFILE;};
+            while(<XQTFILE>) {
+                chop;
+                ($cmd, $data) = split(/\s+/,$_,2);
+                if      ($cmd eq "C") {
+                    $x_cmd = $data;
+                } elsif ($cmd eq "U") {
+                    # who cares.
+                } elsif ($cmd eq "R") {
+                    # who cares.
+                } elsif ($cmd eq "F") {
+                    # who cares.
+                } elsif ($cmd eq "I") {
+                    # who cares.
+                } else {
+                    warn "What is line $_  ??\n";
+                }
+            }
+        close(XQTFILE);
+        print "  $jobid  $x_cmd\n";
+        }
+    }
+}
+exit(0);
+
+# -w cleaning
+$opt_u   = 0 if 0;
+$opt_d   = 0 if 0;
+$ST_SIZE = 0 if 0;
+

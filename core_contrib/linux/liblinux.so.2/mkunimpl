@@ -1,0 +1,30 @@
+#! /bin/sh
+#	BSDI mkunimpl,v 1.1 2000/02/12 18:11:04 donn Exp
+
+#
+# Generate weak stubs to handle all otherwise unimplemented syscalls.
+#
+
+cat << 'EOF'
+/* automatically generated, do not edit */
+
+extern void __bsdi_unimpl(const char *);
+
+void __bsdi_nosys() { __bsdi_unimpl("<unknown>"); }
+
+EOF
+
+awk '
+BEGIN {
+	high = 0
+}
+
+$1 == "#define" && $2 ~ /^__NR_/ && $3 ~ /^[1-9][0-9]*$/ {
+	s = substr($2, 6)
+	n = "__bsdi_nosys_" s
+	g = "__bsdi_glue_" s
+	print "void", n "() { __bsdi_unimpl(\"" s "\"); }"
+	print "void", g "(void) __attribute__ ((weak, alias(\"" n "\")));"
+}' $1
+
+exit 0

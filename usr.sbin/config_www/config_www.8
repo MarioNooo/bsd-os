@@ -1,0 +1,42 @@
+.\" Copyright (c) 1994 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI config_www.8,v 2.3 1997/04/22 16:11:16 sanders Exp
+.\"
+.Dd October 13, 1994
+.Os
+.Dt CONFIG_WWW 8
+.Sh NAME
+.Nm config_www
+.Nd "create or modify www (httpd) configuration"
+.Sh SYNOPSIS
+.Nm config_www
+.Op Fl vk
+.Sh DESCRIPTION
+The
+.Nm config_www
+program creates or modifies the existing www server (httpd) 
+configuration.
+The
+.Fl v
+flag may be used to cause 
+.Nm config_www
+to provide more information about what it is doing.
+The 
+.Fl k
+flag inhibits 
+.Nm config_www
+from starting the www server if it is not already running.
+.Sh BUGS
+The 
+.Nm config_www
+configuration is extremely simplistic.  It basically creates
+a generic home page with a few links to get you started.  Any 
+additional configuration must be performed manually in 
+.Pa /var/www/docs .
+.Sh FILES
+.Pa /var/www/conf/homepage.template
+.Sh SEE ALSO
+.Xr httpd 1

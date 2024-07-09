@@ -1,0 +1,80 @@
+#
+#	BSDI $Id: rc,v 2.86 2000/05/18 15:17:14 polk Exp $
+#
+
+# Simple sample configuration file for UCD SNMP snmpd, based on the
+# EXAMPLE.conf file in the distribution.  This config file provides
+# some quick examples to get snmpd running w/o enabling many of the
+# more advanced features.  It does enable access for Gated.
+
+# By default, the agent responds to the "public" community for read
+# only access, if run out of the box without any configuration file in 
+# place.  That is the equivalent of:
+
+#rocommunity	public		default
+
+# Allowing the whole world to view your entire MIB is not very safe.
+# A more restrictive approach would be to only allow the world to view
+# your ``system'' tree:
+
+#rocommunity	public		default		system
+
+# The default configuration we supply will provide R/O access to the
+# complete MIB tree when queried from the 127.0.0.1 address.  All
+# other addresses will only see the system tree.
+
+rocommunity	public		127.0.0.1
+rocommunity	public		default		system
+
+# The most secure approach would be not to allow the world access at
+# all.
+
+# For simple community access use the ``rocommunity'' and
+# ``rwcommunity'' keywords.  Some examples:
+
+#rocommunity	myrocomm	127.0.0.1
+#rocommunity	myrocomm	MYNET1/PREFIX
+#rocommunity	myrocomm	MYNET2/PREFIX
+#rwcommunity	myrwcomm	127.0.0.1
+#rwcommunity	myrwcomm	TRUSTEDHOST1
+#rwcommunity	myrwcomm	TRUSTEDHOST2
+#rwcommunity	myrwcomm	TRUSTEDHOST3
+
+# More compilcated access control should be based on the ``com2sec'',
+# ``group'', ``view'' and ``access'' keywords.  See
+# /etc/snmp/snmpd.conf-example for details.
+
+#
+#	System Contact Information
+#
+
+# These two variables control what is returned by the
+# ``sysLocation'' and ``sysContact'' variables in the ``system''
+# group.
+
+# syslocation: Physical location of the system.  For example:
+#
+#	syslocation	Third floor machine room
+#
+#		or
+#
+#	syslocation	Suite 300; 200 Main St; Anytown, USA
+#
+
+#syslocation	Right here, right now.
+
+#
+# syscontact:	Whom to contact about this system and how to contact
+# them.  For example:
+#
+#	syscontact	John Doe (+1 800 555 1212) <jdoe@somewhere.org>
+
+#syscontact	Name (Phone) <e-mail>
+
+
+#
+# Gated interface.  Uncomment and edit the ``smuxpeer'' line to
+# enable SMUX access to/from Gated.  These values must both match what
+# Gated uses.
+
+smuxpeer .1.3.6.1.4.1.4.1.3 password

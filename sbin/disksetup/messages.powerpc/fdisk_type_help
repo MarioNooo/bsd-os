@@ -1,0 +1,17 @@
+Enter the partition type either symbolically (e.g.,  BSD/OS or PPC-BOOT
+or a hexadecimal constant (e.g., 0x9f or 0x04).  You must provide a
+partition type other than 0 to continue on with editing the partition.
+
+The special keystrokes are:
+
+^T     List the available types
+
+ESC    Cancel all changes to this partition.
+ENTER  Apply changes to this partition.
+TAB    Go on to editing the starting offset of the partition
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.

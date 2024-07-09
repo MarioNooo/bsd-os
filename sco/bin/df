@@ -1,0 +1,12 @@
+#! /bin/sh
+#	BSDI df,v 2.1 1995/02/03 15:12:56 polk Exp
+# A crude imitation of SCO df for use with Lotus 1-2-3 install.
+
+PATH=/bin:/usr/bin
+
+unset BLOCKSIZE
+//bin/df -i | /usr/bin/awk '
+	NR == 1 { next };
+	{ print $9, "(" $1 "):", $4, "blocks", $7, "i-nodes" }'
+
+exit 0

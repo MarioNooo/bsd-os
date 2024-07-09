@@ -1,0 +1,2 @@
+#!/usr/local/bin/perl -spi.bak
+	s/plp_snprintf/SNPRINTF/;

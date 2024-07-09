@@ -1,0 +1,10 @@
+#	BSDI Makefile.version,v 1.2 2002/01/18 21:06:33 polk Exp
+
+#
+# Set the common version number for the dynamic math shared libraries.
+#
+
+# For compatible changes, increment minor
+# For incompatible changes use increment major
+LDDYNMAJOR=.0
+LDDYNMINOR=.0

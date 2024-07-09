@@ -1,0 +1,562 @@
+.\" Copyright (c) 1998 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ftpconfig.5,v 1.9 2000/08/15 22:03:49 polk Exp
+.Dd January 1, 1998
+.Dt FTPCONFIG 5
+.Os
+.Sh NAME
+.Nm ftpconfig
+.Nd ftpd configuration file
+.Sh SYNOPSIS
+.Nm /etc/ftpd/config
+.Sh DESCRIPTION
+The
+.Pa /etc/ftpd/config
+file contains the configuration parameters for use by the
+.Xr ftpd 8
+daemon.
+It consists of lines which contain a parameter and its value:
+.Bd -literal -offset indent
+.Ar parameter value
+.Ed
+.sp
+(Except where noted below.)
+.sp
+Comments are denoted by the
+.Sq #
+character and any text following a
+.Sq #
+is ignored.
+Some parameters may be specified differently for guest sessions (anonymous ftp)
+and normal user sessions.
+All parameters may be specified per virtual host.
+When the same parameter is specified more than once,
+the final setting found will be used.
+.Sh Guest Sessions
+.Pp
+To specify parameters which are to be applied for guest sessions they
+must be within a guest block.  A guest block is started with the line:
+.Bd -literal -offset indent
+.Li <Guest>
+.Ed
+.sp
+and concludes with:
+.Bd -literal -offset indent
+.Li </Guest>
+.Ed
+.sp
+There may be multiple guest blocks.
+.Sh Virtual Hosts
+.Pp
+A virtual host is defined by a line of the form:
+.Bd -literal -offset indent
+.Li <VirtualHost Ar hostname Ns Li >
+.Ed
+.sp
+All parameters specified following this line are specific to the virtual host
+.Ar hostname .
+A virtual host definition is concluded with:
+.Bd -literal -offset indent
+.Li </VirtualHost>
+.Ed
+.Pp
+Multiple definitions for the same
+.Ar hostname
+are allowed and are all merged together.
+Note that only the first Internet address found for
+.Ar hostname
+will be listened to.
+Guest blocks may be contained in a virtual host definition, but
+virtual host definitions may not be nested.
+.Pp
+A virtual host starts with a copy of the global values so
+all global values must be specified prior to defining any
+virtual hosts.  Specifing a global value after a virtual host has
+been defined produces an error.
+.Sh Parameters
+.Pp
+There are four types of parameters:
+.Bl -bullet
+.It
+Variables which contain values, such as pathnames, hostnames, or numbers.
+These may not appear within a guest block, but may be virtual host specific.
+.It
+Flags which determine availability of certain features.  These may both
+appear in a guest block and be virtual host specific.
+.It
+Commands to disable (or enable).  These make specific FTP commands appear
+to be unimplemented.  They may be within a guest block as well as
+virtual host specific.
+.It
+Incoming (upload) directory definitions.
+These only apply to guest sessions.
+.El
+.Sh Variables
+.Pp
+The following variables may be set:
+.Bl -tag -width "BannedUserList"
+.It AnonymousDir
+The directory to which guest sessions initially are
+.Xr chdir 1 ' Ns No d
+and limited to.
+This defaults to the home directory of AnonymousUser.
+.It AnonymousUser
+The account name which implies guest sessions.  By default this is the account
+.Dq ftp .
+.It BannedUserList
+A filename containing users or groups that are not allowed to use FTP.
+Groups are denoted by a leading
+.Sq @ .
+This defaults to
+.Pa /etc/ftpd/banned .
+.It ChrootUserList
+A filename containing users or groups that will be chrooted to their
+home directory.
+Groups are denoted by a leading
+.Sq @ .
+This defaults to
+.Pa /etc/ftpd/chroot .
+.It GroupFile
+Specifies a filename which contains a mapping of ftp group names
+(specified with SITE GROUP) to real group names.  The file also
+contains the encrypted password (see
+.Xr passwd 5 ) needed for access to the group.  Each line has
+the syntax of:
+.Bd -literal -offset indent
+groupname:password:realgroup
+.Ed
+.sp
+where
+.Ar groupname
+is the name specified to the SITE GROUP command,
+.Ar password
+is the encrypted version of the password supplied to the SITE GPASS command,
+and
+.Ar realgroup
+is the group name in the
+.Pa /etc/group
+file that this group is mapped to.
+Specifying a group by SITE GROUP and SITE GPASS gives the user access to
+files readable to
+.Ar realgroup .
+.It LogFormat
+Specify the format to be used in the statistics file.
+This format string is similar to a
+.Xr printf 3
+format string with the exception that the conversions must be one of
+the following:
+.Bl -tag -width "{direction}"
+.It {time}
+The 20 character string representing the current time.
+(e.g.,
+.Dq "Jan  5 10:02:41 1998" ) .
+.It {duration}
+The duration of the transfer, in seconds.
+.It {remote}
+The remote host names.
+.It {size}
+The number of bytes transfered.
+.It {path}
+The pathname retrieved or stored.
+.It {type}
+The type of transfer,
+.Sq a
+for ASCII and
+.Sq b
+for binary.
+.It {action}
+For compatability with
+.Nm wu-ftpd .
+This currently always is always printed as
+.Sq _ .
+.It {direction}
+The direction of the transfer,
+.Sq i
+for incoming and
+.Sq o
+for outgoing.
+.It {session}
+The type of session,
+.Sq a
+for guest sessions (anonymous) and
+.Sq r
+for registered users.
+.It {user}
+The registered user name for normal sessions or the password
+provided for guest sessions.
+.It {authtype}
+If UseRFC931 (see below) has been turned on and RFC 931 authentication (ident)
+was successful this is printed as
+.Sq 1 ,
+else it is printed as
+.Sq 0 .
+.It {authuser}
+If UseRFC931 (see below) has been turned on and RFC 931 authentication (ident)
+was successful this prints the authenticated name, otherwise a
+.Sq *
+is printed.
+.El
+.Pp
+The default format, which produces the same results as
+.Nm wu-ftpd ,
+is:
+.Pp
+.Li "%{time} %{duration} %{remote} %{size} %{path} %{type} %{action} %{direction} %{session} %{user} %{authtype} %{authuser}"
+.Pp
+Since all white space between
+.Li LogFormat
+and the start of the format are stripped, a leading
+.Sq \e
+will be stripped, allowing the format to start with a white space.
+.It LoginMessage
+Specifies a filename to display to the client after the client has
+logged in to the server.  Note that this is read after the user has
+been chrooted so it must exist within the chrooted environment.
+This defaults to
+.Pa /etc/ftpd/motd .
+.It MaxTimeout
+The maximum value the user may increase the idle timeout value to.
+Defaults to 7200 seconds.
+.It MaxUsers
+This parameter is only settable for guest sessions and only has
+effect if
+.Xr ftpd 8
+is run in daemon mode.
+When set to a positive value it limits the number of guest
+sessions allowed.  If the current total number of sessions for a particular
+virtual host (including both guest and non-guest sessions) is greater than
+or equal to this value then only non-guest sessions are allowed.
+.It MessageFile
+This parameter is only settable for guest sessions.
+After a successful CWD request, the contents of this file
+are printed.  The file name must not contain a
+.Sq /
+(that is, it is a file name in the new directory).
+By default this is
+.Dq .message .
+.It PathFilter
+This parameter is only settable for guest sessions.  It limits
+the file names allowed for storing or the names of directories
+that may be created.  The value is a series of strings, each
+being a regular expression
+(see
+.Xr re_format 7 ) .
+The first regular expression must match the last component of
+the file or directory name.  The following regular expressions must
+\fInot\fP match.  A common invocation might be:
+.Bd -literal -offset indent
+.Li PathFilter ^[-A-Za-z0-9._]*$ ^\e. ^-
+.Ed
+.sp
+This limits files to the character set of the alphanumeric characters,
+.Sq - ,
+.Sq \&. ,
+and
+.Sq _ .
+The second and third regular expressions prohibit names that start with a
+.Sq \&.
+or
+.Sq - .
+.It PermittedUserList
+A filename containing users or groups that are allowed to use FTP.
+If the specified file exists, only users or users in the groups
+listed in that file are allowed to connect, but are still subject to
+rejection by the BannedUserList file.
+Groups are denoted by a leading
+.Sq @ .
+.It ServerName
+The name to use in the initial banner instead of the standard hostname.
+For virtual hosts this defaults to the
+.Ar hostname
+specified on the <VirtualHost ...> line.
+.It StatFile
+The file to keep track of file transfer statistics.
+You must also turn on the Stats flag, below.
+This defaults to
+.Pa /var/log/ftpd/xferlog .
+.It Timeout
+The inactivity timeout value, in seconds.
+Defaults to 900 seconds.
+.It Umask
+The default umask to use for creating files.
+This defaults to 027.
+The user's login.conf entry may override this value.
+.It WelcomeMessage
+Specifies a filename to display to the client when they first contact
+this server.
+This defaults to
+.Pa /etc/ftpd/welcome .
+.El
+.sp
+The value for variable parameters is taken as is and should not be
+enclosed in quotation marks.  I.e., use
+.Bd -literal -offset indent
+.Li LoginMessage /etc/welcome
+.Ed
+.sp
+rather than
+.Bd -literal -offset indent
+.Li LoginMessage Dq /etc/welcome
+.Ed
+.Sh Flags
+.Pp
+Flags may have either the value of
+.Dq On
+or
+.Dq Off .
+When inside of a guest block the setting will only be for
+guest sessions.  When outside of a guest block the definition will be
+for both normal user sessions and for guest sessions.
+(You should first set all the global settings outside of a guest block
+and then make any alterations needed within the guest block.)
+The following flags are available:
+.Bl -tag -width "RestrictedDataPorts"
+.It AllowAnonymous
+Defaults to on.  If turned off then guest sessions are not allowed.
+.It AnonymousOnly
+Defaults to off.  If turned on then only guest sessions are allowed.
+.It BuiltinLS
+Defaults to on.  If specified then a builtin version of
+.Xr ls 1
+is used rather than
+.Pa /bin/ls
+for listing files.  This allows chrooted environment (including guest
+sessions) to not require a
+.Pa /bin
+or
+.Pa /shlib
+directory.
+.It Debug
+Defaults to off.  When turned on detailed information about the session
+is sent to syslog.
+.It ExtraLogging
+Defaults to off.
+When turned on the retrieve (get), store (put), append, delete, make directory,
+remove directory and rename operations and their filename arguments
+using syslog.
+.It KeepAlive
+Defaults to off.
+When turned on the SO_KEEPALIVE option is turned on for all data connections.
+This will cause data connections to eventually timeout if the remote client
+disappears.
+.It Logging
+Defaults to off.  When turned on,
+each successful and failed
+.Xr ftp 1
+session is logged using syslog with a facility of LOG_FTP.
+.It Proxy
+Defaults to off for guest sessions and on for normal sessions.
+When on it allows third party transfers.
+This is required to be on for RFC 959 conformance.
+Please see RFC 959 COMPLIANCE below.
+.It RestrictedDataPorts
+Defaults to on.
+When on, outgoing port requests to ports under 1024 are not allowed.
+This must be off to be RFC 959 compliant.
+Please see RFC 959 COMPLIANCE below.
+.It Stats
+Defaults to off.  When on, ftpd logs all transfers to the
+statistics file defined above, if it already exists.  This file will not
+be created if it does not already exist.
+.It UseHighPorts
+Defaults to on.  When on, the system uses data ports in the range of
+40000..44999.  If turned off, and the operating system supports
+turning it off, the traditional range of 1024..4999 is used.
+This option is not needed and is ignored under BSD/OS.
+.It UseRFC931
+Defaults to off.  When on, ftpd uses RFC 931 authentication protocol
+(ident) to try and establish the identification of the remote user.
+Note that this information cannot be trusted and can only be correctly
+interpreted by the remote system administrator.
+.It VirtualOnly
+Defaults to off.  When on, only requests to defined virtual hosts are allowed.
+.El
+.Sh Commands
+.Pp
+In addition to the above parameters, individual FTP commands may be
+enabled or disabled for all sessions, or just for guest sessions.
+This may be virtual host specific.
+By default, all implemented commands are available to normal sessions.
+Guest sessions, by default, have the following commands disabled:
+.Bl -column "Request" -offset indent
+.It Sy Request Ta Sy "Description"
+.It APPE Ta "append to a file"
+.It DELE Ta "delete a file"
+.It MKD Ta "make a directory"
+.It RMD Ta "remove a directory"
+.It RNFR Ta "specify rename-from file name"
+.It RNTO Ta "specify rename-to file name"
+.It XMKD Ta "make a directory (deprecated)"
+.It XRMD Ta "remove a directory (deprecated)"
+.It SITE-UMASK Ta "change umask, e.g. ``SITE UMASK 002''"
+.It SITE-IDLE Ta "set idle-timer, e.g. ``SITE IDLE 60''"
+.It SITE-CHMOD Ta "change mode of a file, e.g. ``SITE CHMOD 755 filename''"
+.El
+.sp
+Commands are enabled with the value
+.Dq On
+and disabled with the the value
+.Dq Off .
+The complete list of commands can be found in
+.Xr ftpd 8 .
+Note that SITE commands are specified as
+.Li SITE-CMD
+and are not as
+.Li SITE CMD .
+.Sh Incoming
+.Pp
+For guest sessions, stores (uploads) are only possible into directories that
+have been explicitly allowed to have stores.
+The
+.Li Incoming
+directive is used to specify a directory for stores.  It must exist
+within a guest block, though it can be virtual host specific.
+.Pp
+The incoming directive takes the form:
+.Bd -literal -offset indent
+.Li Incoming Ar "path user group mode" Op Ar dmode
+.Ed
+.sp
+The arguments are defined as:
+.Bl -tag -offset indent -width XXXXXX
+.It Ar path
+The full pathname to the directory which allows stores.
+This pathname is always relative to AnonymousDir.
+Stores may also be made into sub-directories, up to 7 levels deep,
+from this directory.
+.It Ar user
+Name of the user in the
+.Pa /etc/passwd
+file who should own all files stored into this directory.
+.It Ar group
+Name of the group in the
+.Pa /etc/group
+file which should be used for all files stored into this directory.
+.It Ar mode
+The octal mode bits that should be set for all files stored into
+this directory.  Typically this should be something like 600
+(only readable and writable by
+.Ar user . )
+.It Ar dmode
+If specified,
+the octal mode bits that should be set for all directories created in
+this directory.  Typically this should be something like 733.
+Directories can only be created when
+.Ar dmode
+is specified.
+.\" FIXME: should this say that the MKD command needs to also be enabled? XXX
+.El
+.Pp
+Typically the directory specified by
+.Ar path
+should be owned by
+.Ar user / group
+and be mode 733 (u+rwx g+wx o+wx) or 773 (u+rwx g+rwx o+wx).
+.Sh RFC 959 COMPLIANCE
+.Pp
+Due to misconfigurations of some sites,
+.Xr ftpd 8
+is configured by default to try and protect against an attack
+against misconfigured machines.  This attack is only possible
+when other machines trust the ftp host for
+.Xr rhosts 5
+authentication and also allow connections from the ftp data port, 20.
+The protection is to both disable third party transfers as well as
+limit the the ports to which the FTP server is allowed to connect
+to at the request of the client.
+.Pp
+To be compliant with RFC 959 you must set the following flags:
+.Bl -column "RestrictedDataPorts" -colum "Value" -offset indent
+.It Sy "Flag" Ta Sy "Value" Ta Sy "Description"
+.It RestrictedDataPorts Ta Off Ta "allow PORT requests from any port"
+.It Proxy Ta On Ta "allow third party transfers"
+.El
+.Sh EXAMPLE
+The following sample
+.Pa /etc/ftpd/config
+file sets up two virtual hosts (ftp.mycompany.com and ftp.yourcompany.com)
+and does not allow ftp sessions to any other host.
+.Bd -literal -offset indent
+#
+# Turn on some standard options we desire for all servers
+# BuiltinLS is required to allow listing in chrooted environments
+# We keep logs and statistics
+# Timeout dead connections
+# We only allow virtual hosts to run
+# We specify a shorter format string for the logfile
+#
+BuiltinLS On
+Logging On
+ExtraLogging On
+Stats On
+KeepAlive On
+VirtualOnly On
+LogFormat %{time} %{remote} %{user} %{direction} %{path} %{size} %{duration}
+
+#
+# Make sure we use the account "ftp" for guest sessions
+# Set up for a welcome banner once they get logged in
+#
+AnonymousUser ftp
+LoginMessage /etc/welcome
+
+#
+# These are turned off by default, but lets be
+# paranoid and make sure they are off for guests.
+# Also add in a filter on the path names.
+#
+<Guest>
+    APPE Off
+    RNFR Off
+    RNTO Off
+    DELE Off
+    MKD Off
+    XMKD Off
+    RMD Off
+    XRMD Off
+    SITE-UMASK Off
+    SITE-IDLE Off
+    SITE-CHMOD Off
+    PathFilter ^[-A-Za-z0-9._]*$ ^\e. ^-
+</Guest>
+
+#
+# Define mycompany's ftp server
+# We have a list of users we don't want to allow
+# access to our server.
+#
+<VirtualHost ftp.mycompany.com>
+    AnonymousDir /var/spool/ftp.mycompany.com
+    StatFile /var/log/ftpd/ftp.mycompany.com
+    BannedUserList /etc/ftpd/banned.mycompany.com
+    <Guest>
+	Incoming /incoming bob user 600
+    </Guest>
+</VirtualHost>
+
+#
+# Define yourcompany's ftp server
+# They have a special welcome message they want displayed.
+# They also have their own ls command for guest sessions
+# so we cannot use the builtin version.  
+# We also disable the ability of guest to store any files
+#
+<VirtualHost ftp.yourcompany.com>
+    AnonymousDir /var/spool/ftp.yourcompany.com
+    StatFile /var/log/ftpd/ftp.yourcompany.com
+    WelcomeMessage /etc/ftpd/welcome.yourcompany.com
+    <Guest>
+	BuiltinLS Off
+	ALLO Off
+	STOR Off
+	STOU Off
+    </Guest>
+</VirtualHost>
+.Ed
+.Sh SEE ALSO
+.Xr ls 1 ,
+.Xr ftp 1 ,
+.Xr login.conf 5 ,
+.Xr ftpd 8

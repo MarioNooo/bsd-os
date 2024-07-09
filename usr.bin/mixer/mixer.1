@@ -1,0 +1,102 @@
+.\"	BSDI mixer.1,v 1.2 2000/04/26 17:04:09 jch Exp
+.Dd October 19, 1995
+.Dt MIXER 1
+.Os
+.Sh NAME
+.Nm mixer
+.Nd Set audio mixer options
+.Sh SYNOPSIS
+.Nm mixer
+.Op Fl m Ar number
+.Op Ar device Op val
+.Op Ar ...
+.Sh DESCRIPTION
+The
+.Nm mixer
+program is used to control settings on audio card mixers.
+The following options are available:
+.Bl -tag -width Fl
+.It Fl m Ar number
+Select an audio card, the default is card 0.
+.It Fl v
+Print a summary of all settings before exiting (even if changing settings).
+.El
+.Pp
+The
+.Ar device val
+pairs are used to change audio settings for the various channels on the
+mixer. The 
+.Ar device 
+argument is a device name that describes a channel on the mixer, the devices
+available vary by audio card and can be discovered by
+running
+.Nm mixer
+without any device/val arguments.
+The device name may be abbreviated to the shortest unique string.
+.Pp
+For most devices the
+.Ar val
+argument is an audio level expressed as a number from 0 to 100. For devices
+that support stereo two numbers may be listed separated by a colon, this
+gives the values for the left and right channels. The resolution varies
+by audio card so small changes in values may not produce any effect on
+some cards.
+.Pp
+If a channel does not support stereo and a stereo value is supplied only the
+left channel value is used.
+.Pp
+There is one special case device called
+.Nm rdev
+that does not take a numeric value argument, instead a comma separated 
+list of devices
+to record from should be given.
+.Pp
+If the
+.Ar val
+argument is not given for a 
+.Ar device 
+the current settings for that channel are displayed. Multiple devices
+can be entered without arguments.
+.Sh EXAMPLES
+Display all settings:
+.Bd -literal -offset indent
+% mixer
+Device     Description                    Value
+vol        Master volume                  50:50
+bass       Bass                           50:50
+treble     Treble                         50:50
+pcm        Primary DAC                    50:50
+speaker    PC speaker                     21
+mic        Microphone                     32:32
+mix        Recording monitor              0
+igain      Input gain                     0:0
+line1      Line input 1                   32:32
+line2      Line input 2                   32:32
+line3      Line input 3                   21:21
+center     3D center                      0:0
+rdev       Recording source               mic
+
+Valid recording devices: synth, line, microphone, cd
+.Ed
+.Pp
+Set volume, bass, and record from line and CD:
+.Bd -literal -offset indent
+% mixer vol 90:75 bass 100 rdev line,cd
+.Ed
+Display current volume, bass, treble, and recording device:
+.Bd -literal -offset indent
+% mixer vo ba tr rd
+volume 90:75 bass 100:100 treble 75:75 rdev line,cd
+.Ed
+.Sh BUGS
+It is only possible to list the
+.Nm rdev
+device without a value argument (to print its current value) 
+last on the command line.
+.Sh SEE ALSO
+.Xr vplay 1 ,
+.Xr sox 1
+.Sh HISTORY
+This
+.Nm mixer
+command was written for BSD/OS 2.1.

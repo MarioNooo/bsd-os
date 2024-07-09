@@ -1,0 +1,42 @@
+.\"     BSDI    ungetwc.3,v 2.2 1997/12/18 18:07:10 bostic Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd December 9, 1997
+.Dt UNGETWC 3
+.Os
+.Sh NAME
+.Nm ungetwc
+.Nd push wide-character code back onto an input stream
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Fd #include <wcahr.h>
+.Ft wint_t
+.Fn ungetwc "wint_t wc, FILE *stream"
+.Sh DESCRIPTION
+The
+.Nm ungetwc 
+function
+is the same as
+.Xr fungetrune 3
+with the exception that it returns
+.Nm WEOF
+on error and
+.Ar wc
+on success.
+.Sh RETURN VALUES
+The
+.Nm ungetwc
+function
+returns
+.Ar wc
+on success.
+On error it returns
+.Nm WEOF
+and set the global value
+.Va errno
+to indicate the error.
+.Sh SEE ALSO
+.Xr ungetrune 3

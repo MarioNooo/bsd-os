@@ -1,0 +1,31 @@
+#!/bin/sh
+#	BSDI tokenls,v 1.2 1997/11/10 23:53:25 tks Exp
+PROG=$(basename $0 ls)adm
+echo 1>&2 "$(basename $0) deprecated, please use $PROG in the future"
+TERSE=-T
+while [ $# -gt 0 -a ! X${1#-} = X$1 ] ; do
+	A=${1#?}
+	shift
+	while [ ! X$A = X ] ; do
+		case $A in
+		b*)	ARGS="$ARGS -B" ;;
+		d*)	ARGS="$ARGS -D" ;;
+		e*)	ARGS="$ARGS -E" ;;
+		l*)	TERSE= ;;
+		r*)	ARGS="$ARGS -R" ;;
+		1*)	ARGS="$ARGS -1" ;;
+		*)
+			echo "Usage: $(basename $0) [-bdelr1] [user [...]]" 1>&2
+			exit 1
+			;;
+		esac
+		if [ $A = ${A#?} ] ; then
+			A=
+		else
+			A=${A#?}
+		fi
+	done
+done
+ARGS="$ARGS $TERSE"
+echo 1>&2 "Executing: $PROG$ARGS $*"
+exec $PROG$ARGS $*

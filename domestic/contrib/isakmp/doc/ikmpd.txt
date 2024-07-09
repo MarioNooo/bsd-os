@@ -1,0 +1,22 @@
+
+  To compile cisco Systems' IKE daemon, go to the top-level directory
+entitled "isakmp-jan98" and issue the "make" command. The daemon itself will
+be in "isakmp-jan98/ikmpd/ikmpd". There is no "make install" rule. Debug 
+options exist in the ikmpd makefile. By turning them off messages will be 
+issued via syslog(3) and daemon will behave as such; turning them on will 
+result in messages written to standard output and the daemon will behave as 
+a regular application (no fork, keep controlling terminal, etc).
+  It is recommended that the daemon be compiled without debugging and 
+installed in a system directory such as /usr/local/bin. It can then be
+started automatically upon system boot by adding it to the rc.local file.
+
+  Random numbers are created with large amounts of entropy using truerand().
+Obtaining 60 bits of randomness takes considerably more time than obtaining 12
+bits of randomness. Depending on your local speed vs. security policy, you
+may want to lessen (or even increase!) the amount of time it takes to obtain
+random numbers. (Search for occurances of get_rand()).
+
+  This package has been sucessfully compiled and run under BSDI v2.1. If
+any porting is necessary for it to run under different versions or OS's
+please forward the changes to isakmp-oakley@cisco.com.
+

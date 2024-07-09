@@ -1,0 +1,8 @@
+Makefile
+Shell.h
+StringDefs.c
+StringDefs.h
+unshared
+libXt.so.6.0
+libXt_s
+.depend

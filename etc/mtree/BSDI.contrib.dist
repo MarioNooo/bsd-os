@@ -1,0 +1,2066 @@
+/set type=dir gname=wheel uname=root mode=0755
+
+# ./bin
+bin
+
+# ./bin
+..
+
+# ./etc
+etc
+
+# ./etc
+..
+
+# ./lib
+lib
+
+# ./lib/calc
+calc
+
+# ./lib/calc/help
+help
+
+# ./lib/calc/help
+..
+
+# ./lib/calc
+..
+
+# ./lib/hylafax
+hylafax
+
+# ./lib/hylafax/afm
+afm
+
+# ./lib/hylafax/afm
+..
+
+# ./lib/hylafax
+..
+
+# ./lib/ghostscript
+ghostscript
+
+# ./lib/ghostscript/fonts
+fonts
+
+# ./lib/ghostscript/fonts
+..
+
+# ./lib/ghostscript
+..
+
+# ./lib/gmake
+gmake
+
+# ./lib/gmake
+..
+
+# ./lib/irc
+irc
+
+# ./lib/irc/help
+help
+
+# ./lib/irc/help/ALIAS
+ALIAS
+
+# ./lib/irc/help/ALIAS
+..
+
+# ./lib/irc/help/DCC
+DCC
+
+# ./lib/irc/help/DCC
+..
+
+# ./lib/irc/help/BIND
+BIND
+
+# ./lib/irc/help/BIND
+..
+
+# ./lib/irc/help/CTCP
+CTCP
+
+# ./lib/irc/help/CTCP
+..
+
+# ./lib/irc/help/LOAD
+LOAD
+
+# ./lib/irc/help/LOAD
+..
+
+# ./lib/irc/help/NOTE
+NOTE
+
+# ./lib/irc/help/NOTE
+..
+
+# ./lib/irc/help/ON
+ON
+
+# ./lib/irc/help/ON
+..
+
+# ./lib/irc/help/SET
+SET
+
+# ./lib/irc/help/SET
+..
+
+# ./lib/irc/help/WINDOW
+WINDOW
+
+# ./lib/irc/help/WINDOW
+..
+
+# ./lib/irc/help/ircII
+ircII
+
+# ./lib/irc/help/ircII
+..
+
+# ./lib/irc/help
+..
+
+# ./lib/irc/script
+script
+
+# ./lib/irc/script
+..
+
+# ./lib/irc/translation
+translation
+
+# ./lib/irc/translation
+..
+
+# ./lib/irc
+..
+
+# ./lib/jove
+jove
+
+# ./lib/jove
+..
+
+# ./lib/lprps
+lprps
+
+# ./lib/lprps
+..
+
+# ./lib/md5
+md5
+
+# ./lib/md5
+..
+
+# ./lib/psgraph
+psgraph
+
+# ./lib/psgraph
+..
+
+# ./lib/shs
+shs
+
+# ./lib/shs
+..
+
+# ./lib/amanda
+amanda
+
+# ./lib/amanda
+..
+
+# ./lib/enscript
+enscript
+
+# ./lib/enscript
+..
+
+# ./lib/locale
+locale
+
+# ./lib/locale/de
+de
+
+# ./lib/locale/de/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/de/LC_MESSAGES
+..
+
+# ./lib/locale/de
+..
+
+# ./lib/locale/fi
+fi
+
+# ./lib/locale/fi/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/fi/LC_MESSAGES
+..
+
+# ./lib/locale/fi
+..
+
+# ./lib/locale/fr
+fr
+
+# ./lib/locale/fr/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/fr/LC_MESSAGES
+..
+
+# ./lib/locale/fr
+..
+
+# ./lib/locale/nl
+nl
+
+# ./lib/locale/nl/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/nl/LC_MESSAGES
+..
+
+# ./lib/locale/nl
+..
+
+# ./lib/locale/sl
+sl
+
+# ./lib/locale/sl/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/sl/LC_MESSAGES
+..
+
+# ./lib/locale/sl
+..
+
+# ./lib/locale/ja_JP.EUC
+ja_JP.EUC
+
+# ./lib/locale/ja_JP.EUC/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/ja_JP.EUC/LC_MESSAGES
+..
+
+# ./lib/locale/ja_JP.EUC
+..
+
+# ./lib/locale/pt
+pt
+
+# ./lib/locale/pt/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/pt/LC_MESSAGES
+..
+
+# ./lib/locale/pt
+..
+
+# ./lib/locale/sv
+sv
+
+# ./lib/locale/sv/LC_MESSAGES
+LC_MESSAGES
+
+# ./lib/locale/sv/LC_MESSAGES
+..
+
+# ./lib/locale/sv
+..
+
+# ./lib/locale
+..
+
+# ./lib/ispell
+ispell
+
+# ./lib/ispell
+..
+
+# ./lib/psutils
+psutils
+
+# ./lib/psutils
+..
+
+# ./lib
+..
+
+# ./libexec
+libexec
+
+# ./libexec
+..
+
+# ./man
+man
+
+# ./man/cat1
+cat1
+
+# ./man/cat1
+..
+
+# ./man/cat2
+cat2
+
+# ./man/cat2
+..
+
+# ./man/cat3
+cat3
+
+# ./man/cat3
+..
+
+# ./man/cat4
+cat4
+
+# ./man/cat4
+..
+
+# ./man/cat5
+cat5
+
+# ./man/cat5
+..
+
+# ./man/cat6
+cat6
+
+# ./man/cat6
+..
+
+# ./man/cat7
+cat7
+
+# ./man/cat7
+..
+
+# ./man/cat8
+cat8
+
+# ./man/cat8
+..
+
+# ./man/man1
+man1
+
+# ./man/man1
+..
+
+# ./man/man2
+man2
+
+# ./man/man2
+..
+
+# ./man/man3
+man3
+
+# ./man/man3
+..
+
+# ./man/man4
+man4
+
+# ./man/man4
+..
+
+# ./man/man5
+man5
+
+# ./man/man5
+..
+
+# ./man/man6
+man6
+
+# ./man/man6
+..
+
+# ./man/man7
+man7
+
+# ./man/man7
+..
+
+# ./man/man8
+man8
+
+# ./man/man8
+..
+
+# ./man/mann
+mann
+
+# ./man/mann
+..
+
+# ./man
+..
+
+# ./mh
+mh
+
+# ./mh/bin
+bin
+
+# ./mh/bin
+..
+
+# ./mh/lib
+lib
+
+# ./mh/lib
+..
+
+# ./mh/man
+man
+
+# ./mh/man/cat1
+cat1
+
+# ./mh/man/cat1
+..
+
+# ./mh/man/cat5
+cat5
+
+# ./mh/man/cat5
+..
+
+# ./mh/man/cat8
+cat8
+
+# ./mh/man/cat8
+..
+
+# ./mh/man/man1
+man1
+
+# ./mh/man/man1
+..
+
+# ./mh/man/man5
+man5
+
+# ./mh/man/man5
+..
+
+# ./mh/man/man8
+man8
+
+# ./mh/man/man8
+..
+
+# ./mh/man
+..
+
+# ./mh
+..
+
+# ./misc
+misc
+
+# ./misc
+..
+
+# ./sbin
+sbin
+
+# ./sbin
+..
+
+# ./share
+share
+
+# ./share
+..
+
+# ./tclman
+tclman
+
+# ./tclman/cat1
+cat1
+
+# ./tclman/cat1
+..
+
+# ./tclman/cat3
+cat3
+
+# ./tclman/cat3
+..
+
+# ./tclman/man1
+man1
+
+# ./tclman/man1
+..
+
+# ./tclman/man3
+man3
+
+# ./tclman/man3
+..
+
+# ./tclman
+..
+
+# ./info
+info
+
+# ./info
+..
+
+# ./include
+include
+
+# ./include
+..
+
+# ./teTeX
+teTeX
+
+# ./teTeX/bin
+bin
+
+# ./teTeX/bin
+..
+
+# ./teTeX/info
+info
+
+# ./teTeX/info
+..
+
+# ./teTeX/man
+man
+
+# ./teTeX/man/cat1
+cat1
+
+# ./teTeX/man/cat1
+..
+
+# ./teTeX/man/cat5
+cat5
+
+# ./teTeX/man/cat5
+..
+
+# ./teTeX/man/man1
+man1
+
+# ./teTeX/man/man1
+..
+
+# ./teTeX/man/man5
+man5
+
+# ./teTeX/man/man5
+..
+
+# ./teTeX/man
+..
+
+# ./teTeX/texmf
+texmf
+
+# ./teTeX/texmf/bibtex
+bibtex
+
+# ./teTeX/texmf/bibtex/bib
+bib
+
+# ./teTeX/texmf/bibtex/bib
+..
+
+# ./teTeX/texmf/bibtex/bst
+bst
+
+# ./teTeX/texmf/bibtex/bst/ams
+ams
+
+# ./teTeX/texmf/bibtex/bst/ams
+..
+
+# ./teTeX/texmf/bibtex/bst/base
+base
+
+# ./teTeX/texmf/bibtex/bst/base
+..
+
+# ./teTeX/texmf/bibtex/bst/misc
+misc
+
+# ./teTeX/texmf/bibtex/bst/misc
+..
+
+# ./teTeX/texmf/bibtex/bst/natbib
+natbib
+
+# ./teTeX/texmf/bibtex/bst/natbib
+..
+
+# ./teTeX/texmf/bibtex/bst
+..
+
+# ./teTeX/texmf/bibtex
+..
+
+# ./teTeX/texmf/doc
+doc
+
+# ./teTeX/texmf/doc/ams
+ams
+
+# ./teTeX/texmf/doc/ams/amsfonts
+amsfonts
+
+# ./teTeX/texmf/doc/ams/amsfonts
+..
+
+# ./teTeX/texmf/doc/ams/amslatex
+amslatex
+
+# ./teTeX/texmf/doc/ams/amslatex
+..
+
+# ./teTeX/texmf/doc/ams/amstex
+amstex
+
+# ./teTeX/texmf/doc/ams/amstex
+..
+
+# ./teTeX/texmf/doc/ams
+..
+
+# ./teTeX/texmf/doc/bibtex
+bibtex
+
+# ./teTeX/texmf/doc/bibtex
+..
+
+# ./teTeX/texmf/doc/eplain
+eplain
+
+# ./teTeX/texmf/doc/eplain
+..
+
+# ./teTeX/texmf/doc/fonts
+fonts
+
+# ./teTeX/texmf/doc/fonts/cyrillic
+cyrillic
+
+# ./teTeX/texmf/doc/fonts/cyrillic
+..
+
+# ./teTeX/texmf/doc/fonts/fontname
+fontname
+
+# ./teTeX/texmf/doc/fonts/fontname
+..
+
+# ./teTeX/texmf/doc/fonts/oldgerman
+oldgerman
+
+# ./teTeX/texmf/doc/fonts/oldgerman
+..
+
+# ./teTeX/texmf/doc/fonts
+..
+
+# ./teTeX/texmf/doc/generic
+generic
+
+# ./teTeX/texmf/doc/generic/babel
+babel
+
+# ./teTeX/texmf/doc/generic/babel
+..
+
+# ./teTeX/texmf/doc/generic/localloc
+localloc
+
+# ./teTeX/texmf/doc/generic/localloc
+..
+
+# ./teTeX/texmf/doc/generic/pstricks
+pstricks
+
+# ./teTeX/texmf/doc/generic/pstricks
+..
+
+# ./teTeX/texmf/doc/generic/styles
+styles
+
+# ./teTeX/texmf/doc/generic/styles
+..
+
+# ./teTeX/texmf/doc/generic/texdraw
+texdraw
+
+# ./teTeX/texmf/doc/generic/texdraw
+..
+
+# ./teTeX/texmf/doc/generic/xypic
+xypic
+
+# ./teTeX/texmf/doc/generic/xypic/xyguide-html
+xyguide-html
+
+# ./teTeX/texmf/doc/generic/xypic/xyguide-html/COPYING
+COPYING
+
+# ./teTeX/texmf/doc/generic/xypic/xyguide-html/COPYING
+..
+
+# ./teTeX/texmf/doc/generic/xypic/xyguide-html
+..
+
+# ./teTeX/texmf/doc/generic/xypic
+..
+
+# ./teTeX/texmf/doc/generic
+..
+
+# ./teTeX/texmf/doc/help
+help
+
+# ./teTeX/texmf/doc/help/Catalogue
+Catalogue
+
+# ./teTeX/texmf/doc/help/Catalogue
+..
+
+# ./teTeX/texmf/doc/help/ctan
+ctan
+
+# ./teTeX/texmf/doc/help/ctan
+..
+
+# ./teTeX/texmf/doc/help/faq
+faq
+
+# ./teTeX/texmf/doc/help/faq/de-tex-faq
+de-tex-faq
+
+# ./teTeX/texmf/doc/help/faq/de-tex-faq
+..
+
+# ./teTeX/texmf/doc/help/faq/uktug-faq
+uktug-faq
+
+# ./teTeX/texmf/doc/help/faq/uktug-faq
+..
+
+# ./teTeX/texmf/doc/help/faq
+..
+
+# ./teTeX/texmf/doc/help
+..
+
+# ./teTeX/texmf/doc/latex
+latex
+
+# ./teTeX/texmf/doc/latex/base
+base
+
+# ./teTeX/texmf/doc/latex/base
+..
+
+# ./teTeX/texmf/doc/latex/changebar
+changebar
+
+# ./teTeX/texmf/doc/latex/changebar
+..
+
+# ./teTeX/texmf/doc/latex/custom-bib
+custom-bib
+
+# ./teTeX/texmf/doc/latex/custom-bib
+..
+
+# ./teTeX/texmf/doc/latex/dinbrief
+dinbrief
+
+# ./teTeX/texmf/doc/latex/dinbrief
+..
+
+# ./teTeX/texmf/doc/latex/draftcopy
+draftcopy
+
+# ./teTeX/texmf/doc/latex/draftcopy
+..
+
+# ./teTeX/texmf/doc/latex/eepic
+eepic
+
+# ./teTeX/texmf/doc/latex/eepic
+..
+
+# ./teTeX/texmf/doc/latex/fancyhdr
+fancyhdr
+
+# ./teTeX/texmf/doc/latex/fancyhdr
+..
+
+# ./teTeX/texmf/doc/latex/floatflt
+floatflt
+
+# ./teTeX/texmf/doc/latex/floatflt
+..
+
+# ./teTeX/texmf/doc/latex/foiltex
+foiltex
+
+# ./teTeX/texmf/doc/latex/foiltex
+..
+
+# ./teTeX/texmf/doc/latex/g-brief
+g-brief
+
+# ./teTeX/texmf/doc/latex/g-brief
+..
+
+# ./teTeX/texmf/doc/latex/general
+general
+
+# ./teTeX/texmf/doc/latex/general
+..
+
+# ./teTeX/texmf/doc/latex/geometry
+geometry
+
+# ./teTeX/texmf/doc/latex/geometry
+..
+
+# ./teTeX/texmf/doc/latex/graphics
+graphics
+
+# ./teTeX/texmf/doc/latex/graphics
+..
+
+# ./teTeX/texmf/doc/latex/koma-script
+koma-script
+
+# ./teTeX/texmf/doc/latex/koma-script
+..
+
+# ./teTeX/texmf/doc/latex/latex209-html
+latex209-html
+
+# ./teTeX/texmf/doc/latex/latex209-html
+..
+
+# ./teTeX/texmf/doc/latex/mfnfss
+mfnfss
+
+# ./teTeX/texmf/doc/latex/mfnfss
+..
+
+# ./teTeX/texmf/doc/latex/minitoc
+minitoc
+
+# ./teTeX/texmf/doc/latex/minitoc
+..
+
+# ./teTeX/texmf/doc/latex/natbib
+natbib
+
+# ./teTeX/texmf/doc/latex/natbib
+..
+
+# ./teTeX/texmf/doc/latex/ntgclass
+ntgclass
+
+# ./teTeX/texmf/doc/latex/ntgclass
+..
+
+# ./teTeX/texmf/doc/latex/program
+program
+
+# ./teTeX/texmf/doc/latex/program
+..
+
+# ./teTeX/texmf/doc/latex/psfrag
+psfrag
+
+# ./teTeX/texmf/doc/latex/psfrag
+..
+
+# ./teTeX/texmf/doc/latex/pslatex
+pslatex
+
+# ./teTeX/texmf/doc/latex/pslatex
+..
+
+# ./teTeX/texmf/doc/latex/rotating
+rotating
+
+# ./teTeX/texmf/doc/latex/rotating
+..
+
+# ./teTeX/texmf/doc/latex/rotfloat
+rotfloat
+
+# ./teTeX/texmf/doc/latex/rotfloat
+..
+
+# ./teTeX/texmf/doc/latex/seminar
+seminar
+
+# ./teTeX/texmf/doc/latex/seminar
+..
+
+# ./teTeX/texmf/doc/latex/styles
+styles
+
+# ./teTeX/texmf/doc/latex/styles
+..
+
+# ./teTeX/texmf/doc/latex/tools
+tools
+
+# ./teTeX/texmf/doc/latex/tools
+..
+
+# ./teTeX/texmf/doc/latex/textmerg
+textmerg
+
+# ./teTeX/texmf/doc/latex/textmerg
+..
+
+# ./teTeX/texmf/doc/latex/wasysym
+wasysym
+
+# ./teTeX/texmf/doc/latex/wasysym
+..
+
+# ./teTeX/texmf/doc/latex
+..
+
+# ./teTeX/texmf/doc/makeindex
+makeindex
+
+# ./teTeX/texmf/doc/makeindex
+..
+
+# ./teTeX/texmf/doc/metapost
+metapost
+
+# ./teTeX/texmf/doc/metapost
+..
+
+# ./teTeX/texmf/doc/programs
+programs
+
+# ./teTeX/texmf/doc/programs
+..
+
+# ./teTeX/texmf/doc/tetex
+tetex
+
+# ./teTeX/texmf/doc/tetex
+..
+
+# ./teTeX/texmf/doc
+..
+
+# ./teTeX/texmf/dvips
+dvips
+
+# ./teTeX/texmf/dvips/base
+base
+
+# ./teTeX/texmf/dvips/base
+..
+
+# ./teTeX/texmf/dvips/config
+config
+
+# ./teTeX/texmf/dvips/config
+..
+
+# ./teTeX/texmf/dvips/gsftopk
+gsftopk
+
+# ./teTeX/texmf/dvips/gsftopk
+..
+
+# ./teTeX/texmf/dvips/misc
+misc
+
+# ./teTeX/texmf/dvips/misc
+..
+
+# ./teTeX/texmf/dvips/psfrag
+psfrag
+
+# ./teTeX/texmf/dvips/psfrag
+..
+
+# ./teTeX/texmf/dvips/pstricks
+pstricks
+
+# ./teTeX/texmf/dvips/pstricks
+..
+
+# ./teTeX/texmf/dvips/xypic
+xypic
+
+# ./teTeX/texmf/dvips/xypic
+..
+
+# ./teTeX/texmf/dvips
+..
+
+# ./teTeX/texmf/fontname
+fontname
+
+# ./teTeX/texmf/fontname
+..
+
+# ./teTeX/texmf/fonts
+fonts
+
+# ./teTeX/texmf/fonts/afm
+afm
+
+# ./teTeX/texmf/fonts/afm/adobe
+adobe
+
+# ./teTeX/texmf/fonts/afm/adobe/avantgar
+avantgar
+
+# ./teTeX/texmf/fonts/afm/adobe/avantgar
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/bookman
+bookman
+
+# ./teTeX/texmf/fonts/afm/adobe/bookman
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/courier
+courier
+
+# ./teTeX/texmf/fonts/afm/adobe/courier
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/helvetic
+helvetic
+
+# ./teTeX/texmf/fonts/afm/adobe/helvetic
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/ncntrsbk
+ncntrsbk
+
+# ./teTeX/texmf/fonts/afm/adobe/ncntrsbk
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/palatino
+palatino
+
+# ./teTeX/texmf/fonts/afm/adobe/palatino
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/symbol
+symbol
+
+# ./teTeX/texmf/fonts/afm/adobe/symbol
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/times
+times
+
+# ./teTeX/texmf/fonts/afm/adobe/times
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/utopia
+utopia
+
+# ./teTeX/texmf/fonts/afm/adobe/utopia
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/zapfchan
+zapfchan
+
+# ./teTeX/texmf/fonts/afm/adobe/zapfchan
+..
+
+# ./teTeX/texmf/fonts/afm/adobe/zapfding
+zapfding
+
+# ./teTeX/texmf/fonts/afm/adobe/zapfding
+..
+
+# ./teTeX/texmf/fonts/afm/adobe
+..
+
+# ./teTeX/texmf/fonts/afm/bitstrea
+bitstrea
+
+# ./teTeX/texmf/fonts/afm/bitstrea/charter
+charter
+
+# ./teTeX/texmf/fonts/afm/bitstrea/charter
+..
+
+# ./teTeX/texmf/fonts/afm/bitstrea
+..
+
+# ./teTeX/texmf/fonts/afm
+..
+
+# ./teTeX/texmf/fonts/source
+source
+
+# ./teTeX/texmf/fonts/source/ams
+ams
+
+# ./teTeX/texmf/fonts/source/ams/cmextra
+cmextra
+
+# ./teTeX/texmf/fonts/source/ams/cmextra
+..
+
+# ./teTeX/texmf/fonts/source/ams/cyrillic
+cyrillic
+
+# ./teTeX/texmf/fonts/source/ams/cyrillic
+..
+
+# ./teTeX/texmf/fonts/source/ams/euler
+euler
+
+# ./teTeX/texmf/fonts/source/ams/euler
+..
+
+# ./teTeX/texmf/fonts/source/ams/symbols
+symbols
+
+# ./teTeX/texmf/fonts/source/ams/symbols
+..
+
+# ./teTeX/texmf/fonts/source/ams
+..
+
+# ./teTeX/texmf/fonts/source/jknappen
+jknappen
+
+# ./teTeX/texmf/fonts/source/jknappen/dc
+dc
+
+# ./teTeX/texmf/fonts/source/jknappen/dc
+..
+
+# ./teTeX/texmf/fonts/source/jknappen/sauter
+sauter
+
+# ./teTeX/texmf/fonts/source/jknappen/sauter
+..
+
+# ./teTeX/texmf/fonts/source/jknappen/tc
+tc
+
+# ./teTeX/texmf/fonts/source/jknappen/tc
+..
+
+# ./teTeX/texmf/fonts/source/jknappen
+..
+
+# ./teTeX/texmf/fonts/source/public
+public
+
+# ./teTeX/texmf/fonts/source/public/bbm
+bbm
+
+# ./teTeX/texmf/fonts/source/public/bbm
+..
+
+# ./teTeX/texmf/fonts/source/public/bbold
+bbold
+
+# ./teTeX/texmf/fonts/source/public/bbold
+..
+
+# ./teTeX/texmf/fonts/source/public/cm
+cm
+
+# ./teTeX/texmf/fonts/source/public/cm
+..
+
+# ./teTeX/texmf/fonts/source/public/cmextra
+cmextra
+
+# ./teTeX/texmf/fonts/source/public/cmextra
+..
+
+# ./teTeX/texmf/fonts/source/public/concrete
+concrete
+
+# ./teTeX/texmf/fonts/source/public/concrete
+..
+
+# ./teTeX/texmf/fonts/source/public/gothic
+gothic
+
+# ./teTeX/texmf/fonts/source/public/gothic
+..
+
+# ./teTeX/texmf/fonts/source/public/latex
+latex
+
+# ./teTeX/texmf/fonts/source/public/latex
+..
+
+# ./teTeX/texmf/fonts/source/public/mflogo
+mflogo
+
+# ./teTeX/texmf/fonts/source/public/mflogo
+..
+
+# ./teTeX/texmf/fonts/source/public/misc
+misc
+
+# ./teTeX/texmf/fonts/source/public/misc
+..
+
+# ./teTeX/texmf/fonts/source/public/olddc
+olddc
+
+# ./teTeX/texmf/fonts/source/public/olddc
+..
+
+# ./teTeX/texmf/fonts/source/public/pandora
+pandora
+
+# ./teTeX/texmf/fonts/source/public/pandora
+..
+
+# ./teTeX/texmf/fonts/source/public/rsfs
+rsfs
+
+# ./teTeX/texmf/fonts/source/public/rsfs
+..
+
+# ./teTeX/texmf/fonts/source/public/stmary
+stmary
+
+# ./teTeX/texmf/fonts/source/public/stmary
+..
+
+# ./teTeX/texmf/fonts/source/public/wasy
+wasy
+
+# ./teTeX/texmf/fonts/source/public/wasy
+..
+
+# ./teTeX/texmf/fonts/source/public/xypic
+xypic
+
+# ./teTeX/texmf/fonts/source/public/xypic
+..
+
+# ./teTeX/texmf/fonts/source/public
+..
+
+# ./teTeX/texmf/fonts/source
+..
+
+# ./teTeX/texmf/fonts/tfm
+tfm
+
+# ./teTeX/texmf/fonts/tfm/adobe
+adobe
+
+# ./teTeX/texmf/fonts/tfm/adobe/avantgar
+avantgar
+
+# ./teTeX/texmf/fonts/tfm/adobe/avantgar
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/bookman
+bookman
+
+# ./teTeX/texmf/fonts/tfm/adobe/bookman
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/courier
+courier
+
+# ./teTeX/texmf/fonts/tfm/adobe/courier
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/helvetic
+helvetic
+
+# ./teTeX/texmf/fonts/tfm/adobe/helvetic
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/mathppl
+mathppl
+
+# ./teTeX/texmf/fonts/tfm/adobe/mathppl
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/mathptm
+mathptm
+
+# ./teTeX/texmf/fonts/tfm/adobe/mathptm
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/ncntrsbk
+ncntrsbk
+
+# ./teTeX/texmf/fonts/tfm/adobe/ncntrsbk
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/palatino
+palatino
+
+# ./teTeX/texmf/fonts/tfm/adobe/palatino
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/symbol
+symbol
+
+# ./teTeX/texmf/fonts/tfm/adobe/symbol
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/times
+times
+
+# ./teTeX/texmf/fonts/tfm/adobe/times
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/utopia
+utopia
+
+# ./teTeX/texmf/fonts/tfm/adobe/utopia
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/zapfchan
+zapfchan
+
+# ./teTeX/texmf/fonts/tfm/adobe/zapfchan
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe/zapfding
+zapfding
+
+# ./teTeX/texmf/fonts/tfm/adobe/zapfding
+..
+
+# ./teTeX/texmf/fonts/tfm/adobe
+..
+
+# ./teTeX/texmf/fonts/tfm/ams
+ams
+
+# ./teTeX/texmf/fonts/tfm/ams/cmextra
+cmextra
+
+# ./teTeX/texmf/fonts/tfm/ams/cmextra
+..
+
+# ./teTeX/texmf/fonts/tfm/ams/cyrillic
+cyrillic
+
+# ./teTeX/texmf/fonts/tfm/ams/cyrillic
+..
+
+# ./teTeX/texmf/fonts/tfm/ams/euler
+euler
+
+# ./teTeX/texmf/fonts/tfm/ams/euler
+..
+
+# ./teTeX/texmf/fonts/tfm/ams/symbols
+symbols
+
+# ./teTeX/texmf/fonts/tfm/ams/symbols
+..
+
+# ./teTeX/texmf/fonts/tfm/ams
+..
+
+# ./teTeX/texmf/fonts/tfm/bitstrea
+bitstrea
+
+# ./teTeX/texmf/fonts/tfm/bitstrea/charter
+charter
+
+# ./teTeX/texmf/fonts/tfm/bitstrea/charter
+..
+
+# ./teTeX/texmf/fonts/tfm/bitstrea
+..
+
+# ./teTeX/texmf/fonts/tfm/public
+public
+
+# ./teTeX/texmf/fonts/tfm/public/bbm
+bbm
+
+# ./teTeX/texmf/fonts/tfm/public/bbm
+..
+
+# ./teTeX/texmf/fonts/tfm/public/bbold
+bbold
+
+# ./teTeX/texmf/fonts/tfm/public/bbold
+..
+
+# ./teTeX/texmf/fonts/tfm/public/cm
+cm
+
+# ./teTeX/texmf/fonts/tfm/public/cm
+..
+
+# ./teTeX/texmf/fonts/tfm/public/cmextra
+cmextra
+
+# ./teTeX/texmf/fonts/tfm/public/cmextra
+..
+
+# ./teTeX/texmf/fonts/tfm/public/concrete
+concrete
+
+# ./teTeX/texmf/fonts/tfm/public/concrete
+..
+
+# ./teTeX/texmf/fonts/tfm/public/gothic
+gothic
+
+# ./teTeX/texmf/fonts/tfm/public/gothic
+..
+
+# ./teTeX/texmf/fonts/tfm/public/latex
+latex
+
+# ./teTeX/texmf/fonts/tfm/public/latex
+..
+
+# ./teTeX/texmf/fonts/tfm/public/mflogo
+mflogo
+
+# ./teTeX/texmf/fonts/tfm/public/mflogo
+..
+
+# ./teTeX/texmf/fonts/tfm/public/misc
+misc
+
+# ./teTeX/texmf/fonts/tfm/public/misc
+..
+
+# ./teTeX/texmf/fonts/tfm/public/pandora
+pandora
+
+# ./teTeX/texmf/fonts/tfm/public/pandora
+..
+
+# ./teTeX/texmf/fonts/tfm/public/rsfs
+rsfs
+
+# ./teTeX/texmf/fonts/tfm/public/rsfs
+..
+
+# ./teTeX/texmf/fonts/tfm/public/stmary
+stmary
+
+# ./teTeX/texmf/fonts/tfm/public/stmary
+..
+
+# ./teTeX/texmf/fonts/tfm/public/wasy
+wasy
+
+# ./teTeX/texmf/fonts/tfm/public/wasy
+..
+
+# ./teTeX/texmf/fonts/tfm/public/xypic
+xypic
+
+# ./teTeX/texmf/fonts/tfm/public/xypic
+..
+
+# ./teTeX/texmf/fonts/tfm/public
+..
+
+# ./teTeX/texmf/fonts/tfm
+..
+
+# ./teTeX/texmf/fonts/type1
+type1
+
+# ./teTeX/texmf/fonts/type1/adobe
+adobe
+
+# ./teTeX/texmf/fonts/type1/adobe/utopia
+utopia
+
+# ./teTeX/texmf/fonts/type1/adobe/utopia
+..
+
+# ./teTeX/texmf/fonts/type1/adobe
+..
+
+# ./teTeX/texmf/fonts/type1/bitstrea
+bitstrea
+
+# ./teTeX/texmf/fonts/type1/bitstrea/charter
+charter
+
+# ./teTeX/texmf/fonts/type1/bitstrea/charter
+..
+
+# ./teTeX/texmf/fonts/type1/bitstrea
+..
+
+# ./teTeX/texmf/fonts/type1/public
+public
+
+# ./teTeX/texmf/fonts/type1/public/xypic
+xypic
+
+# ./teTeX/texmf/fonts/type1/public/xypic
+..
+
+# ./teTeX/texmf/fonts/type1/public
+..
+
+# ./teTeX/texmf/fonts/type1
+..
+
+# ./teTeX/texmf/fonts/vf
+vf
+
+# ./teTeX/texmf/fonts/vf/adobe
+adobe
+
+# ./teTeX/texmf/fonts/vf/adobe/avantgar
+avantgar
+
+# ./teTeX/texmf/fonts/vf/adobe/avantgar
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/bookman
+bookman
+
+# ./teTeX/texmf/fonts/vf/adobe/bookman
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/courier
+courier
+
+# ./teTeX/texmf/fonts/vf/adobe/courier
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/helvetic
+helvetic
+
+# ./teTeX/texmf/fonts/vf/adobe/helvetic
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/mathppl
+mathppl
+
+# ./teTeX/texmf/fonts/vf/adobe/mathppl
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/mathptm
+mathptm
+
+# ./teTeX/texmf/fonts/vf/adobe/mathptm
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/ncntrsbk
+ncntrsbk
+
+# ./teTeX/texmf/fonts/vf/adobe/ncntrsbk
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/palatino
+palatino
+
+# ./teTeX/texmf/fonts/vf/adobe/palatino
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/times
+times
+
+# ./teTeX/texmf/fonts/vf/adobe/times
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/utopia
+utopia
+
+# ./teTeX/texmf/fonts/vf/adobe/utopia
+..
+
+# ./teTeX/texmf/fonts/vf/adobe/zapfchan
+zapfchan
+
+# ./teTeX/texmf/fonts/vf/adobe/zapfchan
+..
+
+# ./teTeX/texmf/fonts/vf/adobe
+..
+
+# ./teTeX/texmf/fonts/vf/bitstrea
+bitstrea
+
+# ./teTeX/texmf/fonts/vf/bitstrea/charter
+charter
+
+# ./teTeX/texmf/fonts/vf/bitstrea/charter
+..
+
+# ./teTeX/texmf/fonts/vf/bitstrea
+..
+
+# ./teTeX/texmf/fonts/vf
+..
+
+# ./teTeX/texmf/fonts
+..
+
+# ./teTeX/texmf/lists
+lists
+
+# ./teTeX/texmf/lists
+..
+
+# ./teTeX/texmf/makeindex
+makeindex
+
+# ./teTeX/texmf/makeindex
+..
+
+# ./teTeX/texmf/maketex
+maketex
+
+# ./teTeX/texmf/maketex
+..
+
+# ./teTeX/texmf/metafont
+metafont
+
+# ./teTeX/texmf/metafont/base
+base
+
+# ./teTeX/texmf/metafont/base
+..
+
+# ./teTeX/texmf/metafont/misc
+misc
+
+# ./teTeX/texmf/metafont/misc
+..
+
+# ./teTeX/texmf/metafont
+..
+
+# ./teTeX/texmf/metapost
+metapost
+
+# ./teTeX/texmf/metapost/base
+base
+
+# ./teTeX/texmf/metapost/base
+..
+
+# ./teTeX/texmf/metapost/misc
+misc
+
+# ./teTeX/texmf/metapost/misc
+..
+
+# ./teTeX/texmf/metapost/support
+support
+
+# ./teTeX/texmf/metapost/support/charlib
+charlib
+
+# ./teTeX/texmf/metapost/support/charlib
+..
+
+# ./teTeX/texmf/metapost/support
+..
+
+# ./teTeX/texmf/metapost
+..
+
+# ./teTeX/texmf/mft
+mft
+
+# ./teTeX/texmf/mft
+..
+
+# ./teTeX/texmf/tex
+tex
+
+# ./teTeX/texmf/tex/amstex
+amstex
+
+# ./teTeX/texmf/tex/amstex/base
+base
+
+# ./teTeX/texmf/tex/amstex/base
+..
+
+# ./teTeX/texmf/tex/amstex
+..
+
+# ./teTeX/texmf/tex/eplain
+eplain
+
+# ./teTeX/texmf/tex/eplain
+..
+
+# ./teTeX/texmf/tex/generic
+generic
+
+# ./teTeX/texmf/tex/generic/babel
+babel
+
+# ./teTeX/texmf/tex/generic/babel
+..
+
+# ./teTeX/texmf/tex/generic/config
+config
+
+# ./teTeX/texmf/tex/generic/config
+..
+
+# ./teTeX/texmf/tex/generic/dvips
+dvips
+
+# ./teTeX/texmf/tex/generic/dvips
+..
+
+# ./teTeX/texmf/tex/generic/hyphen
+hyphen
+
+# ./teTeX/texmf/tex/generic/hyphen
+..
+
+# ./teTeX/texmf/tex/generic/misc
+misc
+
+# ./teTeX/texmf/tex/generic/misc
+..
+
+# ./teTeX/texmf/tex/generic/pictex
+pictex
+
+# ./teTeX/texmf/tex/generic/pictex
+..
+
+# ./teTeX/texmf/tex/generic/pstricks
+pstricks
+
+# ./teTeX/texmf/tex/generic/pstricks
+..
+
+# ./teTeX/texmf/tex/generic/texdraw
+texdraw
+
+# ./teTeX/texmf/tex/generic/texdraw
+..
+
+# ./teTeX/texmf/tex/generic/xypic
+xypic
+
+# ./teTeX/texmf/tex/generic/xypic
+..
+
+# ./teTeX/texmf/tex/generic
+..
+
+# ./teTeX/texmf/tex/latex
+latex
+
+# ./teTeX/texmf/tex/latex/algorithm
+algorithm
+
+# ./teTeX/texmf/tex/latex/algorithm
+..
+
+# ./teTeX/texmf/tex/latex/amsfonts
+amsfonts
+
+# ./teTeX/texmf/tex/latex/amsfonts
+..
+
+# ./teTeX/texmf/tex/latex/amslatex
+amslatex
+
+# ./teTeX/texmf/tex/latex/amslatex
+..
+
+# ./teTeX/texmf/tex/latex/base
+base
+
+# ./teTeX/texmf/tex/latex/base
+..
+
+# ./teTeX/texmf/tex/latex/bbm
+bbm
+
+# ./teTeX/texmf/tex/latex/bbm
+..
+
+# ./teTeX/texmf/tex/latex/cite
+cite
+
+# ./teTeX/texmf/tex/latex/cite
+..
+
+# ./teTeX/texmf/tex/latex/config
+config
+
+# ./teTeX/texmf/tex/latex/config
+..
+
+# ./teTeX/texmf/tex/latex/custom-bib
+custom-bib
+
+# ./teTeX/texmf/tex/latex/custom-bib
+..
+
+# ./teTeX/texmf/tex/latex/dinbrief
+dinbrief
+
+# ./teTeX/texmf/tex/latex/dinbrief
+..
+
+# ./teTeX/texmf/tex/latex/eepic
+eepic
+
+# ./teTeX/texmf/tex/latex/eepic
+..
+
+# ./teTeX/texmf/tex/latex/endfloat
+endfloat
+
+# ./teTeX/texmf/tex/latex/endfloat
+..
+
+# ./teTeX/texmf/tex/latex/fancyhdr
+fancyhdr
+
+# ./teTeX/texmf/tex/latex/fancyhdr
+..
+
+# ./teTeX/texmf/tex/latex/fancyheadings
+fancyheadings
+
+# ./teTeX/texmf/tex/latex/fancyheadings
+..
+
+# ./teTeX/texmf/tex/latex/foiltex
+foiltex
+
+# ./teTeX/texmf/tex/latex/foiltex
+..
+
+# ./teTeX/texmf/tex/latex/g-brief
+g-brief
+
+# ./teTeX/texmf/tex/latex/g-brief
+..
+
+# ./teTeX/texmf/tex/latex/graphics
+graphics
+
+# ./teTeX/texmf/tex/latex/graphics
+..
+
+# ./teTeX/texmf/tex/latex/koma-script
+koma-script
+
+# ./teTeX/texmf/tex/latex/koma-script
+..
+
+# ./teTeX/texmf/tex/latex/labels
+labels
+
+# ./teTeX/texmf/tex/latex/labels
+..
+
+# ./teTeX/texmf/tex/latex/mflogo
+mflogo
+
+# ./teTeX/texmf/tex/latex/mflogo
+..
+
+# ./teTeX/texmf/tex/latex/mfnfss
+mfnfss
+
+# ./teTeX/texmf/tex/latex/mfnfss
+..
+
+# ./teTeX/texmf/tex/latex/minitoc
+minitoc
+
+# ./teTeX/texmf/tex/latex/minitoc
+..
+
+# ./teTeX/texmf/tex/latex/misc
+misc
+
+# ./teTeX/texmf/tex/latex/misc
+..
+
+# ./teTeX/texmf/tex/latex/ntgclass
+ntgclass
+
+# ./teTeX/texmf/tex/latex/ntgclass
+..
+
+# ./teTeX/texmf/tex/latex/ot2cyr
+ot2cyr
+
+# ./teTeX/texmf/tex/latex/ot2cyr
+..
+
+# ./teTeX/texmf/tex/latex/psnfss
+psnfss
+
+# ./teTeX/texmf/tex/latex/psnfss
+..
+
+# ./teTeX/texmf/tex/latex/seminar
+seminar
+
+# ./teTeX/texmf/tex/latex/seminar
+..
+
+# ./teTeX/texmf/tex/latex/tools
+tools
+
+# ./teTeX/texmf/tex/latex/tools
+..
+
+# ./teTeX/texmf/tex/latex/supertabular
+supertabular
+
+# ./teTeX/texmf/tex/latex/supertabular
+..
+
+# ./teTeX/texmf/tex/latex/textmerg
+textmerg
+
+# ./teTeX/texmf/tex/latex/textmerg
+..
+
+# ./teTeX/texmf/tex/latex/umlaute
+umlaute
+
+# ./teTeX/texmf/tex/latex/umlaute
+..
+
+# ./teTeX/texmf/tex/latex/wasysym
+wasysym
+
+# ./teTeX/texmf/tex/latex/wasysym
+..
+
+# ./teTeX/texmf/tex/latex
+..
+
+# ./teTeX/texmf/tex/plain
+plain
+
+# ./teTeX/texmf/tex/plain/base
+base
+
+# ./teTeX/texmf/tex/plain/base
+..
+
+# ./teTeX/texmf/tex/plain/config
+config
+
+# ./teTeX/texmf/tex/plain/config
+..
+
+# ./teTeX/texmf/tex/plain/misc
+misc
+
+# ./teTeX/texmf/tex/plain/misc
+..
+
+# ./teTeX/texmf/tex/plain
+..
+
+# ./teTeX/texmf/tex/texinfo
+texinfo
+
+# ./teTeX/texmf/tex/texinfo
+..
+
+# ./teTeX/texmf/tex
+..
+
+# ./teTeX/texmf/texconfig
+texconfig
+
+# ./teTeX/texmf/texconfig/g
+g
+
+# ./teTeX/texmf/texconfig/g
+..
+
+# ./teTeX/texmf/texconfig/v
+v
+
+# ./teTeX/texmf/texconfig/v
+..
+
+# ./teTeX/texmf/texconfig/x
+x
+
+# ./teTeX/texmf/texconfig/x
+..
+
+# ./teTeX/texmf/texconfig
+..
+
+# ./teTeX/texmf/web2c
+web2c
+
+# ./teTeX/texmf/web2c
+..
+
+# ./teTeX/texmf/xdvi
+xdvi
+
+# ./teTeX/texmf/xdvi
+..
+
+# ./teTeX/texmf
+..
+
+# ./teTeX
+..
+

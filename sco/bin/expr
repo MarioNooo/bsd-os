@@ -1,0 +1,58 @@
+#! /bin/sh
+#	BSDI expr,v 2.2 1995/02/13 18:56:17 donn Exp
+
+#
+# Emulate the SCO/SVID match/substr/length/index extensions to expr.
+# None of these extensions provide features that are not already
+# available with expr, of course, so we just translate them.
+# Testing shows that the SCO expr is amazingly stupid about parsing,
+# which saves us a little effort.  (Yes, of course awk could emulate
+# expr all by itself; we're just trying to prove a point...)
+#
+
+PATH=//bin://usr/bin
+IFS=''
+set -f
+
+translate() {
+	for f in "$@"
+	do
+		echo "$f"
+	done |
+	awk '
+	/^match$/ {
+		getline s
+		getline r
+		printf "%s:%s", s, r
+		next
+	}
+
+	/^substr$/ {
+		getline s
+		getline x
+		getline y
+		printf "%s:.\\{%d\\}\\(.\\{0,%d\\}\\)", s, x - 1, y
+		next
+	}
+
+	/^length$/ {
+		getline s
+		printf "%s:.*", s
+		next
+	}
+
+	/^index$/ {
+		getline s
+		getline r
+		printf "%s:[^%s]*[%s]", s, r, r
+		next
+	}
+
+	{
+		printf "%s", $0
+	}'
+}
+
+set $(translate "$@")
+
+exec expr "$@"

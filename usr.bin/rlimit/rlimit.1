@@ -1,0 +1,178 @@
+.\"	BSDI	rlimit.1,v 1.1 1999/09/08 19:16:59 prb Exp
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)csh.1	8.2 (Berkeley) 1/21/94
+.\"
+.Dd September 7, 1999
+.Dt RLIMIT 1
+.Sh NAME
+.Nm rlimit
+.Nd change process limits
+.Sh SYNOPSIS
+.Nm rlimit
+.Op Fl huv
+.Op Fl p Ar pid
+.Op Ar resource Op maximum-use
+.Sh DESCRIPTION
+The
+.Nm rlimit
+command limits the consumption by the target process and each process
+it creates to not individually exceed
+.Ar maximum-use
+of the specified
+.Ar resource  .
+If
+.Ar maximum-use
+is not specified, then the current limit is printed; if
+.Ar resource
+is not specified, then the current limits on all resources are displayed.
+.Pp
+The following options are available:
+.Bl -tag -width indent                
+.It Fl h
+If the
+.Fl h
+option is specified,
+the hard limits are used instead of the current limits.
+The hard limits impose a ceiling on the values of the current limits.
+Only the super-user may raise the hard limits,
+but a user may lower or raise the current limits within the legal range.
+.It Fl p
+Normally the limits for the current process are printed or changed.
+The
+.Fl p
+allows the specification of which process should be queried or altered.
+You must either have the same user id as the target process or be
+super-user to query or alter another process.
+.It Fl u
+Normally limits are printed in abbreviated for, i.e., 2K instead of
+2048.  The
+.Fl u
+option turns off abbreviations and the full value is printed.
+.It Fl v
+The
+.Fl v
+option causes both the current and hard limit to be displayed.
+A textual definition of the resource is printed rather than the resource name.
+.El
+.Pp
+Controllable resources include:
+.Bl -tag -width indent
+.It coredumpsize
+The largest size core file that may be created.
+.It cputime
+The maximum amount of cpu time to be used by each process.
+.It datasize
+The maximum size of the data segment for the process; this defines how far
+a program may extend its break with the
+.Xr sbrk 2
+system call.
+.It filesize
+The largest size file that may be created.
+.It maxproc
+The maximum number of simultaneous processes for this user id.
+.It memorylocked
+The maximum size which the process may lock into memory using the
+.Xr mlock 2
+function.
+.It memoryuse
+The maximum size to which the process's resident set size may grow.
+This imposes a limit on the amount of physical memory to be given to a
+process; if memory is tight,
+the system will prefer to take memory from processes that are exceeding
+their declared resident set size.
+.It openfiles
+The maximum number of open files for the process.
+.It stacksize
+The maximum size of the stack segment for the process; this defines how far
+a program's stack segment may be extended.
+Stack extension is performed automatically by the system.
+.El
+.Pp
+The
+.Ar maximum-use
+argument may be specified as an integer number
+followed by a scale factor.
+For all limits other than
+.Ar cputime ,
+multiple numbers, with scale factors, may be multiplied together by
+using
+.Dq x.
+(I.e., 
+.Li 5x1024 . )
+The scale factors for limits other than cputime are:
+.Bl -tag -width indent                
+.It b
+the number is multiplied by 512
+.It k
+the number is multiplied by 1024
+.It m
+the number is multiplied by 1024*1024
+.It g
+the number is multiplied by 1024*1024*1024
+.It t
+the number is multiplied by 1024*1024*1024*1024
+.El
+.Pp
+For
+.Ar cputime ,
+multiple numbers with scale factors may simply be concatenated together.
+(I.e.,
+.Li 1h30m . )
+The scale factors available are:
+.Bl -tag -width indent                
+.It s
+seconds
+.It m
+minutes (multiplied by 60)
+.It h
+hours (multiplied by 60*60)
+.It d
+days (multiplied by 60*60*24)
+.It w
+weeks (multiplied by 60*60*24*7)
+.It y
+years (multiplied by 60*60*24*365)
+.El
+.Pp
+The
+.Nm rlimit
+command exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr getprlimit 8 ,
+.Xr setprlimit 8

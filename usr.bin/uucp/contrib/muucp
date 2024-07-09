@@ -1,0 +1,66 @@
+BSDI muucp,v 2.2 1996/06/11 19:26:49 vixie Exp
+
+Path: vixie!mail-hub.interpath.net!bsdi-users-request
+From: dsinc!jabber!candle!maillist@uunet.UU.NET (Bruce Momjian)
+Newsgroups: local.mail.bsdi.users
+Subject: uucp'ing multiple files, new version
+Date: 3 May 1994 00:28:56 -0700
+Organization: A blearily-installed InterNetNews site
+Lines: 39
+Sender: daemon@vix.com
+Distribution: local
+Message-ID: <199405030601.CAA03448@candle.uucp>
+X-Received: by gw.home.vix.com id AA28319; Tue, 3 May 94 00:28:52 -0700
+X-Received: by mail-hub.interpath.net (5.65/interpath_01)
+	id AA00335; Tue, 3 May 94 02:51:13 -0400
+X-Resent-Date: Tue, 3 May 1994 02:01:45 -0400 (EDT)
+X-Resent-Message-Id: <9405030651.AA00335@mail-hub.interpath.net>
+X-To: bsdi-users@bsdi.com (BSDI mailing list)
+X-Mailer: ELM [version 2.4 PL23]
+X-Content-Type: text
+X-Content-Length: 806       
+X-Resent-From: bsdi-users@mail-hub.interpath.net
+X-Mailing-List: <bsdi-users@mail-hub.interpath.net> archive/latest/1019
+X-Loop: bsdi-users@mail-hub.interpath.net
+X-Precedence: list
+X-Resent-Sender: bsdi-users-request@mail-hub.interpath.net
+
+This is an updated version of my muucp command.  The old version broke
+when more than 10 files were used.
+
+---------------------------------------------------------------------------
+Description:
+
+As 1.1 is not going to allow uucp'ing multilple files on one command
+line either, here is a script to allow it, like:
+
+ 	uucp file1 file2 file3 site!dest
+
+Here is the script.  It accepts all valid uucp options too:
+
+---------------------------------------------------------------------------
+
+
+# muucp - uucp multiple files
+# root@candle.uucp (Bruce Momjian)
+#set -x
+OPTS=""
+
+while getopts cCde:fg:mM:n:P:rs:S:x: FLAG
+do
+	OPTS="$OPTS -$FLAG$OPTARG"
+	[ "$FLAG" = "?" ] && exit 1
+done
+[ $OPTIND -gt 1 ] && shift `expr $OPTIND - 1`
+
+for LAST
+do
+	:
+done
+
+while [ "$#" -gt 1 ]
+do
+	uucp $OPTS $1 $LAST
+	shift
+done
+

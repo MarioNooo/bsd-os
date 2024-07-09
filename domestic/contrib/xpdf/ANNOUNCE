@@ -1,0 +1,38 @@
+Subject: ANNOUNCE: xpdf 0.91 - a PDF viewer for X
+
+
+I've just released a new version of xpdf, my Portable Document Format
+(PDF) viewer for X.
+
+Xpdf runs under the X Window System on Unix, VMS, and OS/2.  The non-X
+components of the package (pdftops, pdftotext, etc.) also run on Win32
+systems.
+
+Noticeable changes:
+
+* Added TrueType font rendering, using FreeType.
+* Support for (some) Chinese fonts.
+* Decryption code is included with the main distribution (now that the
+  US export regulations are a little bit less irrational).
+* Added (very basic) support for generating PostScript with Japanese
+  fonts.
+* Added support for generating EPS files (pdftops -eps).
+* Much-improved image filtering in xpdf.
+* Implemented a basic full-screen (presentation) mode (xpdf
+  -fullscreen).
+
+See the `CHANGES' file for a complete list.
+
+Source (C++ and C) is available, and it should be fairly easy to
+compile for UNIX, VMS, OS/2, and Win32.
+
+More information, source code, and precompiled binaries are on the
+xpdf web page and ftp site:
+
+    http://www.foolabs.com/xpdf/
+    ftp://ftp.foolabs.com/pub/xpdf/
+
+Source and Linux binaries are on sunsite.unc.edu, currently in
+the incoming directory, but they will be moved to:
+
+    ftp://sunsite.unc.edu/pub/Linux/apps/graphics/viewers/X

@@ -1,0 +1,57 @@
+    Welcome to Qpopper, a POP3 server UNIX/Linux
+    --------------------------------------------
+
+
+What is Qpopper?
+----------------
+Qpopper supports the widely used POP3 protocol for downloading Internet
+e-mail used by many popular e-mail clients. Qopper does not include a
+message transfer agent or SMTP support and normally works with standard
+UNIX mail transfer agents such as sendmail or smail.
+
+
+Installing and documentation
+----------------------------
+The Qpopper Administrator's Guide is a comprehensive document with
+installation and configuration information.  Please visit
+<http://www.eudora.com/qpopper/> for a copy.
+
+If you want to get started quickly, usually you can type
+"configure" to generate the Makefile for your platform, and then
+type "make".
+
+Detailed documentation is available the doc directory. In particular the
+file doc/Release.Notes describes the changes from one version to the next.
+
+
+Finding out more about Qpopper
+-----------------------------
+Please visit the Qpopper web site for more information:
+<http://www.eudora.com/qpopper/>.
+
+Qualcomm operates a mailing list for official announcements regarding
+Qpopper.  To subscribe, send the word "subscribe" (without the quotes)
+as the body of an email message to
+<qpopper-announce-request@rohan.qualcomm.com>.
+
+An unofficial public discussion mailing list exists for Qpopper users.
+To subscribe, send the word "subscribe" (without the quotes) as the body
+of an email message to <qpopper-request@lists.pensive.org>.
+
+Note that announcements are sent to both lists, so you only need to
+subscribe to one.
+
+
+Other QUALCOMM e-mail products
+------------------------------
+The Eudora Division of QUALCOMM has several e-mail products, some for free
+and others that are sold.  These include the Eudora e-mail client for
+Windows and Macintosh; and the Eudora Internet Mail Server (EIMS) for the 
+Macintosh and the WorldMail server for Windows NT, which implement the POP,
+IMAP, SMTP, LDAP and Ph protocols.  You can find out more about these
+products by writing e-mail to eudora-rep@eudora.com or by visiting the
+Eudora web site at <http://www.eudora.com>.
+
+
+
+

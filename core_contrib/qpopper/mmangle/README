@@ -1,0 +1,153 @@
+  Mime Parser 
+  Laurence Lundblade <lgl@qualcomm.com>
+  Brian Kelly 
+
+  Copyright (c) 2003 QUALCOMM Incorporated.
+
+The major input structures are:
+
+     Single part message:
+          RFC-822 Headers
+          MIME Headers
+          blank line
+          Message body
+
+     Multipart entity:
+          MIME Headers
+          blank line
+          inter-boundary junk
+          boundary
+            MIME Headers
+            blank line
+            MIME body
+          boundary
+            MIME Headers
+            blank line
+            MIME body
+          ....
+          ending boundary
+
+     Encapsulated message:
+          MIME Headers
+          blank line
+          RFC-822 Headers
+          MIME Headers
+          blank line
+          MIME body
+
+The above structures can of course be nested. Mime bodies may be
+binary (they are not transfer encoded). The MIME standard prevents
+other elements from being binary. Mime headers and RFC 822 headers are
+often interleaved. Mime headers always start with "Content-". (However
+the Content-Length header is never a MIME header). The full RFC-822
+syntax for MIME headers is handled including comments, quoting, etc.
+
+The MIME parse starts by the user calling the MIMEInit function, then
+the MimeInput function with buffers of the input message. Input may be
+fed all at once or a byte at a time. The user will be called back and
+requested to supply functions to handle/output the RFC-822 headers and
+the MIME bodies. In this call back the MIME type, and MIME nesting
+details are provided so it can decided how to handle the content. This
+call back happens whenever the parser encounters the blank line
+separating headers from the body. In addition it is called once at the
+very start of the parse with a NULL Mime type to request a handler for
+the initial RFC 822 headers.  No parsing of the contents of RFC-822
+headers is done at all.
+
+The mime bodies are passed to the callers call back a buffer at a
+time. The transfer encoding is removed before the call back, so the
+data is likely to be binary.
+
+Note that the caller has no access to raw MIME headers, boundary
+delimiters, interboundary junk, or transfer encoded content. This does
+result in a few limitations, such as the inability to adapt this code
+to new transfer encodings without changing it.
+
+A more serious limitation is access to the unparsed MIME headers,
+because this parser (at present) does not parse all parts of the MIME
+headers in the interest of keeping it very small.  At present, it only
+handles the Content-Type, Content-Disposition, and
+Content-Transfer-Encoding headers, and a very limited number of MIME
+parameters. Both these limitations could be remedied without changing
+the structure of the code though.
+
+Another limitation is on the size of parsed MIME tokens. It is set at
+about 100 bytes. MIME parameter names or values are rarely larger, it
+is allowed. Tokens longer are truncated. The MIME nesting depth also
+has a hard limit. These limitations make the MIME parser run in fixed
+memory no matter the complexity of the input.
+
+The core MIME parser consists of the files:
+   mime.c       mime.h,
+   utils.c      utils.h,
+   lineend.c    lineend.h
+
+In addition HTML and text/enriched strippers are included:
+   enriched.c   enriched.h
+   striphtml.c  striphtml.h
+
+----------------------------------------------------------------------
+
+The UNIX code here compiles into a the MIME mangler, that reduces MIME
+structure to plain text. These are the files:
+   testjig.c   
+   mangle.c  mangle.h
+
+This is some text processing code that takes standard MIME email as
+input and produces a text-only version of it. It was particularly
+designed with small text-only devices in mind. The code is also
+intented to run on a most any platform and at this point runs well on
+UNIX, and has also been tested o the Palm Pilot. There is no
+recursion, and there is a hard limit on the MIME nesting depth, both
+to limit stack and memory usage. Stack usage is very limited.  In a
+number of cases features where scarificed for small size.  The main
+entry points are in mmangle.c and/or mmangle.h.
+
+This implements a full and proper MIME, text/enriched and HTML
+parse. So for example a legal MIME header like:
+
+   content-type: (((()())))application (( ")))"
+      )) "/"()()()
+     (xxx"\"") "xyz"
+
+will parse down to a MIME type of application/xyz. Some of constructs
+and types explicity handled are:
+  - Filters rfc 822 headers
+  - Content-type header
+  - Content-transfer-encoding - only quoted printable
+  - Content-dispostion - the filename parameter and disposition itself
+  - multipart/alternative - shows only first part
+  - multipart/report - omits body of enclosed message
+  - charset parameter - warns if character set is weird
+  - message/rfc822 - filters headers
+  - message/news - filters headers
+  - multipart/mixed - traverses 5 levels as is, can do up to 31
+  - multipart/* - defaults to multipart/mixed
+  - text/enriched - reduces to plain text
+  - application,image,model,audio,video - shows type and filename 
+  - ms-tnef - ignores
+  - HTML - all common entities like &AMP; 
+  - HTML - shows URL in <A HREF=xxx>
+  - HTML - shows ALT tag in images
+  - HTML - fakes lists
+  - HTML - <HR>
+  - HTML - <PRE>, <P>, <BR> and similar text formatting
+
+Some bugs/omissions:
+  - doesn't lop off trailing white space in QP decoding
+  - doesn't actually check version of MIME in MIME-version header
+  - some parts are not reentrant
+  - could probably reduce code size by another 10%
+
+
+The test directory contains a bunch of weird input and sample results
+the mangler should produce that can be used as a regression test.
+
+
+
+
+
+
+
+
+

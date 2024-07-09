@@ -1,0 +1,40 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI sched_yield.3,v 1.2 1997/11/07 23:02:13 donn Exp
+.\" 
+.Dd November 7, 1997
+.Dt SCHED_YIELD 3
+.Os BSD 4
+.Sh NAME
+.Nm sched_yield
+.Nd force the current pthread to be rescheduled
+.Sh SYNOPSIS
+.Fd #include <sched.h>
+.Ft int
+.Fn sched_yield "void"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+If other threads are ready to run, the
+.Fn sched_yield
+function forces the current thread to suspend itself
+temporarily and let them execute.
+.Sh RETURN VALUES
+Always returns 0.
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_setschedparam 3
+.Sh STANDARDS
+The
+.Nm sched_yield
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm sched_yield
+function first appeared in BSD/OS 3.0.

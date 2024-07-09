@@ -1,0 +1,7 @@
+
+#------------------------------------------------------------------------------
+# Localstuff:  file(1) magic for locally observed files
+#
+# Localstuff,v 1.1 2002/02/12 02:33:47 polk Exp
+# Add any locally observed files here.  Remember:
+# text if readable, executable if runnable binary, data if unreadable.

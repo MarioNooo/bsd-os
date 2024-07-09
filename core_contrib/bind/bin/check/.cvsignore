@@ -1,0 +1,7 @@
+Makefile
+named-checkconf
+named-checkzone
+.libs
+named-checkconf.lo
+check-tool.lo
+named-checkzone.lo

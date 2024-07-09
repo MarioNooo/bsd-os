@@ -1,0 +1,102 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI MAKEDEV.8,v 1.4 1998/03/17 11:23:03 torek Exp
+.Dd March 15, 1995
+.Dt MAKEDEV 8
+.Os
+.Sh NAME
+.Nm MAKEDEV
+.Nd create system and device special files
+.Sh SYNOPSIS
+.Nm MAKEDEV
+.Ar name ...
+.Sh DESCRIPTION
+The shell script
+.Nm MAKEDEV ,
+found in the
+.Pa /dev
+directory, is used to create the common special files.
+See
+.Xr special 8
+(XXX there is no special(8))
+for a more complete discussion of special files.
+.Pp
+.Nm MAKEDEV
+takes any number of device names as arguments, where the names are
+the common abbreviation for the device.
+There are two special devices,
+.Dq std
+and
+.Dq local .
+The former creates the standard devices for the architecture.
+The latter is for devices specific to the local site, and
+executes the shell file ``MAKEDEV.local''.
+.Pp
+The sparc supports the following devices.
+Where a device name is followed by a hash sign
+.Pq Dq # ,
+the hash sign must be replaced by a unit number.
+.Pp
+.Bl -tag -width cgthreeX -compact
+.It std
+the standard machine-independent devices
+(console, drum, fd/*, klog, kmem, mem, null,
+zero, stderr, stdin, stdout, tty)
+and sparc-specific devices
+(ttya, ttyb, fb, mouse, kbd, audio, openprom, eeprom).
+Also makes special files for
+fd, sd, sr, st, pty, bpf, and sg,
+described below.
+.It local
+configuration specific devices
+.It bpf#
+Berkeley packet filter - for analyzing network traffic
+.It bwtwo#
+bwtwo display devices
+.It cgsix#
+cgsix display devices
+.It cgthree#
+cgthree display devices
+.It fd#
+.Dq floppy
+disk drives (3 1/2)
+.It pty#
+set of 16 master and slave pseudo terminals
+.It sd#
+SCSI disk drives, including R/W optical disks
+.It sg#
+SCSI generic (non-disk non-tape units)
+.It sp#
+.Dq splice
+striped/concatenated disk pseudo-devices
+.It sr#
+SCSI read-only drives, including CD-ROMs
+.It st#
+SCSI interfaced tape, including quarter inch and 8mm
+.It tun#
+network tunnel interface pseudo-devices
+.It vnd#
+.Dq "vnode disk"
+pseudo-devices
+.El
+.Pp
+All of the various display devices
+are normally used via the indirect
+.Dq fb
+console frame-buffer driver.
+Specific names such as
+.Pa /dev/bwtwo0
+allow access to the display on systems using a serial console,
+and to additional displays besides the console
+on multi-headed systems.
+.Sh FILES
+.Bl -tag -width /dev
+.It Pa /dev
+The special file directory.
+.El
+.Sh SEE ALSO
+.Xr mknod 8 ,
+.Xr intro 4 ,
+.Xr config 8

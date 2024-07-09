@@ -1,0 +1,103 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_specific.3,v 1.3 1996/12/12 03:03:48 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_SPECIFIC 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_setspecific ,
+.Nm pthread_getspecific
+.Nd thread specific data value functions
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_setspecific "pthread_key_t key" "void *value"
+.Ft void *
+.Fn pthread_getspecific "pthread_key_t key"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_setspecific
+and
+.Fn pthread_getspecific
+functions maintain thread-specific data values associated with
+data keys created by calling
+.Fn pthread_key_create .
+.Pp
+The
+.Fn pthread_setspecific
+function associates the data value specified in
+.Fa value
+with the data key
+.Fa key 
+previously created by a call to
+.Fn pthread_key_create .
+While data keys are unique within the implementation the data values
+associated with them are maintained per-thread.  The intent is to allow
+creation of per-thread state for functions that require that local state
+be maintained.
+.Pp
+The 
+.Fn pthread_getspecific
+function retrieves a data value previously registered with
+.Fn pthread_setspecific .
+.Pp
+Calling 
+.Fn pthread_setspecific
+or 
+.Fn pthread_getspecific
+with a key value not previously created with a call to
+.Fn pthread_key_create
+results in undefined behavior.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn pthread_getspecific
+returns the thread specific data value associated with
+.Fa key
+or a 
+.Dv NULL
+to indicate that no thread-specific data value is available.
+.Pp
+Upon successful completion, the
+.Fn pthread_setspecific
+function returns 0.  A non-zero result indicates that an error occurred.
+.Sh ERRORS
+The
+.Nm pthread_setspecific
+function may fail and return one of the following errors:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The 
+.Fa key 
+value is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to associate the specified
+.Fa value
+with 
+.Fa key .
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_key_create 3 ,
+.Xr pthread_key_delete 3
+.Sh STANDARDS
+The
+.Nm pthread_setspecific
+and
+.Nm pthread_getspecific
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_setspecific
+and
+.Nm pthread_getspecific
+functions first appeared in BSD/OS 3.0.

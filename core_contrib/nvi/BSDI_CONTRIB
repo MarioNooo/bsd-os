@@ -1,0 +1,20 @@
+Software Package:       
+	nvi
+
+Release/Version:
+	1.79
+
+Retrieved from:
+	ftp.bostic.com/pub/nvi-1.79.tar.gz.
+
+Bug reports:
+	This software package is maintained by both BSDI and the
+	software contributor.  Please send any bug reports to both
+	support@BSDI.COM and bostic@bostic.com.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+The recover script has been modified for security reasons

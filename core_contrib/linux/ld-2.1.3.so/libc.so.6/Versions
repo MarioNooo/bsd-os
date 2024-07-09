@@ -1,0 +1,4 @@
+BSDI_DUMMY_LIBC {
+global:
+	__bsdi_dummy_libc_stub;
+};

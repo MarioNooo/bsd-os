@@ -1,0 +1,5 @@
+Edit the length of the partition.  You may enter the number of sectors
+(e.g., 1234s), or the number of megabytes (e.g., 10M) or the number of
+cylinders (e.g., 32C).  You can also adjust the value (e.g., -37s or +5M).
+
+[ESC]cancel [ENTER]apply [TAB]next [?]Help

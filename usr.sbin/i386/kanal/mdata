@@ -1,0 +1,5 @@
+#!/usr/bin/perl5
+
+while (($rc = read(STDIN, $d, 45)) != 0) {
+	print pack("u", $d);
+}

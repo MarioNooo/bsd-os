@@ -1,0 +1,301 @@
+.\"	BSDI	disksetup.8,v 2.9 1998/01/17 17:15:49 bostic Exp
+.\"
+.\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd January 30, 1995
+.Dt DISKSETUP 8
+.Os
+.Sh NAME
+.Nm disksetup
+.Nd setup and label disk drives
+.Sh SYNOPSIS
+.Nm disksetup
+.Fl i
+.Op Fl DEFKPns
+.Op Fl I
+.Op Fl II
+.Op Fl A Ar bootany
+.Op Fl M Ar memsize
+.Op Ar disk
+.Nm disksetup
+.Op Fl NW
+.Ar disk
+.Nm disksetup
+.Op Fl DKs
+.Op Fl I
+.Op Fl II
+.Ar disk
+.Nm disksetup
+.Fl R
+.Op Fl DKns
+.Op Fl I
+.Op Fl II
+.Ar disk
+.Ar proto-file
+.Op Ar xxboot Ar bootxx Op Ar mboot
+.Nm disksetup
+.Fl e
+.Op Fl DKns
+.Op Fl I
+.Op Fl II
+.Oo
+.Ar disk
+.Op Ar xxboot Ar bootxx Op Ar mboot
+.Oc
+.Nm disksetup
+.Fl B
+.Ar disk
+.Op Ar xxboot Ar bootxx Op Ar mboot
+.Sh DESCRIPTION
+.Pp
+The
+.Nm disksetup
+program is used to examine and alter the various disk labels on a disk drive
+specified by
+.Ar disk .
+If
+.Ar disk
+is indicated as optional, disksetup will either assume the only hard
+drive on the system is the target, or, if there is more than one drive,
+prompt for which drive should be used.
+.Pp
+The
+.Nm disksetup
+utility can be called in a variety of ways.  After a short description of the
+six major ways
+.Nm disksetup
+may be called, a combined list of options will be presented.
+.\"
+.\"
+.\"
+.Ss Method 1 \(em Interactive mode
+.Pp
+When the
+.Fl i
+flag is specified,
+.Nm disksetup
+will interactively setup the disk.
+See the section below on interactive setup.
+.\"
+.\"
+.\"
+.Ss Method 2 \(em Mark disk writable/not writable
+.Pp
+Normally the second sector the disk (or BSD/OS FDISK partition)
+contains the BSD/OS disk label and is not writable.  Using
+.Nm disksetup
+with the
+.Fl W
+or
+.Fl N
+flag makes this sector writable/not writable.
+When disksetup needs to write the BSD/OS disk label, it automatically
+enables the ability to write it.
+.\"
+.\"
+.\"
+.Ss Method 3 \(em Displaying existing labels 
+.Pp
+In this mode, disksetup outputs the existing label in ASCII, suitable
+for use as a
+.Ar proto-file .
+.\"
+.\"
+.\"
+.Ss Method 4 \(em Restoring disk label
+.Pp
+When the
+.Fl R
+flag is specified,
+.Nm disksetup
+will restore the label from the file specified by
+.Ar proto-file ,
+which is usually generated using Method 3 (above).
+See the section below on installing boot blocks for information
+on the other optional arguments.
+.\"
+.\"
+.\"
+.Ss Method 5 \(em Editing disk label
+.Pp
+When the
+.Fl e
+flag is specified, a temporary ASCII version of the disklabel
+is created and an editor (either
+the contents of the
+.Ev EDITOR
+environment variable or
+.Xr vi 1 )
+is invoked on that file.  After exiting the editor,
+.Nm disksetup
+will label the disk the with altered label.
+See the section below on installing boot blocks for information
+on the other optional arguments.
+.\"
+.\"
+.\"
+.Ss Method 6 \(em Install boot blocks.
+.Pp
+When the
+.Fl B
+flag is specified,
+.Nm disksetup
+will only install boot blocks, and possibly a Master Boot Record (MBR).
+An MBR is only needed when the disk is set up for co-residency using the
+DOS style FDISK table.
+The
+.Ar xxboot
+and
+.Ar bootxx
+arguments specify the primary and secondary bootstraps.  The bootstraps
+are normally found in /usr/bootstraps.
+If the primary and secondary bootstraps are not specified,
+.Nm disksetup
+will prompt for the type of bootstrap to install.
+The
+.Ar mboot
+argument is used to specify a new MBR.  The standard MBR used by
+BSD/OS is
+.Nm bootany.sys .
+If an FDISK table exists and
+.Ar mboot
+is not specified, disksetup will prompt for the file containing the
+MBR, with the option to keep the existing MBR.
+If
+.Nm bootany.sys
+is chosen as the MBR, the
+.Xr bootany 8
+program will be run to install and initialize the MBR.
+.sp
+.\"
+.\"
+.\"
+.Ss Flags and Options
+.Pp
+.Bl -tag -width Fl M Ar memsize
+.It Fl A Ar bootany
+Use
+.Ar bootany
+as the path to the program to install
+.Nm bootany.sys .
+.It Fl D
+Only read the on disk label.
+.It Fl E
+Expert mode.  Turn off some consistency checks, such as partition overlap,
+partition length, etc.  Allow specification of the FDISK geometry.
+Only useful with the
+.Fl i
+flag.
+.It Fl F
+Edit the FDISK table.  Implies the
+.Fl i
+flag.
+.It Fl I
+Ignore the on-disk BSD/OS disk label.  Also causes the device to
+be open non-blocking.
+.It Fl II
+In addition to the the effects of the
+.Fl I
+flag, ignore any FDISK table on the disk.
+.It Fl K
+Only read the kernel's (in-core) disk label.
+.It Fl M Ar memsize
+In interactive mode, the amount of memory in the system is used to help
+determine the size of some partitions.  When 
+.Fl M
+is supplied,
+.Ar memsize 
+(specified in megabytes) will be used instead of the actual size of memory.
+.It Fl N
+Disable writes to the BSD/OS label sector.
+.It Fl P
+Edit the BSD/OS partition table.  Implies the
+.Fl i
+flag.
+.It Fl Q
+Do not ask any questions when using the express setup.
+.It Fl S
+Express mode setup.  Used by the installation scripts.
+.It Fl Z Ar dossize
+When using express setup.
+reserve
+.Ar dossize
+MB of disk space for DOS.  A value of
+.Li 0
+(zero)
+implies no DOS partition.
+.It Fl W
+Enable writes to the BSD/OS label sector.
+.It Fl n
+Do not write any output to the disk.
+.It Fl p Ar xxboot
+Use
+.Ar xxboot
+as the primary bootstrap.
+Used by express setup.
+.It Fl q Ar bootxx
+Use
+.Ar bootxx
+as the secondary bootstrap.
+Used by express setup.
+.It Fl s
+Write only the kernel's in-core label.
+.It Fl t Ar path
+Use by the installation script to specify a file prefix for storing
+filesystem information.  This information is used by the installation
+script to generate
+.Xr fstab 5
+entries.
+.El 
+.\"
+.\"
+.\"
+.Pp
+Although
+.Nm disksetup
+attempts to be self explanatory (via prompts
+and help screens), it is useful to understand the basics of how the
+interactive mode works and the goals for configuring disks.
+.Pp
+The
+.Nm disksetup
+utility
+will present a series of questions, with a default or
+recommended response enclosed in brackets
+.Op like\ this .
+To use the default response, simply press the
+.Nm <Enter>
+key.
+If you enter an invalid response,
+.Nm disksetup
+will prompt you again until a valid response is received.
+.Pp
+When requesting information about the geometry, or when editing FDISK
+and BSD/OS partition tables,
+.Nm disksetup
+uses a full screen display/edit mode.
+Use the
+.Nm <Tab>
+key to change fields.
+Generally the
+.Nm <Esc>
+key will cancel the current changes.
+When editing the partition tables, the
+.Nm ?
+key may be pressed for context sensitive help.
+You may want to read through these help screens as they contain
+valuable tips on using
+.Nm disksetup .
+.Sh FILES
+.Pa /etc/disktab
+.br
+.Pa /usr/bootstraps/\fIxx\fPboot
+.br
+.Pa /usr/bootstraps/boot\fIxx\fP
+.br
+.Pa /usr/bootstraps/bootany.sys
+.Sh SEE ALSO
+.Xr disktab 5 ,
+.Xr disklabel 5

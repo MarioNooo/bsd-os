@@ -1,0 +1,65 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI statd.8,v 1.2 1999/06/30 20:09:35 chrisk Exp
+.\"
+.Dd March 17, 1998
+.Dt STATD 8
+.Os
+.Sh NAME
+.Nm statd
+.Nd network status daemon
+.Sh SYNOPSIS
+.Nm statd
+.Op Fl d Ar debug-level
+.Sh DESCRIPTION
+.Nm Statd
+is a daemon which co-operates with
+.Nm statd
+daemons on other hosts to provide a host status monitoring service.
+.Pp
+The daemon accepts requests from programs running on the local
+host (typically,
+.Xr lockd 8 ,
+the NFS lock manager) to monitor the status of specified hosts.
+If a monitored host reboots,
+the remote daemon will notify the local daemon,
+which in turn will notify the local program(s) which requested the
+monitoring service.
+Conversely,
+if the local host reboots, when the
+.Nm statd
+re-starts,
+it will notify the hosts which were being monitored at the time of the
+crash.
+.Pp
+Error conditions are logged to syslog,
+using log level LOG_ERR and facility LOG_DAEMON.
+.Pp
+.Pp
+.Nm Statd
+daemon should be run by
+.Xr rc 8
+after network services and
+.Xr portmap 8
+have been started, but before any other services which depend on
+.Nm statd
+are run (ie:
+.Xr lockd 8 ).
+.Sh FILES
+.Bl -tag -width XXXXX -compact
+.It Pa /usr/include/rpcsvc/sm_inter.x
+RPC protocol specification for the network status manager (NSM) protocol.
+.It Pa /var/db/statd.state
+Record of currently monitored hosts.
+.It Pa /var/db/statd.status
+Local server status value.
+.El
+.Sh SEE ALSO
+.Xr lockd 8
+.Xr portmap 8
+.Sh STANDARDS
+The implementation is based on the X/Open CAE Specification,
+Document number C525, "Protocols for X/Open Interworking: XNFS, Version 3".

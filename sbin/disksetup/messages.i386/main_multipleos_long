@@ -1,0 +1,9 @@
+BSD/OS may be installed as
+
+    * The only operating system on the disk.
+      Some disk controllers may require an FDISK table even if BSD/OS is
+      to be the only operating system on the disk.
+
+    * Sharing the disk with other operating systems, such as DOS.
+      This requires an FDISK table.
+

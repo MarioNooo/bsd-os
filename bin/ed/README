@@ -1,0 +1,102 @@
+
+Welcome to the 4.4BSD 'ed'.
+
+The lastest release by source can be found at "http://www.bond.net/~rodney".
+At the same web page there may be additional information.
+
+** If you are unsure that the source code is correct, or you are
+** suspicious that the code has been modified in some manner get
+** a fresh download from the above web page.
+
+All bugs, enhancement requests, etc. should be sent to "rodney@bond.net".
+I have maintained 'ed' since the 4.4BSD release and continue to do so.
+
+'Ed' is maintained under the original BSD copyright.
+It will never be placed under the FSF/GNU -- I don't like viruses.
+
+The full current COPYRIGHT should be found in the same directory that
+you discovered this file (named appropriately "COPYRIGHT").
+If not refer to the above named web page.
+
+For building and installing 'ed' please refer to the file name "INSTALL"
+which should also be found in the same directory that this README file
+was found. If not found you likely need to get a fresh download of
+the entire package; reference the above named web page.
+
+This version of 'ed' was (and still is) written to remove limits of
+previous (AT&T) versions of 'ed' such as line and buffer limits. It
+was also written to continue having a small memory footprint.
+Interestingly enough the result of this is that when (originally) 'ed'
+was compiled using the "old" regular expressions (RE's) it worked
+faster. Using the (newer) Posix RE package resulted it several
+commands going slower. This isn't surprising since Posix added several
+new items. The RE package I compared this against was Henry Spencer's
+RE package included with the 4.4BSD release; this continues to be
+used by most of the *BSD* releases. No, I'm not flaming Henry. This
+is just a reality of doing things right. I can say this since I was
+responsible for another (commercial) RE and making it work for Posix
+and XPG correctly (if you've used a commercial system there's a good
+chance you used it).
+
+Since the 4.4BSD I've fixed a few bugs. I've also added a few new
+commands to make things more useful (i.e. the extended 'z'/'Z'
+commands). I use 'ed' all the time (usually everyday). No, I'm not
+neolithic; I use 'vi' regularly; the right tool at the right time for
+the right job: do the job.
+
+If you want to browse the source remember "tags" are your friend (see
+ctags(1); 'ed' now uses tags as does 'vi(1)' of course). I'm firm
+believer of not(!) having incredibly huge src files. Each source file
+matches a function group. For triva buffs the file sub.c was originally
+named s.c. Alas, SCCS couldn't handle the name (I manage it under RCS
+now).
+
+Thanks to Keith Bostic for letting me contribute to the 4.4BSD release
+and his initial testing. Thanks to Peter Collinson for lots of
+extra testing.
+
+Below is the orginal "README" included for the 4.4BSD release.
+
+Rodney Ruddock
+(rodney@bond.net)
+/master/bin/ed/README,v 2.2 2000/01/11 22:43:34 polk Exp
+
+#	@(#)README	5.2 (Berkeley) 3/1/93
+
+For compiling:
+	There are several flag options for compiling 'ed' into executable.
+
+This table briefly describes the flags used in compilation:
+
+	BSD | POSIX
+		specifies over-riding behaviour in historical terms:
+		BSD=> BSD behaviour when confilicting with P1003.2,
+		POSIX=> as P1003.2 specified when conflicting with BSD.
+
+	STDIO | DBI | MEMORY
+		specifies which method is to be used for the buffer.
+                Be sure to understand that there are trade-offs with
+                any of the methods:
+		STDIO=> standard I/O temp file,
+		DBI=> BSD recno database file (db(3)),
+		MEMORY=> ye olde silicon.
+
+	One of each compile flag option _must_ be chosen to get a sensible
+	compile.
+
+One define not listed above, yet used as a flag, is RE_STARTEND. This
+is used to automagically check if you are using the real BSD RE interfaces.
+See regex(3) (4.4BSD) for a description of RE_STARTEND; an extension to
+P1003.2 B.5. If you happen to be using another POSIX regex(3) this
+automatically taken care of; the old RE interfaces are unsupported.
+
+This implementation of `ed' is a superset of the POSIX 1003.2 description
+for `ed' to remain compatible with earlier (BSD) versions of `ed'.
+Hence, any BSD 'ed'isms that do not conflict with P1003.2 are available
+to the user even under the POSIX flag compilation. Likewise, any POSIX
+'ed'isms that do not conflict with historical BSD behaviour are available
+to the user.
+
+Refer to the man page ed(1) for information about using `ed'.
+
+-Rodney

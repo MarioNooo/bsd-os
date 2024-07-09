@@ -1,0 +1,212 @@
+.\"     BSDI ikmpd.8,v 1.3 1998/04/13 04:41:23 dab Exp
+.Dd April 9, 1998
+.Dt IKMPD
+.Os
+.Sh NAME
+.Nm ikmpd
+.Nd ISA Key Management Protocol daemon
+.Sh SYNOPSIS
+.Nm ikmpd
+.Sh DESCRIPTION
+Cisco Systems, Inc. IKE distribution, version 0.8 
+.Pp
+This software distribution is a reference implementation of the
+IETF's IKE protocol. This distribution is being made available free of
+charge for any commercial or non-commercial use.
+.Pp
+The implementation is based upon ISAKMP draft number 9 [MSST98] and
+the Internet Key Exchange (IKE) draft number 6 [HC98].
+.Pp
+Included with this distribution is a copy of a cryptographic
+library from Cylink, Corporation. In order to promote ISAKMP and IKE, Cylink 
+has granted Cisco the right to offer this library-- source code to the 
+Diffie-Hellman key exchange, the Digital Signature Standard, and the Digital 
+Encryption Standard-- to all third parties on a royalty-free basis for use 
+only with this IKE reference implementation. This cryptographic library
+is offered under the following license:
+.Pp
+.Bd -filled -offset indent
+"Cylink Corporation, through its wholly owned subsidiary Caro-Kann
+Corporation, holds exclusive sublicensing rights to the following U.S.
+patents owned by the Leland Stanford Junior University:
+.Pp
+Cryptographic Apparatus and Method
+.br
+("Hellman-Diffie") .................................. No. 4,200,770
+.Pp
+Public Key Cryptographic Apparatus
+.br
+and Method ("Hellman-Merkle") .................. No. 4,218, 582
+.Ed
+.Pp
+In order to promote the widespread use of these inventions from
+Stanford University and adoption of the ISAKMP reference by the IETF
+community, Cisco has acquired the right under its sublicense from Cylink to
+offer the ISAKMP reference implementation to all third parties on a royalty
+free basis.  This royalty free privilege is limited to use of the ISAKMP
+reference implementation in accordance with proposed, pending or approved
+IETF standards, and applies only when used with Diffie-Hellman key
+exchange, the Digital Signature Standard, or any other public key
+techniques which are publicly available for commercial use on a royalty
+free basis.  Any use of the ISAKMP reference implementation which does not
+satisfy these conditions and incorporates the practice of public key may
+require a separate patent license to the Stanford Patents which must be
+negotiated with Cylink's subsidiary, Caro-Kann Corporation."
+.Pp
+The Cylink library uses Colin Plumb's BigNum multiprecision integer
+math library which is covered by the following copyright:
+.Bd -filled -offset indent
+"BigNum multiprecision integer math library.
+.br
+Copyright (c) 1995 Colin Plumb.  All rights reserved.
+.Pp
+Licensed from Philip Zimmermann by Cylink Corporation.
+.Pp
+For licensing information, please contact Philip Zimmermann
+.br
+(prz@acm.org, +1 303 541-0140).
+.Pp
+Warranties:
+.br
+The author does not guarantee that this software will do anything more
+than take up storage space, nor that if it does do something, it will
+be what you want it to do.  This software is provided "as is," with no
+warranty expressed or implied, including any warranty of merchantability
+or fitness for a particular purpose.  In no event will the author be
+responsible for indirect or consequential damages including, without
+limitation, loss of income, psychiatric care, or alimony.  Neither shall
+the author's liability exceed the amount paid for the software.  Since
+it is being distributed for free, don't expect very much."
+.Ed
+.Pp
+Also included in this distribution is the "Physically random numbers"
+generator by Don Mitchell and Matt Blaze. It is covered by the following
+copyright:
+.Bd -filled -offset indent
+"The authors of this software are Don Mitchell and Matt Blaze.
+Copyright (c) 1995 by AT&T.
+.Pp
+Permission to use, copy, and modify this software without fee
+is hereby granted, provided that this entire notice is included in
+all copies of any software which is or includes a copy or
+modification of this software and in all copies of the supporting
+documentation for such software.
+.Pp
+This software may be subject to United States export controls.
+.Pp
+THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+WARRANTY.  IN PARTICULAR, NEITHER THE AUTHORS NOR AT&T MAKE ANY
+REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE."
+.Ed
+.Pp
+This distribution also uses the "RSA Data Security, Inc. MD5 Message-Digest
+Algorithm" and implements an HMAC form which is "derived from the RSA Data
+Security, Inc. MD5 Message-Digest Algorithm". This algorithm is covered by 
+the following copyright:
+.Bd -filled -offset indent
+"Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
+rights reserved.
+.Pp
+License to copy and use this software is granted provided that it
+is identified as the 'RSA Data Security, Inc. MD5 Message-Digest
+Algorithm' in all material mentioning or referencing this software
+or this function.
+.Pp
+License is also granted to make and use derivative works provided
+that such works are identified as "derived from the RSA Data
+Security, Inc. MD5 Message-Digest Algorithm' in all material
+mentioning or referencing the derived work.
+.Pp
+RSA Data Security, Inc. makes no representations concerning either
+the merchantability of this software or the suitability of this
+software for any particular purpose. It is provided 'as is'
+without express or implied warranty of any kind.
+.Pp
+These notices must be retained in any copies of any part of this
+documentation and/or software."
+.Ed
+.Pp
+This entire distribution is export controlled. It should not be
+distributed outside the United States or Canada nor should it be given
+to a non-citizen or non-permanent resident of the United States. All 
+software in this package is provided under the following disclaimer:
+.Bd -filled -offset indent
+"DISCLAIMER OF LIABILITY
+.Pp
+THIS SOFTWARE IS PROVIDED BY CISCO SYSTEMS, INC. ("CISCO")  ``AS IS'' 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL CISCO BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE."
+.Ed
+.Pp
+and is subject to licensing terms in the included LICENSE file.
+.Pp
+This daemon uses the PF_KEY Key Management API [MPA96] to register
+with a kernel which has implemented this API and the surrounding key 
+management infrastructure. The NRL IPsec software distribution (currently 
+bundled with IPv6) is such an implementation. Note that the NRL January 96 
+distribution must be patched with the patchfiles included in this release
+*before* use with this ISAKMP implementation.
+.Pp
+The daemon fully functions with a BSD 4.4ish UNIX operating system 
+to which the NRL code has been ported. Application requests for security 
+generate key acquire requests to the ISAKMP daemon. Upon successful 
+negotiation, a valid Security Association is inserted into the key engine, 
+at which point packets from and/or to the application will be processed 
+according to the attributes from the requested Security Association. 
+.Sh SEE ALSO
+.Xr ipsec 5
+.Sh REFERENCES
+.Pp
+.Bl -column MSST98
+.It Li "[HC98]" Ta
+Harkins, D., Carrel, D., "The Internet Key Exchange", version 6,
+work in progress.
+.It Li "[MSST98]" Ta
+Maughhan, D., Schertler, M., Schneider, M., and Turner, J., 
+"Internet Security Association and Key Management Protocol (ISAKMP)",
+version 9, work in progress.
+.It Li "[MPA96]" Ta
+McDonald, D., Phan B., and Atkinson, R., "A Socket-Based Key
+Management API", Proceedings of INET'96 Conference, June 1996,
+Montreal, Canada.
+.El
+.Sh LICENSE
+All software in this package is provided under the following license:
+.Pp
+"In no event shall Cisco's or its suppliers' liability to Licensee, whether
+in contract, tort (including negligence), or otherwise, exceed the price
+paid by Licensee.
+.Pp
+This License is effective until terminated. Licensee may terminate this
+License at any time by destroying all copies of software including any
+documentation. This License will terminate immediately without notice from
+Cisco if Licensee fails to comply with any provision of this License. Upon
+termination, Licensee must destroy all copies of software.
+.Pp
+This License shall be governed by and construed in accordance with the laws
+of the State of California, United States of America, as if performed
+wholly within the state and without giving effect to the principles of
+conflict of law. If any portion hereof is found to be void or
+unenforceable, the remaining provisions of this License shall remain in
+full force and effect. This License constitutes the entire License between
+the parties with respect to the use of the software."
+.Pp
+If licensee is the U.S. Government, then the following restrictions apply:
+Restricted Rights - Cisco's software is provided to non-DOD agencies with
+RESTRICTED RIGHTS and its supporting documentation is provided with LIMITED
+RIGHTS. Use, duplication, or disclosure by the Government is subject to the
+restrictions as set forth in subparagraph "C" of the Commercial Computer
+Software - Restricted Rights clause at FAR 52.227-19. In the event the sale
+is to a DOD agency, the government's rights in software, supporting 
+documentation, and technical data are governed by the restrictions in the
+Technical Data Commercial Items clause at DFARS 252.227-7015 and DFARS
+227.7202.

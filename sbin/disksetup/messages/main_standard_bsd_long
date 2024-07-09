@@ -1,0 +1,3 @@
+A standard BSD partition table includes room for the root filesystem,
+swap space, and a /usr partition.
+

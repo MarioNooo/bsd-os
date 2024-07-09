@@ -1,0 +1,55 @@
+Software Package:       
+	ncurses
+
+Release/Version:
+	5.3
+
+Retrieved from:
+	ftp://ftp.gnu.org/ncurses
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and bug-ncurses@gnu.org.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added top level makefile to build things our way
+Modified all the Makefile.in files to set DESTDIR conditionally
+	so we can pass in DESTDIR= on the command line
+
+The Booleans field in the termtype structure is declared 'char'
+but its usage assumes that it is 'signed char'.  This matters to
+systems on which 'char' is unsigned, like PowerPC.  I changed the
+type to signed char:
+
+Index: MKterm.h.awk.in
+===================================================================
+RCS file: /master/contrib/ncurses-5.0/include/MKterm.h.awk.in,v
+retrieving revision 1.1
+retrieving revision 1.2
+diff -c -r1.1 -r1.2
+*** MKterm.h.awk.in	1999/09/07 18:59:43	1.1
+--- MKterm.h.awk.in	2001/02/21 03:38:46	1.2
+***************
+*** 200,206 ****
+  			print  "typedef struct termtype {	/* in-core form of terminfo data */"
+  			print  "    char  *term_names;		/* str_table offset of term names */"
+  			print  "    char  *str_table;		/* pointer to string table */"
+! 			print  "    char  *Booleans;		/* array of boolean values */"
+  			print  "    short *Numbers;		/* array of integer values */"
+  			print  "    char  **Strings;		/* array of string offsets */"
+  			print  ""
+--- 200,206 ----
+  			print  "typedef struct termtype {	/* in-core form of terminfo data */"
+  			print  "    char  *term_names;		/* str_table offset of term names */"
+  			print  "    char  *str_table;		/* pointer to string table */"
+! 			print  "    signed char *Booleans;	/* array of boolean values */"
+  			print  "    short *Numbers;		/* array of integer values */"
+  			print  "    char  **Strings;		/* array of string offsets */"
+  			print  ""
+
+BSDI BSDI_CONTRIB,v 1.9 2003/07/08 21:46:44 polk Exp

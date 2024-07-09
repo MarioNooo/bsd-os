@@ -1,0 +1,63 @@
+.\"	BSDI $Id Exp $
+.Dd December 18, 1996
+.Dt MKCT 8
+.Os
+.Sh NAME
+.Nm mkct
+.Nd build keyboard map table file
+.Sh SYNOPSIS
+.Nm mkct
+.Sh DESCRIPTION
+The mkct command creates a keyboard mapping file which can be used by the
+.Xr setcons 8
+command.
+.Pp
+The mkct command takes no options or arguments. It must instead
+be compiled in order to set the keyboard mapping definition
+which will be used. The name of the output file created by mkct
+is dependent upon the name of the keyboard mapping definition that
+mkct is compiled with.
+Mkct uses the variable named
+.Dq KBD
+as the name of the output file and as the extension portion of the name of the
+source of the keyboard mapping definition.
+.Pp
+When executed, mkct always creates the output file in the current directory
+and attempts to read the file named
+.Pa /sys/i386/isa/kbd/pcconstab.${KBD}
+as the source of the keyboard mapping definition.
+.Sh ENVIRONMENT
+Mkct is intended to be run during installation of the
+.Xr setcons
+command. It is therefore
+not installed anywhere. It is strongly suggested that the executable be
+deleted after being run.
+.Sh FILES
+.Bl -tag -width /sys/i386/isa/kbd/pcconstab.* -compact
+.It Pa /sys/i386/isa/kbd/pcconstab.*
+Keyboard mapping definition files.
+.El 
+.Sh EXAMPLES
+The following command line is a good example of how to compile mkct:
+.Pp
+.Bd -literal
+	cc -O2 -I/sys -o mkct -DKBD=NAME mkct.c
+.Ed
+.Pp
+Where NAME specifies the keyboard mapping definition to be used. Names like
+.Dq US
+and
+.Dq FR
+are typical and imply keyboard mappings for the US and France respectively.
+.Sh ERRORS
+If
+.Dq KBD
+is undefined then mkct will fail to compile with the following error message:
+.Pp
+.Em WHICH KEYBOARD DID YOU WANT?
+.Sh WARNING
+Since recompiling is necessary to specify a new keyboard mapping
+definition, mkct is best used in a makefile rather than on the
+command line.
+.Sh SEE ALSO
+.Xr setcons 8

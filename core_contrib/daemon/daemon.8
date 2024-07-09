@@ -1,0 +1,40 @@
+.Dd August 14, 1996
+.Dt daemon 8
+.Os BSD 3
+.Sh NAME
+.Nm daemon
+.Nd run detached from the controlling terminal
+.Sh SYNOPSIS
+.Nm daemon
+.Op Fl cf
+.Ar "command arguments ..."
+.Sh DESCRIPTION
+.Pp
+The
+.Nm daemon
+utility detaches itself from the controlling terminal and 
+.Xr exec 3 's
+the program specified by its arguments.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Change the current working directory to the root (``/'').
+.It Fl f
+Redirect standard input, standard output and standard error to
+.Pa /dev/null .
+.El
+.Pp 
+The
+.Nm daemon
+utility exits 1 if an error is returned by the
+.Xr daemon 3
+library routine, otherwise 0.
+If the command cannot be exec'd, an error message is displayed on
+standard error unless the
+.Fl f
+flag is specified.
+.Sh "SEE ALSO"
+.Xr daemon 3 ,
+.Xr termios 4 ,
+.Xr tty 4 .

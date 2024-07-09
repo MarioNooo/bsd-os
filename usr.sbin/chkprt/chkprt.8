@@ -1,0 +1,73 @@
+.\"
+.\"
+.Dd Janurary 20, 2003
+.Dt CHKPRT 8
+.Sh NAME
+.Nm chkprt
+.Nd Reserved port check daemon
+.Sh SYNOPSIS
+.Nm chkprt
+.Op Fl d
+.Op Fl D
+.Op Fl f Ar file
+.Op Fl h Ar high_range
+.Op Fl l Ar low_range
+.Op Fl w Ar timeout
+.Sh DESCRIPTION
+.Nm Chkprt
+Scans
+.Pa /etc/services
+for services on ports in the reserved port range
+(900-1023)
+and updates the file
+.Ns Pa /var/run/resvports .
+.Pp
+The options available for
+.Nm chkprt:
+.Bl -tag -width Ds
+.It Fl d
+Run as a daemon and re-scan periodically.
+.It Fl D
+Turns on debugging.
+.It Fl f Ar file
+Specifies a file to read rather than using 
+.Xr getservent 3
+to get the currently configured set of services.  This is typically used 
+during boot when NIS has not yet been configured and using 
+.Xr getservent 3
+could hang.
+.It Fl h Ar high_range
+Specifies the highest port in the range to scan, defaults to 1023.
+.It Fl l Ar low_range
+Specifies the lowest port in the range to scan, defaults to 600.
+.It Fl w Ar timeout
+Specifies the time in seconds to wait between scans of
+.Xr services 5
+when running as a daemon; defaults to 10 minutes (600 seconds).
+.El
+.Pp
+Applications that use the
+.Xr bindresvport 3
+library call can end up using ports that normally would be assigned to
+internet services that use ports in the range of 600 - 1023.  This can
+prevent these services from being able to start.
+.Pp
+.Nm Chkprt
+checks the contents of
+.Pa /etc/services
+(or the NIS database if so configured)
+and writes the list of ports in the reserved port range to
+.Pa /var/run/resvports
+where the
+.Xr bindresvport 3
+library call expects to find it.
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /etc/irs.conf
+.It Pa /etc/services
+.It Pa /var/run/resvports
+.El
+.Sh SEE ALSO
+.Xr bindresvport 3 ,
+.Xr irs.conf 5 .
+.Xr services 5 .

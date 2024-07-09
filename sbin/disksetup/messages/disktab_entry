@@ -1,0 +1,3 @@
+The type entered must be one of the types of a disk found in
+the /etc/disktab file.
+Please enter the disk type:

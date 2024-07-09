@@ -1,0 +1,4 @@
+Makefile
+libmenu.so*
+*.po
+*.do

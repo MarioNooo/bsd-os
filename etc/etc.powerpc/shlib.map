@@ -1,0 +1,43 @@
+#	BSDI shlib.map,v 2.17 2000/11/02 22:14:27 polk Exp
+
+#
+# The master table of static shared library addresses and dependencies.
+#
+# BSD/OS process address space on the Power PC currently looks like this:
+#
+# 00000000-0fffffff:	user text (executable)
+# 10000000-9fffffff:	user data and mmap() segments
+# a0000000-a3ffffff:	reserved for BSD/OS static shared library text
+# a4000000-afffffff:	reserved for customer & third party shared library text
+# b0000000-b3ffffff:	reserved for BSD/OS static shared library data
+# b4000000-bfffffff:	reserved for customer & third party shared library data
+# c0000000-dfffffff:	user stack segment
+# e0000000-ffffffff:	reserved for operating system
+#
+# This file is processed by the shell (sh(1)); use the MAP directive
+# to describe a shared library, following the guidelines in mkshlib(8).
+# The shlib(8) command builds individual shared libraries.
+# The shlicc(1) command links programs to use shared libraries.
+#
+
+VER=${SHLIB_VER-5.0.0}
+UL=${SHLIB_UL-/usr/lib}
+SL=${SHLIB_SL-/shlib}
+
+#    -lX       text     data      source archive   shared image          params
+MAP  -lc       a0000000 b0000000  $UL/libc.a       $SL/libc_s.$VER
+MAP  -lutil    a0100000 b0100000  $UL/libutil.a    $SL/libutil_s.$VER    -lc
+MAP  -lcompat  a0110000 b0110000  $UL/libcompat.a  $SL/libcompat_s.$VER  -lc
+MAP  -lkvm     a0120000 b0120000  $UL/libkvm.a     $SL/libkvm_s.$VER     -lc
+MAP  -lm       a0130000 b0130000  $UL/libm.a       $SL/libm_s.$VER       -lc
+
+MAP  -lcurses  a0150000 b0150000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -lncurses a0150000 b0150000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermcap a0150000 b0150000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+MAP  -ltermlib a0150000 b0150000  $UL/libncurses.a $SL/libncurses_s.$VER -lc
+
+# C++ related libraries
+MAP  -lgcc     a0190000 b0190000  $UL/libgcc.a     $SL/libgcc_s.$VER \
+	-X __main.o -X _ctors.o -E -lc
+MAP  -lstdc++  a01b0000 b01b0000  $UL/libstdc++.a  $UL/libstdc++_s.$VER \
+	-E -lgcc -lm -lc

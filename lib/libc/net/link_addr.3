@@ -1,0 +1,146 @@
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Donn Seeley at BSDI.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)linkaddr.3	8.1 (Berkeley) 7/28/93
+.\"
+.Dd April 29, 1998
+.Dt LINK_ADDR 3
+.Os BSD 4.4
+.Sh NAME
+.Nm link_addr ,
+.Nm link_ntoa
+.Nd elementary address specification routines for link level access
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/socket.h>
+.Fd #include <net/if_dl.h>
+.Ft void
+.Fn link_addr "const char *addr" "struct sockaddr_dl *sdl"
+.Ft char *
+.Fn link_ntoa "const struct sockaddr_dl *sdl"
+.Sh DESCRIPTION
+The routine
+.Fn link_addr
+interprets character strings representing
+link-level addresses, returning binary information suitable
+for use in system calls.
+The routine
+.Fn link_ntoa
+takes
+a link-level
+address and returns an
+.Tn ASCII
+string representing some of the information present,
+including the link level address itself, and the interface name, if
+present. 
+.Pp
+For
+.Fn link_addr ,
+the string
+.Fa addr
+may contain
+an optional network interface identifier of the form
+.Dq "name unit-number" ,
+suitable for the first argument to
+.Xr ifconfig 4 ,
+followed by an optional
+interface address in the form of
+groups of one or two hexadecimal digits
+separated by periods (.), colons (:) or dashes (-).
+Each group represents a byte of address;
+address bytes are filled left to right from
+low order bytes through high order bytes.
+.Pp
+When both an interface identifier and interface address are specified,
+they must be separated by a colon (:).  When only one is specified,
+the colon is optional.
+.Pp
+When calling
+.Fn link_addr
+the
+.Va sdl_len
+field of
+.Fa sdl
+must be set to indicate the total available length of
+.Fa sdl .
+.Sh RETURN VALUES
+.Fn Link_ntoa
+always returns a null terminated string.
+.Pp
+.Fn Link_addr
+has no return value.  
+If the input was successfully parsed
+.Fn link_addr
+will set the
+.Va sdl_family , sdl_len , sdl_nlen and sdl_alen
+fields of
+.Fa sdl
+appropriately.
+If there are errors parsing the input, or insufficient space was
+available in
+.Fa sdl->sdl_data ,
+.Fn link_addr
+will clear all the fields in
+.Fa sdl .  
+.Sh EXAMPLES
+Both an interface identifier and an interface address may be specified
+as:
+.Dl le0:8.0.9.13.d.30
+.Pp
+When specifying only an interface name the colon is optional:
+.Dl le0
+.Dl lo0:
+.Pp
+The colon is also optional when specifying only an interface address:
+.Dl fc.0.32.1c.8.5
+.Dl :0.0.1f.3c.23.09
+.Sh SEE ALSO
+.Xr getnameinfo 3 ,
+.Xr iso 4 ,
+.Xr route 8 .
+.Sh HISTORY
+The
+.Fn link_addr
+and
+.Fn link_ntoa
+functions appeared in 
+.Bx 4.3 Reno  .
+.Sh BUGS
+.Pp
+When using a colon as a delimiter for the components of the address is
+is possible that the parser could become confused.  The use of periods
+as the delimiter for the address components is preferred.
+.Pp
+The returned values for link_ntoa
+reside in a static memory area.

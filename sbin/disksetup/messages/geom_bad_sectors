@@ -1,0 +1,2 @@
+The number of sectors per track must be between 1 and 63
+for FDISK geometries.

@@ -1,0 +1,44 @@
+# ----------------------------------------------------------------------
+#     MIME Mangler - single pass reduction of MIME to plain text
+#
+#     Laurence Lundblade <lgl@qualcomm.com>
+#
+#     Copyright (c) 2003 QUALCOMM Incorporated.
+#   
+#     File: makefile - makefile for UNIX
+#     Version: 0.2.6   April 15, 1998
+#     Last Edited: Apr 12 20:15
+#
+#  ---- */
+
+
+CFLAGS = -g -O2 -DUNIX -fshort-enums
+CC = gcc
+VPATH=..
+
+all:	testjig mime.a 
+
+mime.a:	mime.o enriched.o striphtml.o utils.o lineend.o etags.o
+	ar -rc mime.a mime.o enriched.o striphtml.o utils.o lineend.o etags.o
+
+testjig:	testjig.o mangle.o mime.a 
+	$(CC) $(CFLAGS) -o testjig testjig.o mangle.o mime.a 
+
+mime.o:		mime.h utils.h lineend.o 
+enriched.o:	mime.h enriched.h lineend.h
+striphtml.o:	striphtml.h utils.h lineend.h 
+m-utils.o:	m-utils.h
+lineend.o:	lineend.h
+mangle.o:	mime.h enriched.h striphtml.h utils.h
+
+testjig.o:	mime.h mangle.h
+
+.c.o: 
+	${CC} -c -I.. ${CFLAGS} $< -o $@
+
+clean:	
+	rm -f *.o
+
+veryclean:
+	rm -f *.o testjig *~ *.a
+

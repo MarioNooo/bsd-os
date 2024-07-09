@@ -1,0 +1,19 @@
+Software Package:       
+	patch
+
+Release/Version:
+	2.5
+
+Retrieved from:
+	ftp.gnu.ai.mit.edu
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to support@BSDI.COM,
+	bug-gnu-utils@prep.ai.mit.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+

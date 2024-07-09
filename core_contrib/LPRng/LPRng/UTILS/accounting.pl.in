@@ -1,0 +1,150 @@
+#!@PERL@
+
+# accounting.pl.in,v 5.2 2000/04/15 02:06:38 papowell Exp
+# LPRng based accounting script.
+#  Version Thu Apr 13 21:00:20 PDT 2000
+# LPRng 3.6.14
+#
+# stdin = /dev/null
+# stdout = accounting file
+# stderr = log file
+#  
+#  command line format:
+#   accounting [start|end] [-options] [accounting file]
+#     -Tdebug will turn on debugging
+#     start - at start of job; scan accounting file, fix up,
+#         put in START entry
+#     end  - at end of job; scan accounting file, fix up,
+#         put in END entry
+#
+# Accounting File has format:
+# start '-ppagecounter' '-Athis' -P'that'  <- startpage
+# ...
+# end   '-ppagecounter'                    <- lastpage
+# END 'p=$pages' 'q=$lastpage' 's=$startpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'
+#               --- end of a job
+# START 'q=$lastpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'
+# start '-ppagecounter' '-Athis' -P'that'    <- startpage
+# ...
+# end   '-ppagecounter'                        <- lastpage
+# END 'p=pages' 'q=$lastpage' 's=$startpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'
+#
+# We look for the last -p=pagecounter entry - this gives the last page number
+# When option is 'start', look for an unmatched START and using the pagecounter
+# value calculate the number of pages used by the job without an END
+# The END information is then recorded for this job and we put out
+# the START information for the next job.
+# When option is 'END',  then we calculate the number of pages for this
+# job and put out the END information.
+#
+
+# use strict;
+use Getopt::Std;
+use FileHandle;
+
+my($JFAIL, $JABORT, $JREMOVE, $JHOLD) = ( 32, 33, 34, 37);
+my(%opt, $action, $page_file, $acct_h, $page_h, $debug);
+sub printpages($);
+
+$debug = 0;
+
+# print STDERR "$0: '" . join("' '",@ARGV) . "'\n" if $debug;
+$action = "";
+$page_file = "pagefile";
+if( @ARGV ){
+	if( $ARGV[0] !~ /^-/ ){
+		$action = shift @ARGV;
+	}
+	print STDERR "action $action\n" if $debug;
+}
+if( $action ne "start" and $action ne "end" ){
+	print STDERR "$0: invalid action '$action'\n";
+	exit $JABORT;
+}
+
+# pull out the options
+
+getopts( 'A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:T:S:U:V:W:X:Y:Z:'
+. 'a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:t:s:u:v:w:x:y:z:', \%opt );
+
+my($acct_file) = "";
+if( @ARGV ){
+	$acct_file = shift @ARGV;
+} else {
+	$acct_file = $opt{'a'};
+}
+if( exists( $opt{T} ) && $opt{T} =~ m/debug/ ){
+	$debug = 1;
+}
+if( !$acct_file ){
+	print STDERR "$0: no accounting file\n";
+	exit( $JABORT );
+}
+
+my($time) = time;
+print STDERR "$0: $action 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'\n" if $debug;
+
+print STDERR "accounting file '$acct_file'\n" if $debug;
+$acct_h = new FileHandle "+<$acct_file" ;
+
+if( ! defined($acct_h) ){
+	print STDERR "$0: cannot open $acct_file r/w - $!\n";
+	exit( $JABORT );
+}
+
+# now we read the last line from the accounting file
+$acct_h->seek( 2, -2048 );
+my( $startpage, $lastpage, $lastjobstart, $pages );
+$lastjobstart = "";
+$lastpage = 0;
+
+while( <$acct_h> ){
+	chomp;
+	if( /^START/ ){
+		$lastjobstart = $_;
+	} elsif( /^END/ ){
+		$lastjobstart = "";
+	}
+	$lastpage = $1 if($_ =~ /'-p(\d+)/);
+}
+
+# get the last pagecounter value
+
+print STDERR "last jobstart '$lastjobstart'\n" if $debug;
+
+if( $action eq "start" ){
+	# check to see if the start and end match
+	if( $lastjobstart ne "" ){
+		$startpage = $1 if( $lastjobstart =~ s/'q=*(\d+)// );
+		$pages = $lastpage - $startpage;
+		$lastjobstart =~ s/^START\s*//;
+		$lastjobstart =~ s/ D=.*//;
+		printpages "END 'p=$pages' 'q=$lastpage' 's=$startpage' $lastjobstart 'D=$time'";
+	}
+	unless(
+    print $acct_h "START 'q=$lastpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'\n"
+	){
+		print STDERR "$0: write to $acct_file failed - $!\n";
+		exit( $JABORT );
+	}
+} else {
+	$startpage = $1 if( $lastjobstart =~ s/'q=*(\d+)// );
+	$pages = $lastpage - $startpage;
+    printpages "END 'p=$pages' 'q=$lastpage' 's=$startpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'";
+}
+
+exit 0;
+
+sub printpages($){
+	unless( print $acct_h $_[0] . "\n" ){
+		print STDERR "$0: write to $acct_file failed - $!\n";
+		exit( $JABORT );
+	}
+	# how to rip apart the line
+	my( $line ) = $_[0];
+	my( %p );
+	while( $line =~ s/ '([a-zA-Z])=([^']*)'// ){
+		print STDERR "have '$1'=$2'\n" if $debug;
+		$p{$1} = $2;
+	}
+}

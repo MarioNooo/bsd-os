@@ -1,0 +1,41 @@
+/*	BSDI types.xh,v 1.3 2000/02/12 17:43:15 donn Exp	*/
+
+/*
+ * Basic types for the old Linux C library (v5).
+ */
+
+%{
+#include <sys/types.h>
+
+#define	kernel_gid_t	gid_t
+#define	kernel_uid_t	uid_t
+%}
+
+typedef unsigned short dev_t {
+	in(dev) { return (makedev(dev >> 8, dev & 0xff)); }
+	out(dev) { return (major(dev) << 8 | minor(dev)); }
+};
+
+typedef char *caddr_t;
+typedef long clock_t;
+typedef unsigned short gid_t;
+typedef unsigned long ino_t;
+typedef int key_t;
+typedef long long linux_loff_t;
+typedef unsigned short mode_t;
+typedef unsigned short nlink_t;
+typedef long off_t;
+typedef int pid_t;
+typedef int ptrdiff_t;
+typedef unsigned int size_t;
+typedef int ssize_t;
+typedef long time_t;
+typedef unsigned short uid_t;
+
+/* For consistency...  */
+typedef unsigned short kernel_gid_t;
+typedef unsigned short kernel_uid_t;
+
+typedef unsigned int u_int;
+typedef unsigned short u_short;
+typedef unsigned long u_long;

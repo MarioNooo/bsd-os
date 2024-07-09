@@ -1,0 +1,2910 @@
+Software Package:
+	binutils
+
+Release/Version:
+	2.13.1
+
+Retrieved from:
+	ftp.gnu.org
+
+Bug reports:
+	This software package is maintained by both Wind River and the
+	software contributor.  Please send any bug reports to both
+???	support@windriver.com and bug-gnu-utils@prep.ai.mit.edu.
+
+Comments:
+	This is the Wind River-modified version of binutils 2.13.1.  The
+	source tree looks exactly like the original GNU tree with
+	additions of BSD configuration files.
+
+	Note that Wind River installs only the following subset of
+	binutils:
+		[figure out what]
+
+	The other binutils programs are ignored or are replaced by
+	BSD programs.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by Wind River:
+
+Added files:
+
+	BSDI_CONTRIB
+	makefile
+	bfd/bsdi-core.c
+	bfd/hosts/i386bsdi.h
+	gas/config/te-bsdi.h
+	ld/emulparams/i386bsdi.sh
+
+Moved files:
+
+Changes:
+
+Index: config.guess
+===================================================================
+RCS file: /master/core_contrib/binutils/config.guess,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 config.guess
+*** config.guess	2002/11/21 01:03:51	1.1.1.1
+--- config.guess	2003/01/14 16:12:24
+***************
+*** 1,6 ****
+--- 1,8 ----
+  #! /bin/sh
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  # Attempt to guess a canonical system name.
+  #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+  #   2000, 2001, 2002 Free Software Foundation, Inc.
+  
+  timestamp='2002-05-22'
+***************
+*** 714,730 ****
+          FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
+          FUJITSU_REL=`echo ${UNAME_RELEASE} | sed -e 's/ /_/'`
+          echo "${FUJITSU_PROC}-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
+          exit 0 ;;
+      i*86:BSD/386:*:* | i*86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
+! 	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
+  	exit 0 ;;
+      sparc*:BSD/OS:*:*)
+  	echo sparc-unknown-bsdi${UNAME_RELEASE}
+  	exit 0 ;;
+      *:BSD/OS:*:*)
+  	echo ${UNAME_MACHINE}-unknown-bsdi${UNAME_RELEASE}
+  	exit 0 ;;
+      *:FreeBSD:*:*)
+  	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+  	exit 0 ;;
+      i*:CYGWIN*:*)
+--- 716,735 ----
+          FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
+          FUJITSU_REL=`echo ${UNAME_RELEASE} | sed -e 's/ /_/'`
+          echo "${FUJITSU_PROC}-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
+          exit 0 ;;
+      i*86:BSD/386:*:* | i*86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
+! 	echo ${UNAME_MACHINE}-unknown-bsdi${UNAME_RELEASE}
+  	exit 0 ;;
+      sparc*:BSD/OS:*:*)
+  	echo sparc-unknown-bsdi${UNAME_RELEASE}
+  	exit 0 ;;
+      *:BSD/OS:*:*)
+  	echo ${UNAME_MACHINE}-unknown-bsdi${UNAME_RELEASE}
++ 	exit 0 ;;
++     *:Darwin:*:*)
++ 	echo powerpc-apple-darwin${UNAME_RELEASE}
+  	exit 0 ;;
+      *:FreeBSD:*:*)
+  	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+  	exit 0 ;;
+      i*:CYGWIN*:*)
+cvs server: Diffing bfd
+Index: bfd/config.bfd
+===================================================================
+RCS file: /master/core_contrib/binutils/bfd/config.bfd,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 config.bfd
+*** bfd/config.bfd	2002/11/21 01:03:58	1.1.1.1
+--- bfd/config.bfd	2003/01/14 16:12:24
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  # config.bfd
+  # Convert a canonical host type into a BFD host type.
+  # Set shell variable targ to canonical target name, and run
+  # using ``. config.bfd''.
+  # Sets the following shell variables:
+***************
+*** 383,392 ****
+--- 385,398 ----
+      targ_selvecs="i386coff_vec i386aout_vec"
+      ;;
+   i[3456]86-sequent-bsd*)
+      targ_defvec=i386dynix_vec
+      targ_underscore=yes
++     ;;
++   i[3456]86-*-bsdi*)
++     targ_defvec=bfd_elf32_i386_vec
++     targ_selvecs=i386bsd_vec
+      ;;
+    i[3456]86-*-bsd*)
+      targ_defvec=i386bsd_vec
+      targ_underscore=yes
+      ;;
+Index: bfd/configure
+===================================================================
+RCS file: /master/core_contrib/binutils/bfd/configure,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 configure
+*** bfd/configure	2002/11/21 01:03:58	1.1.1.1
+--- bfd/configure	2003/01/14 16:12:25
+***************
+*** 1,6 ****
+--- 1,7 ----
+  #! /bin/sh
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
+  
+  # Guess values for system-dependent variables and create Makefiles.
+  # Generated automatically using autoconf version 2.13 
+  # Copyright (C) 1992, 93, 94, 95, 96 Free Software Foundation, Inc.
+  #
+***************
+*** 5082,5093 ****
+    i[3456]86-sequent-sysv4*) ;;
+    i[3456]86-sequent-sysv*)
+  	COREFILE=trad-core.lo
+  	TRAD_HEADER='"hosts/symmetry.h"'
+  	;;
+!   i[3456]86-*-bsdi)
+! 	COREFILE=
+  	;;
+    i[3456]86-*-bsd* | i[34567]86-*-freebsd[123] | i[34567]86-*-freebsd[123]\.* | i[34567]86-*-freebsd4\.[01234]* | i[34567]86-*-freebsd*aout*)
+  	COREFILE=trad-core.lo
+  	TRAD_HEADER='"hosts/i386bsd.h"'
+  	;;
+--- 5083,5097 ----
+    i[3456]86-sequent-sysv4*) ;;
+    i[3456]86-sequent-sysv*)
+  	COREFILE=trad-core.lo
+  	TRAD_HEADER='"hosts/symmetry.h"'
+  	;;
+!   i[3456]86-*-bsdi*)
+! 	# XXX - we MUST supply a core-dump file reader even though
+! 	# this version of libbfd is not used by gdb.
+! 	COREFILE=bsdi-core.lo
+! 	TRAD_HEADER='"hosts/i386bsdi.h"'
+  	;;
+    i[3456]86-*-bsd* | i[34567]86-*-freebsd[123] | i[34567]86-*-freebsd[123]\.* | i[34567]86-*-freebsd4\.[01234]* | i[34567]86-*-freebsd*aout*)
+  	COREFILE=trad-core.lo
+  	TRAD_HEADER='"hosts/i386bsd.h"'
+  	;;
+Index: bfd/elf.c
+===================================================================
+RCS file: /master/core_contrib/binutils/bfd/elf.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elf.c
+*** bfd/elf.c	2002/11/21 01:03:58	1.1.1.1
+--- bfd/elf.c	2003/01/14 16:12:27
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* ELF executable support for BFD.
+     Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+     Free Software Foundation, Inc.
+  
+  This file is part of BFD, the Binary File Descriptor library.
+***************
+*** 5569,5582 ****
+        return -1;
+      }
+  
+    ret = sizeof (arelent *);
+    for (s = abfd->sections; s != NULL; s = s->next)
+!     if (elf_section_data (s)->this_hdr.sh_link == elf_dynsymtab (abfd)
+! 	&& (elf_section_data (s)->this_hdr.sh_type == SHT_REL
+! 	    || elf_section_data (s)->this_hdr.sh_type == SHT_RELA))
+!       ret += ((s->_raw_size / elf_section_data (s)->this_hdr.sh_entsize)
+  	      * sizeof (arelent *));
+  
+    return ret;
+  }
+  
+--- 5571,5585 ----
+        return -1;
+      }
+  
+    ret = sizeof (arelent *);
+    for (s = abfd->sections; s != NULL; s = s->next)
+!     if (elf_section_data (s)->rel_hdr.sh_link == elf_dynsymtab (abfd)
+! 	&& (elf_section_data (s)->rel_hdr.sh_type == SHT_REL
+! 	    || elf_section_data (s)->rel_hdr.sh_type == SHT_RELA))
+!       ret += ((elf_section_data (s)->rel_hdr.sh_size
+! 	       / elf_section_data (s)->rel_hdr.sh_entsize)
+  	      * sizeof (arelent *));
+  
+    return ret;
+  }
+  
+***************
+*** 5607,5626 ****
+  
+    slurp_relocs = get_elf_backend_data (abfd)->s->slurp_reloc_table;
+    ret = 0;
+    for (s = abfd->sections; s != NULL; s = s->next)
+      {
+!       if (elf_section_data (s)->this_hdr.sh_link == elf_dynsymtab (abfd)
+! 	  && (elf_section_data (s)->this_hdr.sh_type == SHT_REL
+! 	      || elf_section_data (s)->this_hdr.sh_type == SHT_RELA))
+  	{
+  	  arelent *p;
+  	  long count, i;
+  
+  	  if (! (*slurp_relocs) (abfd, s, syms, true))
+  	    return -1;
+! 	  count = s->_raw_size / elf_section_data (s)->this_hdr.sh_entsize;
+  	  p = s->relocation;
+  	  for (i = 0; i < count; i++)
+  	    *storage++ = p++;
+  	  ret += count;
+  	}
+--- 5610,5630 ----
+  
+    slurp_relocs = get_elf_backend_data (abfd)->s->slurp_reloc_table;
+    ret = 0;
+    for (s = abfd->sections; s != NULL; s = s->next)
+      {
+!       if (elf_section_data (s)->rel_hdr.sh_link == elf_dynsymtab (abfd)
+! 	  && (elf_section_data (s)->rel_hdr.sh_type == SHT_REL
+! 	      || elf_section_data (s)->rel_hdr.sh_type == SHT_RELA))
+  	{
+  	  arelent *p;
+  	  long count, i;
+  
+  	  if (! (*slurp_relocs) (abfd, s, syms, true))
+  	    return -1;
+! 	  count = elf_section_data (s)->rel_hdr.sh_size
+! 		  / elf_section_data (s)->rel_hdr.sh_entsize;
+  	  p = s->relocation;
+  	  for (i = 0; i < count; i++)
+  	    *storage++ = p++;
+  	  ret += count;
+  	}
+Index: bfd/elflink.h
+===================================================================
+RCS file: /master/core_contrib/binutils/bfd/elflink.h,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elflink.h
+*** bfd/elflink.h	2002/11/21 01:03:59	1.1.1.1
+--- bfd/elflink.h	2003/01/14 16:12:29
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* ELF linker support.
+     Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+     Free Software Foundation, Inc.
+  
+  This file is part of BFD, the Binary File Descriptor library.
+***************
+*** 356,365 ****
+--- 358,368 ----
+  	    }
+  
+  	  if (h == NULL)
+  	    continue;
+  
++ #ifndef __bsdi__ /* this code breaks 20+ years of linking convention */
+  	  if (h->root.type == bfd_link_hash_common)
+  	    {
+  	      /* We currently have a common symbol.  The archive map contains
+  		 a reference to this symbol, so we may want to include it.  We
+  		 only want to include it however, if this archive element
+***************
+*** 373,382 ****
+--- 376,386 ----
+  		 table and check that to see what kind of symbol definition
+  		 this is.  */
+  	      if (! elf_link_is_defined_archive_symbol (abfd, symdef))
+  		continue;
+  	    }
++ #endif
+  	  else if (h->root.type != bfd_link_hash_undefined)
+  	    {
+  	      if (h->root.type != bfd_link_hash_undefweak)
+  		defined[i] = true;
+  	      continue;
+Index: bfd/i386bsd.c
+===================================================================
+RCS file: /master/core_contrib/binutils/bfd/i386bsd.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 i386bsd.c
+*** bfd/i386bsd.c	2002/11/21 01:04:00	1.1.1.1
+--- bfd/i386bsd.c	2003/01/14 16:12:29
+***************
+*** 31,40 ****
+--- 31,42 ----
+  #define N_SHARED_LIB(x) 0
+  
+  #define	TARGET_PAGE_SIZE	4096
+  #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
+  
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  #define	DEFAULT_ARCH	bfd_arch_i386
+  #define MACHTYPE_OK(mtype) ((mtype) == M_386 || (mtype) == M_UNKNOWN)
+  
+  /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+     remove whitespace added here, and thus will fail to concatenate
+***************
+*** 44,50 ****
+--- 46,173 ----
+  
+  #include "bfd.h"
+  #include "sysdep.h"
+  #include "libbfd.h"
+  #include "libaout.h"
++ 
++ #ifdef __bsdi__
++ 
++ #include "aout/aout64.h"
++ 
++ #define	MY_callback	MY(callback)
++ 
++ static const bfd_target *MY(callback) PARAMS ((bfd *));
++ 
++ static const bfd_target *
++ MY(callback) (abfd)
++      bfd *abfd;
++ {
++   struct internal_exec *execp = exec_hdr (abfd);
++   unsigned int arch_align_power;
++   unsigned long arch_align;
++ 
++   /* Calculate the file positions of the parts of a newly read aout header */
++   obj_textsec (abfd)->_raw_size = N_TXTSIZE(*execp);
++ 
++   /* The virtual memory addresses of the sections */
++   obj_textsec (abfd)->vma = N_TXTADDR(*execp);
++   obj_datasec (abfd)->vma = N_DATADDR(*execp);
++   obj_bsssec  (abfd)->vma = N_BSSADDR(*execp);
++ 
++   /* Check for kernel binaries.  */
++   if ((execp->a_entry & 0xff000000) != 0)
++     {
++       bfd_vma adjust;
++ 
++       adjust = execp->a_entry - obj_textsec (abfd)->vma;
++       /* Adjust only by whole pages. */
++       adjust &= ~(TARGET_PAGE_SIZE - 1);
++       obj_textsec (abfd)->vma += adjust;
++       obj_datasec (abfd)->vma += adjust;
++       obj_bsssec (abfd)->vma += adjust;
++     }
++ 
++   /* Set the load addresses to be the same as the virtual addresses.  */
++   obj_textsec (abfd)->lma = obj_textsec (abfd)->vma;
++   obj_datasec (abfd)->lma = obj_datasec (abfd)->vma;
++   obj_bsssec (abfd)->lma = obj_bsssec (abfd)->vma;
++ 
++   /* The file offsets of the sections */
++   obj_textsec (abfd)->filepos = N_TXTOFF (*execp);
++   obj_datasec (abfd)->filepos = N_DATOFF (*execp);
++ 
++   /* The file offsets of the relocation info */
++   obj_textsec (abfd)->rel_filepos = N_TRELOFF(*execp);
++   obj_datasec (abfd)->rel_filepos = N_DRELOFF(*execp);
++ 
++   /* The file offsets of the string table and symbol table.  */
++   obj_sym_filepos (abfd) = N_SYMOFF (*execp);
++   obj_str_filepos (abfd) = N_STROFF (*execp);
++ 
++   /* Determine the architecture and machine type of the object file.  */
++ #ifdef SET_ARCH_MACH
++   SET_ARCH_MACH(abfd, *execp);
++ #else
++   bfd_default_set_arch_mach(abfd, DEFAULT_ARCH, 0);
++ #endif
++ 
++   /* The number of relocation records.  This must be called after
++      SET_ARCH_MACH.  It assumes that SET_ARCH_MACH will set
++      obj_reloc_entry_size correctly, if the reloc size is not
++      RELOC_STD_SIZE.  */
++   obj_textsec (abfd)->reloc_count =
++     execp->a_trsize / obj_reloc_entry_size (abfd);
++   obj_datasec (abfd)->reloc_count =
++     execp->a_drsize / obj_reloc_entry_size (abfd);
++ 
++   /* Now that we know the architecture, set the alignments of the
++      sections.  This is normally done by NAME(aout,new_section_hook),
++      but when the initial sections were created the architecture had
++      not yet been set.  However, for backward compatibility, we don't
++      set the alignment power any higher than as required by the size
++      of the section.  */
++   arch_align_power = bfd_get_arch_info (abfd)->section_align_power;
++   arch_align = 1 << arch_align_power;
++   if ((BFD_ALIGN (obj_textsec (abfd)->_raw_size, arch_align)
++        == obj_textsec (abfd)->_raw_size)
++       && (BFD_ALIGN (obj_datasec (abfd)->_raw_size, arch_align)
++         == obj_datasec (abfd)->_raw_size)
++       && (BFD_ALIGN (obj_bsssec (abfd)->_raw_size, arch_align)
++         == obj_bsssec (abfd)->_raw_size))
++     {
++       obj_textsec (abfd)->alignment_power = arch_align_power;
++       obj_datasec (abfd)->alignment_power = arch_align_power;
++       obj_bsssec (abfd)->alignment_power = arch_align_power;
++     }
++ 
++   /* Don't set sizes now -- can't be sure until we know arch & mach.
++      Sizes get set in set_sizes callback, later.  */
++ #if 0
++   adata(abfd).page_size = TARGET_PAGE_SIZE;
++   adata(abfd).segment_size = SEGMENT_SIZE;
++   adata(abfd).exec_bytes_size = EXEC_BYTES_SIZE;
++ #endif
++ 
++   return abfd->xvec;
++ }
++ 
++ static void MY_final_link_callback
++   PARAMS ((bfd *, file_ptr *, file_ptr *, file_ptr *));
++ static boolean i386bsd_bfd_final_link
++   PARAMS ((bfd *, struct bfd_link_info *));
++ 
++ /*
++  * Make QMAGIC be the default output format.
++  */
++ static boolean
++ i386bsd_bfd_final_link (abfd, info)
++      bfd *abfd;
++      struct bfd_link_info *info;
++ {
++   obj_aout_subformat (abfd) = q_magic_format;
++   return NAME(aout,final_link) (abfd, info, MY_final_link_callback);
++ }
++ 
++ #define	MY_bfd_final_link	i386bsd_bfd_final_link
++ #endif
+  
+  #include "aout-target.h"
+cvs server: Diffing bfd/doc
+cvs server: Diffing bfd/hosts
+cvs server: Diffing bfd/po
+cvs server: Diffing binutils
+Index: binutils/ar.c
+===================================================================
+RCS file: /master/core_contrib/binutils/binutils/ar.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 ar.c
+*** binutils/ar.c	2002/11/21 01:03:52	1.1.1.1
+--- binutils/ar.c	2003/01/14 16:12:29
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* ar.c - Archive modify and extract.
+     Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+     2001, 2002
+     Free Software Foundation, Inc.
+  
+***************
+*** 577,586 ****
+--- 579,593 ----
+  	  counted_name_mode = true;
+  	  break;
+  	case 'f':
+  	  ar_truncate = true;
+  	  break;
++ #ifdef __bsdi__
++ 	case 'T':
++ 	  /* compatibility */
++ 	  break;
++ #endif
+  	case 'P':
+  	  full_pathname = true;
+  	  break;
+  	default:
+  	  /* xgettext:c-format */
+Index: binutils/not-ranlib.c
+===================================================================
+RCS file: /master/core_contrib/binutils/binutils/not-ranlib.c,v
+retrieving revision 1.1.1.1
+retrieving revision 1.2
+diff -c -5 -r1.1.1.1 -r1.2
+*** not-ranlib.c	2002/11/21 01:03:53	1.1.1.1
+--- not-ranlib.c	2003/01/15 18:03:57	1.2
+***************
+*** 1,3 ****
+--- 1,10 ----
+  /* Linked with ar.o to flag that this program is 'ar' (not 'ranlib').  */
+  
++ #ifdef __bsdi__
++ /* XXX -- this is not technically the "right" way to do it, but
++    avoids needing to change two separate files, Makefile.am and
++    Makefile.in */
++ int is_ranlib = -1;
++ #else
+  int is_ranlib = 0;
++ #endif
+cvs server: Diffing binutils/doc
+Index: binutils/doc/ar.1
+===================================================================
+RCS file: /master/core_contrib/binutils/binutils/doc/ar.1,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 ar.1
+*** binutils/doc/ar.1	2002/11/21 01:03:54	1.1.1.1
+--- binutils/doc/ar.1	2003/01/14 16:12:29
+***************
+*** 164,175 ****
+  makes a change to its contents (save for the \fBq\fR update operation).
+  An archive with such an index speeds up linking to the library, and
+  allows routines in the library to call each other without regard to
+  their placement in the archive.
+  .PP
+  You may use \fBnm \-s\fR or \fBnm \-\-print\-armap\fR to list this index
+! table.  If an archive lacks the table, another form of \fBar\fR called
+  \&\fBranlib\fR can be used to add just the table.
+  .PP
+  \&\s-1GNU\s0 \fBar\fR is designed to be compatible with two different
+  facilities.  You can control its activity using command-line options,
+  like the different varieties of \fBar\fR on Unix systems; or, if you
+--- 164,178 ----
+  makes a change to its contents (save for the \fBq\fR update operation).
+  An archive with such an index speeds up linking to the library, and
+  allows routines in the library to call each other without regard to
+  their placement in the archive.
+  .PP
++ .ig \" BSD/OS doesn't use GNU nm
+  You may use \fBnm \-s\fR or \fBnm \-\-print\-armap\fR to list this index
+! table.
+! ..
+! If an archive lacks the table, another form of \fBar\fR called
+  \&\fBranlib\fR can be used to add just the table.
+  .PP
+  \&\s-1GNU\s0 \fBar\fR is designed to be compatible with two different
+  facilities.  You can control its activity using command-line options,
+  like the different varieties of \fBar\fR on Unix systems; or, if you
+Index: binutils/doc/ranlib.1
+===================================================================
+RCS file: /master/core_contrib/binutils/binutils/doc/ranlib.1,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 ranlib.1
+*** binutils/doc/ranlib.1	2002/11/21 01:03:54	1.1.1.1
+--- binutils/doc/ranlib.1	2003/01/14 16:12:29
+***************
+*** 139,150 ****
+--- 139,152 ----
+  .SH "DESCRIPTION"
+  .IX Header "DESCRIPTION"
+  \&\fBranlib\fR generates an index to the contents of an archive and
+  stores it in the archive.  The index lists each symbol defined by a
+  member of an archive that is a relocatable object file.  
++ .ig \" BSD/OS doesn't use GNU nm
+  .PP
+  You may use \fBnm \-s\fR or \fBnm \-\-print\-armap\fR to list this index.
++ ..
+  .PP
+  An archive with such an index speeds up linking to the library and
+  allows routines in the library to call each other without regard to
+  their placement in the archive.
+  .PP
+cvs server: Diffing binutils/po
+cvs server: Diffing binutils/testsuite
+cvs server: Diffing binutils/testsuite/binutils-all
+cvs server: Diffing binutils/testsuite/binutils-all/hppa
+cvs server: Diffing binutils/testsuite/binutils-all/windres
+cvs server: Diffing binutils/testsuite/config
+cvs server: Diffing binutils/testsuite/lib
+cvs server: Diffing config
+cvs server: Diffing config/mpw
+cvs server: Diffing etc
+cvs server: Diffing gas
+Index: gas/configure
+===================================================================
+RCS file: /master/core_contrib/binutils/gas/configure,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 configure
+*** gas/configure	2002/11/21 01:04:03	1.1.1.1
+--- gas/configure	2003/01/14 16:12:30
+***************
+*** 1,6 ****
+--- 1,7 ----
+  #! /bin/sh
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
+  
+  # Guess values for system-dependent variables and create Makefiles.
+  # Generated automatically using autoconf version 2.13 
+  # Copyright (C) 1992, 93, 94, 95, 96 Free Software Foundation, Inc.
+  #
+***************
+*** 1460,1470 ****
+  
+  beos*)
+    lt_cv_deplibs_check_method=pass_all
+    ;;
+  
+! bsdi4*)
+    lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (shared object|dynamic lib)'
+    lt_cv_file_magic_cmd='/usr/bin/file -L'
+    lt_cv_file_magic_test_file=/shlib/libc.so
+    ;;
+  
+--- 1461,1471 ----
+  
+  beos*)
+    lt_cv_deplibs_check_method=pass_all
+    ;;
+  
+! bsdi[45]*)
+    lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (shared object|dynamic lib)'
+    lt_cv_file_magic_cmd='/usr/bin/file -L'
+    lt_cv_file_magic_test_file=/shlib/libc.so
+    ;;
+  
+***************
+*** 2395,2405 ****
+        i370-*-elf* | i370-*-linux*) fmt=elf ;;
+        i386-ibm-aix*)        fmt=coff em=i386aix ;;
+        i386-sequent-bsd*)    fmt=aout em=dynix bfd_gas=yes ;;
+        i386-*-beospe*)       fmt=coff em=pe bfd_gas=yes ;;
+        i386-*-beoself* | i386-*-beos*) fmt=elf bfd_gas=yes ;;
+!       i386-*-bsd*)          fmt=aout em=386bsd ;;
+        i386-*-netbsd0.8)     fmt=aout em=386bsd ;;
+        i386-*-netbsdpe*)       fmt=coff em=pe bfd_gas=yes ;;
+        i386-*-netbsd*)       em=nbsd bfd_gas=yes
+  			    case ${cpu} in
+  			      x86_64)	fmt=elf ;;
+--- 2396,2407 ----
+        i370-*-elf* | i370-*-linux*) fmt=elf ;;
+        i386-ibm-aix*)        fmt=coff em=i386aix ;;
+        i386-sequent-bsd*)    fmt=aout em=dynix bfd_gas=yes ;;
+        i386-*-beospe*)       fmt=coff em=pe bfd_gas=yes ;;
+        i386-*-beoself* | i386-*-beos*) fmt=elf bfd_gas=yes ;;
+!       i386-*-bsdi[45]*)     fmt=elf em=bsdi ;;
+!       i386-*-bsd*)          fmt=aout em=386bsd bfd_gas=yes ;;
+        i386-*-netbsd0.8)     fmt=aout em=386bsd ;;
+        i386-*-netbsdpe*)       fmt=coff em=pe bfd_gas=yes ;;
+        i386-*-netbsd*)       em=nbsd bfd_gas=yes
+  			    case ${cpu} in
+  			      x86_64)	fmt=elf ;;
+cvs server: Diffing gas/config
+Index: gas/config/tc-i386.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gas/config/tc-i386.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 tc-i386.c
+*** gas/config/tc-i386.c	2002/11/21 01:04:05	1.1.1.1
+--- gas/config/tc-i386.c	2003/01/14 16:12:32
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* i386.c -- Assemble code for the Intel 80386
+     Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+     2000, 2001, 2002
+     Free Software Foundation, Inc.
+  
+***************
+*** 190,199 ****
+--- 192,202 ----
+  #endif
+  
+  #if (defined (TE_I386AIX)				\
+       || ((defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))	\
+  	 && !defined (TE_LINUX)				\
++ 	 && !defined (TE_BSDI)				\
+  	 && !defined (TE_FreeBSD)			\
+  	 && !defined (TE_NetBSD)))
+  /* This array holds the chars that always start a comment.  If the
+     pre-processor is disabled, these aren't very useful.  */
+  const char comment_chars[] = "#/";
+cvs server: Diffing gas/doc
+cvs server: Diffing gas/po
+cvs server: Diffing gas/testsuite
+cvs server: Diffing gas/testsuite/config
+cvs server: Diffing gas/testsuite/gas
+cvs server: Diffing gas/testsuite/gas/all
+cvs server: Diffing gas/testsuite/gas/alpha
+cvs server: Diffing gas/testsuite/gas/arc
+cvs server: Diffing gas/testsuite/gas/arm
+cvs server: Diffing gas/testsuite/gas/cris
+cvs server: Diffing gas/testsuite/gas/d10v
+cvs server: Diffing gas/testsuite/gas/d30v
+cvs server: Diffing gas/testsuite/gas/dlx
+cvs server: Diffing gas/testsuite/gas/elf
+cvs server: Diffing gas/testsuite/gas/fr30
+cvs server: Diffing gas/testsuite/gas/frv
+cvs server: Diffing gas/testsuite/gas/h8300
+cvs server: Diffing gas/testsuite/gas/hppa
+cvs server: Diffing gas/testsuite/gas/hppa/basic
+cvs server: Diffing gas/testsuite/gas/hppa/parse
+cvs server: Diffing gas/testsuite/gas/hppa/reloc
+cvs server: Diffing gas/testsuite/gas/hppa/unsorted
+cvs server: Diffing gas/testsuite/gas/i386
+cvs server: Diffing gas/testsuite/gas/ia64
+cvs server: Diffing gas/testsuite/gas/ieee-fp
+cvs server: Diffing gas/testsuite/gas/m32r
+cvs server: Diffing gas/testsuite/gas/m68hc11
+cvs server: Diffing gas/testsuite/gas/m68k
+cvs server: Diffing gas/testsuite/gas/m68k-coff
+cvs server: Diffing gas/testsuite/gas/m88k
+cvs server: Diffing gas/testsuite/gas/macros
+cvs server: Diffing gas/testsuite/gas/mcore
+cvs server: Diffing gas/testsuite/gas/mips
+cvs server: Diffing gas/testsuite/gas/mmix
+cvs server: Diffing gas/testsuite/gas/mn10200
+cvs server: Diffing gas/testsuite/gas/mn10300
+cvs server: Diffing gas/testsuite/gas/mri
+cvs server: Diffing gas/testsuite/gas/openrisc
+cvs server: Diffing gas/testsuite/gas/pdp11
+cvs server: Diffing gas/testsuite/gas/pj
+cvs server: Diffing gas/testsuite/gas/ppc
+cvs server: Diffing gas/testsuite/gas/s390
+cvs server: Diffing gas/testsuite/gas/sh
+cvs server: Diffing gas/testsuite/gas/sh/sh64
+cvs server: Diffing gas/testsuite/gas/sparc
+cvs server: Diffing gas/testsuite/gas/sparc-solaris
+cvs server: Diffing gas/testsuite/gas/sun4
+cvs server: Diffing gas/testsuite/gas/symver
+cvs server: Diffing gas/testsuite/gas/tic54x
+cvs server: Diffing gas/testsuite/gas/tic80
+cvs server: Diffing gas/testsuite/gas/v850
+cvs server: Diffing gas/testsuite/gas/vax
+cvs server: Diffing gas/testsuite/gas/vtable
+cvs server: Diffing gas/testsuite/gas/xstormy16
+cvs server: Diffing gas/testsuite/gasp
+cvs server: Diffing gas/testsuite/gasp/mri
+cvs server: Diffing gas/testsuite/lib
+cvs server: Diffing gprof
+Index: gprof/cg_arcs.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/cg_arcs.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 cg_arcs.c
+*** gprof/cg_arcs.c	2002/11/21 01:05:04	1.1.1.1
+--- gprof/cg_arcs.c	2003/01/14 16:12:32
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /*
+   * Copyright (c) 1983, 1993, 2001
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+***************
+*** 48,60 ****
+  
+  Sym *cycle_header;
+  unsigned int num_cycles;
+  Arc **arcs;
+  unsigned int numarcs;
+  
+  /*
+!  * Return TRUE iff PARENT has an arc to covers the address
+   * range covered by CHILD.
+   */
+  Arc *
+  arc_lookup (parent, child)
+       Sym *parent;
+--- 50,72 ----
+  
+  Sym *cycle_header;
+  unsigned int num_cycles;
+  Arc **arcs;
+  unsigned int numarcs;
++ Arc *archead;
++ Cl *cyclehead;
++ int cyclecnt;
++ 
++ #ifdef DEBUG
++ static int viable;
++ static int visited;
++ static int oldcycle;
++ static int newcycle;
++ #endif
+  
+  /*
+!  * Return true iff PARENT has an arc to covers the address
+   * range covered by CHILD.
+   */
+  Arc *
+  arc_lookup (parent, child)
+       Sym *parent;
+***************
+*** 182,191 ****
+--- 194,207 ----
+  
+    /* gather time from children of this parent: */
+  
+    for (arc = parent->cg.children; arc; arc = arc->next_child)
+      {
++       if (arc->arc_flags & DEADARC)
++ 	{
++ 	  continue;
++ 	}
+        child = arc->child;
+        if (arc->count == 0 || child == parent || child->cg.prop.fract == 0)
+  	{
+  	  continue;
+  	}
+***************
+*** 207,226 ****
+  	    {
+  	      fprintf (stderr, "[propagate] toporder botches\n");
+  	      continue;
+  	    }
+  	}
+!       if (child->ncalls == 0)
+  	{
+  	  continue;
+  	}
+  
+        /* distribute time for this arc: */
+        arc->time = child->hist.time * (((double) arc->count)
+! 				      / ((double) child->ncalls));
+        arc->child_time = child->cg.child_time
+! 	* (((double) arc->count) / ((double) child->ncalls));
+        share = arc->time + arc->child_time;
+        parent->cg.child_time += share;
+  
+        /* (1 - cg.prop.fract) gets lost along the way: */
+        prop_share = parent->cg.prop.fract * share;
+--- 223,242 ----
+  	    {
+  	      fprintf (stderr, "[propagate] toporder botches\n");
+  	      continue;
+  	    }
+  	}
+!       if (child->cg.npropcall == 0)
+  	{
+  	  continue;
+  	}
+  
+        /* distribute time for this arc: */
+        arc->time = child->hist.time * (((double) arc->count)
+! 				      / ((double) child->cg.npropcall));
+        arc->child_time = child->cg.child_time
+! 	* (((double) arc->count) / ((double) child->cg.npropcall));
+        share = arc->time + arc->child_time;
+        parent->cg.child_time += share;
+  
+        /* (1 - cg.prop.fract) gets lost along the way: */
+        prop_share = parent->cg.prop.fract * share;
+***************
+*** 238,248 ****
+  	}
+        DBG (PROPDEBUG,
+  	   printf ("[prop_time] child \t");
+  	   print_name (child);
+  	   printf (" with %f %f %lu/%lu\n", child->hist.time,
+! 		   child->cg.child_time, arc->count, child->ncalls);
+  	   printf ("[prop_time] parent\t");
+  	   print_name (parent);
+  	   printf ("\n[prop_time] share %f\n", share));
+      }
+  }
+--- 254,264 ----
+  	}
+        DBG (PROPDEBUG,
+  	   printf ("[prop_time] child \t");
+  	   print_name (child);
+  	   printf (" with %f %f %lu/%lu\n", child->hist.time,
+! 		   child->cg.child_time, arc->count, child->cg.npropcall);
+  	   printf ("[prop_time] parent\t");
+  	   print_name (parent);
+  	   printf ("\n[prop_time] share %f\n", share));
+      }
+  }
+***************
+*** 348,364 ****
+  		{
+  		  cyc->cg.self_calls += arc->count;
+  		}
+  	      else
+  		{
+! 		  cyc->ncalls += arc->count;
+  		}
+  	    }
+  	}
+      }
+  }
+  
+  
+  /*
+   * Check if any parent of this child (or outside parents of this
+   * cycle) have their print flags on and set the print flag of the
+   * child (cycle) appropriately.  Similarly, deal with propagation
+--- 364,746 ----
+  		{
+  		  cyc->cg.self_calls += arc->count;
+  		}
+  	      else
+  		{
+! 		  cyc->cg.npropcall += arc->count;
+  		}
+  	    }
+  	}
+      }
+  }
+  
++ /*
++  * analyze cycles to determine breakup
++  */
++ boolean
++ cycleanalyze ()
++ {
++   Arc **cyclestack;
++   Arc **stkp;
++   Arc **arcpp;
++   Arc **endlist;
++   Arc *arcp;
++   Sym *nlp;
++   Cl *clp;
++   boolean ret;
++   boolean done;
++   int size;
++   unsigned int cycleno;
++ 
++   /*
++    * calculate the size of the cycle, and find nodes that
++    * exit the cycle as they are desirable targets to cut
++    * some of their parents
++    */
++   for (done = true, cycleno = 1; cycleno <= num_cycles; cycleno++)
++     {
++       size = 0;
++       for (nlp = cycle_header[cycleno].cg.cyc.next; nlp; nlp = nlp->cg.cyc.next)
++         {
++           size += 1;
++           nlp->cg.cyc.parentcnt = 0;
++           nlp->cg.flags &= ~HASCYCLEXIT;
++           for (arcp = nlp->cg.parents; arcp; arcp = arcp->next_parent)
++             {
++               nlp->cg.cyc.parentcnt += 1;
++               if ((unsigned)arcp->parent->cg.cyc.num != cycleno)
++                   nlp->cg.flags |= HASCYCLEXIT;
++             }
++         }
++       if (size <= cyclethreshold)
++           continue;
++       done = false;
++       cyclestack = (Arc **) calloc (size + 1, sizeof (Arc *));
++       if (cyclestack == 0)
++         {
++           fprintf (stderr, "%s: No room for %d bytes of cycle stack\n",
++                    whoami, (size + 1) * sizeof (Arc *));
++           return true; /* not really, but don't want to get called again */
++         }
++       DBG (BREAKCYCLE,
++            printf ("[cycleanalyze] starting cycle %d of %d, size %d\n",
++                    cycleno, num_cycles, size));
++       for (nlp = cycle_header[cycleno].cg.cyc.next; nlp; nlp = nlp->cg.cyc.next)
++ 	{
++ 	  stkp = &cyclestack[0];
++ 	  nlp->cg.flags |= CYCLEHEAD;
++ 	  ret = descend (nlp, cyclestack, stkp);
++ 	  nlp->cg.flags &= ~CYCLEHEAD;
++ 	  if (ret == false)
++ 	    {
++ 	      break;
++ 	    }
++ 	}
++ 	free (cyclestack);
++ 	if (cyclecnt > 0)
++ 	  {
++ 	    compresslist ();
++ 	    for (clp = cyclehead; clp; )
++ 	      {
++ 		endlist = &clp->list[clp->size];
++ 		for (arcpp = clp->list; arcpp < endlist; arcpp++)
++ 		  {
++ 		    (*arcpp)->arc_cyclecnt--;
++ 		  }
++ 		cyclecnt--;
++ 		clp = clp->next;
++ 		free (clp);
++ 	      }
++ 	    cyclehead = 0;
++ 	  }
++     }
++   DBG (BREAKCYCLE,
++        printf("%s visited %d, viable %d, newcycle %d, oldcycle %d\n",
++ 	      "[doarcs]", visited, viable, newcycle, oldcycle));
++   return done;
++ }
++ 
++ boolean
++ descend (node, stkstart, stkp)
++      Sym *node;
++      Arc **stkstart;
++      Arc **stkp;
++ {
++   Arc *arcp;
++   boolean ret;
++ 
++   for (arcp = node->cg.children; arcp; arcp = arcp->next_child)
++     {
++       DBG (BREAKCYCLE, visited++);
++       if (arcp->child->cg.cyc.num != node->cg.cyc.num ||
++ 	  (arcp->child->cg.flags & VISITED) ||
++ 	  (arcp->arc_flags & DEADARC))
++ 	{
++ 	  continue;
++ 	}
++       DBG (BREAKCYCLE, viable++);
++       *stkp = arcp;
++       if (arcp->child->cg.flags & CYCLEHEAD)
++ 	{
++ 	  if (addcycle (stkstart, stkp) == false)
++ 	    {
++ 	      return false;
++ 	    }
++ 	  continue;
++ 	}
++       arcp->child->cg.flags |= VISITED;
++       ret = descend (arcp->child, stkstart, stkp + 1);
++       arcp->child->cg.flags &= ~VISITED;
++       if (ret == false)
++ 	{
++ 	  return false;
++ 	}
++     }
++   return true;  /* ??? this was missing; "true" seems the only obvious value */
++ }
++ 
++ boolean
++ addcycle (stkstart, stkend)
++      Arc **stkstart;
++      Arc **stkend;
++ {
++   Arc **arcpp;
++   Arc **stkloc;
++   Arc **stkp;
++   Arc **endlist;
++   Arc *minarc;
++   Arc *arcp;
++   Cl *clp;
++   int size;
++ 
++   size = stkend - stkstart + 1;
++   if (size <= 1)
++     {
++       return true;
++     }
++   minarc = *stkstart;
++   stkloc = stkstart;
++   for (arcpp = stkstart; arcpp <= stkend; arcpp++)
++     {
++       if (*arcpp > minarc)
++ 	{
++ 	  continue;
++ 	}
++       minarc = *arcpp;
++       stkloc = arcpp;
++     }
++   for (clp = cyclehead; clp; clp = clp->next)
++     {
++       if (clp->size != size)
++ 	{
++ 	  continue;
++ 	}
++       stkp = stkloc;
++       endlist = &clp->list[size];
++       for (arcpp = clp->list; arcpp < endlist; arcpp++)
++ 	{
++ 	  if (*stkp++ != *arcpp)
++ 	    {
++ 	      break;
++ 	    }
++ 	  if (stkp > stkend)
++ 	    {
++ 	      stkp = stkstart;
++ 	    }
++ 	}
++       if (arcpp == endlist)
++ 	{
++ 	  DBG (BREAKCYCLE, oldcycle++);
++ 	  return true;
++ 	}
++     }
++   clp = (Cl *) calloc (1, sizeof (Cl) + (size - 1) * sizeof(Arc *));
++   if (clp == 0)
++     {
++       fprintf (stderr, "%s: No room for %d bytes of subcycle storage\n",
++ 	       whoami, sizeof (Cl) + (size - 1) * sizeof (Arc *));
++       return false;
++     }
++   stkp = stkloc;
++   endlist = &clp->list[size];
++   for (arcpp = clp->list; arcpp < endlist; arcpp++)
++     {
++       arcp = *arcpp = *stkp++;
++       if (stkp > stkend)
++ 	{
++ 	  stkp = stkstart;
++ 	}
++       arcp->arc_cyclecnt++;
++       if ((arcp->arc_flags & ONLIST) == 0)
++ 	{
++ 	  arcp->arc_flags |= ONLIST;
++ 	  arcp->arc_next = archead;
++ 	  archead = arcp;
++ 	}
++     }
++   clp->size = size;
++   clp->next = cyclehead;
++   cyclehead = clp;
++   DBG (BREAKCYCLE, newcycle++);
++   DBG (SUBCYCLELIST,
++        printsubcycle (clp));
++   cyclecnt++;
++   if (cyclecnt >= CYCLEMAX)
++     {
++       return false;
++     }
++   return true;
++ }
++ 
++ void
++ compresslist ()
++ {
++   Cl *clp;
++   Cl **prev;
++   Arc **arcpp;
++   Arc **endlist;
++   Arc *arcp;
++   Arc *maxarcp;
++   Arc *maxexitarcp;
++   Arc *maxwithparentarcp;
++   Arc *maxnoparentarcp;
++   int maxexitcnt;
++   int maxwithparentcnt;
++   int maxnoparentcnt;
++   char *type;
++ 
++   maxexitcnt = 0;
++   maxwithparentcnt = 0;
++   maxnoparentcnt = 0;
++   /* the NULLs below are just to eliminiate gcc warnings */
++   maxexitarcp = NULL;
++   maxnoparentarcp = NULL;
++   maxwithparentarcp = NULL;
++   type = NULL;
++   for (endlist = &archead, arcp = archead; arcp; )
++     {
++       if (arcp->arc_cyclecnt == 0)
++ 	{
++ 	  arcp->arc_flags &= ~ONLIST;
++ 	  *endlist = arcp->arc_next;
++ 	  arcp->arc_next = 0;
++ 	  arcp = *endlist;
++ 	  continue;
++ 	}
++       if (arcp->child->cg.flags & HASCYCLEXIT)
++ 	{
++ 	  if (arcp->arc_cyclecnt > maxexitcnt ||
++ 	      (arcp->arc_cyclecnt == maxexitcnt &&
++ 	       arcp->arc_cyclecnt < maxexitarcp->count))
++ 	    {
++ 	      maxexitcnt = arcp->arc_cyclecnt;
++ 	      maxexitarcp = arcp;
++ 	    }
++ 	}
++       else if (arcp->child->cg.cyc.parentcnt > 1)
++ 	{
++ 	  if (arcp->arc_cyclecnt > maxwithparentcnt ||
++ 	      (arcp->arc_cyclecnt == maxwithparentcnt &&
++ 	       arcp->arc_cyclecnt < maxwithparentarcp->count))
++ 	    {
++ 	      maxwithparentcnt = arcp->arc_cyclecnt;
++ 	      maxwithparentarcp = arcp;
++ 	    }
++ 	}
++       else
++ 	{
++ 	  if (arcp->arc_cyclecnt > maxnoparentcnt ||
++ 	      (arcp->arc_cyclecnt == maxnoparentcnt &&
++ 	       arcp->arc_cyclecnt < maxnoparentarcp->count))
++ 	    {
++ 	      maxnoparentcnt = arcp->arc_cyclecnt;
++ 	      maxnoparentarcp = arcp;
++ 	    }
++ 	}
++       endlist = &arcp->arc_next;
++       arcp = arcp->arc_next;
++     }
++   if (maxexitcnt > 0)
++     {
++       /*
++        *	first choice is edge leading to node with out-of-cycle parent
++        */
++       maxarcp = maxexitarcp;
++       DBG (BREAKCYCLE, type = "exit");
++     }
++   else if (maxwithparentcnt > 0)
++     {
++       /*
++        *	second choice is edge leading to node with at least one
++        *	other in-cycle parent
++        */
++       maxarcp = maxwithparentarcp;
++       DBG (BREAKCYCLE, type = "internal");
++     }
++   else
++     {
++       /*
++        *	last choice is edge leading to node with only this arc as
++        *	a parent (as it will now be orphaned)
++        */
++       maxarcp = maxnoparentarcp;
++       DBG (BREAKCYCLE, type = "orphan");
++     }
++   maxarcp->arc_flags |= DEADARC;
++   maxarcp->child->cg.cyc.parentcnt -= 1;
++   maxarcp->child->cg.npropcall -= maxarcp->count;
++   DBG (BREAKCYCLE,
++        printf ("%s delete %s arc: %s (%lu) -> %s from %u cycle(s)\n",
++ 	       "[compresslist]", type, maxarcp->parent->name,
++ 	       maxarcp->count, maxarcp->child->name,
++ 	       (unsigned)maxarcp->arc_cyclecnt));
++   printf ("\t%s to %s with %lu calls\n", maxarcp->parent->name,
++ 	  maxarcp->child->name, maxarcp->count);
++   prev = &cyclehead;
++   for (clp = cyclehead; clp; )
++     {
++       endlist = &clp->list[clp->size];
++       for (arcpp = clp->list; arcpp < endlist; arcpp++)
++ 	{
++ 	  if ((*arcpp)->arc_flags & DEADARC)
++ 	    {
++ 	      break;
++ 	    }
++ 	}
++       if (arcpp == endlist)
++ 	{
++ 	  prev = &clp->next;
++ 	  clp = clp->next;
++ 	  continue;
++ 	}
++       for (arcpp = clp->list; arcpp < endlist; arcpp++)
++ 	{
++ 	  (*arcpp)->arc_cyclecnt--;
++ 	}
++       cyclecnt--;
++       *prev = clp->next;
++       clp = clp->next;
++       free (clp);
++     }
++ }
++ 
++ void
++ printsubcycle (clp)
++      Cl *clp;
++ {
++   Arc **arcpp;
++   Arc **endlist;
++ 
++   arcpp = clp->list;
++   printf ("%s <cycle %d>\n", (*arcpp)->parent->name,
++ 	  (*arcpp)->parent->cg.cyc.num);
++   for (endlist = &clp->list[clp->size]; arcpp < endlist; arcpp++)
++     {
++       printf ("\t(%lu) -> %s\n", (*arcpp)->count,
++ 	      (*arcpp)->child->name);
++     }
++ }
+  
+  /*
+   * Check if any parent of this child (or outside parents of this
+   * cycle) have their print flags on and set the print flag of the
+   * child (cycle) appropriately.  Similarly, deal with propagation
+***************
+*** 388,401 ****
+  	  /*
+  	   * If the child was never actually called (e.g., this arc
+  	   * is static (and all others are, too)) no time propagates
+  	   * along this arc.
+  	   */
+! 	  if (child->ncalls != 0)
+  	    {
+  	      child->cg.prop.fract += parent->cg.prop.fract
+! 		* (((double) arc->count) / ((double) child->ncalls));
+  	    }
+  	}
+      }
+    else
+      {
+--- 770,783 ----
+  	  /*
+  	   * If the child was never actually called (e.g., this arc
+  	   * is static (and all others are, too)) no time propagates
+  	   * along this arc.
+  	   */
+! 	  if ((arc->arc_flags & DEADARC) == 0 && child->cg.npropcall != 0)
+  	    {
+  	      child->cg.prop.fract += parent->cg.prop.fract
+! 		* (((double) arc->count) / ((double) child->cg.npropcall));
+  	    }
+  	}
+      }
+    else
+      {
+***************
+*** 418,431 ****
+  	      /*
+  	       * If the cycle was never actually called (e.g. this
+  	       * arc is static (and all others are, too)) no time
+  	       * propagates along this arc.
+  	       */
+! 	      if (head->ncalls != 0)
+  		{
+  		  head->cg.prop.fract += parent->cg.prop.fract
+! 		    * (((double) arc->count) / ((double) head->ncalls));
+  		}
+  	    }
+  	}
+        for (member = head; member; member = member->cg.cyc.next)
+  	{
+--- 800,813 ----
+  	      /*
+  	       * If the cycle was never actually called (e.g. this
+  	       * arc is static (and all others are, too)) no time
+  	       * propagates along this arc.
+  	       */
+! 	      if ((arc->arc_flags & DEADARC) == 0 && head->cg.npropcall != 0)
+  		{
+  		  head->cg.prop.fract += parent->cg.prop.fract
+! 		    * (((double) arc->count) / ((double) head->cg.npropcall));
+  		}
+  	    }
+  	}
+        for (member = head; member; member = member->cg.cyc.next)
+  	{
+***************
+*** 607,616 ****
+--- 989,999 ----
+  cg_assemble ()
+  {
+    Sym *parent, **time_sorted_syms, **top_sorted_syms;
+    unsigned int index;
+    Arc *arc;
++   long pass;
+  
+    /*
+     * initialize various things:
+     *      zero out child times.
+     *      count self-recursive calls.
+***************
+*** 640,663 ****
+        if (ignore_direct_calls)
+  	{
+  	  find_call (parent, parent->addr, (parent + 1)->addr);
+  	}
+      }
+!   /*
+!    * Topologically order things.  If any node is unnumbered, number
+!    * it and any of its descendents.
+!    */
+!   for (parent = symtab.base; parent < symtab.limit; parent++)
+      {
+!       if (parent->cg.top_order == DFN_NAN)
+  	{
+! 	  cg_dfn (parent);
+  	}
+-     }
+  
+!   /* link together nodes on the same cycle: */
+!   cycle_link ();
+  
+    /* sort the symbol table in reverse topological order: */
+    top_sorted_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
+    for (index = 0; index < symtab.len; ++index)
+      {
+--- 1023,1078 ----
+        if (ignore_direct_calls)
+  	{
+  	  find_call (parent, parent->addr, (parent + 1)->addr);
+  	}
+      }
+!   for (pass = 1; ; pass++)
+      {
+!       /*
+!        * Topologically order things.  If any node is unnumbered, number
+!        * it and any of its descendents.
+!        */
+!       for (dfn_init (), parent = symtab.base; parent < symtab.limit; parent++)
+  	{
+! 	  if (parent->cg.top_order == DFN_NAN)
+! 	    {
+! 	      cg_dfn (parent);
+! 	    }
+  	}
+  
+!       /* link together nodes on the same cycle: */
+!       cycle_link ();
+!       /* if no cycles to break up, proceed */
+!       if (!eliminate_cycles)
+! 	{
+! 	  break;
+! 	}
+!       if (pass == 1)
+! 	{
+! 	  printf ("\n\n%s %s\n%s %d:\n",
+! 		  "The following arcs were deleted",
+! 		  "from the propagation calculation",
+! 		  "to reduce the maximum cycle size to", cyclethreshold);
+! 	}
+!       if (cycleanalyze ())
+! 	{
+! 	  break;
+! 	}
+!       free (cycle_header);
+!       num_cycles = 0;
+!       for (parent = symtab.base; parent < symtab.limit; parent++)
+! 	{
+! 	  parent->cg.top_order = DFN_NAN;
+! 	  parent->cg.cyc.num = 0;
+! 	  parent->cg.cyc.head = parent;
+! 	  parent->cg.cyc.next = 0;
+! 	}
+!     }
+!   if (pass > 1)
+!     {
+!       printf("\f\n");
+!     }
+  
+    /* sort the symbol table in reverse topological order: */
+    top_sorted_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
+    for (index = 0; index < symtab.len; ++index)
+      {
+Index: gprof/cg_arcs.h
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/cg_arcs.h,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 cg_arcs.h
+*** gprof/cg_arcs.h	2002/11/21 01:05:04	1.1.1.1
+--- gprof/cg_arcs.h	2003/01/14 16:12:32
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  #ifndef cg_arcs_h
+  #define cg_arcs_h
+  
+  /*
+   * Arc structure for call-graph.
+***************
+*** 16,33 ****
+      double time;		/* time inherited along arc */
+      double child_time;		/* child-time inherited along arc */
+      struct arc *next_parent;	/* next parent of CHILD */
+      struct arc *next_child;	/* next child of PARENT */
+      int has_been_placed;	/* have this arc's functions been placed? */
+    }
+  Arc;
+  
+  extern unsigned int num_cycles;	/* number of cycles discovered */
+  extern Sym *cycle_header;	/* cycle headers */
+  
+  extern void arc_add PARAMS ((Sym * parent, Sym * child, unsigned long count));
+  extern Arc *arc_lookup PARAMS ((Sym * parent, Sym * child));
+  extern Sym **cg_assemble PARAMS ((void));
+! extern Arc **arcs;
+! extern unsigned int numarcs;
+  
+  #endif /* cg_arcs_h */
+--- 18,70 ----
+      double time;		/* time inherited along arc */
+      double child_time;		/* child-time inherited along arc */
+      struct arc *next_parent;	/* next parent of CHILD */
+      struct arc *next_child;	/* next child of PARENT */
+      int has_been_placed;	/* have this arc's functions been placed? */
++     struct arc *arc_next;	/* list of arcs on cycle */
++     unsigned short arc_cyclecnt; /* num cycles involved in */
++     unsigned short arc_flags;	/* see below */
+    }
+  Arc;
+  
++ /*
++  * arc flags
++  */
++ #define DEADARC		0x01	/* time should not propagate across the arc */
++ #define ONLIST		0x02	/* arc is on list of arcs in cycles */
++ 
++ /*
++  * The cycle list.
++  * For eaach subcycle within an identified cycle, we gather
++  * its size and the list of included arcs.
++  */
++ typedef struct cl
++   {
++     int size;			/* length of cycle */
++     struct cl *next;		/* next member of list */
++     Arc *list[1];		/* list of arcs in cycle */
++     /* actually longer */
++   }
++ Cl;
++ 
++ #define	CYCLEMAX	100	/* maximum cycles before cutting one of them */
++ extern Arc *archead;		/* the head of arcs in current cycle list */
++ extern Cl *cyclehead;		/* the head of the list */
++ extern int cyclecnt;		/* the number of cycles found */
++ 
++ 
+  extern unsigned int num_cycles;	/* number of cycles discovered */
+  extern Sym *cycle_header;	/* cycle headers */
++ extern Arc **arcs;
++ extern unsigned int numarcs;
+  
+  extern void arc_add PARAMS ((Sym * parent, Sym * child, unsigned long count));
+  extern Arc *arc_lookup PARAMS ((Sym * parent, Sym * child));
+  extern Sym **cg_assemble PARAMS ((void));
+! 
+! extern boolean cycleanalyze PARAMS ((void));
+! extern boolean descend PARAMS ((Sym * node, Arc * * stkstart, Arc * * stkp));
+! extern boolean addcycle PARAMS ((Arc * * stkstart, Arc * * stkend));
+! extern void compresslist PARAMS ((void));
+! extern void printsubcycle PARAMS ((Cl * clp));
+  
+  #endif /* cg_arcs_h */
+Index: gprof/cg_dfn.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/cg_dfn.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 cg_dfn.c
+*** gprof/cg_dfn.c	2002/11/21 01:05:04	1.1.1.1
+--- gprof/cg_dfn.c	2003/01/14 16:12:32
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /*
+   * Copyright (c) 1983, 1993
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+***************
+*** 50,61 ****
+  static void pre_visit PARAMS ((Sym *));
+  static void post_visit PARAMS ((Sym *));
+  
+  DFN_Stack *dfn_stack = NULL;
+  int dfn_maxdepth = 0;
+! int dfn_depth = 0;
+! int dfn_counter = DFN_NAN;
+  
+  
+  /*
+   * Is CHILD already numbered?
+   */
+--- 52,71 ----
+  static void pre_visit PARAMS ((Sym *));
+  static void post_visit PARAMS ((Sym *));
+  
+  DFN_Stack *dfn_stack = NULL;
+  int dfn_maxdepth = 0;
+! int dfn_depth;
+! int dfn_counter;
+! 
+! 
+! void
+! dfn_init ()
+! {
+!   dfn_depth = 0;
+!   dfn_counter = DFN_NAN;
+! }
+  
+  
+  /*
+   * Is CHILD already numbered?
+   */
+***************
+*** 300,308 ****
+    /*
+     * Recursively visit children:
+     */
+    for (arc = parent->cg.children; arc; arc = arc->next_child)
+      {
+!       cg_dfn (arc->child);
+      }
+    post_visit (parent);
+  }
+--- 310,321 ----
+    /*
+     * Recursively visit children:
+     */
+    for (arc = parent->cg.children; arc; arc = arc->next_child)
+      {
+!       if ((arc->arc_flags & DEADARC) == 0)
+! 	{
+! 	  cg_dfn (arc->child);
+! 	}
+      }
+    post_visit (parent);
+  }
+Index: gprof/cg_dfn.h
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/cg_dfn.h,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 cg_dfn.h
+*** gprof/cg_dfn.h	2002/11/21 01:05:04	1.1.1.1
+--- gprof/cg_dfn.h	2003/01/14 16:12:32
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  #ifndef cg_dfn_h
+  #define cg_dfn_h
+  
+  /*
+   * Flags which mark a symbol as topologically ``busy'' or as
+***************
+*** 10,17 ****
+--- 12,20 ----
+  
+  /*
+   * Depth-first numbering of a call-graph.
+   */
+  
++ extern void dfn_init PARAMS ((void));
+  extern void cg_dfn PARAMS ((Sym * root));
+  
+  #endif /* cg_dfn_h */
+Index: gprof/cg_print.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/cg_print.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 cg_print.c
+*** gprof/cg_print.c	2002/11/21 01:05:04	1.1.1.1
+--- gprof/cg_print.c	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* cg_print.c -  Print routines for displaying call graphs.
+  
+     Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+  
+     This file is part of GNU Binutils.
+***************
+*** 117,127 ****
+    sprintf (buf, "[%d]", cyc->cg.index);
+    printf (bsd_style_output
+  	  ? "%-6.6s %5.1f %7.2f %11.2f %7lu"
+  	  : "%-6.6s %5.1f %7.2f %7.2f %7lu", buf,
+  	  100 * (cyc->cg.prop.self + cyc->cg.prop.child) / print_time,
+! 	  cyc->cg.prop.self / hz, cyc->cg.prop.child / hz, cyc->ncalls);
+  
+    if (cyc->cg.self_calls != 0)
+      printf ("+%-7lu", cyc->cg.self_calls);
+    else
+      printf (" %7.7s", "");
+--- 119,129 ----
+    sprintf (buf, "[%d]", cyc->cg.index);
+    printf (bsd_style_output
+  	  ? "%-6.6s %5.1f %7.2f %11.2f %7lu"
+  	  : "%-6.6s %5.1f %7.2f %7.2f %7lu", buf,
+  	  100 * (cyc->cg.prop.self + cyc->cg.prop.child) / print_time,
+! 	  cyc->cg.prop.self / hz, cyc->cg.prop.child / hz, cyc->cg.npropcall);
+  
+    if (cyc->cg.self_calls != 0)
+      printf ("+%-7lu", cyc->cg.self_calls);
+    else
+      printf (" %7.7s", "");
+***************
+*** 199,209 ****
+      {
+        printf (bsd_style_output
+  	      ? "%6.6s %5.5s %7.2f %11.2f %7lu"
+  	      : "%6.6s %5.5s %7.2f %7.2f %7lu",
+  	      "", "", member->cg.prop.self / hz, member->cg.prop.child / hz,
+! 	      member->ncalls);
+  
+        if (member->cg.self_calls != 0)
+  	printf ("+%-7lu", member->cg.self_calls);
+        else
+  	printf (" %7.7s", "");
+--- 201,211 ----
+      {
+        printf (bsd_style_output
+  	      ? "%6.6s %5.5s %7.2f %11.2f %7lu"
+  	      : "%6.6s %5.5s %7.2f %7.2f %7lu",
+  	      "", "", member->cg.prop.self / hz, member->cg.prop.child / hz,
+! 	      member->cg.npropcall);
+  
+        if (member->cg.self_calls != 0)
+  	printf ("+%-7lu", member->cg.self_calls);
+        else
+  	printf (" %7.7s", "");
+***************
+*** 369,380 ****
+    sort_parents (child);
+  
+    for (arc = child->cg.parents; arc; arc = arc->next_parent)
+      {
+        parent = arc->parent;
+!       if (child == parent || (child->cg.cyc.num != 0
+! 			      && parent->cg.cyc.num == child->cg.cyc.num))
+  	{
+  	  /* Selfcall or call among siblings.  */
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+  		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
+--- 371,383 ----
+    sort_parents (child);
+  
+    for (arc = child->cg.parents; arc; arc = arc->next_parent)
+      {
+        parent = arc->parent;
+!       if (child == parent || (arc->arc_flags & DEADARC)
+! 	  || (child->cg.cyc.num != 0
+! 	      && parent->cg.cyc.num == child->cg.cyc.num))
+  	{
+  	  /* Selfcall or call among siblings.  */
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+  		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
+***************
+*** 389,399 ****
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+  		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
+  		  "", "",
+  		  arc->time / hz, arc->child_time / hz,
+! 		  arc->count, cycle_head->ncalls);
+  	  print_name (parent);
+  	  printf ("\n");
+  	}
+      }
+  }
+--- 392,402 ----
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+  		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
+  		  "", "",
+  		  arc->time / hz, arc->child_time / hz,
+! 		  arc->count, cycle_head->cg.npropcall);
+  	  print_name (parent);
+  	  printf ("\n");
+  	}
+      }
+  }
+***************
+*** 444,455 ****
+    arc = parent->cg.children;
+  
+    for (arc = parent->cg.children; arc; arc = arc->next_child)
+      {
+        child = arc->child;
+!       if (child == parent || (child->cg.cyc.num != 0
+! 			      && child->cg.cyc.num == parent->cg.cyc.num))
+  	{
+  	  /* Self call or call to sibling.  */
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+  		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
+--- 447,459 ----
+    arc = parent->cg.children;
+  
+    for (arc = parent->cg.children; arc; arc = arc->next_child)
+      {
+        child = arc->child;
+!       if (child == parent || (arc->arc_flags & DEADARC)
+! 	  || (child->cg.cyc.num != 0
+! 	      && child->cg.cyc.num == parent->cg.cyc.num))
+  	{
+  	  /* Self call or call to sibling.  */
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+  		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
+***************
+*** 463,473 ****
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+  		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
+  		  "", "",
+  		  arc->time / hz, arc->child_time / hz,
+! 		  arc->count, child->cg.cyc.head->ncalls);
+  	  print_name (child);
+  	  printf ("\n");
+  	}
+      }
+  }
+--- 467,477 ----
+  	  printf (bsd_style_output
+  		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+  		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
+  		  "", "",
+  		  arc->time / hz, arc->child_time / hz,
+! 		  arc->count, child->cg.cyc.head->cg.npropcall);
+  	  print_name (child);
+  	  printf ("\n");
+  	}
+      }
+  }
+***************
+*** 486,496 ****
+  	  100 * (np->cg.prop.self + np->cg.prop.child) / print_time,
+  	  np->cg.prop.self / hz, np->cg.prop.child / hz);
+  
+    if ((np->ncalls + np->cg.self_calls) != 0)
+      {
+!       printf (" %7lu", np->ncalls);
+  
+        if (np->cg.self_calls != 0)
+  	  printf ("+%-7lu ", np->cg.self_calls);
+        else
+  	  printf (" %7.7s ", "");
+--- 490,500 ----
+  	  100 * (np->cg.prop.self + np->cg.prop.child) / print_time,
+  	  np->cg.prop.self / hz, np->cg.prop.child / hz);
+  
+    if ((np->ncalls + np->cg.self_calls) != 0)
+      {
+!       printf (" %7lu", np->cg.npropcall);
+  
+        if (np->cg.self_calls != 0)
+  	  printf ("+%-7lu ", np->cg.self_calls);
+        else
+  	  printf (" %7.7s ", "");
+Index: gprof/gprof.1
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/gprof.1,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 gprof.1
+*** gprof/gprof.1	2002/11/21 01:05:04	1.1.1.1
+--- gprof/gprof.1	2003/01/14 16:12:33
+***************
+*** 134,143 ****
+--- 134,144 ----
+  .SH "NAME"
+  gprof \- display call graph profile data
+  .SH "SYNOPSIS"
+  .IX Header "SYNOPSIS"
+  gprof [ \-[abcDhilLsTvwxyz] ] [ \-[ACeEfFJnNOpPqQZ][\fIname\fR] ] 
++  [ \-M \fIcount\fR ]
+   [ \-I \fIdirs\fR ] [ \-d[\fInum\fR] ] [ \-k \fIfrom/to\fR ]
+   [ \-m \fImin-count\fR ] [ \-t \fItable-length\fR ]
+   [ \-\-[no\-]annotated\-source[=\fIname\fR] ] 
+   [ \-\-[no\-]exec\-counts[=\fIname\fR] ]
+   [ \-\-[no\-]flat\-profile[=\fIname\fR] ] [ \-\-[no\-]graph[=\fIname\fR] ]
+***************
+*** 394,405 ****
+--- 395,408 ----
+  \&        c-lang.o:00000000 T recognize_objc_keyword
+  \&        c-decl.o:00000000 T print_lang_identifier
+  \&        c-decl.o:00000000 T print_lang_type
+  \&        ...
+  .Ve
++ .ig \" BSD/OS doesn't use GNU nm
+  To create a \fImap_file\fR with \s-1GNU\s0 \f(CW\*(C`nm\*(C'\fR, type a command like
+  \&\f(CW\*(C`nm \-\-extern\-only \-\-defined\-only \-v \-\-print\-file\-name program\-name\*(C'\fR.
++ ..
+  .ie n .IP """\-T""" 4
+  .el .IP "\f(CW\-T\fR" 4
+  .IX Item "-T"
+  .PD 0
+  .ie n .IP """\-\-traditional""" 4
+***************
+*** 516,525 ****
+--- 519,546 ----
+  code was executed.
+  While line-by-line profiling can help isolate where in a large function
+  a program is spending its time, it also significantly increases
+  the running time of \f(CW\*(C`gprof\*(C'\fR, and magnifies statistical
+  inaccuracies.
++ .ie n .IP """\-M \f(CIcount\f(CW""" 4
++ .el .IP "\F(CW\-M \f(CIcount\f(CW""" 4
++ .IX Item "-M count"
++ .PD 0
++ .ie n .IP """\-\-eliminate-cycles=\f(CIcount\f(CW""" 4
++ .el .IP "\F(CW\-\-eliminate-cycles=\f(CIcount\f(CW""" 4
++ .IX Item "--eliminate-cycles=count"
++ .PD
++ The \fB\-M\fR option finds a minimal set of arcs that can be broken
++ to eliminate all cycles with \fIcount\fR or more members.
++ Caution: the algorithm used to break cycles is exponential,
++ so using this option may cause \f(CW\*(C`gprof\*(C'\fR
++ to run for a very long time.
++ (Breaking arcs allows CPU time that would otherwise disappear into a cycle
++ to be propagated to its callers, which makes the output more useful.
++ There is no guarantee that the minimal set of arcs broken this way
++ divides the time correctly, but it is better than not being able
++ to propagate it at all.)
+  .ie n .IP """\-m \f(CInum\f(CW""" 4
+  .el .IP "\f(CW\-m \f(CInum\f(CW\fR" 4
+  .IX Item "-m num"
+  .PD 0
+  .ie n .IP """\-\-min\-count=\f(CInum\f(CW""" 4
+Index: gprof/gprof.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/gprof.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 gprof.c
+*** gprof/gprof.c	2002/11/21 01:05:04	1.1.1.1
+--- gprof/gprof.c	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /*
+   * Copyright (c) 1983, 1993, 1998, 2001, 2002
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+***************
+*** 66,75 ****
+--- 68,79 ----
+  boolean ignore_zeros = true;
+  boolean line_granularity = false;
+  boolean print_descriptions = true;
+  boolean print_path = false;
+  boolean ignore_non_functions = false;
++ boolean eliminate_cycles = false;
++ int cyclethreshold;
+  File_Format file_format = FF_AUTO;
+  
+  boolean first_output = true;
+  
+  char copyright[] =
+***************
+*** 100,109 ****
+--- 104,114 ----
+  static struct option long_options[] =
+  {
+    {"line", no_argument, 0, 'l'},
+    {"no-static", no_argument, 0, 'a'},
+    {"ignore-non-functions", no_argument, 0, 'D'},
++   {"eliminate-cycles", required_argument, 0, 'M'},
+  
+      /* output styles: */
+  
+    {"annotated-source", optional_argument, 0, 'A'},
+    {"no-annotated-source", optional_argument, 0, 'J'},
+***************
+*** 201,211 ****
+  
+    whoami = argv[0];
+    xmalloc_set_program_name (whoami);
+  
+    while ((ch = getopt_long (argc, argv,
+! 	"aA::bBcCd::De:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
+  			    long_options, 0))
+  	 != EOF)
+      {
+        switch (ch)
+  	{
+--- 206,216 ----
+  
+    whoami = argv[0];
+    xmalloc_set_program_name (whoami);
+  
+    while ((ch = getopt_long (argc, argv,
+! 	"aA::bBcCd::De:E:f:F:hiI:J::k:lLm:M:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
+  			    long_options, 0))
+  	 != EOF)
+      {
+        switch (ch)
+  	{
+***************
+*** 302,311 ****
+--- 307,320 ----
+  	case 'L':
+  	  print_path = true;
+  	  break;
+  	case 'm':
+  	  bb_min_calls = (unsigned long) strtoul (optarg, (char **) NULL, 10);
++ 	  break;
++ 	case 'M':
++ 	  eliminate_cycles = true;
++ 	  cyclethreshold = atoi (optarg);
+  	  break;
+  	case 'n':
+  	  sym_id_add (optarg, INCL_TIME);
+  	  break;
+  	case 'N':
+Index: gprof/gprof.h
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/gprof.h,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 gprof.h
+*** gprof/gprof.h	2002/11/21 01:05:04	1.1.1.1
+--- gprof/gprof.h	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /*
+   * Copyright (c) 1983, 1993
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+***************
+*** 91,100 ****
+--- 93,104 ----
+  #define	LOOKUPDEBUG	(1<<9)	/*  512 */
+  #define	PROPDEBUG	(1<<10)	/* 1024 */
+  #define BBDEBUG		(1<<11)	/* 2048 */
+  #define IDDEBUG		(1<<12)	/* 4096 */
+  #define SRCDEBUG	(1<<13)	/* 8192 */
++ #define BREAKCYCLE	(1<<14) /* 16384 */
++ #define SUBCYCLELIST	(1<<15) /* 32768 */
+  
+  #ifdef DEBUG
+  #define DBG(l,s)	if (debug_level & (l)) {s;}
+  #else
+  #define DBG(l,s)
+***************
+*** 117,126 ****
+--- 121,132 ----
+   * Command-line options:
+   */
+  extern int debug_level;			/* debug level */
+  extern int output_style;
+  extern int output_width;		/* controls column width in index */
++ extern int cyclethreshold;		/* maximum cycle size */
++ extern boolean eliminate_cycles;	/* find cut-set to eliminate cycles */
+  extern boolean bsd_style_output;	/* as opposed to FSF style output */
+  extern boolean demangle;		/* demangle symbol names? */
+  extern boolean discard_underscores;	/* discard leading underscores? */
+  extern boolean ignore_direct_calls;	/* don't count direct calls */
+  extern boolean ignore_static_funcs;	/* suppress static functions */
+Index: gprof/hertz.c
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/hertz.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 hertz.c
+*** gprof/hertz.c	2002/11/21 01:05:04	1.1.1.1
+--- gprof/hertz.c	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /*
+   * Copyright (c) 1983, 1993
+   *      The Regents of the University of California.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+***************
+*** 26,36 ****
+   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+   * SUCH DAMAGE.
+   */
+  #include "gprof.h"
+  #include "hertz.h"
+! 
+  
+  int
+  hertz ()
+  {
+  #ifdef HERTZ
+--- 28,40 ----
+   * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+   * SUCH DAMAGE.
+   */
+  #include "gprof.h"
+  #include "hertz.h"
+! #ifdef __bsdi__
+! #include <unistd.h>
+! #endif
+  
+  int
+  hertz ()
+  {
+  #ifdef HERTZ
+Index: gprof/symtab.h
+===================================================================
+RCS file: /master/core_contrib/binutils/gprof/symtab.h,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 symtab.h
+*** gprof/symtab.h	2002/11/21 01:05:04	1.1.1.1
+--- gprof/symtab.h	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* symtab.h
+  
+     Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+  
+  This file is part of GNU Binutils.
+***************
+*** 71,105 ****
+--- 73,115 ----
+      hist;
+  
+      /* Call-graph specific information:  */
+      struct
+        {
++ 	unsigned long npropcall; /* Times called by live arcs.  */
+  	unsigned long self_calls; /* How many calls to self.  */
+  	double child_time;	/* Cumulative ticks in children.  */
+  	int index;		/* Index in the graph list.  */
+  	int top_order;		/* Graph call chain top-sort order.  */
+  	boolean print_flag;	/* Should this be printed?  */
++ 	short flags;		/* See cycle flags below.  */
+  	struct
+  	  {
+  	    double fract;	/* What % of time propagates.  */
+  	    double self;	/* How much self time propagates.  */
+  	    double child;	/* How much child time propagates.  */
+  	  }
+  	prop;
+  	struct
+  	  {
+  	    int num;		/* Internal number of cycle on.  */
++ 	    int parentcnt;	/* Number of live parent arcs.  */
+  	    struct sym *head;	/* Head of cycle.  */
+  	    struct sym *next;	/* Next member of cycle.  */
+  	  }
+  	cyc;
+  	struct arc *parents;	/* List of caller arcs.  */
+  	struct arc *children;	/* List of callee arcs.  */
+        }
+      cg;
+    }
+  Sym;
++ 
++ /* Cycle flags.  */
++ #define	HASCYCLEXIT	0x08	/* Node has arc exiting from cycle.  */
++ #define	CYCLEHEAD	0x10	/* Node marked as head of a cycle.  */
++ #define	VISITED		0x20	/* Node visited during a cycle.  */
+  
+  /* Symbol-tables are always assumed to be sorted
+     in increasing order of addresses.  */
+  typedef struct
+    {
+cvs server: Diffing gprof/po
+cvs server: Diffing include
+cvs server: Diffing include/aout
+cvs server: Diffing include/coff
+cvs server: Diffing include/elf
+cvs server: Diffing include/gdb
+cvs server: Diffing include/mpw
+cvs server: Diffing include/mpw/sys
+cvs server: Diffing include/nlm
+cvs server: Diffing include/opcode
+cvs server: Diffing include/regs
+cvs server: Diffing intl
+cvs server: Diffing ld
+Index: ld/Makefile.am
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/Makefile.am,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 Makefile.am
+*** ld/Makefile.am	2002/11/21 01:04:55	1.1.1.1
+--- ld/Makefile.am	2003/01/14 16:12:33
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  ## Process this file with automake to generate Makefile.in
+  
+  ## FIXME: work around apparent automake bug.
+  INTLLIBS = @INTLLIBS@
+  
+***************
+*** 200,209 ****
+--- 202,212 ----
+  	ehppanbsd.o \
+  	ehppaobsd.o \
+  	ei386aout.o \
+  	ei386beos.o \
+  	ei386bsd.o \
++ 	ei386bsdi.o \
+  	ei386coff.o \
+  	ei386go32.o \
+  	ei386linux.o \
+  	ei386lynx.o \
+  	ei386mach.o \
+***************
+*** 783,792 ****
+--- 786,798 ----
+    $(srcdir)/emultempl/beos.em $(srcdir)/scripttempl/i386beos.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386beos "$(tdir_i386beos)"
+  ei386bsd.c: $(srcdir)/emulparams/i386bsd.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386bsd "$(tdir_i386bsd)"
++ ei386bsdi.c: $(srcdir)/emulparams/i386bsdi.sh \
++   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
++ 	${GENSCRIPTS} i386bsdi.c "$(tdir_i386bsdi)"
+  ei386coff.c: $(srcdir)/emulparams/i386coff.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386coff.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386coff "$(tdir_i386coff)"
+  ei386go32.c: $(srcdir)/emulparams/i386go32.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386go32.sc ${GEN_DEPENDS}
+Index: ld/Makefile.in
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/Makefile.in,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 Makefile.in
+*** ld/Makefile.in	2002/11/21 01:04:55	1.1.1.1
+--- ld/Makefile.in	2003/01/14 16:12:34
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  # Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+  
+  # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
+  # This Makefile.in is free software; the Free Software Foundation
+  # gives unlimited permission to copy and/or distribute it,
+***************
+*** 311,320 ****
+--- 313,323 ----
+  	ehppanbsd.o \
+  	ehppaobsd.o \
+  	ei386aout.o \
+  	ei386beos.o \
+  	ei386bsd.o \
++ 	ei386bsdi.o \
+  	ei386coff.o \
+  	ei386go32.o \
+  	ei386linux.o \
+  	ei386lynx.o \
+  	ei386mach.o \
+***************
+*** 1506,1515 ****
+--- 1509,1521 ----
+    $(srcdir)/emultempl/beos.em $(srcdir)/scripttempl/i386beos.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386beos "$(tdir_i386beos)"
+  ei386bsd.c: $(srcdir)/emulparams/i386bsd.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386bsd "$(tdir_i386bsd)"
++ ei386bsdi.c: $(srcdir)/emulparams/i386bsdi.sh \
++   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
++ 	${GENSCRIPTS} i386bsdi "$(tdir_i386bsdi)"
+  ei386coff.c: $(srcdir)/emulparams/i386coff.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386coff.sc ${GEN_DEPENDS}
+  	${GENSCRIPTS} i386coff "$(tdir_i386coff)"
+  ei386go32.c: $(srcdir)/emulparams/i386go32.sh \
+    $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/i386go32.sc ${GEN_DEPENDS}
+Index: ld/configure.host
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/configure.host,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 configure.host
+*** ld/configure.host	2002/11/21 01:04:55	1.1.1.1
+--- ld/configure.host	2003/01/14 16:12:34
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  # This is the linker host specific file.  This is invoked by the
+  # autoconf generated configure script.  Putting it in a separate shell
+  # file lets us skip running autoconf when modifying host specific
+  # information.
+  
+***************
+*** 18,27 ****
+--- 20,36 ----
+  #	Generic configurations:
+  #
+  
+  case "${host}" in
+  
++ *-*-bsdi5*)
++   NATIVE_LIB_DIRS='/shlib /usr/lib /usr/X11/lib /usr/contrib/lib /usr/local/lib'
++   # crude, but effective
++   HOSTING_CRT0='/usr/lib/crt1.o /usr/lib/crti.o /usr/lib/crtbegin.o'
++   HOSTING_LIBS="$HOSTING_LIBS /usr/lib/crtend.o /usr/lib/crtn.o"
++   ;;
++ 
+  *-*-freebsd*)
+    NATIVE_LIB_DIRS='/lib /usr/lib /usr/local/lib'
+    # Older versions of gcc do not use a specs file.  In those cases,
+    # gcc -print-file-name=specs will simply print specs.  We create a
+    # dummy specs files to handle this.
+***************
+*** 67,76 ****
+--- 76,89 ----
+  hppa*64*-*-hpux11*)
+    NATIVE_LIB_DIRS=/usr/lib/pa20_64
+    HOSTING_CRT0=/usr/ccs/lib/pa20_64/crt0.o
+    # Even if CC is not gcc, the tests use gcc.
+    HOSTING_LIBS='`if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else if test "$GCC" = yes; then ${CC} --print-libgcc-file-name; else gcc --print-libgcc-file-name; fi fi` -lc /usr/lib/pa20_64/milli.a'
++   ;;
++ 
++ *-*-bsdi5*)
++   # avoid matching i386-*-bsd* below
+    ;;
+  
+  i[3456]86-*-bsd* | i[34567]86-*-freebsd[12] | i[34567]86-*-freebsd[12]\.* | i[34567]86-*-freebsd*aout* | i[3456]86-*-netbsd*)
+    HOSTING_CRT0=/usr/lib/crt0.o
+    ;;
+Index: ld/configure.tgt
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/configure.tgt,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 configure.tgt
+*** ld/configure.tgt	2002/11/21 01:04:55	1.1.1.1
+--- ld/configure.tgt	2003/01/14 16:12:34
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  # This is the linker target specific file.  This is invoked by the
+  # autoconf generated configure script.  Putting it in a separate shell
+  # file lets us skip running autoconf when modifying target specific
+  # information.
+  
+***************
+*** 133,143 ****
+  i[3456]86-*-rtemscoff*) targ_emul=i386coff ;;
+  i[3456]86-*-rtemself*)  targ_emul=elf_i386 ;;
+  i[3456]86-*-rtems*)     targ_emul=elf_i386 ;;
+  i[3456]86-*-bsd)	targ_emul=i386bsd ;;
+  i[3456]86-*-bsd386)	targ_emul=i386bsd ;;
+! i[3456]86-*-bsdi*)	targ_emul=i386bsd ;;
+  i[3456]86-*-aout)	targ_emul=i386aout ;;
+  i[3456]86-*-linux*aout*)	targ_emul=i386linux
+  			targ_extra_emuls=elf_i386
+  			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/aout//'`
+  			;;
+--- 135,147 ----
+  i[3456]86-*-rtemscoff*) targ_emul=i386coff ;;
+  i[3456]86-*-rtemself*)  targ_emul=elf_i386 ;;
+  i[3456]86-*-rtems*)     targ_emul=elf_i386 ;;
+  i[3456]86-*-bsd)	targ_emul=i386bsd ;;
+  i[3456]86-*-bsd386)	targ_emul=i386bsd ;;
+! i[3456]86-*-bsdi*)	targ_emul=elf_i386
+! 			targ_extra_emuls=i386bsdi
+! 			;;
+  i[3456]86-*-aout)	targ_emul=i386aout ;;
+  i[3456]86-*-linux*aout*)	targ_emul=i386linux
+  			targ_extra_emuls=elf_i386
+  			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/aout//'`
+  			;;
+Index: ld/ldfile.c
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/ldfile.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 ldfile.c
+*** ld/ldfile.c	2002/11/21 01:04:55	1.1.1.1
+--- ld/ldfile.c	2003/01/14 16:12:34
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* Linker file opening and searching.
+     Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002
+     Free Software Foundation, Inc.
+  
+  This file is part of GLD, the Gnu Linker.
+***************
+*** 76,88 ****
+--- 78,105 ----
+  ldfile_add_library_path (name, cmdline)
+       const char *name;
+       boolean cmdline;
+  {
+    search_dirs_type *new;
++ #ifdef TORNADO
++   static char *wind_ref_dir;
++ #endif
+  
+    if (!cmdline && config.only_cmd_line_lib_dirs)
+      return;
++ 
++ #ifdef TORNADO
++   if (wind_ref_dir == NULL)
++     {
++       if ((wind_ref_dir = getenv ("WIND_REF_DIR")) == NULL)
++ 	wind_ref_dir = "";
++     }
++   /* If no library path was given on the command line, we prepend the
++      root directory for the Tornado reference tree to the path.  */
++   if (!cmdline && *wind_ref_dir != '\0')
++     name = concat (wind_ref_dir, name, NULL);
++ #endif
+  
+    new = (search_dirs_type *) xmalloc (sizeof (search_dirs_type));
+    new->next = NULL;
+    new->name = name;
+    new->cmdline = cmdline;
+Index: ld/ldmain.c
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/ldmain.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 ldmain.c
+*** ld/ldmain.c	2002/11/21 01:04:56	1.1.1.1
+--- ld/ldmain.c	2003/01/14 16:12:34
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* Main program of GNU linker.
+     Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+     2002
+     Free Software Foundation, Inc.
+     Written by Steve Chamberlain steve@cygnus.com
+***************
+*** 617,626 ****
+--- 619,629 ----
+  
+    if (check_for_scripts_dir (SCRIPTDIR))
+      /* We've been installed normally.  */
+      return;
+  
++ #ifndef __bsdi__
+    /* Look for "ldscripts" in the dir where our binary is.  */
+    end = strrchr (program_name, '/');
+  #ifdef HAVE_DOS_BASED_FILE_SYSTEM
+    {
+      /* We could have \foo\bar, or /foo\bar.  */
+***************
+*** 653,662 ****
+--- 656,666 ----
+    if (check_for_scripts_dir (dir))
+      return;
+  
+    /* Well, we tried.  */
+    free (dir);
++ #endif /* __bsdi__ */
+  }
+  
+  void
+  add_ysym (name)
+       const char *name;
+Index: ld/lexsup.c
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/lexsup.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 lexsup.c
+*** ld/lexsup.c	2002/11/21 01:04:56	1.1.1.1
+--- ld/lexsup.c	2003/01/14 16:12:35
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* Parse options for the GNU linker.
+     Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+     2001, 2002
+     Free Software Foundation, Inc.
+  
+***************
+*** 94,104 ****
+  #define OPTION_STATS			(OPTION_SORT_COMMON + 1)
+  #define OPTION_SYMBOLIC			(OPTION_STATS + 1)
+  #define OPTION_TASK_LINK		(OPTION_SYMBOLIC + 1)
+  #define OPTION_TBSS			(OPTION_TASK_LINK + 1)
+  #define OPTION_TDATA			(OPTION_TBSS + 1)
+! #define OPTION_TTEXT			(OPTION_TDATA + 1)
+  #define OPTION_TRADITIONAL_FORMAT	(OPTION_TTEXT + 1)
+  #define OPTION_UR			(OPTION_TRADITIONAL_FORMAT + 1)
+  #define OPTION_VERBOSE			(OPTION_UR + 1)
+  #define OPTION_VERSION			(OPTION_VERBOSE + 1)
+  #define OPTION_VERSION_SCRIPT		(OPTION_VERSION + 1)
+--- 96,107 ----
+  #define OPTION_STATS			(OPTION_SORT_COMMON + 1)
+  #define OPTION_SYMBOLIC			(OPTION_STATS + 1)
+  #define OPTION_TASK_LINK		(OPTION_SYMBOLIC + 1)
+  #define OPTION_TBSS			(OPTION_TASK_LINK + 1)
+  #define OPTION_TDATA			(OPTION_TBSS + 1)
+! #define OPTION_TINIT			(OPTION_TDATA + 1)
+! #define OPTION_TTEXT			(OPTION_TINIT + 1)
+  #define OPTION_TRADITIONAL_FORMAT	(OPTION_TTEXT + 1)
+  #define OPTION_UR			(OPTION_TRADITIONAL_FORMAT + 1)
+  #define OPTION_VERBOSE			(OPTION_UR + 1)
+  #define OPTION_VERSION			(OPTION_VERBOSE + 1)
+  #define OPTION_VERSION_SCRIPT		(OPTION_VERSION + 1)
+***************
+*** 374,383 ****
+--- 377,388 ----
+        '\0', N_("SECTION=ADDRESS"), N_("Set address of named section"), TWO_DASHES },
+    { {"Tbss", required_argument, NULL, OPTION_TBSS},
+        '\0', N_("ADDRESS"), N_("Set address of .bss section"), ONE_DASH },
+    { {"Tdata", required_argument, NULL, OPTION_TDATA},
+        '\0', N_("ADDRESS"), N_("Set address of .data section"), ONE_DASH },
++   { {"Tinit", required_argument, NULL, OPTION_TINIT},
++       '\0', N_("ADDRESS"), N_("Set address of .init section"), ONE_DASH },
+    { {"Ttext", required_argument, NULL, OPTION_TTEXT},
+        '\0', N_("ADDRESS"), N_("Set address of .text section"), ONE_DASH },
+    { {"verbose", no_argument, NULL, OPTION_VERBOSE},
+        '\0', NULL, N_("Output lots of information during link"), TWO_DASHES },
+    { {"dll-verbose", no_argument, NULL, OPTION_VERBOSE}, /* Linux.  */
+***************
+*** 971,980 ****
+--- 976,988 ----
+  	case OPTION_TBSS:
+  	  set_section_start (".bss", optarg);
+  	  break;
+  	case OPTION_TDATA:
+  	  set_section_start (".data", optarg);
++ 	  break;
++ 	case OPTION_TINIT:
++ 	  set_section_start (".init", optarg);
+  	  break;
+  	case OPTION_TTEXT:
+  	  set_section_start (".text", optarg);
+  	  break;
+  	case OPTION_TRADITIONAL_FORMAT:
+cvs server: Diffing ld/emulparams
+Index: ld/emulparams/elf32ppc.sh
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/emulparams/elf32ppc.sh,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elf32ppc.sh
+*** ld/emulparams/elf32ppc.sh	2002/11/21 01:04:56	1.1.1.1
+--- ld/emulparams/elf32ppc.sh	2003/01/14 16:12:35
+***************
+*** 1,14 ****
+  # If you change this file, please also look at files which source this one:
+  # elf32lppc.sh elf32ppclinux.sh elf32ppcsim.sh
+  
+  TEMPLATE_NAME=elf32
+  GENERATE_SHLIB_SCRIPT=yes
+  SCRIPT_NAME=elf
+  OUTPUT_FORMAT="elf32-powerpc"
+! TEXT_START_ADDR=0x01800000
+  MAXPAGESIZE=0x10000
+  ARCH=powerpc
+  MACHINE=
+  BSS_PLT=
+  EXECUTABLE_SYMBOLS='PROVIDE (__stack = 0); PROVIDE (___stack = 0);'
+  OTHER_BSS_END_SYMBOLS='__end = .;'
+--- 1,18 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ #
+  # If you change this file, please also look at files which source this one:
+  # elf32lppc.sh elf32ppclinux.sh elf32ppcsim.sh
+  
+  TEMPLATE_NAME=elf32
+  GENERATE_SHLIB_SCRIPT=yes
+  SCRIPT_NAME=elf
+  OUTPUT_FORMAT="elf32-powerpc"
+! TEXT_START_ADDR=0x02000000
+  MAXPAGESIZE=0x10000
++ # Put data in a non-executable segment unless we use a PLT.
++ DATA_ADDR="ALIGN(32) + (DEFINED(_DYNAMIC) ? $MAXPAGESIZE : 0x10000000)"
+  ARCH=powerpc
+  MACHINE=
+  BSS_PLT=
+  EXECUTABLE_SYMBOLS='PROVIDE (__stack = 0); PROVIDE (___stack = 0);'
+  OTHER_BSS_END_SYMBOLS='__end = .;'
+Index: ld/emulparams/elf64_sparc.sh
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/emulparams/elf64_sparc.sh,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elf64_sparc.sh
+*** ld/emulparams/elf64_sparc.sh	2002/11/21 01:04:57	1.1.1.1
+--- ld/emulparams/elf64_sparc.sh	2003/01/14 16:12:35
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ #
+  SCRIPT_NAME=elf
+  ELFSIZE=64
+  TEMPLATE_NAME=elf32
+  OUTPUT_FORMAT="elf64-sparc"
+  MAXPAGESIZE=0x100000
+***************
+*** 8,17 ****
+--- 10,20 ----
+  MACHINE=
+  DATA_PLT=
+  GENERATE_SHLIB_SCRIPT=yes
+  NOP=0x01000000
+  NO_SMALL_DATA=yes
++ ALIGNMENT=8
+  
+  case "$target" in
+    sparc*-solaris*)
+      TEXT_START_ADDR=0x100000000
+      NONPAGED_TEXT_START_ADDR=0x100000000
+***************
+*** 40,50 ****
+        # to first include a 64-bit specific directory.  It's put
+        # in slightly different places on the two systems.
+        case "$target" in
+  	sparc*-linux*)
+  	  suffix=64 ;;
+! 	sparc*-solaris*)
+  	  suffix=/sparcv9 ;;
+        esac
+  
+        # Look for 64 bit target libraries in /lib64, /usr/lib64 etc., first
+        # on Linux and /lib/sparcv9, /usr/lib/sparcv9 etc. on Solaris.
+--- 43,53 ----
+        # to first include a 64-bit specific directory.  It's put
+        # in slightly different places on the two systems.
+        case "$target" in
+  	sparc*-linux*)
+  	  suffix=64 ;;
+! 	sparc*-solaris*|sparc*-bsdi*)
+  	  suffix=/sparcv9 ;;
+        esac
+  
+        # Look for 64 bit target libraries in /lib64, /usr/lib64 etc., first
+        # on Linux and /lib/sparcv9, /usr/lib/sparcv9 etc. on Solaris.
+cvs server: Diffing ld/emultempl
+Index: ld/emultempl/elf32.em
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/emultempl/elf32.em,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elf32.em
+*** ld/emultempl/elf32.em	2002/11/21 01:04:58	1.1.1.1
+--- ld/emultempl/elf32.em	2003/01/14 16:12:35
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ #
+  # This shell script emits a C file. -*- C -*-
+  # It does some substitutions.
+  # This file is now misnamed, because it supports both 32 bit and 64 bit
+  # ELF emulations.
+  test -z "${ELFSIZE}" && ELFSIZE=32
+***************
+*** 735,744 ****
+--- 737,762 ----
+  	continue;
+  
+        einfo ("%P: warning: %s, needed by %B, not found (try using -rpath or -rpath-link)\n",
+  	     l->name, l->by);
+      }
++ 
++   /* If requested, add an interpreter even if not dynamic linking.  */
++   if (command_line.interpreter != NULL && config.dynamic_link == false)
++     {
++       /* Grab the first input BFD and attach the section there.  */
++       asection *sinterp = bfd_make_section (link_info.input_bfds, ".interp");
++       if (sinterp == NULL
++ 	  || ! bfd_set_section_flags (link_info.input_bfds, sinterp,
++ 				      SEC_ALLOC | SEC_LOAD
++ 				      | SEC_HAS_CONTENTS | SEC_IN_MEMORY
++ 				      | SEC_READONLY))
++ 	einfo("%P%F: failed to set interpreter name\n");
++       sinterp->contents = (bfd_byte *) command_line.interpreter;
++       sinterp->_raw_size = strlen (command_line.interpreter) + 1;
++     }
++ 
+  }
+  
+  EOF
+  fi
+  
+cvs server: Diffing ld/po
+cvs server: Diffing ld/scripttempl
+Index: ld/scripttempl/aout.sc
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/scripttempl/aout.sc,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 aout.sc
+*** ld/scripttempl/aout.sc	2002/11/21 01:04:58	1.1.1.1
+--- ld/scripttempl/aout.sc	2003/01/14 16:12:35
+***************
+*** 1,5 ****
+--- 1,7 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
++ 
+  test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
+  test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
+  test -z "${ALIGNMENT}" && ALIGNMENT="4"
+  
+  cat <<EOF
+***************
+*** 16,34 ****
+--- 18,41 ----
+  {
+    ${RELOCATING+. = ${TEXT_START_ADDR};}
+    .text :
+    {
+      CREATE_OBJECT_SYMBOLS
++     *(.init)
+      *(.text)
++     *(.fini)
++     *(.note.ABI-tag)
++     *(.rodata)
+      /* The next six sections are for SunOS dynamic linking.  The order
+         is important.  */
+      *(.dynrel)
+      *(.hash)
+      *(.dynsym)
+      *(.dynstr)
+      *(.rules)
+      *(.need)
++     ${RELOCATING+etext = .;}
+      ${RELOCATING+_etext = .;}
+      ${RELOCATING+__etext = .;}
+      ${PAD_TEXT+${RELOCATING+. = ${DATA_ALIGNMENT};}}
+    }
+    ${RELOCATING+. = ${DATA_ALIGNMENT};}
+***************
+*** 37,57 ****
+      /* The first three sections are for SunOS dynamic linking.  */
+      *(.dynamic)
+      *(.got)
+      *(.plt)
+      *(.data)
+      *(.linux-dynamic) /* For Linux dynamic linking.  */
+      ${CONSTRUCTING+CONSTRUCTORS}
+      ${RELOCATING+_edata  =  .;}
+      ${RELOCATING+__edata  =  .;}
+    }
+    .bss :
+    {
+!    ${RELOCATING+ __bss_start = .};
+!    *(.bss)
+!    *(COMMON)
+!    ${RELOCATING+. = ALIGN(${ALIGNMENT});}
+!    ${RELOCATING+_end = . };
+!    ${RELOCATING+__end = . };
+    }
+  }
+  EOF
+--- 44,77 ----
+      /* The first three sections are for SunOS dynamic linking.  */
+      *(.dynamic)
+      *(.got)
+      *(.plt)
+      *(.data)
++     *(.ctors)
++     *(.dtors)
++     *(.eh_frame)
+      *(.linux-dynamic) /* For Linux dynamic linking.  */
+      ${CONSTRUCTING+CONSTRUCTORS}
++     ${RELOCATING+. = ALIGN(${ALIGNMENT});}
++     ${RELOCATING+edata  =  .;}
+      ${RELOCATING+_edata  =  .;}
+      ${RELOCATING+__edata  =  .;}
+    }
+    .bss :
++   {
++     ${RELOCATING+ __bss_start = .};
++     *(.bss)
++     *(COMMON)
++     ${RELOCATING+. = ALIGN(${ALIGNMENT});}
++     ${RELOCATING+end = . };
++     ${RELOCATING+_end = . };
++     ${RELOCATING+__end = . };
++   }
++   /DISCARD/ :
+    {
+!     *(.stab)
+!     *(.stabstr)
+!     *(.note)
+!     *(.comment)
+    }
+  }
+  EOF
+Index: ld/scripttempl/elf.sc
+===================================================================
+RCS file: /master/core_contrib/binutils/ld/scripttempl/elf.sc,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 elf.sc
+*** ld/scripttempl/elf.sc	2002/11/21 01:04:58	1.1.1.1
+--- ld/scripttempl/elf.sc	2003/01/14 16:12:35
+***************
+*** 1,6 ****
+--- 1,8 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp
+  #
++ #
+  # Unusual variables checked by this code:
+  #	NOP - four byte opcode for no-op (defaults to 0)
+  #	NO_SMALL_DATA - no .sbss/.sbss2/.sdata/.sdata2 sections if not
+  #		empty.
+  #	DATA_ADDR - if end-of-text-plus-one-page isn't right for data start
+***************
+*** 212,221 ****
+--- 214,225 ----
+    .rela.data    ${RELOCATING-0} : { *(.rela.data${RELOCATING+ .rela.data.* .rela.gnu.linkonce.d.*}) }
+    .rel.tdata	${RELOCATING-0} : { *(.rel.tdata${RELOCATING+ .rel.tdata.* .rel.gnu.linkonce.td.*}) }
+    .rela.tdata	${RELOCATING-0} : { *(.rela.tdata${RELOCATING+ .rela.tdata.* .rela.gnu.linkonce.td.*}) }
+    .rel.tbss	${RELOCATING-0} : { *(.rel.tbss${RELOCATING+ .rel.tbss.* .rel.gnu.linkonce.tb.*}) }
+    .rela.tbss	${RELOCATING-0} : { *(.rela.tbss${RELOCATING+ .rela.tbss.* .rela.gnu.linkonce.tb.*}) }
++   .rel.eh_frame  ${RELOCATING-0} : { *(.rel.eh_frame) }
++   .rela.eh_frame ${RELOCATING-0} : { *(.rela.eh_frame) }
+    .rel.ctors    ${RELOCATING-0} : { *(.rel.ctors) }
+    .rela.ctors   ${RELOCATING-0} : { *(.rela.ctors) }
+    .rel.dtors    ${RELOCATING-0} : { *(.rel.dtors) }
+    .rela.dtors   ${RELOCATING-0} : { *(.rela.dtors) }
+    .rel.got      ${RELOCATING-0} : { *(.rel.got) }
+cvs server: Diffing ld/testsuite
+cvs server: Diffing ld/testsuite/config
+cvs server: Diffing ld/testsuite/ld-bootstrap
+cvs server: Diffing ld/testsuite/ld-cdtest
+cvs server: Diffing ld/testsuite/ld-checks
+cvs server: Diffing ld/testsuite/ld-cris
+cvs server: Diffing ld/testsuite/ld-d10v
+cvs server: Diffing ld/testsuite/ld-discard
+cvs server: Diffing ld/testsuite/ld-elfvers
+cvs server: Diffing ld/testsuite/ld-elfvsb
+cvs server: Diffing ld/testsuite/ld-elfweak
+cvs server: Diffing ld/testsuite/ld-empic
+cvs server: Diffing ld/testsuite/ld-i386
+cvs server: Diffing ld/testsuite/ld-linkonce
+cvs server: Diffing ld/testsuite/ld-mips-elf
+cvs server: Diffing ld/testsuite/ld-mmix
+cvs server: Diffing ld/testsuite/ld-powerpc
+cvs server: Diffing ld/testsuite/ld-scripts
+cvs server: Diffing ld/testsuite/ld-selective
+cvs server: Diffing ld/testsuite/ld-sh
+cvs server: Diffing ld/testsuite/ld-sh/sh64
+cvs server: Diffing ld/testsuite/ld-shared
+cvs server: Diffing ld/testsuite/ld-srec
+cvs server: Diffing ld/testsuite/ld-undefined
+cvs server: Diffing ld/testsuite/ld-versados
+cvs server: Diffing ld/testsuite/lib
+cvs server: Diffing libiberty
+Index: libiberty/vasprintf.c
+===================================================================
+RCS file: /master/core_contrib/binutils/libiberty/vasprintf.c,v
+retrieving revision 1.1.1.1
+diff -c -5 -r1.1.1.1 vasprintf.c
+*** libiberty/vasprintf.c	2002/11/21 01:04:43	1.1.1.1
+--- libiberty/vasprintf.c	2003/01/14 16:12:35
+***************
+*** 1,5 ****
+--- 1,7 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2003/01/15 18:08:19 torek Exp	*/
++ 
+  /* Like vsprintf but provides a pointer to malloc'd storage, which must
+     be freed by the caller.
+     Copyright (C) 1994 Free Software Foundation, Inc.
+  
+  This file is part of the libiberty library.
+***************
+*** 153,163 ****
+       _BSD_VA_LIST_ args;
+  #else
+       va_list args;
+  #endif
+  {
+!   return int_vasprintf (result, format, &args);
+  }
+  
+  #ifdef TEST
+  static void ATTRIBUTE_PRINTF_1
+  checkit VPARAMS ((const char *format, ...))
+--- 155,174 ----
+       _BSD_VA_LIST_ args;
+  #else
+       va_list args;
+  #endif
+  {
+!   va_list ap;
+! 
+!   /* XXX - the code is wrong in the first place; this is a hack.
+!      If sizeof (args) == sizeof (ap), we assume a va_list is a simple
+!      pointer and we should pass its address.  If not, it must be an
+!      array, so we pass the array's value, i.e., the address of its
+!      first element. */
+!   if (sizeof (args) == sizeof (ap))
+!     return int_vasprintf (result, format, &args);
+!   return int_vasprintf (result, format, args);
+  }
+  
+  #ifdef TEST
+  static void ATTRIBUTE_PRINTF_1
+  checkit VPARAMS ((const char *format, ...))
+cvs server: Diffing libiberty/config
+cvs server: Diffing libiberty/testsuite
+cvs server: Diffing opcodes
+cvs server: Diffing opcodes/po
+cvs server: Diffing texinfo

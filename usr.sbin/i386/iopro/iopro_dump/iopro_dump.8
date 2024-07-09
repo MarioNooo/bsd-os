@@ -1,0 +1,47 @@
+.\"
+.\"     $Id: iopro_dump.8,v 1.5 1995/07/28 10:42:24 rjd
+.\"
+.Dd 5 Feb 94
+.Dt IOPRO_DUMP 8
+.Os BSD/OS
+.Sh NAME
+.Nm iopro_dump
+.Nd Shared memory dump for Chase Research IOPRO
+.Sh SYNOPSIS
+.Nm iopro_dump [-v|-h] [-f file] | [ card [ unit [ page ]]]
+.Sh DESCRIPTION
+.Nm Iopro_dump
+displays the contents of IOPRO shared memory in a more readable form.
+It's main purpose is for debugging of the interface although it can
+be used to obtain silly statistics like the number of characters
+input and output, or for checking the firmware version.
+.Pp
+Without arguments the program displays info about the first external
+unit and it's ports.
+Other units may be selected by adding the card and unit numbers.
+If a page number is added information about only that page will be
+printed. Page 1 is the firmware control page and physical ports normally
+follow on from there.
+.Pp
+.Fl v
+enables a far more verbose output, most of the information only being
+of interest to driver hackers.
+.Pp
+.Fl h
+causes the pages to be hexdumped rather than displayed as text. This is
+only for very serious hackers.
+.Pp
+.Fl f
+can be used to supply a alternate device or file name in place of the
+card and unit numbers. This is normally used with an image captured
+at some pervious time.
+.Sh WARNING
+In order to operate this program must be able to read files in /dev/iopro.
+Since these files contain images of the cards data buffers it is possible
+to catch user information such as passwords in them. The files in
+/dev/iopro are accessible to root only by default. Do not change these
+permissions unless you don't care about security.
+.Sh DIAGNOSTICS
+Should be self explanatory.
+.Sh SEE ALSO
+.Xr iopro_debug 8

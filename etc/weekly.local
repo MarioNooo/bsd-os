@@ -1,0 +1,26 @@
+#!/bin/sh -
+#
+#	BSDI weekly.local,v 2.4 1998/04/15 16:15:15 tks Exp
+#
+# weekly.local
+#
+
+cd /
+
+#
+# to enable: chown nobody /var/db/locate.database
+#
+echo ""; echo "Rebuilding locate database:"
+echo /usr/libexec/locate.updatedb | nice -5 su -m nobody 2>/dev/null
+
+#
+# to enable: echo ' ' > /var/db/core.db
+# /var/db/core.db contains a list of grep patterns to exclude from the report
+# There nust be at least one line in this file.
+#
+echo ""; echo "Core list:"
+[ -f /var/db/core.db ] && {
+    locate '*.core' | grep -vf /var/db/core.db
+}
+
+exit 0

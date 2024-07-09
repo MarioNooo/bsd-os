@@ -1,0 +1,314 @@
+.\"	BSDI sysctl.8,v 2.26 2003/05/07 20:41:37 prb Exp
+.\"
+.\" Copyright (c) 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
+.\"
+.Dd "May 9, 1995"
+.Dt SYSCTL 8
+.Os
+.Sh NAME
+.Nm sysctl
+.Nd get or set kernel state
+.Sh SYNOPSIS
+.Nm sysctl
+.Op Fl Aans
+.Nm sysctl
+.Op Fl ns
+.Ar name ...
+.Nm sysctl
+.Op Fl ns
+.Fl w
+.Ar name=value ...
+.Sh DESCRIPTION
+The
+.Nm sysctl
+utility retrieves kernel state and allows processes with
+appropriate privilege to set kernel state.
+The state to be retrieved or set is described using a
+.Dq "Management Information Base"
+.Pq Dq MIB
+style name,
+described as a dotted set of components.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl A
+List all known MIB names including tables.
+Those with string or integer values will be printed as with the
+.Fl a
+flag; for the table values,
+the name of the utility to retrieve them is given.
+.It Fl a
+List all the currently available string or integer values.
+.It Fl n
+Specify that the printing of the field name should be suppressed and
+that only its value should be output.
+This flag is useful for setting shell variables.
+For example, to save the pagesize in the
+.Xr csh 1
+variable psize, use:
+.Pp
+.Bd -literal -offset indent -compact
+set psize=`sysctl -n hw.pagesize`
+.Ed
+.It Fl s
+Use simple formatting of data.  If a value can be display in multiple ways
+format it in the simplest way posssible.  This is useful to force
+.Nm sysctl
+to print performance times in cycles rather than seconds.
+.It Fl w
+Set a value.
+In this case, the MIB name must be followed by an equal sign and the
+new value to be used.
+For example, to enable the forwarding of IP packets, use:
+.Pp
+.Bd -literal -offset indent -compact
+sysctl -w net.inet.ip.forwarding=1
+.Ed
+.El
+.Pp
+If only the MIB style name is specified,
+the corresponding information is displayed.
+.Pp
+The information available from
+.Nm sysctl
+consists of integers, strings, and tables.
+The tabular information can only be retrieved by special
+purpose programs such as
+.Nm ps ,
+.Nm systat ,
+and
+.Nm netstat .
+The string and integer information is summarized below.
+For a detailed description of these variables see
+.Xr sysctl 3 .
+The changeable column indicates whether a process with appropriate
+privilege can change the value.
+.Bl -column net.link_layer.generic.ppp.numifxxx integerxxx
+.It Sy Name	Type	Changeable
+.It hw.byteorder	integer	no
+.It hw.machine	string	no
+.It hw.model	string	no
+.It hw.ncpu	integer	no
+.It hw.pagesize	integer	no
+.It hw.physmem	integer	no
+.It hw.usermem	integer	no
+
+.It kern.argmax	integer	no
+.It kern.autonicetime	integer	yes
+.It kern.boottime	struct	no
+.It kern.clockrate	struct	no
+.It kern.coresfollowlinks	integer	yes
+.It kern.deadmantimer	integer	yes
+.It kern.file	struct	no
+.It kern.hostid	integer	yes
+.It kern.hostname	string	yes
+.It kern.job_control	integer	no
+.It kern.license	string	yes
+.It kern.license_users	integer	through kern.license
+.It kern.license_flags	integer	through kern.license
+.It kern.maxfiles	integer	yes
+.It kern.maxproc	integer	yes
+.It kern.maxsymlinks	integer	yes
+.It kern.maxvnodes	integer	yes
+.It kern.ngroups	integer	no
+.It kern.nisdomainname	string	yes
+.It kern.numvnodes	integer	no
+.It kern.osrelease	string	no
+.It kern.osrevision	integer	no
+.It kern.ostype	string	no
+.It kern.posix1version	integer	no
+.It kern.proc	struct	no
+.It kern.profiling	node	not applicable
+.It kern.saved_ids	integer	no
+.It kern.securelevel	integer	raise only
+.It kern.sysvipc	node	not applicable
+.It kern.version	string	no
+.It kern.vnode	struct	no
+
+.It machdep.cntlaltdel	integer	yes
+.It machdep.cntlaltdelcore	integer	yes
+.It machdep.console_device	dev_t	no
+.It machdep.parityerrorpanic	integer	yes
+
+.It net.inet.ah.stats	struct	no
+.It net.inet.esp.stats	struct	no
+.It net.inet.icmp.bmcastecho	integer	yes
+.It net.inet.icmp.maskrepl	integer	yes
+.It net.inet.icmp.printfs	integer	yes
+.It net.inet.icmp.rediraccept	integer	yes
+.It net.inet.icmp.redirtimeout	integer	yes
+.It net.inet.icmp.stats	struct	no
+.It net.inet.icmpv6.forwarding	integer	yes
+.It net.inet.icmpv6.stats	struct	no
+.It net.inet.igmp.stats	struct	no
+.It net.inet.ip.do_rfc1858	integer	yes
+.It net.inet.ip.forwarding	integer	yes
+.It net.inet.ip.forwsrcrt	integer	yes
+.It net.inet.ip.maxfragpackets	integer	yes
+.It net.inet.ip.mrstats	struct	no
+.It net.inet.ip.mrtproto	integer	yes
+.It net.inet.ip.mrttable	struct	no
+.It net.inet.ip.redirect	integer	yes
+.It net.inet.ip.sourcecheck	integer	yes
+.It net.inet.ip.sourcecheck_logint	integer	yes
+.It net.inet.ip.stats	struct	no
+.It net.inet.ip.ttl	integer	yes
+.It net.inet.ip.viftable	struct	no
+.It net.inet.ipv6.debuglevel	integer	yes
+.It net.inet.ipv6.forwarding	integer	yes
+.It net.inet.ipv6.routersolicit	integer	yes
+.It net.inet.ipv6.stats	struct	no
+.It net.inet.ipv6.ttl	integer	yes
+.It net.inet.tcp.conntimeo	integer	yes
+.It net.inet.tcp.do_rfc1323	integer	yes
+.It net.inet.tcp.ifp_maxseg	integer	yes
+.It net.inet.tcp.keepcount	integer	yes
+.It net.inet.tcp.keepidle	integer	yes
+.It net.inet.tcp.keepinterval	integer	yes
+.It net.inet.tcp.maxpersistidle	integer	yes
+.It net.inet.tcp.mssdflt	integer	yes
+.It net.inet.tcp.pmtu	integer	yes
+.It net.inet.tcp.pmtu_expire	integer	yes
+.It net.inet.tcp.pmtu_probe	integer	yes
+.It net.inet.tcp.recvspace	integer	yes
+.It net.inet.tcp.sendspace	integer	yes
+.It net.inet.tcp.stats	struct	no
+.It net.inet.tcp.syn_bucket_limit	integer	yes
+.It net.inet.tcp.syn_cache_interval	integer	yes
+.It net.inet.tcp.syn_cache_limit	integer	yes
+.It net.inet.tcp.43maxseg	integer	yes
+.It net.inet.udp.checksum	integer	yes
+.It net.inet.udp.recvspace	integer	yes
+.It net.inet.udp.sendmax	integer	yes
+.It net.inet.udp.stats	struct	no
+.It net.route.arp.down	integer	yes
+.It net.route.arp.keep	integer	yes
+.It net.route.arp.maxtries	integer	yes
+.It net.route.arp.probe	integer	yes
+.It net.route.arp.refresh	integer	yes
+.It net.route.arp.useloopback	integer	yes
+.It net.route.idletimeout	integer	yes
+.It net.route.netclone	integer	yes
+.It net.route.stats	struct	no
+.It net.socket.maxconn	integer	yes
+.It net.socket.nmbclusters	integer	yes
+.It net.socket.sbmax	integer	yes
+.It net.link_layer.generic.lo.numif	integer	yes
+.It net.link_layer.generic.pif.numif	integer	yes
+.It net.link_layer.generic.ppp.numif	integer	yes
+.It net.link_layer.generic.tun.numif	integer	yes
+
+.It user.bc_base_max	integer	no
+.It user.bc_dim_max	integer	no
+.It user.bc_scale_max	integer	no
+.It user.bc_string_max	integer	no
+.It user.coll_weights_max	integer	no
+.It user.cs_path	string	no
+.It user.expr_nest_max	integer	no
+.It user.line_max	integer	no
+.It user.posix2_c_bind	integer	no
+.It user.posix2_c_dev	integer	no
+.It user.posix2_char_term	integer	no
+.It user.posix2_fort_dev	integer	no
+.It user.posix2_fort_run	integer	no
+.It user.posix2_localedef	integer	no
+.It user.posix2_sw_dev	integer	no
+.It user.posix2_upe	integer	no
+.It user.posix2_version	integer	no
+.It user.re_dup_max	integer	no
+.It user.stream_max	integer	no
+.It user.tzname_max	integer	no
+
+.It vfs.generic.maxsyncdelay	integer	no
+.It vfs.generic.syncdelay	integer	yes
+
+.It vm.loadavg	struct	no
+.It vm.maxdsize	integer	yes
+.It vm.maxmapentries	integer	yes
+.It vm.maxssize	integer	yes
+.It vm.swapreserve	integer	yes
+.It vm.vmtotal	struct	no
+
+.It stat. Ns Ar statname Ns No .prof	structure	no
+.It stat. Ns Ar statname Ns No .value	integer	yes
+
+.El
+.Pp
+The
+.Nm sysctl
+program can get or set debugging variables and statistics information
+that have been identified for its display.
+This information can be obtained by using the commands:
+.Bd -literal -offset indent
+sysctl debug
+sysctl stat
+.Ed
+In addition,
+.Nm sysctl
+can extract information about the filesystems that have been compiled
+into the running system.
+This information can be obtained by using the command:
+.Bd -literal -offset indent
+sysctl vfs
+.Ed
+By default, only filesystems that are actively being used are listed.
+Use of the
+.Fl A
+flag lists all the filesystems compiled into the running kernel.
+.Sh EXAMPLES
+.Pp
+For example, to retrieve the maximum number of processes allowed
+in the system, one would use the follow request:
+.Pp
+.Dl sysctl kern.maxproc
+.Pp
+To set the maximum number of processes allowed
+in the system to 1000, one would use the follow request:
+.Pp
+.Dl sysctl -w kern.maxproc=1000
+.Pp
+Information about the system clock rate may be obtained with:
+.Pp
+.Dl sysctl kern.clockrate
+.Pp
+Information about the load average history may be obtained with
+.Pp
+.Dl sysctl vm.loadavg
+.Sh SEE ALSO
+.Xr getconf 1 ,
+.Xr sysctl 3
+.Sh HISTORY
+The
+.Nm sysctl
+utility first appeared in 4.4BSD.

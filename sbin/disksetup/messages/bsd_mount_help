@@ -1,0 +1,19 @@
+Enter the path to where this filesystem should be mounted (it at all).
+Typically mount points are:
+
+    /        For the ``a'' partition
+    swap     For the ``b'' partition
+    /usr     For the ``h'' partition
+    /var     For the ``g'' partition
+
+The special keystrokes are:
+
+ESC    Cancel all changes to this partition.
+ENTER  Apply changes to this partition.
+TAB    Go on to editing the length of the partition
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.

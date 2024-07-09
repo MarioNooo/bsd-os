@@ -1,0 +1,5 @@
+*.po
+*.0
+policy_parse.c
+policy_token.c
+y.tab.h

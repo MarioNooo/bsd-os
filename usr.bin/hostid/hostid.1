@@ -1,0 +1,25 @@
+.Dd "March 26, 1997"
+.Dt HOSTID 1
+.Sh NAME
+.Nm hostid
+.Nd display numeric host identification
+.Sh SYNOPSIS
+.Nm hostid
+.Sh DESCRIPTION
+The
+.Nm hostid
+utility displays the numeric host identifier of the current host
+in decimal.
+This information is the same as the information presented by the
+.Bd -literal -offset indent
+sysctl kern.hostid
+.Ed
+.Pp
+command.
+.Pp
+The
+.Nm hostid
+utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr hostname 1 ,
+.Xr sysctl 8

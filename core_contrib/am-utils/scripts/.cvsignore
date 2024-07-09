@@ -1,0 +1,13 @@
+Makefile
+am-eject
+amd2ldif
+amd2sun
+automount2amd
+ctl-amd
+ctl-hlfsd
+expn
+fixrmtab
+fix-amd-map
+lostaltmail
+wait4amd
+wait4amd2die

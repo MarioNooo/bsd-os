@@ -1,0 +1,4 @@
+#	BSDI Makefile.sparc,v 2.1 1995/02/03 09:54:35 polk Exp
+
+CFLAGS+=	-DSPARC
+SRCS+=		sparc.c atof-ieee.c

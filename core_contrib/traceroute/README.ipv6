@@ -1,0 +1,13 @@
+IPv6 Support Patch for traceroute-1.4a5
+=======================================
+
+  This program has been modified to support IPv6. Please see the notices on
+individual files for the copyrights and licenses that apply to the changes.
+This package REQUIRES that the inet6-apps package be installed first. That
+package also contains more documentation and the actual license notices
+referenced in the copyright notice.
+
+History
+=======
+
+1	Initial release.

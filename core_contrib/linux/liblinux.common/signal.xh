@@ -1,0 +1,235 @@
+/*	BSDI signal.xh,v 1.7 2003/09/23 17:46:34 donn Exp	*/
+
+/*
+ * Signal.h transforms.
+ */
+
+%{
+#include <sys/signal.h>
+#include <machine/trap.h>
+
+#define	kernel_sigaction	sigaction
+
+struct sigset {
+	unsigned long sigset_bits;
+	unsigned long sigset_bits2;
+};
+
+#define	B_SIGBUS		sigmask(SIGBUS)
+#define	B_SIGUSR1		sigmask(SIGUSR1)
+#define	B_SIGUSR2		sigmask(SIGUSR2)
+#define	B_SIGCHLD		sigmask(SIGCHLD)
+#define	B_SIGCONT		sigmask(SIGCONT)
+#define	B_SIGSTOP		sigmask(SIGSTOP)
+#define	B_SIGTSTP		sigmask(SIGTSTP)
+#define	B_SIGURG		sigmask(SIGURG)
+#define	B_SIGIO			sigmask(SIGIO)
+#define	B_SIGEMT		sigmask(SIGEMT)
+#define	B_SIGSYS		sigmask(SIGSYS)
+#define	B_SIGINFO		sigmask(SIGINFO)
+%}
+
+cookie int signal_t {
+	SIGBUS			7;
+	SIGUSR1			10;
+	SIGUSR2			12;
+	LINUX_SIGSTKFLT		16;
+	SIGCHLD			17;
+	SIGCONT			18;
+	SIGSTOP			19;
+	SIGTSTP			20;
+	SIGURG			23;
+	SIGIO			29;
+	LINUX_SIGPWR		30;
+	SIGSYS			31;
+
+	/*
+	 * Since we can't catch any BSD signals that aren't also in Linux,
+	 * we don't need to provide an output translation function.
+	 */
+	in(f) {
+		int n;
+
+		switch (f) {
+		case LINUX_SIGPWR:	n = SIGTERM; break;
+		case LINUX_SIGSTKFLT:	n = SIGSEGV; break;
+		default:		n = f; break;
+		}
+
+		return (n);
+	}
+};
+
+flag unsigned long sigset_bits_t {
+	B_SIGBUS		0x00000040;
+	B_SIGUSR1		0x00000200;
+	B_SIGUSR2		0x00000800;
+	LINUX_B_SIGSTKFLT	0x00008000;
+	B_SIGCHLD		0x00010000;
+	B_SIGCONT		0x00020000;
+	B_SIGSTOP		0x00040000;
+	B_SIGTSTP		0x00080000;
+	B_SIGURG		0x00400000;
+	B_SIGIO			0x10000000;
+	LINUX_B_SIGPWR		0x20000000;
+	B_SIGEMT;
+	B_SIGINFO;
+};
+
+/* The GNU C library reserves space for 1024 signals (!).  */
+struct sigset {
+	sigset_bits_t sigset_bits;
+	unsigned long sigset_bits2;
+%{ #ifndef LIBC5 %}
+	unsigned long linux_ignored[30];
+%{ #endif /* !LIBC5 */ %}
+};
+
+flag unsigned long sa_flags_t {
+	SA_NOCLDSTOP		0x00000001;
+	SA_SIGINFO		0x00000004;
+	LINUX_SA_SHIRQ		0x04000000;
+	SA_ONSTACK		0x08000000;
+	SA_RESTART		0x10000000;
+	LINUX_SA_INTERRUPT	0x20000000;
+	LINUX_SA_NOMASK		0x40000000;
+	LINUX_SA_ONESHOT	0x80000000;
+};
+
+typedef void *sig_t;
+
+struct sigaction {
+	sig_t linux_sa_handler;
+	sigset_bits_t linux_sa_mask;
+	unsigned long linux_sa_mask2;
+%{ #ifndef LIBC5 %}
+	unsigned long linux_ignored[30];
+%{ #endif /* !LIBC5 */ %}
+	sa_flags_t sa_flags;
+	void *linux_sa_restorer;
+
+	in(f, n, len) {
+		n->sa_mask.__bits[0] = sigset_bits_t_in(f->linux_sa_mask);
+		n->sa_mask.__bits[1] = f->linux_sa_mask2;
+	}
+
+	out(n, f, len) {
+		f->linux_sa_mask = sigset_bits_t_out(n->sa_mask.__bits[0]);
+		f->linux_sa_mask2 = n->sa_mask.__bits[1];
+	}
+};
+
+struct kernel_sigaction {
+	sig_t linux_sa_handler;
+	sa_flags_t sa_flags;
+	void *linux_sa_restorer;
+	sigset_bits_t linux_sa_mask;
+	unsigned long linux_sa_mask2;
+
+	in(f, n, len) {
+		n->sa_mask.__bits[0] = sigset_bits_t_in(f->linux_sa_mask);
+		n->sa_mask.__bits[1] = f->linux_sa_mask2;
+	}
+
+	out(n, f, len) {
+		f->linux_sa_mask = sigset_bits_t_out(n->sa_mask.__bits[0]);
+		f->linux_sa_mask2 = n->sa_mask.__bits[1];
+	}
+};
+
+cookie int sigprocmask_t {
+	SIG_BLOCK		0;
+	SIG_UNBLOCK		1;
+	SIG_SETMASK		2;
+};
+
+flag int sigaltstack_t {
+	SS_ONSTACK		1;
+	SS_DISABLE		2;
+};
+
+struct sigaltstack {
+	char *ss_sp;
+	sigaltstack_t ss_flags;
+	int ss_size;
+};
+
+cookie int siginfo_code_t {
+	SI_USER			0;
+	SI_QUEUE		-1;
+	SI_TIMER		-2;
+	SI_MESGQ		-3;
+	SI_ASYNCIO		-4;
+	LINUX_SI_SIGIO		-5;
+	LINUX_SI_TKILL		-6;
+	LINUX_SI_DETHREAD	-7;
+};
+
+struct siginfo_t {
+	int si_signo;
+	int si_errno;
+	siginfo_code_t si_code;
+	int si_pid;
+	unsigned int si_uid;
+	int linux_si_sigval;
+	unsigned long linux_si_utime;
+	unsigned long linux_si_stime;
+
+	/*
+	 * The situation with Linux codes is fairly complex.
+	 * Since at this point in BSD/OS's life cycle,
+	 * we're unlikely to fix up our trap code issues,
+	 * let's just make a best-effort attempt to convert
+	 * our codes to Linux codes.  Linux has a union
+	 * that starts at the si_pid field; the transform
+	 * language won't let us handle that easily,
+	 * so we just overlay fields.
+	 */
+	out(n, f, len) {
+		if (n->si_code == SI_QUEUE) {
+			f->linux_si_sigval = n->si_value.sival_int;
+			return;
+		}
+		if (n->si_code < 0)
+			return;
+		switch (n->si_signo) {
+		case SIGBUS:
+			/* Just making a guess here.  It's a mess.  */
+			if (n->si_code != 0)
+				f->si_code = 3;
+			else
+				f->si_code = 2;
+			break;
+		case SIGSEGV:
+		case SIGTRAP:
+			/* Faking it!  */
+			f->si_code = 1;
+			break;
+		case SIGILL:
+			if (n->si_code == T_PRIVINFLT)
+				f->si_code = 5;
+			else if (n->si_code == T_RESOPFLT)
+				f->si_code = 2;
+			else
+				f->si_code = 1;
+			break;
+		case SIGFPE:
+			if (n->si_code == FPE_INTDIV_TRAP)
+				f->si_code = 1;
+			else
+				f->si_code = 7;
+			break;
+		case SIGCHLD:
+			/* It's probably safest to indicate a stopped child.  */
+			f->si_code = 5;
+			f->linux_si_sigval = n->si_status;
+			f->linux_si_utime = 0;
+			f->linux_si_stime = 0;
+			return;
+		default:
+			return;
+		}
+		/* Every case that falls through here is a fault.  */
+		f->si_pid = (int)n->si_addr;
+	}
+};

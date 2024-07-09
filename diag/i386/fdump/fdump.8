@@ -1,0 +1,54 @@
+.Dd Dec 7, 1997
+.Dt FDUMP 8
+.Sh NAME
+.Nm fdump
+.Nd Check virtual memory table linkages
+.Sh SYNOPSIS
+.Nm fdump
+.Op Fl dpv
+.Op Fl f Ar val32
+.Op Fl m Ar mask
+.Fl M Op memory-file
+.Fl N Op kernel-file
+.Op Fl s Ar addr
+.Op Fl t Ar val32
+.Sh DESCRIPTION
+The
+.Nm fdump
+utility reads a kernel binary and checks a number of kernel virtual
+memory structures for consistency. There is also a facility for searching
+for a pattern in the dump, but this functionality is deprecated (the
+.Xr pmap 8
+program should be used for that purpose).
+.Pp
+The options are as follows:
+.Bl -tag -width passcount
+.It Fl d
+Print debug information while processing the dump.
+.It Fl f Ar val32
+Find
+.Ar val32
+in the dump (as 4 bytes of data), print physical and virtual addresses of
+any hits.
+.It Fl m Ar mask
+If given, only the bits set in the mask are used during a search operation.
+.It Fl M Op memory-file
+Kernel memory, must be from a core dump (bsdcore.N), it is not possible to
+run this against an active system via
+.Pa /dev/mem .
+.It Fl N Op kernel-file
+The file from which the kernel was booted, if not given
+.Pa /bsd
+is used.
+.It Fl p
+Print very verbose per page information.
+.It Fl s Ar addr
+Print vmspace information for a single vmspace, addr is a 'struct vmspace *'.
+.It Fl t Ar val32
+Translate a physical address to corresponding virtual addresses.
+.It Fl v
+Print verbose information on processes, VM maps, and VM objects.
+.El
+.Sh SEE ALSO
+.Xr kanal 8 ,
+.Xr pmap 8

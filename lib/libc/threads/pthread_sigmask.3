@@ -1,0 +1,93 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_sigmask.3,v 1.2 1996/12/12 03:03:47 donn Exp
+.\" 
+.Dd June 3, 1996
+.Dt PTHREAD_SIGMASK 3
+.Os
+.Sh NAME
+.Nm pthread_sigmask
+.Nd manipulate current signal mask
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <signal.h>
+.Ft int
+.Fn pthread_sigmask "int how" "const sigset_t *set" "sigset_t *oset"
+.Sh DESCRIPTION
+The
+.Fn pthread_sigmask
+function examines and/or changes the calling thread's signal 
+mask (those signals that are blocked from delivery).
+Signals delivered to the thread are blocked if they are members of 
+the thread-specific signal mask set.
+.Pp
+If
+.Fa set
+is not null, the action of
+.Fn pthread_sigmask
+depends on the value of the parameter
+.Fa how .
+The calling thread's signal mask is changed as a function of the specified
+.Fa set
+and the thread's current signal mask.
+The function is specified by
+.Fa how
+using one of the following values from
+.Aq Pa signal.h :
+.Bl -tag -width SIG_UNBLOCK
+.It Dv SIG_BLOCK
+The new mask is the union of the current mask and the specified
+.Fa set .
+.It Dv SIG_UNBLOCK
+The new mask is the intersection of the current mask
+and the complement of the specified
+.Fa set .
+.It Dv SIG_SETMASK
+The current mask is replaced by the specified
+.Fa set .
+.El
+.Pp
+If
+.Fa oset
+is not null, it is set to
+the previous value of the signal mask.
+When
+.Fa set
+is null,
+the value of
+.Ar how
+is insignificant and the mask remains unset,
+providing a way to examine the signal mask without modification.
+.Pp
+The system
+quietly disallows
+.Dv SIGKILL
+or
+.Dv SIGSTOP
+to be blocked.
+.Sh RETURN VALUES
+A 0 value indicated that the call succeeded.  A non-zero
+return value indicates that an error occurred and the value returned
+indicates the reason.
+.Sh ERRORS
+The
+.Fn pthread_sigmask
+call will fail and the current threads signal mask will be unchanged if
+the following error occurs:
+.Bl -tag -width Bq Er EINVAL
+.It Bq Er EINVAL
+.Fa how
+has a value other than those listed here.
+.Sh SEE ALSO
+.Xr pthread_kill 2 ,
+.Xr sigsetmask 2 ,
+.Xr sigsetops 3
+.Sh STANDARDS
+The
+.Nm pthread_sigmask
+function call is expected to
+conform to
+.St -p1003.1c .

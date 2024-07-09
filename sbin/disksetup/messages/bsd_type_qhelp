@@ -1,0 +1,4 @@
+Enter the filesystem type.  The available types are:
+``4.2'', ``swap'', ``msdos'', and ``other''.
+
+[ESC]cancel [ENTER]apply [TAB]next [?]Help

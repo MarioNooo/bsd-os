@@ -1,0 +1,84 @@
+.\"	BSDI	ipfwcache.8,v 1.1 2000/01/24 21:58:11 prb Exp
+.\"
+.\" Copyright (c) 2000 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd January 19, 2000
+.Dt IPFWCACHE 8
+.Sh NAME
+.Nm ipfwcache
+.Nd set / delete / modify BSD IP Filter address caches
+.Sh SYNOPSIS
+.Nm ipfwcache
+.Op Fl dv
+.Op Fl s Ar buckets
+.Op Fl T Ar tag
+.Op address Op ...
+.Sh DESCRIPTION
+The
+.Nm ipfwcache
+utility is used to create and maintain address caches for IPFW filters.
+An address cache is a hashed list of individual IP addresses and can
+be used to speed up searching of large set of disjoint addresses (i.e.,
+network masks are of very little use).  For smaller number of addresses is
+is typically more efficient to allow the filter to sequentially search the
+addresses.
+.Pp
+An address cache can also be used to allow dynamic adding and deletion
+of IP addresses for a particular class of addresses.
+.Pp
+An address cache is always put on the CALL chain and cannot be directly
+invoked.
+.Pp
+With no arguments, a new cache is created.  When adding addresses the
+.Fl T
+option must be used to specify which cache should have the new addresses
+added to it.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl d
+Delete rather than add entries.
+.It Fl s
+The default number of hash buckets is 997.
+Increasing the number of buckets for very large number of addresses may
+improve performance.
+.It Fl T
+Specify the
+.Ar tag
+for this cache.
+.It Fl v
+Be noisy while adding new entries.
+.El
+.Pp
+When one or more
+.Ar addresses
+are specified they are inserted into the specified cache.
+The
+.Ar address
+may have a trailing netmask attached (e.g., 192.168.42.64/28).
+This should be used with caution.  Each address in the network
+is then added.  For example, 192.168.0.0/16 will add 65,536
+entries to the cache.
+.Sh FILTER SPECIFIC DATA
+An address cache only checks one IP address.  By default it checks the
+destination address associated with the packet.  By using the filter
+specific data value of 1 the source address is checked.  For instance,
+suppose a list of IP addresses associated with "bad guys" is installed
+in a cache with the tag of "bad-guys".  A pre-input filter might be
+installed with
+.Bd -literal -offset indent
+call("bad-guys" : 1) { deny; }
+.Ed
+.sp
+This will deny all packets from the bad guys.  The pre-output filter,
+to prevent us from sending to the bad guys, would then have:
+.Bd -literal -offset indent
+call("bad-guys") { deny; }
+.Ed
+.Sh SEE ALSO
+.Xr ipfw 8 ,
+.Xr ipfwcmp 8 ,
+.Xr ipfwlog 8

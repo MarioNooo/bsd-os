@@ -1,0 +1,28 @@
+#	BSDI t-bsdi,v 1.1 2003/01/31 07:52:31 torek Exp
+
+#LIBGCC1=libgcc1.null
+CROSS_LIBGCC1=libgcc1.null
+#LIBGCC1_TEST=
+
+## Do not build and install LIBGCC
+#LIBGCC=
+#INSTALL_LIBGCC=
+
+# Don't run fixproto
+# XXX does not seem to stop it; why not?
+STMP_FIXPROTO =
+
+# Don't install "assert.h" in gcc
+INSTALL_ASSERT_H =
+
+# Compile crtbeginS.o and crtendS.o with pic.
+CRTSTUFF_T_CFLAGS_S = -fPIC
+
+# Compile libgcc.a with pic.
+TARGET_LIBGCC2_CFLAGS += -fPIC
+
+# Use only native include files
+USER_H = ${LANG_EXTRA_HEADERS} ${EXTRA_HEADERS}
+
+# Don't install header files
+INSTALL_HEADERS =

@@ -1,0 +1,1023 @@
+.\"	BSDI	netstat.1,v 2.15 1998/03/11 21:47:16 bostic Exp
+.\" Copyright (c) 1983, 1990, 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)netstat.1	8.8 (Berkeley) 4/18/94
+.\"
+.Dd January 11, 1995
+.Dt NETSTAT 1
+.Os BSD 4.4
+.Sh NAME
+.Nm netstat
+.Nd show network status
+.Sh SYNOPSIS
+.de X1
+.Nm netstat
+.Op Fl Aknv
+.Op Fl f Ar address_family
+.Op Fl p Ar protocol
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X1
+.de X2
+.Nm netstat
+.Fl s
+.Op Fl kv
+.Op Fl f Ar address_family
+.Op Fl p Ar protocol
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X2
+.de X3
+.Nm netstat
+.Fl i
+.Op Fl bknOPv
+.Op Fl I Ar interface
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X3
+.de X4
+.Nm netstat
+.Fl ig
+.Op Fl knOP
+.Op Fl I Ar interface
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X4
+.de X5
+.Nm netstat
+.Fl is
+.Op Fl bknOPv
+.Op Fl I Ar interface
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X5
+.de X6
+.Nm netstat
+.Fl i Fl w Ar wait
+.Op Fl bkv
+.Op Fl I Ar interface
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X6
+.de X7
+.Nm netstat
+.Fl m
+.Op Fl k
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X7
+.de X8
+.Nm netstat
+.Fl r
+.Op Fl AknOPv
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X8
+.de X9
+.Nm netstat
+.Fl rg
+.Op Fl knOP
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X9
+.de X0
+.Nm netstat
+.Fl rs
+.Op Fl g
+.Op Fl f Ar address_family
+.Op Fl M Ar core
+.Op Fl N Ar system
+..
+.X0
+.Sh DESCRIPTION
+The
+.Nm
+command symbolically displays the contents of various network-related
+data structures.
+There are a number of display formats,
+depending on the selected options.
+.Pp
+There are a number of global options that apply to all or many of the
+different display formats:
+.Bl -tag -width Fl
+.It Fl f Ar address_family
+Limit output to the specified address family.  Only statistics,
+connections or interface addresses for
+.Ar address_family
+will be displayed.
+The following address families
+are recognized:
+.Ar inet  ,
+for
+.Dv AF_INET
+and
+.Dv AF_INET6  ,
+.Ar ns ,
+for
+.Dv AF_NS  ,
+.Ar iso ,
+for
+.Dv AF_ISO ,
+and
+.Ar local ,
+for
+.Dv AF_LOCAL .
+.It Fl I Ar interface
+Limit output to the addresses, statistics or configuration information
+on the specified interface.  An interface is specified by it's name
+.Ns Pq e.g. ef0 .
+.It Fl k
+By default
+.Nm
+uses
+.Xr sysctl 3
+whenever possible to obtain statistics and other state information
+from the kernel.
+This option requests that it read the data from
+.Pa /dev/kmem .
+This option is implied when the
+.Fl M
+option is specified.
+.It Fl M
+Extract values associated with the name list from the specified kernel
+core file instead of the default
+.Pa /dev/kmem .
+.It Fl N
+Extract the name list from the specified system instead of the default
+.Pa /bsd .
+.It Fl n
+Show network and host addresses and ports as numbers (by default
+.Nm
+interprets addresses and ports and attempts to display them
+symbolically).
+This option may be used with any of the display formats.
+.It Fl O
+Enable backward compatibility.  With certain displays this provides
+backwards compatibility output for use with scripts that interpret
+.Nm
+output.
+It also provides for interpretation of some obsolete options.
+For example, in the interface display
+.Fl a
+will be interpreted as
+.Fl v
+and
+.Nm
+will display active multicast group addresses.
+.It Fl P
+Generate output that facilitates parsing by scripts.
+This option disables width limitations for specific fields (especially
+host, network and port names).
+It also replaces empty non-trailing fields with a dash character
+.Dq \- .
+.It Fl p Ar protocol
+Limit the display output to the specified protocol, only statistics or
+connections for the specified protocol will be displayed.  The
+following
+.Xr inet 4
+protocols are recognized:
+.Ar ip , icmp , igmp , tcp
+and
+.Ar udp .
+The following
+.Xr ns 4
+protocols are recognized:
+.Ar idp , spp
+and
+.Ar ns_err .
+The following
+.Xr iso 4
+protocols are recognized:
+.Ar tp , cltp , clnp
+and
+.Ar esis .
+.It Fl u
+Shorthand for
+.Ns Fl f Ar local .
+.It Fl v
+Show more verbose output, repeating this may provide even more verbose
+output.  See the sections on specific displays for
+details.
+.El
+.cm ----------------------------------------------------------------
+.Ss Active connections
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X1
+.Ed
+.Pp
+The first form of the
+.Nm
+command displays active network connections
+.Ns Pq referred to as sockets .
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl a
+Include connections used by servers listening for incoming
+connections, they are not displayed by default.
+.It Fl A
+Show kernel address of protocol control blocks associated with each
+connection; used for debugging.
+.It Fl f Ar address_family
+Limit output to connections for the specified address family.
+Possible address families are listed in the description of the global
+options  above.
+.It Fl p Ar protocol
+Limit output to connections for the specified protocol.
+Possible protocol names are listed in the description of the global
+options above.
+.It Fl u
+Shorthand for
+.Ns Fl f Ar local .
+.El
+.Pp
+For each connection the following fields are displayed:
+.Bl -tag -width XXXXX
+.It PCB
+When the
+.Fl A
+option is present this field displays the address of the protocol
+control block for this connection.  This information is generally only
+used for debugging the system.
+.It Proto
+The name of protocol being used by this connection.
+.It Recv\-Q
+The number of bytes that have been received by this connection and not
+yet read by the application.
+.It Send\-Q
+The number of bytes that have been written to this connection by the
+application but have not been transmitted over the network.
+.It Local Address
+The address and port number
+.Po
+in the form
+.Dq host.port
+or
+.Dq network.port
+.Pc
+which identifies the local end-point of the connection.
+When possible the host and network addresses are displayed symbolically.
+Otherwise
+.Po
+or if the
+.Fl n
+option is specified
+.Ns Pc ,
+the address is printed numerically, according to
+rules specific to the address family
+.Po
+For more information regarding Internet addresses refer to
+.Xr inet 3
+.Ns Pc .
+Unspecified
+.Pq wild-card
+addresses and ports appear as
+.Dq * .
+.It Remote Address
+The address and port number which identify the remote end-point of the
+connection.
+.It (state)
+For some protocols, the protocol state for the connection is displayed.
+.El
+.cm ----------------------------------------------------------------
+.Ss Protocol Statistics
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X2
+.Ed
+.Pp
+The second form of the
+.Nm
+command displays protocol statistics.  By
+default, non-zero statistics are displayed for all currently supported
+protocols.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl f Ar address_family
+Limit output to statistics for protocols in the specified address
+family.
+Possible address families are listed in the description of the global
+options  above.
+.It Fl p Ar protocol
+Limit output to statistics for the specified protocol.
+Possible protocol names are listed in the description of the global
+options above.
+.It Fl u
+Shorthand for
+.Ns Fl f Ar local .
+.It Fl v
+Include zero statistics in the display.
+.El
+.cm ----------------------------------------------------------------
+.Ss Interface Configuration
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X3
+.Ed
+.Pp
+The third form of the
+.Nm
+command displays the configuration of network
+interfaces.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl f Ar address_family
+Limit output to addresses in the specified address family.  Physical
+interface information is always displayed.
+Possible address families are listed in the description of the global
+options  above.
+.It Fl I Ar interface
+Limit output to the addresses configured on the specified interface
+name.
+.El
+.Pp
+For each interface, the following fields are displayed:
+.Bl -tag -width XXXXX
+.It Name
+The name of the interface.
+.It Idx
+The index of the interface.  This field is used to identify the
+interface in some system calls.
+.It MTU
+The
+.Dq maximum transmission unit
+of the interface.  This is the size
+.Pq in bytes
+of the largest packet that can be sent out this interface.
+.It Speed
+If available, this is the speed
+.Pq in bits per second
+of the interface.  The abbreviations
+.Dq k
+.Pq thousands ,
+.Dq M
+.Pq millions
+and
+.Dq G
+.Pq billions
+are used for higher speeds.
+.It Mtrc
+The routing metric assigned to this interface.  Although configured on
+an interface by
+.Xr ifconfig 8 ,
+this metric is only used by routing daemons
+.Pq such as Xr gated 8 .
+.It Address
+The physical or protocol address assigned to the interface.
+When possible the addresses are displayed symbolically.
+Otherwise
+.Po
+or if the
+.Fl n
+option is specified
+.Ns Pc ,
+the address is printed numerically, according to
+rules specific to the address family
+.It Network
+For address families that support the concept, the network addresses
+and network mask.
+The network address is displayed symbolically when possible unless the
+.Fl n
+option is specified.
+For
+.Dv POINTOPOINT
+interfaces, the remote address is displayed in this field.
+.El
+.cm ----------------------------------------------------------------
+.Ss Interface Group Membership
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X4
+.Ed
+.Pp
+The fourth form of the
+.Nm
+command displays multicast group membership by interface.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl f Ar address_family
+Limit output to addresses in the specified address family.  Physical
+interface information is always displayed.  Currently only the
+.Ar inet
+address family supports multicast groups.
+.It Fl I Ar interface
+Limit output to the addresses configured on the specified interface
+name.
+.El
+.Pp
+The following fields are displayed:
+.Bl -tag -width XXXXX
+.It Name
+The name of the interface.
+.It Idx
+The index of the interface.  This field is used to identify the
+interface in some system calls.
+.It Address
+The physical or protocol address assigned to the interface.
+When possible the addresses are displayed symbolically.
+Otherwise
+.Po
+or if the
+.Fl n
+option is specified
+.Ns Pc ,
+the addressed are printed numerically, according to
+rules specific to the address family.
+For
+.Dv POINTOPOINT
+interfaces, the remote address is displayed.
+.It Group
+The multicast group or range of groups enabled on this interface,
+displayed symbolically if possible.
+.It State
+For group addresses at the protocol layer
+.Pq e.g. IP multicast
+the state of the group membership is displayed.
+.It Timer
+For group addresses at the protocol layer
+.Pq e.g. IP multicast
+the group membership timer is displayed.
+.It Refs
+For group addresses at the protocol layer
+.Pq e.g. IP multicast
+the count of connections that have joined this group are displayed.
+.El
+.cm ----------------------------------------------------------------
+.Ss Interface Statistics
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X5
+.Ed
+.Pp
+The fifth form of the
+.Nm
+command displays statistics for network interfaces, one physical or
+protocol address per line.
+Interface statistics are displayed for each physical interface and
+each protocol address assigned to each interface.  Some protocol
+families
+.Pq IP
+support statistics per address, these will be listed when available.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl b
+Display byte counts instead of packet counts.
+.It Fl f Ar address_family
+Limit output to statistics for addresses in the specified address
+family.  Physical interface statistics are always displayed.
+Possible address families are listed in the description of the global
+options  above.
+.It Fl I Ar interface
+Limit output to the statistics for the specified interface.
+.It Fl v
+When specified once, the output changes to include detailed statistics
+displayed as multiple lines per physical interface.  Only non-zero
+statistics are displayed unless this flag is specified twice.
+.El
+.Pp
+The following fields are displayed:
+.Bl -tag -width XXXXX
+.It Name
+The name of the interface.
+.It Idx
+The index of the interface.  This field is used to identify the
+interface in some system calls.
+.It Address
+The interface address for which these statistics apply.  For physical
+interfaces, the link level address, if any, is displayed.  For
+.Dv POINTOPOINT
+interfaces, the remote protocol addresses are displayed.
+When possible the addresses are displayed symbolically
+unless the
+.Fl n
+option is specified.
+.It Ipkts
+For physical interfaces, the total number of packets received on this
+interface.  For protocol interface addresses, the number of packets
+received for this particular address are displayed.  This field is not
+displayed when the
+.Fl b
+option is specified.
+.It Ibytes
+For physical interfaces, the number of bytes received on this
+interface.  For protocol interface addresses the number of bytes
+received for this particular address are displayed.  This field is only
+displayed when the
+.Fl b
+option is specified.
+.It Ierrs
+For physical interfaces, the number of input errors.  There is no
+equivalent for protocol interface addresses, this field is left blank.
+.It Opkts
+For physical interfaces, the total number of packets received on this
+interface.  For protocol interface addresses, the number of packets
+sent from this particular address are displayed.  This field is not
+displayed when the
+.Fl b
+option is specified.
+.It Obytes
+For physical interfaces, the total number of bytes sent on this
+interface.  For protocol interface addresses, the number of bytes
+sent from this particular address are displayed.  This field is only
+displayed when the
+.Fl b
+option is specified.
+.It Oerrs
+For physical interfaces, the number of output errors.  There is no
+equivalent for protocol interface addresses, this field is left
+blank.
+.It Coll
+For CSMA
+.Pq i.e. Ethernet
+interfaces, this field counts the number of collisions.  Other usage
+of this field should be documented in the man page for the specific
+network interface.
+.It Drop
+The number of packets dropped on output because the queue was full.
+.El
+.cm ----------------------------------------------------------------
+.Ss Interface Statistics Monitor
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X6
+.Ed
+.Pp
+The sixth form of the
+.Nm
+command provides a regularly updated display of
+statistics about one selected interface and the sum of the statistics for all
+interfaces.
+.Pp
+By default,
+.Nm
+chooses an
+.Dq interesting
+interface by trying to find the first non-loopback interface that is
+up, then the loopback interface if it is up, finally the first
+interface, up or down.
+A specific interface my be chosen with the
+.Fl I Ar interface
+option.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl b
+Display byte counts instead of packet counts.
+.It Fl I Ar interface
+Specifies the interface to monitor.  If this option is not used,
+.Nm
+will choose an interface, see above.
+.It Fl w Ar wait
+Pause
+.Ar wait
+seconds between each display.
+The minimum value is one second.
+.It Fl v
+Specifies that the display should include the count of packets dropped
+due to full output queues.  This counter is included in the display of
+the selected interface as well as a sum of dropped packets for all
+interfaces.
+.El
+.Pp
+The following fields are displayed:
+.Bl -tag -width XXXXX
+.It input packets
+The total number of packets received on this interface.
+This field is not displayed when the
+.Fl b
+option is specified.
+.It input bytes
+The number of bytes received on this interface.
+This field is only displayed when the
+.Fl b
+option is specified.
+.It input errs
+The number of input errors.
+.It output packets
+The total number of packets received on this interface.
+This field is not displayed when the
+.Fl b
+option is specified.
+.It output bytes
+The total number of bytes sent on this interface.
+This field is only displayed when the
+.Fl b
+option is specified.
+.It output errs
+The number of output errors.
+.It colls
+For CSMA
+.Pq i.e. Ethernet
+interfaces, this field counts the number of collisions.  Other usage
+of this field should be documented in the man page for the specific
+network interface.
+.It drops
+The number of packets dropped on output because the queue was full.
+This field is only displayed when the
+.Fl v
+flag is specified.
+.El
+.cm ----------------------------------------------------------------
+.Ss Network Buffer utilization
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X7
+.Ed
+.Pp
+The seventh form of the
+.Nm
+command display provides statistics
+recorded by the memory management routines
+.Po
+the network manages a private pool of memory buffers
+called
+.Dv mbufs
+.Ns Pc .
+.cm ----------------------------------------------------------------
+.Ss Forwarding Table
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X8
+.Ed
+.Pp
+The eighth form of the
+.Nm
+command displays the entries in the kernel
+forwarding tables and their status for each protocol family supported
+by the kernel.
+.Pp
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl A
+Display the addresses of control blocks and other esoteric details of
+the kernel forwarding table that is probably only of interest to someone
+debugging the forwarding table.
+.It Fl v
+Used once, this option adds the address associated with the outbound
+interface.  This is useful when interfaces are configured for more
+than one address.  If this option is repeated, the display includes a
+reference count of connections using this entry and the number of
+packets which have been sent using this entry.
+.El
+.Pp
+The following fields are displayed:
+.Bl -tag -width XXXXX
+.It Destination
+The destination specified by this forwarding table entry.  The
+destination may be host or a network with mask
+.Ns Pq sometimes called a netmask ,
+which specifies which parts of the address are matched.  If
+the mask is not the obvious value
+.Po
+e.g. if a entry for an Internet
+Class B network has a mask other than 16 bits
+.Ns Pc ,
+the mask is indicated
+in one of two ways: If the mask is contiguous from the
+most-significant bit to the end, the usual case for subnets,
+a slash
+.Pq /
+and the number of bits in the mask are appended to network value.
+Otherwise, an ampersand
+.Pq &
+and a numeric representation of the mask
+are appended.
+.Pp
+Some address families have the notion of a
+.Dq default
+entry that is used when there is no more appropriate entry for the
+destination.  This entry will be listed with a destination of
+.Ns Dq default .
+.Pp
+When possible the host and network addresses are displayed
+symbolically unless the
+.Fl n
+option is specified.
+.It Gateway
+When an intermediate router is used to send packets to the
+destination
+.Po
+i.e. the flags field contains a
+.Dv G
+.Pc
+this field will display the address of that router.
+When an intermediate router is not in use this field may display the
+address for the interface used when sending to the destination, or may
+contain a link-layer address.
+.Pp
+When possible the gateway addresses are displayed symbolically
+unless the
+.Fl n
+option is specified.
+.It Flags
+This field shows a collection of information about the entry stored as
+binary choices.
+The individual flags are discussed in more
+detail in the
+.Xr route 8
+and
+.Xr route 4
+manual pages.
+The mapping between letters and flags is:
+.Bl -column X RTF_BLACKHOLE
+1	RTF_PROTO1	Protocol specific routing flag #1
+2	RTF_PROTO2	Protocol specific routing flag #2
+A	RTF_AUTH	IPSEC Authenticated tunnel route
+B	RTF_BLACKHOLE	Just discard packets (during updates)
+C	RTF_CLONING	Generate new entries on use
+c	RTF_CLONED	A cloned entry
+D	RTF_DYNAMIC	Created dynamically (by redirect)
+E	RTF_CRYPT	IPSEC Encrypted tunnel route
+G	RTF_GATEWAY	Requires forwarding through an intermediary
+H	RTF_HOST	Host entry (net otherwise)
+L	RTF_LLINFO	Valid protocol to link address translation
+M	RTF_MODIFIED	Modified dynamically (by redirect)
+R	RTF_REJECT	Host or net unreachable
+S	RTF_STATIC	Manually added
+T	RTF_TUNNEL	Tunnelling route
+U	RTF_UP	Entry usable
+X	RTF_XRESOLVE	External daemon translates proto to link addr
+.El
+.It Ref
+This field gives the
+current number of active connections using this entry.
+Connection oriented
+protocols normally hold on to a single entry for the duration of
+a connection while connection-less protocols hold on to an entry only
+while sending to the same destination.
+This field is only displayed when the
+.Fl v
+option is specified more than once.
+.It Use
+The use field provides a count of the number of packets
+sent using this entry.
+This field is only displayed when the
+.Fl v
+option is specified more than once.
+.It MTU
+This field displays the
+.Dq maximum transmission unit
+to use for this destination.
+This MTU may be less than the MTU configured on the interface if there
+is a mechanism for determining the optimum MTU to the destination or
+the MTU was explicitly specified
+.Ns Pq i.e. by Xr route 8 .
+In the case of
+.Xr tcp 4
+the Dynamic Path MTU discovery mechanism is used to determine the
+largest MTU available on the path to the destination.
+.It Interface
+This field indicates the network interface that will be used when
+sending packets to the destination of this entry.
+When the
+.Fl v
+option is specified, the specific protocol address on the interface is
+also printed.
+This is useful when multiple protocol addresses are assigned to one
+physical interface.
+.El
+.Pp
+Direct entries are created for each
+interface attached to the local host;
+the gateway field for such entries shows the address of the outgoing interface.
+Some interfaces such as Ethernet also use link-level entries; see
+.Xr arp 8 .
+In those cases, the direct network entry has the
+.Dq cloning
+flag set
+.Ns Pq C ,
+which causes individual host entries to be created on demand for hosts
+on that network.
+In addition to having the
+.Dq cloned
+flag set
+.Ns Pq c ,
+these host entries contain link-level
+.Dq gateway
+entries with their link-level
+addresses, and the
+.Dq L
+link-level flag is set.
+Cloned entries are also created due to the Dynamic Path MTU
+discovery mechanism.
+These will always be host entries, and will have the
+.Dq cloned
+flag set
+.Ns Pq c .
+.cm ----------------------------------------------------------------
+.Ss Multicast Forwarding Tables
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X9
+.Ed
+.Pp
+The ninth form displays the multicast forwarding information,
+including the table of multicast virtual addresses and the multicast
+forwarding cache.
+Currently, multicast forwarding information is only available for the
+inet address family.
+.Pp
+The IP multicast forwarding table display consists of two sections,
+the virtual interface table and the multicast forwarding cache.  The
+virtual interface table describes the interfaces as IP multicast
+forwarding sees them.  The table consists of an entry for each real
+interface on which IP multicast is enabled and a list of tunnels used
+to connect clouds of systems supporting IP multicast that are
+separated by routers that do not support IP multicast.  The fields in
+this table are:
+.Bl -tag -width XXXXX
+.It Vif
+A non-negative integer which is used to identify this virtual
+interface in the kernel.
+.It Thresh
+The threshold for this interface.  Only packets with a TTL greater
+than this value will be forwarded.
+.It Rate_lmt
+Specifies the maximum bandwidth that should be sent via this virtual
+interface in kilo-bytes per second.
+.It Local-Address
+The address that identifies the address of the local interface, or the
+local side of a tunnel.  If
+possible this address is printed symbolically unless the
+.Fl n
+option is given.
+.It Remote-Address
+The address that identifies the remote side of a tunnel.  For local
+interfaces this field is left blank.
+If possible this address is printed symbolically unless the
+.Fl n
+option is given.
+.It Pkt_in
+The number of multicast packets received on this tunnel or local
+interface.
+.It Pkt_out
+The number of multicast packets transmitted via this tunnel or local
+interface.
+.El
+.Pp
+The multicast forwarding cache contains forwarding entries used for
+sending multicast packets.  Unlike unicast packets which are forwarded
+based on their destination, multicast packets are forward based on the
+destination multicast group and host that originated the packet.
+Entries in this cache are created on demand by querying the multicast
+routing daemon
+.Pq for IP this is Xr mrouted 8
+when trying to forward a packet for which there is no cache entry.
+.Pp
+Fields in this table are:
+.Bl -tag -width XXXXX
+.It Hash
+The hash number is used by the kernel to efficiently find an entry in
+the cache.  This field is mostly of interest to kernel developers.
+.It Origin-Subnet
+Identifies the originating host to which this entry applies.  This
+field is printed symbolically if possible unless the
+.Fl n
+option is specified.
+.It Mcastgroup
+Identifies the destination multicast group to which this entry
+applies.  This field is printed symbolically if possible unless the
+.Fl n
+option is specified.
+.It # pkts
+The number of packets which have been forwarded using this entry.
+.It In-Vif
+The virtual interface from which this packet must be received.  If
+a packet matches this entry but arrives via another virtual interface,
+it is discarded.
+.It Out-Vifs/Forw-ttl
+A list of virtual interfaces to which a packet matching this entry
+should be forwarded and an associated minimum time-to-live
+.Pq TTL
+for each virtual interface.  The TTL describes the shortest distance
+.Pq number of routers to be traversed
+to the first application listening for packets from this multicast
+group.  If the TTL in a packet is smaller than the TTL in the entry,
+the packet is not transmitted on this virtual interface.
+.El
+.cm ----------------------------------------------------------------
+.Ss Forwarding Table Statistics
+.cm ----------------------------------------------------------------
+.Bd -offset indent
+.X0
+.Ed
+.Pp
+The tenth form displays statistics about the kernel forwarding
+tables.  By default, information about the unicast forwarding table is
+provided.
+Options specific to this form of the
+.Nm
+command are:
+.Bl -tag -width Fl
+.It Fl g
+Provide statistics about kernel multicast forwarding tables.
+.El
+.Sh SEE ALSO
+.Xr nfsstat 1 ,
+.Xr ps 1 ,
+.cm .Xr ah 4 ,
+.cm .Xr clnp 4 ,
+.cm .Xr cltp 4 ,
+.cm .Xr esis 4 ,
+.cm .Xr esp 4 ,
+.cm .Xr icmp 4 ,
+.cm .Xr idp 4 ,
+.cm .Xr igmp 4 ,
+.cm .Xr inet 4 ,
+.cm .Xr ip 4 ,
+.cm .Xr ipv6 4 ,
+.cm .Xr ipsec 4 ,
+.cm .Xr iso 4 ,
+.cm .Xr ns 4 ,
+.cm .Xr spp 4 ,
+.cm .Xr tcp 4 ,
+.cm .Xr tp 4 ,
+.cm .Xr udp 4 ,
+.Xr hosts 5 ,
+.Xr networks 5 ,
+.Xr protocols 5 ,
+.Xr services 5 ,
+.Xr arp 8 ,
+.Xr iostat 8 ,
+.Xr trpt 8 ,
+.Xr trsp 8 ,
+.Xr vmstat 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
+Support for IPv6 and the IP Security protocols (ESP and AH) was added
+at the Information Technology Division, Naval Research Laboratory.
+.Sh FILES
+.Bl -tag -width /dev/kmem -compact
+.It Pa /dev/kmem
+default kernel memory
+.It Pa /bsd
+default system namelist
+.El
+.Sh BUGS
+The notion of errors is ill-defined.

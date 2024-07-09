@@ -1,0 +1,75 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_attr_scope.3,v 1.1 1998/06/02 22:53:46 pjd Exp
+.\" 
+.Dd May 29, 1998
+.Dt PTHREAD_ATTR_GETSCOPE 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_attr_getscope ,
+.Nm pthread_attr_setscope 
+.Nd pthread scheduling contention attribute
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_attr_getscope "pthread_attr_t *attr" "int *contentionscope"
+.Ft int
+.Fn pthread_attr_setscope "pthread_attr_t *attr" "int contentionscope"
+.Sh DESCRIPTION
+.Pp
+This interface is defined by
+.St -p1003.1c .
+.Pp
+The 
+.Fn pthread_attr_getscope
+and
+.Fn pthread_attr_setscope
+functions retrieve and establish the scheduling contention attribute in the 
+pthread creation attribute pointed to by
+.Fa attr .
+The
+.Fa contentionscope
+parameter may have the values of PTHREAD_SCOPE_SYSTEM or PTHREAD_SCOPE_PROCESS
+only.
+.Sh RETURN VALUES
+Upon successful completion the
+.Nm pthread_attr_getscope
+and
+.Nm pthread_attr_setscope
+functions both return 0.  A non-zero result indicates
+an error occurred.
+Upon successful completion the
+.Nm pthread_attr_getscope
+function returns a copy of the contentionscope attribute value in the location
+pointed to by
+.Fa contentionscope .
+.Sh ERRORS
+The
+.Nm pthread_attr_getscope
+and
+.Nm pthread_attr_setscope
+functions may fail and return the following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of a function argument is invalid.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_attr 3 ,
+.Xr pthread_create 3
+.Sh STANDARDS
+The
+.Nm pthread_attr_getscope
+and
+.Nm pthread_attr_setscope
+functions conform to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Nm pthread_attr_getscope
+and
+.Nm pthread_attr_setscope
+functions first appeared in BSD/OS 4.0.

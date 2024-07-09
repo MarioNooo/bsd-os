@@ -1,0 +1,157 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"	BSDI boot.define.5,v 2.2 1998/01/20 21:12:37 bostic Exp
+.\"
+.Dd August 5, 1997
+.Dt BOOT.DEFINE 5
+.Os
+.Sh NAME
+.Nm boot.define
+.Nd symbolic definitions used by
+.Xr boot 8
+.Sh DESCRIPTION
+The 
+.Fl parm 
+command to 
+.Xr boot 8
+is used to allocate a
+.Bd -literal
+struct boot_paramfor {
+	char	pf_name[16];	/* typically driver xname */
+	u_long	pf_field;	/* which set of flags bits */
+	u_long	pf_flags;	/* and the bits */
+};
+.Ed
+.Pp
+and pass it into the kernel. The pf_name field specifies the
+consumer of a specific boot_paramfor. This is typically
+the dv_xname associated with a specific piece of hardware. A
+given device driver may have many options which are configurable. The
+pf_field element is used to specify which option is being
+set. The pf_flags field is the actual value that the the option
+is being set to.
+In order to allow the pf_field and pf_flags to be specified
+symbolically
+.Nm boot.define
+is used to map symbolic names to integers.
+.Pp
+The
+mapping from symbol to integer for pf_field is specific to the value
+supplied for pf_name. This allows device edp (electric dog polisher)
+to have a pf_field
+symbol of skip_legs equal to 12 while device ecp (electric cat polisher)
+has symbol skip_legs equal to 66.
+.Pp
+The mapping of symbol to integer
+for pf_flags is specific to the pf_name, pf_field pair. This
+allows device edp to have a pf_flags field leftfront used with
+skip_legs equal to a value of 1 while at the same time
+leftfront used with the ecp device skip_legs has a value of 4. The
+following shows what would be in 
+.Nm boot.define
+to accomplish this.
+.Bd -literal
+edp	skip_legs	12
+	all		0xf
+	leftfront	0x1
+	leftrear	0x2
+	rightfront	0x4
+	rightrear	0x8
+;
+ecp	skip_legs	66
+	all		0xf
+	leftfront	0x4
+	leftrear	0x2
+	rightfront	0x1
+	rightrear	0x8
+;
+.Ed
+.Pp
+The above would allow the user to enter the following
+commands to
+.Xr boot 8 .
+.Bd -literal
+-parm edp0 skip_legs=leftfront		#skip leftfront leg
+-parm edp0 skip_legs=leftfront,leftrear	#skip left legs
+-parm ecp0 skip_legs=all-leftrear	#skip all but leftrear
+.Ed
+.Pp
+Each entry
+in
+.Nm boot.define
+begins with a line specifying the pf_name, the symbolic name of
+the pf_field being described and the integer by which the kernel
+knows this field. Since the meanings of the pf_field is specific
+to a device driver, rather than an instance of the hardware, the dv_xname
+field minus the trailing digit is used for the pf_name.
+After this first line there are 0 or more lines specifying
+symbolic names for different possible values which may be assigned to
+the pf_flags field.
+Finally a line with only a semicolon
+terminates an entry.
+.Pp
+Many times the symbolic names associated with pf_flags are bit
+fields. Further more it is often that the same symbolic name,
+bit field combinations will be used in several drivers. An
+include function is provided to make this easier. Typically
+the edp, ecp example above would be done as follows:
+.Bd -literal
+common	legs		1
+	all		0xf
+	leftfront	0x1
+	leftrear	0x2
+	rightfront	0x4
+	rightrear	0x8
+;
+edp	skip_legs	12
+	include	common legs
+;
+ecp	skip_legs	66
+	include	common legs
+;
+.Ed
+It is permissible to have multiple values defined for
+the same symbolic name. The first one encountered while searching
+for a symbol is used. Items which are included are not examined until
+the line including them is processed. To illustrate, 
+in the above example the leftfront and leftrear bits used with
+the electric cat polisher have been changed to match the electric
+dog polisher. To make them as they were originally the following
+could be used.
+.Bd -literal
+common	legs		1
+	all		0xf
+	leftfront	0x1
+	leftrear	0x2
+	rightfront	0x4
+	rightrear	0x8
+;
+
+edp	skip_legs	12
+	include	common legs
+;
+ecp	skip_legs	66
+	leftfront	0x4
+	rightfront	0x1
+	include	common legs
+;
+.Ed
+.Sh DRIVER CONVENTIONS
+It is necessary to make sure that entries in
+.Nm boot.define
+match what the kernel expects to see in pf_name and pf_field.
+This is a non-trivial
+book keeping task. To simplify this task #defines for use with pf_field
+should be of the form ``PARM4_EDP_FOO.'' The ``PARM4'' is used
+by all routines using 
+.Nm boot.define
+to resolve entries. The ``EDP'' is what will be looked for
+in pf_name minus any trailing digits, changed to upper case. The
+trailing FOO is what the driver uses to make unique a particular
+pf_field. This allows the kernel tree to be checked and items
+missing from
+.Nm boot.define
+to easily be identified.
+.Sh SEE ALSO
+.Xr boot 8 

@@ -1,0 +1,168 @@
+.\"	BSDI ldconfig.8,v 1.2 2001/12/19 02:18:14 donn Exp
+.\"
+.Dd December 18, 2001
+.Os
+.Dt LDCONFIG 8
+.Sh NAME
+.Nm ldconfig
+.Nd "create symbolic links for dynamic linking
+.Sh SYNOPSIS
+.Nm ldconfig
+.Op Fl DXnv
+.Op Fl f Ar configure-file
+.Op Fl r Ar root-directory
+.Bk -words
+.Op Ar directory ...
+.Ek
+.Sh DESCRIPTION
+The
+.Nm ldconfig
+program finds the most up-to-date version
+of each dynamically linked shared library in the system
+and creates symbolic links in the filesystem so that
+.Xr ld 1
+and
+.Xr ld-bsdi.so 8
+can access that version.
+.Pp
+.Nm Ldconfig
+finds shared libraries by reading the file
+.Pa /etc/ld.so.conf .
+Each line in that file is treated as the name of a directory
+where libraries can be found.
+.Pp
+A library file is determined to be
+.Sq up-to-date
+by checking its version suffix.
+A dynamic shared library has a name that starts with
+.Pa lib
+and contains the string
+.Pa \&.so ;
+the version suffix is the text that follows the
+.Pa \&.so
+string.
+A dynamic library also has an internal library name or
+.Sq soname ;
+that name may also have a version suffix.
+.Nm Ldconfig
+treats the version suffix on the soname as a
+.Sq "major version number
+and any characters in the filename's version suffix
+after the major version number are the
+.Sq "minor version number" .
+.\" Got that? :-)
+In spite of the name, version numbers may contain any text;
+traditionally, they are decimal numbers separated by periods
+.Pq Sq \&. .
+For example, a library file named
+.Pa libx.so.2.1a
+with a soname of
+.Pa libx.so.2
+has a version suffix of
+.Li \&.2.1a ,
+a major version number of
+.Li \&.2
+and a minor version number of
+.Li \&.1a .
+.Pp
+When
+.Nm ldconfig
+compares version numbers,
+it works from left to right comparing
+non-numeric text lexicographically (ASCII order)
+but comparing numeric sub-strings as decimal numbers.
+Thus
+.Pa libx.2.10.1
+is more up-to-date than
+.Pa libx.2.9.1
+because the number 10 compares numerically greater than the number 9,
+even though the literal string
+.Li 10
+sorts lower than the literal string
+.Li 9 .
+.Pp
+Once
+.Nm ldconfig
+has determined that a particular library file
+is the most up-to-date version of a given library,
+it creates symbolic links in the filesystem.
+The
+.Xr ld 1
+program only looks at library names that end in
+.Pa .so ,
+while the dynamic linker
+.Xr ld-bsdi.so 8
+only looks at sonames.
+.Nm Ldconfig
+creates a symbolic link from the name of the library
+without the version suffix to
+the corresponding soname with the most up-to-date major version number,
+and creates a symbolic link from each soname
+to the name of the most up-to-date library file with that soname.
+.Pp
+Certain situations cause
+.Nm ldconfig
+to avoid creating a link.
+If the link would replace a file that is not a symbolic link,
+or the symbolic link points to an unexpected place (not the given library),
+.Nm ldconfig
+won't create the link.
+If there is a library that has multiple major version numbers
+across multiple library files,
+and one of the sonames has no major version number, then
+.Nm ldconfig
+won't create the link from that soname to the library file,
+since that would overwrite the link from the library name
+without a version suffix to the most up-to-date soname.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
+Enable debugging output on the standard error file descriptor.
+.It Fl X
+Suppress linking.
+You may use this option to check for errors
+before trying to create links.
+.It Fl f Ar configure-file
+Use
+.Ar configure-file
+instead of
+.Pa /etc/ld.so.conf .
+.It Fl n
+Don't read the configuration file.
+.It Fl r Ar root-directory
+Prepend
+.Ar root-directory
+to every directory name that
+.Nm ldconfig
+processes.
+.It Fl v
+Enable verbose output.
+.El
+.Pp
+Any
+.Ar directory
+arguments are processed after the directories in the configuration file
+(if any).
+.Sh SEE ALSO
+.Xr ld-bsdi.so 8 ,
+.Xr ldd 1 ,
+.Xr shlist 8 ,
+.Xr dlopen 3 ,
+.Xr elf 5
+.Sh BUGS
+There is no longer any
+.Pa /etc/ld.so.cache
+cache file feature, so all of the cache-related options of the old
+.Nm ldconfig
+are now deprecated.
+.Pp
+There are a lot of annoying special cases that
+.Nm ldconfig
+must handle when users don't follow the major.minor
+version number format.
+You can avoid surprises by always using a major version number
+with a soname (even if it's
+.Li \&.0 ),
+and never using your own symlinks to make libraries appear
+to have some other name than their real one.

@@ -1,0 +1,91 @@
+.\"	BSDI cron.8,v 2.4 1996/12/12 22:29:22 bostic Exp
+.\"
+.\"/* Copyright 1988,1990,1993,1996 by Paul Vixie
+.\" * All rights reserved
+.\" *
+.\" * Distribute freely, except: don't remove my name from the source or
+.\" * documentation (don't take credit for my work), mark your changes (don't
+.\" * get me blamed for your possible bugs), don't alter or remove this
+.\" * notice.  May be sold if buildable source is provided to buyer.  No
+.\" * warrantee of any kind, express or implied, is included with this
+.\" * software; use at your own risk, responsibility for damages (if any) to
+.\" * anyone resulting from the use of this software rests entirely with the
+.\" * user.
+.\" *
+.\" * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
+.\" * I'll try to keep a version up to date.  I can be reached as follows:
+.\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
+.\" */
+.\" 
+.\" cron.8,v 2.4 1996/12/12 22:29:22 bostic Exp
+.\" 
+.Dd January 10, 1996
+.Dt CRON 8
+.Os BSD 4.4
+.Sh NAME
+.Nm cron
+.Nd daemon to execute scheduled commands (Vixie Cron)
+.Sh SYNOPSIS
+.Nm cron
+.Sh DESCRIPTION
+The
+.Nm cron
+program should be started from /etc/rc or /etc/rc.local.
+It will return immediately,
+so you don't need to start it with
+.Dq & .
+.Pp
+The
+.Nm cron
+program searches
+.Pa /var/cron/tabs
+for crontab files that are named after user accounts;
+these are loaded into memory.
+It also reads
+.Pa /etc/crontab ,
+which is in a different format (see
+.Xr crontab 5 ) .
+The
+.Nm cron
+program
+then wakes up every minute, examining all stored crontabs, checking each
+command to see if it should be run in the current minute.  When executing
+commands, any output is mailed to the owner of the crontab (or to the user
+named in the MAILTO environment variable in the crontab, if such exists).
+.Pp
+Additionally,
+.Nm cron
+checks each minute to see if its spool directory's modification time (or
+the modification time on
+.Pa /etc/crontab )
+has changed, and if it has,
+.Nm cron
+will then examine the modification times on all crontab files and reload
+those which have changed.
+Thus
+.Nm cron
+need not be restarted whenever a crontab file is modified.  Note that the
+.Xr crontab 1
+command updates the modification time of the spool directory whenever it
+changes a crontab file.
+.Sh DIAGNOSTICS
+Diagnostic messages are logged via
+.Xr syslog 3 .
+Most describe temporary system resource allocation failures.
+If a file in
+.Pa /var/cron/tabs
+does not correspond to a valid user name,
+its name is logged as an
+.Dq orphan .
+.Sh BUGS
+The
+.I cron
+utility will behave mysteriously if a system clock is reset backward by
+more than 59 seconds.
+Smaller steps, or steps forward, are handled correctly.
+.Sh SEE ALSO
+.Xr crontab 1 ,
+.Xr setusercontext 3 ,
+.Xr crontab 5
+.Sh AUTHOR
+Paul Vixie <paul@vix.com>

@@ -1,0 +1,1727 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Permissions and Authentication</TITLE>
+ <LINK HREF="LPRng-HOWTO-15.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-13.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc14" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-15.html">Next</A>
+<A HREF="LPRng-HOWTO-13.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc14">Contents</A>
+<HR>
+<H2><A NAME="lpdpermsref"></A> <A NAME="s14">14. Permissions and Authentication</A></H2>
+
+<P>The contents of the <CODE>/etc/lpd.perms</CODE> file
+are used to control access to the <CODE>lpd</CODE> server facilities.
+The model used for permission granting is similar to packet filters.
+An incoming request is tested against a list of rules,
+and the first match found determines the action to be taken.
+The action is either <CODE>ACCEPT</CODE> or the request is granted,
+or <CODE>REJECT</CODE> and the request is denied.
+You can also establish a default action.
+<P>The following is a sample <CODE>lpd.perms</CODE> file.
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# allow root on server to control jobs
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+REJECT SERVICE=C
+#
+# allow same user on originating host to remove a job
+ACCEPT SERVICE=M SAMEHOST SAMEUSER
+# allow root on server to remove a job
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
+REJECT SERVICE=M
+# all other operations allowed
+DEFAULT ACCEPT
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Each line of the permissions file is a rule.
+A rule will ACCEPT or REJECT a request
+if all of the patterns specified in the rule match.
+If there is a match failure,
+the next rule in sequence will be applied.
+If all of the rules are exhausted,
+then the last specified default authorization will be used.
+<P>The sense of a pattern match can be inverted using the NOT keyword.
+For example,
+the rules with
+<CODE>ACCEPT NOT REMOTEUSER=john,bill</CODE>
+succeeds only if the REMOTEUSER value is defined and
+is not <CODE>john</CODE> or <CODE>bill</CODE>.
+<P>Each entry in a rule is a keyword which has is assigned a value or
+list of values followed by an optional set of patterns that are matched
+against these values.
+The following table is a summary of the available keywords.
+<P>
+<CENTER><TABLE BORDER><TR><TD>
+<BR>
+Keyword</TD><TD>Match</TD></TR><TR><TD>
+<CODE>DEFAULT</CODE></TD><TD>default result</TD></TR><TR><TD>
+<CODE>SERVICE</CODE></TD><TD>Checking lpC, lpR, lprM, lpQ, and Printing</TD></TR><TR><TD>
+<CODE>USER</CODE></TD><TD>P (logname) field name in print job control file.</TD></TR><TR><TD>
+<CODE>REMOTEUSER</CODE></TD><TD>user name in request from remote host.</TD></TR><TR><TD>
+<CODE>HOST</CODE></TD><TD>DNS and IP address information for the H (host) field name in print job control file</TD></TR><TR><TD>
+<CODE>REMOTEHOST</CODE></TD><TD>DNS and IP address information for the connection from the remote host making the request</TD></TR><TR><TD>
+<CODE>IP</CODE></TD><TD>Alias for HOST</TD></TR><TR><TD>
+<CODE>REMOTEIP</CODE></TD><TD>Alias for REMOTEHOST</TD></TR><TR><TD>
+<CODE>REMOTEPORT</CODE></TD><TD>Originating TCP/IP port for the connection from the remote host making the request</TD></TR><TR><TD>
+<CODE>SAMEUSER</CODE></TD><TD>USER and REMOTEUSER matches</TD></TR><TR><TD>
+<CODE>SAMEHOST</CODE></TD><TD>HOST and REMOTEHOST matches</TD></TR><TR><TD>
+<CODE>SERVER</CODE></TD><TD>request originates on lpd server</TD></TR><TR><TD>
+<CODE>FORWARD</CODE></TD><TD>destination of job is not host</TD></TR><TR><TD>
+<CODE>REMOTEGROUP</CODE></TD><TD>REMOTEUSER is in the specified group or netgroup in the <CODE>lpd</CODE> server group database.</TD></TR><TR><TD>
+<CODE>GROUP</CODE></TD><TD>USER is in the specified group or netgroup in the <CODE>lpd</CODE> server group database.</TD></TR><TR><TD>
+<CODE>LPC</CODE></TD><TD>LPC command in the LPC request.</TD></TR><TR><TD>
+<CODE>CONTROLLINE</CODE></TD><TD>match a line in control file</TD></TR><TR><TD>
+<CODE>AUTH</CODE></TD><TD>authentication type</TD></TR><TR><TD>
+<CODE>AUTHUSER</CODE></TD><TD>authenticated user</TD></TR><TR><TD>
+<CODE>AUTHFROM</CODE></TD><TD>authenticated forwarder</TD></TR><TR><TD>
+<CODE>AUTHJOB</CODE></TD><TD>authenticated job in queue</TD></TR><TR><TD>
+
+</TD></TR></TABLE></CENTER>
+<H2><A NAME="ss14.1">14.1 Permission Checking Algorithm</A>
+</H2>
+
+<P>The <CODE>lpd</CODE> server uses the following algorithm to do
+permission checks.
+<OL>
+<LI>Each line of the permissions file is a lists of tests (patterns)
+and a permission value that is used if all of the tests (patterns)
+on the line are successful.
+A DEFAULT line sets the default result if all lines fail.</LI>
+<LI>Each line is executed in sequence until a match is found.
+The first matching line terminates the permission checking
+and the corresponding permission value is used.</LI>
+<LI>Each keyword has a value (or set of values) that are matched against
+a set of patterns.
+If the keyword does not have a value (or the <I>null</I> value)
+then the match will fail.
+Initially,
+all the keywords have a <CODE>null</CODE> value.</LI>
+<LI>When a connection is received by the <CODE>lpd</CODE> server,
+REMOTEHOST
+and
+REMOTEPORT
+are set to the the IP addresses and hostnames, and the TCP/IP port
+of the host originating the IP address respectively.
+REMOTEIP and IFHP are aliases for REMOTEPORT
+and PORT is an alias for REMOTEPORT. Thes
+are provided for backwards compatibility with older versions of LPRng.
+For example,
+a request originating from <CODE>10.0.0.2</CODE>, port 1011 would set
+REMOTEIP to 10.0.0.2 and PORT to 1011.</LI>
+<LI>The REMOTEHOST value is set to the result of doing a reverse DNS lookup
+on the REMOTEIP address.
+This value is the list of names <I>and</I> ip addresses in standard
+IP notation (nnn.nnn.nnn.nnn) that are returned by the
+lookup.
+If the DNS lookup fails
+then the REMOTEHOST value is set to the REMOTEIP value.
+For example,
+lookup of 10.0.0.2 would result in the names
+<CODE>h2.private</CODE> and <CODE>patrick.private</CODE>,
+and the only IP address assigned to it was <CODE>10.0.0.2</CODE>.
+The REMOTEHOST value would then be the list
+<CODE>h2.private,patrick.private,10.0.0.2</CODE>.</LI>
+<LI>The SERVICE value is set to <CODE>X</CODE>
+and then the permissions database is scanned for a matching entry.
+The result is the permission value of the first matching line or the default
+permission.
+If the result is REJECT then the connection is closed.</LI>
+<LI>Next, a single line is read from the connection.
+This line contains the request type,
+the print queue name,
+and depending on the request type an optional user name and options.
+The SERVICE value is set to
+<CODE>R,</CODE>
+<CODE>Q,</CODE>
+<CODE>M,</CODE>
+and
+<CODE>C,</CODE>
+for a
+<CODE>lpR</CODE>,
+<CODE>lpQ</CODE>,
+<CODE>lprM</CODE>,
+and
+<CODE>lpc</CODE>
+request respectively and PRINTER to the print queue name.</LI>
+<LI>If the request is for an <CODE>lpc</CODE> operation,
+the LPC value is set to the name of the operation.
+For example,
+and
+<CODE>lpc lpd</CODE>
+operation</LI>
+<LI>If the request contains a user name then REMOTEUSER is assigned the user name.</LI>
+<LI>If the request originates from the <CODE>lpd</CODE> server as determined by
+the connection arriving from the <CODE>localhost</CODE> address or an
+address assigned to one of the network interfaces for this host
+then the SERVER value is set to true (or matches).</LI>
+<LI>If the request is for an authenticated transfer,
+(see
+<A HREF="#authref">Authentication and Encryption</A>),
+then the authentication procedures are carried out.
+After they have been performed,
+the AUTH value is set to true,
+AUTHTYPE is set to the name of the authentication method,
+AUTHUSER to the authenticated identifier of the originator of the request,
+and AUTHFROM to the authenticated identifier of the originator of the connection.</LI>
+<LI>Other matching keywords such as REMOTEGROUP use values set at this time.
+These are discussed in the next section.</LI>
+<LI>The permission database is rescanned,
+this time to see if there is permission to operate on the
+specified spool queue.
+The permission database is first checked to see
+if the requesting user has control (SERVICE=C) permission.
+If they do,
+then they can permform any operation on the spool queue.
+The scan is then repeated for the actual request.</LI>
+<LI>If there is no permission to perform the operation
+then an error code and messages is returned on the
+requesting connection.</LI>
+<LI>If the operation is for a spool queue or server,
+no other permissions checking is done.
+This includes the <CODE>lpq</CODE> command,
+and most of the <CODE>lpc</CODE> commands control queue operations.</LI>
+<LI>If the operation is for for individual jobs in a spool queue,
+then the queue is scanned and job information is extracted
+for each job in the queue.
+The USER value is set to the job control file <CODE>P</CODE> line.
+The value of the <CODE>H</CODE> line in the control file is used to perform a
+DNS lookup,
+and the HOST value is set to the results of this lookup.
+IP is an alias for HOST,
+and is retained for backwards compatibility.</LI>
+<LI>The SAMEUSER value is set to true (or match) if the REMOTEUSER
+value is identical to the USER value.
+Similarly,
+SAMEHOST is set to true if the REMOTEHOST value matches the HOST value.
+See the following sections for other keywords such as GROUP.</LI>
+<LI>The permission checking is done for each individual job in a
+spool queue,
+and if it succeeds the action is carried out on the job.</LI>
+</OL>
+<P>These checks are applied on the arrival of a job from an external
+connection.
+Unfortunately,
+there are a set of print spooler implementations that do not
+handle job rejection due to lack of permissions.
+These printers will continually and repeatedly attempt to send a job
+for which there is no printing permission until the job is removed
+by administrative action.
+To accommodate these printers,
+we must accept jobs for printing and then dispose of them.
+This is done by using the SERVICE=P (printing) checks.
+<P>
+<OL>
+<LI>When a print spool is active and is printing or forwarding jobs,
+before it processes a job it will read the job control file
+and set the <CODE>USER</CODE>  and <CODE>HOST</CODE>
+values as discussed in the previous sections.
+It will also set the <CODE>AUTH</CODE>,
+<CODE>AUTHUSER</CODE>,
+and <CODE>AUTHJOB</CODE>
+values as well,
+if the job was spooled by using an authenticated method.</LI>
+<LI>The permissions database will be scanned
+and the resulting permission determined.
+Note that the values of the REMOTE keys are undefined,
+and tests using them will have unpredicitible effects.</LI>
+<LI>If the job does not have permission to be printed,
+it will normally be removed from the spool queue.</LI>
+</OL>
+<P>While this model is very simple
+it can handle a wide range of situations.
+However,
+it is really based on the simple <B>trust</B> that
+users will not <I>impersonate</I> other users or hosts.
+If this is not the case,
+then more elaborate proceedures based on encryption and
+authentication are called for.
+<P>There is a problem with permissions checking for <CODE>lpq</CODE> (SERVICE=Q)
+requests.
+Since the user name is not passed as part of the request,
+it is impossible to use the REMOTEUSER clause to restrict <CODE>lpq</CODE>
+operations.
+<P>The <CODE>SERVICE=R</CODE> and <CODE>SERVICE=P</CODE>
+facilities are provided to handle problems with print spoolers that
+do not recognize a <I>lack of permission</I> error code,
+and will indefinately retry sending a job to the <CODE>lpd</CODE> server.
+If this is the case,
+then the <CODE>SERVICE=R</CODE> clause can be used to accept jobs,
+and then the <CODE>SERVICE=P</CODE> clause will cause the <CODE>lpd</CODE>
+server to remove of the job when it is scheduled for printing.
+<H2><A NAME="ss14.2">14.2 Rule Matching Procedures</A>
+</H2>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+[not] key                                 assigned value
+[not] key=pattern                         substring match
+[not] key=pattern1,pattern2,pattern3,...  glob and exact
+[not] key=IP1/mask1,IP2/mask2,...         IP address
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Each of the indicated values is matched against a list of patterns.
+The following types of matches are used:
+<OL>
+<LI>assigned value.
+The keyword has an assigned value which is true (match) or false (no match).
+Examples are SAMEHOST and SERVER.</LI>
+<LI>substring match.
+The indicated entry is present as a substring in the pattern.</LI>
+<LI>GLOB matches.
+The pattern is interpreted as a GLOB style pattern,
+where * matches 0 or more characters,
+and ? matches a single character,
+and
+<CODE>[L-H]</CODE>
+specifies a range of characters from
+<CODE>L</CODE> to <CODE>H</CODE>,
+in ASCII order.</LI>
+<LI>IP address match.  The address must be specified in the
+standard <CODE>nn.nn.nn.nn</CODE> format.
+The mask must be either an integer number
+corresponding to the number of significant bits,
+or in the standard <CODE>nn.nn.nn.nn</CODE> format.
+Addresses are compared by doing
+<BLOCKQUOTE><CODE>
+<PRE>
+( IPaddr XOR IP ) AND mask
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<P>If the result is 0, then a match results.
+Note that there may be one or more addresses being checked for;
+this can occur when a host may have multiple IP addresses assigned to it.
+</LI>
+<LI>integer range match.
+The pattern has the form <CODE>low-high</CODE>,
+where low and high are integer numbers.
+The match succeeds if the value is in the specified range.</LI>
+<LI>Same IP Address Match.
+This compares two lists of IP addresses;
+a match is found when there is one or more common addresses.</LI>
+</OL>
+<H3>DEFAULT</H3>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+DEFAULT ACCEPT
+DEFAULT REJECT
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The DEFAULT rule specifies the default if no rule matches.
+Normally,
+there is one DEFAULT entry in a permissions file.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+DEFAULT ACCEPT
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>SERVICE</H3>
+
+<P>Match type: substring
+<P>The SERVICE key is based on the type of request.
+<CENTER><TABLE BORDER><TR><TD>
+<BR>
+Key</TD><TD>Request</TD></TR><TR><TD>
+<CODE>C</CODE></TD><TD>LPC Control Request</TD></TR><TR><TD>
+<CODE>M</CODE></TD><TD>LPRM Removal Request</TD></TR><TR><TD>
+<CODE>P</CODE></TD><TD>Printing</TD></TR><TR><TD>
+<CODE>Q</CODE></TD><TD>LPQ Status Request</TD></TR><TR><TD>
+<CODE>R</CODE></TD><TD>LPR Job Transfer</TD></TR><TR><TD>
+<CODE>X</CODE></TD><TD>Connection Request</TD></TR><TR><TD>
+
+</TD></TR></TABLE></CENTER>
+<P>Each of the above codes corresponds either directly to the user command,
+or a set of subcommands.
+<P>If you have an LPC request,
+you can add an <CODE>LPC=xxx</CODE> clause to refine the
+permissions checking to allow or disallow
+<CODE>lpc</CODE> commands such as <CODE>lpc status, printcap, active, </CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# control only from root on server
+ACCEPT SERVICE=C SERVER USER=root
+REJECT SERVICE=C
+# accept all others
+ACCEPT SERVICE=*
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>USER</H3>
+
+<P>Match type: GLOB
+<P>The USER information is taken from the <CODE>P</CODE> (person or logname)
+information in the print job control file.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# we allow jobs to be spooled
+ACCEPT SERVICE=R
+# now we do the checking at print time
+ACCEPT SERVICE=P USER=root
+REJECT SERVICE=P
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>REMOTEUSER</H3>
+
+<P>Match type: GLOB
+<P>The REMOTEUSER information is taken from the user information sent
+with a service request.
+<P>Note that one of the flaws of
+<A HREF="LPRng-HOWTO-19.html#rfc1179">RFC1179</A>
+is that an LPQ (print status)
+request does not provide a REMOTEUSER name.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+ACCEPT SERVICE=C REMOTEUSER=root,papowell,admin SERVER
+ACCEPT SERVICE=C LPC=status,lpd REMOTEUSER=admin
+REJECT SERVICE=C
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>HOST</H3>
+
+<P>Match type: GLOB
+<P>The <CODE>H</CODE> (host) information in the print job control file
+is used to do a DNS lookup,
+and the resulting list of names and addresses is used for matching purposes.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# we allow jobs to be spooled
+ACCEPT SERVICE=R
+# now we do the checking at print time
+# allow from our private subnet
+ACCEPT SERVICE=P HOST=10.0.0.0/8,*.othernet.com
+REJECT SERVICE=P
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>REMOTEHOST</H3>
+
+<P>Match type: GLOB
+<P>The REMOTEHOST information is obtained by doing a reverse IP name lookup
+on the remote host IP address
+and the resulting list of names and addresses is used for matching purposes.
+If there is no FQDN available,
+then the IP address in text form will be used.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# allow from our private subnet
+ACCEPT SERVICE=R REMOTEHOST=10.0.0.0/8,*.othernet.com
+REJECT SERVICE=R
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>REMOTEPORT</H3>
+
+<P>Match type: integer range
+<P>The REMOTEPORT value is the originating port of the TCP/IP connection.
+The match succeeds if it is in the specified range.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# require connections to originate from priviledged port
+ACCEPT SERVICE=X REMOTEPORT=1-1023
+REJECT SERVICE=X
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>PORT</H3>
+
+<P>Alias for REMOTEPORT.
+<H3>IP</H3>
+
+<P>Alias for HOST.
+<H3>REMOTEIP</H3>
+
+<P>Alias for REMOTEHOST.
+<H3>LPC</H3>
+
+<P>Match type: GLOB
+<P>The requested <CODE>lpc</CODE> command.
+This allows the following permissions line to be used:
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+#allow remoteuser admin on server to use LPC topq and hold
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+ACCEPT LPC=topq,hold SERVER REMOTEUSER=papowell
+REJECT SERVICE=C
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H3>SAMEUSER</H3>
+
+<P>Match type: exact string match
+<P>Both the REMOTEUSER and USER information must be present and identical.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# LPC users can do anything
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+REJECT SERVICE=C
+# allow users who sent jobs from the same host to remove them
+ACCEPT SERVICE=M SAMEUSER SAMEHOST
+REJECT SERVICE=M
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>SAMEHOST</H3>
+
+<P>Match type: Same IP Address
+<P>The REMOTEHOST and HOST address lists are checked;
+if there is a common value the match succeeds.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# allow root on the same host as user
+# to remove files
+ACCEPT SERVICE=M SAMEHOST REMOTEUSER=root
+REJECT SERVICE=M
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>SERVER</H3>
+
+<P>Match type: Matching IP Address
+<P>One of the REMOTEHOST addresses
+must be the same as one of the addresses of the <CODE>lpd</CODE> server host,
+or must be one of the addresses found by looking up the <CODE>localhost</CODE>
+name using <CODE>gethostbyname()</CODE>.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# allow root on the server full LPC permissions
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+REJECT SERVICE=C
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>FORWARD</H3>
+
+<P>Match type: Address Match
+<P>The list of REMOTEHOST and HOST addresses must not have a common entry.
+This is usually the case when a remote <CODE>lpd</CODE> server is forwarding
+jobs to the <CODE>lpd</CODE> server.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# do not accept forwarded jobs or requests
+REJECT SERVICE=* FORWARD
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>GROUP</H3>
+
+<P>Match type: modified GLOB
+<P>The USER must be present in
+one of the groups in <CODE>/etc/group</CODE> or whatever permissions mechanism is used
+to determine group ownership
+which matches the GLOB pattern.
+If the pattern has the form <CODE>@name</CODE>,
+then a check to see if the user is in the named netgroup is done.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+ACCEPT SERVICE=P GROUP=admin,@netgroup
+REJECT SERVICE=P
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>REMOTEGROUP</H3>
+
+<P>The same rules as for GROUP,
+but using the REMOTEUSER value.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+ACCEPT SERVICE=R REMOTEGROUP=admin,@netgroup
+REJECT SERVICE=R
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>CONTROLLINE</H3>
+
+<P>Match type: GLOB
+<P>A <CODE>CONTROLLINE</CODE> pattern has the form
+<BLOCKQUOTE><CODE>
+<PRE>
+X=pattern1,pattern2,...
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>X is a single upper case letter.
+The corresponding line must be present in a control file,
+and the pattern is applied to the line contents.
+<P>This pattern can be used to select only files with specific control
+file information for printing.
+<H3>AUTH</H3>
+
+<P>Match type: value
+<P>If the current transfer or the transfer used to send a job
+was authenticated,
+then AUTH is true or matches.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# reject all non-authenticated transfers
+REJECT NOT AUTH
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>AUTHTYPE</H3>
+
+<P>Match type: glob
+<P>If the current transfer or the transfer used to send a job
+was authenticated,
+then AUTHTYPE is set to the name of the authentication method.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+# require kerberos, pgp, or md5 authentication
+REJECT NOT AUTHTYPE=kerberos*,pgp,md5
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>AUTHUSER</H3>
+
+<P>Match type: GLOB
+<P>The AUTHUSER rule will check to see if the authenticated user identification
+matches the pattern.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+ACCEPT SERVICE=C AUTHTYPE=kerberos* AUTHUSER=admin@ASTART.COM
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>IFIP</H3>
+
+<P>Match type: IPmatch, but for IPV6 as well as IPV4
+<P>There is a subtle problem with names and IP addresses which are
+obtained for 'multi-homed hosts', i.e. - those with multiple
+ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
+can have multiple addresses,  and for the normal host which can have
+both a short name and a fully qualified domain name.
+<P>The IFIP (interface IP) field can be used to check the IP address
+of the interface
+that accepted the network connection,
+as reported by the information
+returned by the accept() system call.  Note that this information may
+be IPV4 or IPV6 information,  depending on the origination of the
+system.  This information is used by gethostbyaddr() to obtain the
+originating host fully qualified domain name (FQDN) and set of IP addresses.
+Note that this FQDN will be for the originating interface,  and may
+not be the canonical host name.  Some systems which use the Domain Name Server
+(DNS) system may add the canonical system name as an alias.
+<P>This entry is deprecated and may not be supported in future releases.
+<H2><A NAME="permspath"></A> <A NAME="ss14.3">14.3 Permission File Location</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>perms_path=</CODE><EM> directory path list</EM></LI>
+</UL>
+<P>The <CODE>perms_path=</CODE> configuration variable specifies the
+location of the default permissions file.
+The default value is:
+<BLOCKQUOTE><CODE>
+<PRE>
+perms_path=/etc/lpd.perms:/usr/etc/lpd.perms
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpd.perms</CODE> file can be obtained by running a program,
+in a similar manner to the <CODE>/etc/printcap</CODE> file.
+See
+<A HREF="LPRng-HOWTO-13.html#secfilter">Filters</A> for details on how
+the program would be invoked.
+For example, assume the configuration information specified:
+<BLOCKQUOTE><CODE>
+<PRE>
+perms_path=|/usr/local/libexec/get_perms
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>lpd</CODE> server will write either a blank line
+for connection (<CODE>SERVICE=X</CODE>) and global <CODE>lpc</CODE> permissions
+(<CODE>SERVICE=C</CODE> and <CODE>LPC=reread,lpd,default</CODE>)
+or the name of the spool queue to the <CODE>get_perms</CODE>
+STDIN,
+and expects to read permission information from its STDOUT.
+If the filter method is used,
+it should always return the complete set of connection (<CODE>X</CODE>)
+and control (<CODE>C</CODE> service values.
+<H2><A NAME="ss14.4">14.4 Example Permission File</A>
+</H2>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+# allow root on server to control jobs
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+ACCEPT SERVICE=C LPC=lpd
+REJECT SERVICE=C
+#
+# allow same user on originating host to remove a job
+ACCEPT SERVICE=M SAMEHOST SAMEUSER
+# allow root on server to remove a job
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
+REJECT SERVICE=M
+# all other operations allowed
+DEFAULT ACCEPT
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>In the above sample, we first specify that
+lp<CODE>C</CODE>
+commands from user <CODE>root</CODE> on the lpd server will be accepted.
+This is traditionally the way that most lpc commands operate.
+We also allow anybody to use the <CODE>lpc lpd</CODE> command.
+We reject any other <CODE>lpc</CODE> requests.
+<P>We accept
+lpr<CODE>M</CODE>
+requests from the host and user that submitted the job,
+as well as from root on the server,
+and reject any others.
+<P>Finally,
+all other types of commands (lpq, lpr) are allowed by default.
+<H2><A NAME="ss14.5">14.5 Complex Permission Checking</A>
+</H2>
+
+<P>One of the more useful types of permission checking is to
+restrict access to your printers from users outside your
+networks.
+The IP pattern can specify a list of IP addresses and netmasks
+to apply to them.
+<P>For example
+<CODE>IP=10.3.4.0/24</CODE> would match all hosts with the IP
+addresses
+<CODE>IP=10.3.4.0</CODE> to
+<CODE>IP=10.3.4.255</CODE>.
+<P>Similarly, the HOST pattern can specify a set of hostnames
+or patterns to match against based on the GLOB notation.
+<P>For example
+<CODE>REMOTEHOST=*.astart.com</CODE>
+would match all hosts with a DNS entry which ended with
+<CODE>astart.com</CODE>.
+<P>The NOT keyword reverses the match sense.  For example
+<CODE>REJECT NOT REMOTEHOST=*.astart.com,*.murphy.com</CODE>
+would reject all requests from hosts which did not have a DNS entry
+ending in
+<CODE>astart.com</CODE>
+or
+<CODE>murphy.com</CODE>.
+<H2><A NAME="ss14.6">14.6 More Examples</A>
+</H2>
+
+<P>The following is a more complex lpd.perms file.
+<BLOCKQUOTE><CODE>
+<PRE>
+# All operations allowed except those specifically forbidden
+DEFAULT ACCEPT
+#Reject connections which do not originate from hosts with an
+# address on 130.191.0.0 or from localhost,
+# or name is not assigned to Engineering pc's
+REJECT SERVICE=X NOT IFIP=130.191.0.0/16,127.0.0.1/32
+REJECT SERVICE=X NOT REMOTEHOST=engpc*
+#Do not allow anybody but root or papowell on
+#astart1.astart.com or the server to use control
+#facilities.
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+ACCEPT SERVICE=C REMOTEHOST=astart1.astart.com REMOTEUSER=papowell
+#Allow root on talker.astart.com to control printer hpjet
+ACCEPT SERVICE=C HOST=talker.astart.com PRINTER=hpjet REMOTEUSER=root
+#Reject all others
+REJECT SERVICE=C
+#Do not allow forwarded jobs or requests
+REJECT SERVICE=R,C,M FORWARD
+# allow same user on originating host to remove a job
+ACCEPT SERVICE=M SAMEHOST SAMEUSER
+# allow root on server to remove a job
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="authref"></A> <A NAME="ss14.7">14.7 Authentication</A>
+</H2>
+
+<P>One of the major problems in a print spooler system is providing
+privacy and authentication services for users.  One method is to
+construct a specific set of protocols which will be used for
+providing the privacy or authentication;  another is to provide a
+simple interface to a set of tools that will do the authentication
+and/or encryption.
+<P>LPRng provides native support for the MIT Kerberos 4 extensions and
+Kerberos 5 authentication.
+<P>LPRng has native support for the PGP (Pretty Good Privacy) program
+and can sign and optionally encrypt command and responses between servers
+and clients.
+Due to legal restrictions,
+an external PGP program must be used for this purpose.
+<P>A simple MD5 hash based authentication scheme is also provided as an
+example to illustrate how new or different authentication methods
+can be adddd.
+<P>Finally,
+LPRng provide a general purpose interface allowing users to insert their
+own authentication methods,
+either at the program level or at the code level.
+<H2><A NAME="ss14.8">14.8 Authentication</A>
+</H2>
+
+<P>A careful study of the authentication problem shows that it should be done
+during reception of commands and/or jobs from a remote user and/or
+spooler.  At this time the following must be done:
+<OL>
+<LI>The received command must be checked for consistency,  and the
+remote user and host must be determined.</LI>
+<LI>The remote user and host must be authenticated.</LI>
+<LI>The command and/or spooling operation must be carried out.</LI>
+<LI>The results must be returned to the remote system.</LI>
+</OL>
+<P>
+<H2><A NAME="ss14.9">14.9 Identifiers</A>
+</H2>
+
+<P>When a user logs into a system,  they are assigned a user name
+and a corresponding UserID.  This user name is used by the LPRng
+software when transferring jobs to identify the user.
+<P>When we look into the problem of authentication,  we will possibly
+have a more global user identification to deal with, the
+authentication identifier (AuthID).  One way to deal with this problem is to
+give LPRng intimate knowledge of the UserID and AuthID relationship.
+While this is possible it is difficult to deal with in a
+simple and extensible manner.  An alternate solution is to provide
+a mapping service,  where the authentication procedure provides
+a map between the UserID and AuthID.
+<H2><A NAME="ss14.10">14.10 RFC1179 Protocol Extensions</A>
+</H2>
+
+<P>The RFC1179 protocol specifies that a LPD server command sent on
+a connection has the form:
+<BLOCKQUOTE><CODE>
+<PRE>
+\nnn[additional fields]\n
+</PRE>
+</CODE></BLOCKQUOTE>
+<P><CODE>\nnn</CODE> is a one octet (byte) value with the following meaning:
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+REQ_START   1    start printer
+REQ_RECV    2    transfer a printer job
+REQ_DSHORT  3    print short form of queue status
+REQ_DLONG   4    print long form of queue status
+REQ_REMOVE  5    remove jobs
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The LPRng system extends the protocol with the following additional
+types:
+<BLOCKQUOTE><CODE>
+<PRE>
+REQ_CONTROL 6    do control operation
+REQ_BLOCK   7    transfer a block format print job
+REQ_SECURE  8    do operation with authentication
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The REQ_CONTROL allows a remote user to send LPC commands to the
+server.  The REQ_BLOCK provides an alternate method to transfer a
+job.  Rather than transferring the control and data files individually,
+this format transfers one file.  The REQ_AUTH provides a mechanism
+for providing an authentication mechanism and is described in this
+document.
+<H2><A NAME="authforward"></A> <A NAME="auth"></A> <A NAME="ss14.11">14.11 Authentication Operations</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>auth=</CODE><EM>client to server authentication type</EM></LI>
+<LI> <CODE>auth_forward=</CODE><EM>server to server authentication type</EM></LI>
+<LI> <CODE>XX_id=</CODE><EM>server identification</EM></LI>
+<LI> <CODE>XX_forward_id=</CODE><EM>Server identification</EM></LI>
+</UL>
+<P>A client (<CODE>lpr, lpc, etc</CODE> to <CODE>lpd</CODE> server authenticated transfer
+proceeds as follows.
+If an authenticated transfer is specified by the
+<CODE>auth=protocol</CODE> entry in the printcap or configuration information,
+the client sends a request for an authenticated transfer
+to the server.
+<P>Part of the authentication request is the authentication type.
+If authentication type <CODE>XX</CODE> is requested
+the server will examine the information in the printcap and configuration
+entries for an <CODE>XX_id</CODE> value.
+If this value is present then the server supports authentication of this type.
+Further permission checks are carried out and finally the
+server will accept or reject the authentication request.
+If the request is accepted the server returns a postive
+acknowlegement (single 0 byte) to the requester,
+otherwise it returns a nonzero value and an error message.
+<P>If the request is accepted
+then an authentication specific protocol exchange is carried out between
+client and server.
+The commands and/or data files
+are encrypted and/or signed and transferred to the server.
+The protocol specific software on the server will then decrypt and/or check
+signatures,
+perform the requested actions,
+and in turn generate a status information.
+The status information is encrypted and/or signed by the server
+and sent to the client,
+where the client decrypts and/or checked for correct signature.
+<P>A <CODE>lpd</CODE> server to <CODE>lpd</CODE> server authenticated transfer
+proceeds as follows.
+If an authenticated transfer is specified by the
+<CODE>auth_forward=protocol</CODE> entry in the printcap or configuration information,
+the originating server sends a request for an authenticated transfer
+to the destination server.
+The originating server plays the part of the client
+and performs the same set of actions.
+<P>The following printcap or user level information needs to be provided
+for an authenticated exchange.
+<OL>
+<LI>The <CODE>auth</CODE> option specifies the authentication type to be used
+for client to server transfers.
+For example,
+<CODE>auth=kerberos</CODE> or
+<CODE>auth=kerberos5</CODE> or
+would specify Kerberos 5 authentication,
+<CODE>auth=kerberos4</CODE> would specify Kerberos 4 authentication,
+<CODE>auth=pgp</CODE> would specify PGP authentication,
+<CODE>auth=md5</CODE> would specify MD5 authentication,
+etc.
+The special form <CODE>auth@</CODE> specifies no authentication.</LI>
+<LI>The <CODE>auth_forward</CODE> option specifies the authentication type to be used
+for server to server transfers.
+For example,
+<CODE>auth_forward=kerberos5</CODE> would specify Kerberos 5 authentication,
+etc.
+The special form <CODE>auth@</CODE> specifies no authentication.</LI>
+<LI>The authenticated transfer request sent to a server has one of the
+following forms, depending on the orginator:
+<BLOCKQUOTE><CODE>
+<PRE>
+\008printer C user_id authtype \n     - for commands (lpq, lpc, etc.)
+\008printer C user_id authtype size\n - for print jobs (lpr)
+\008printer F server_id authtype \n     - forwarded commands (lpq, lpc, etc.)
+\008printer F server_id authtype size\n - forwarded print jobs (lpr)
+</PRE>
+</CODE></BLOCKQUOTE>
+
+<P>The single character with the <CODE>\008</CODE> value signals that this
+is an authentication request
+the <CODE>printer</CODE> is the name of a print queue,
+and the <CODE>C</CODE> (client) or <CODE>F</CODE> indicates that the request is from
+a client program or is a forwarded request from a server.
+The <CODE>user_id</CODE> or <CODE>server_id</CODE> field is an identifier supplied by
+the originator and is dicussed below.
+If the <CODE>size</CODE> value is present then the request
+is for a job transfer and this value represents the job size.
+It is used to determine if there is sufficient space in the spool queue
+for the job.
+</LI>
+<LI>The <CODE>user_id</CODE> or <CODE>server_id</CODE> fields in the authentication
+request are obtained as follows.
+If the request originates from a client,
+then the <CODE>user_id</CODE> is the user name of the originator obtained from
+password information.
+If the request originates from a server,
+then the  <CODE>server_id</CODE> is the printcap or configuration
+<CODE>xx_id=server_id</CODE> value,
+where <CODE>xx</CODE> is the value of the <CODE>auth_forward=xx</CODE> entry.</LI>
+<LI>When the authenticated transfer request is received,
+the destination will either return a single zero byte,
+or a non-zero byte value followed by additional refusal information.
+A refusal terminates the protocol exchange.</LI>
+<LI>Further exchanges are then determined by the authentication
+protocol specific requirements.</LI>
+<LI>Once the initial exchanges have been completed
+a user file and/or command will be transferred to the destination server.</LI>
+<LI>An authentication protcol specific <CODE>AUTHFROM</CODE> and <CODE>AUTHUSER</CODE>
+strings will be supplied
+to the lpd server for purposes of permission checking.</LI>
+<LI>The lpd server then carries out the requested operation,
+and will write error and status information into a file.</LI>
+<LI>After the requested activity has finished,
+protocol specific module transfer the status information in the
+file to the requesting system
+and terminate the protocol exchange.</LI>
+</OL>
+<H2><A NAME="ss14.12">14.12 Permission Checking</A>
+</H2>
+
+<P>When an authenticated transfer has been performed,
+the following permission information will be provided.
+<UL>
+<LI>AUTH<BR>
+This value is <CODE>true</CODE> or <CODE>match</CODE> if an authenticated request
+was received.</LI>
+<LI>AUTHTYPE=authtype<BR>
+This has the value of the <CODE>authtype</CODE> field in the authentication
+request.</LI>
+<LI>AUTHUSER=userinfo<BR>
+This is the <CODE>AUTHUSER</CODE> information provided by the authentication
+protocol,
+and is usually the originating user's identification.</LI>
+<LI>AUTHFROM=frominfo<BR>
+This is the <CODE>AUTHUSER</CODE> information provided by the authentication
+protocol,
+and is usually the originating system (user or lpd server) identification.</LI>
+<LI>AUTHSAMEUSER<BR>
+This item has effect only when checking jobs in a spool queue.
+The <CODE>AUTHUSER</CODE> information from the request is compared to the
+<CODE>AUTHUSER</CODE> information from the request that created a job.
+If they are identical,  the match succeeds.</LI>
+<LI>AUTHJOB
+This item has effect only when checking jobs in a spool queue.
+If the job was transfered using an authentication protocol the match succeeds.<BR></LI>
+</UL>
+<P>For example,  to reject non-authenticated operations, the following
+line could be put in the permissions file.
+<BLOCKQUOTE><CODE>
+<PRE>
+REJECT NOT AUTH
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If a remote server has id information FFEDBEEFDEAF,  then the
+following will accept only forwarded jobs from this server.
+<BLOCKQUOTE><CODE>
+<PRE>
+ACCEPT AUTH AUTHFROM=FFEDBEEFDEAF
+REJECT AUTH
+REJECT NOT AUTH
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>To allow only authenticated users to remove jobs you can use:
+<BLOCKQUOTE><CODE>
+<PRE>
+ACCEPT AUTH SERVICE=R,M,L,P AUTHSAMEUSER
+REJECT AUTH
+REJECT NOT AUTH
+</PRE>
+</CODE></BLOCKQUOTE>
+<H2><A NAME="ss14.13">14.13 PGP Authentication Support</A>
+</H2>
+
+<P>PGP is a well known encryption and authentication program.
+For more details see the web site
+<A HREF="http://www.pgp.net">http://www.pgp.net</A>
+or the ftp site
+<A HREF="ftp://ftp.pgp.net">ftp://ftp.pgp.net</A>.
+<P>LPRng has greatly simplified the use of PGP for authentication
+by building in support as follows.
+<UL>
+<LI>The <CODE>user</CODE> and <CODE>group</CODE> configuration entry (defaults
+<CODE>daemon</CODE> and <CODE>daemon</CODE> respectively) specify the user and group id
+used by the <CODE>lpd</CODE> server for file and program execution.
+PGP uses the current user id of the PGP process to determine the locations
+of various configuration files and information.
+In this discussion we will assume that <CODE>lpd</CODE> runs as uid <CODE>daemon</CODE>.</LI>
+<LI>By default,
+the PGP program expects the public and secret key rings to be in the
+<CODE>$HOME/.pgp/</CODE> directory
+to be readable only by the user.
+In order to set up PGP authentication,
+make sure that the <CODE>daemon</CODE> account has a home directory.
+Then use the <CODE>su daemon</CODE> command to change effective UID to daemon
+and run the
+<CODE>pgp -kg</CODE>
+(generate key)
+command as daemon.
+The <CODE>daemon</CODE> user should not have a password.</LI>
+<LI>Each PGP key has an associated identifier.
+It is recommended that the <CODE>lpd</CODE> key be <CODE>lpr@hostname</CODE>,
+where hostname is the fully qualified domain name of the server.
+A public and a private key file will be created.</LI>
+<LI>Next,
+place the passphrase for the <CODE>daemon</CODE>
+user in
+<CODE>~daemon/.pgp/serverkey</CODE>,
+and make sure it has owner <CODE>daemon</CODE>
+and <CODE>600</CODE> permissions (read/write only by <CODE>daemon</CODE>).
+This is extremely important.
+If other users can read this file then security will be severely compromised.</LI>
+<LI>Next, distribute the <CODE>lpr@hostname</CODE> public key to all users of the
+LPRng server.
+This is usually done by placing the public key in a well known file location
+or making it available to users by some form of Public Key Distribution system
+(PKD).
+The key can be extracted and put into a text file using the following commands:
+<BLOCKQUOTE><CODE>
+<PRE>
+pgp -kxa userid destfile keyfile
+
+Example:
+> pgp -kxa lpr@astart /tmp/lprkey ~daemon/.pgp/pubring.pgp
+Key for user ID: lpr@astart
+512-bit key, key ID BB261B89, created 1999/01/01
+
+Transport armor file: /tmp/lprkey.asc
+Key extracted to file '/tmp/lprkey.asc'.
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>To allow a user to send files to the server,
+their public key must be put into the <CODE>daemon</CODE> public key ring.
+This can be done using:
+<BLOCKQUOTE><CODE>
+<PRE>
+pgp -ka /tmp/lprkey.asc
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>Finally,  the administrator will need to add users public keys to the
+<CODE>daemon</CODE> users public key ring.  This can most easily be done by
+copying all the keys (in ASCII text form) to a single file
+(<CODE>/tmp/keyfile</CODE>)and using:
+<BLOCKQUOTE><CODE>
+<PRE>
+su daemon
+pgp -ka /tmp/keyfile ~daemon/.pgp/pubring.pgp
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>If the <CODE>lpd</CODE> server is using PGP to forward jobs or requests,
+the destination server's public key must be put in the originating
+servers public keyring.  For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+su daemon
+pgp -ka /tmp/lpd.keyfile ~daemon/.pgp/pubring.pgp
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+</UL>
+<H3><A NAME="pgpserverkey"></A> <A NAME="pgppassphrase"></A> <A NAME="pgppath"></A> Printcap Configuration</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>pgp_path=</CODE><EM>path to PGP program</EM></LI>
+<LI><CODE>pgp_id=</CODE><EM>destination server key used by clients</EM></LI>
+<LI><CODE>pgp_forward_id=</CODE><EM>destination server used by server</EM></LI>
+<LI><CODE>pgp_server_key=</CODE><EM>path to server passphrase file</EM></LI>
+</UL>
+<P>Example printcap entry:
+<BLOCKQUOTE><CODE>
+<PRE>
+pr:
+    :lp=pr@wayoff
+    :auth=pgp
+    :pgp_id=lpr@wayoff.com
+    :pgp_path=/usr/local/bin/pgp
+pr:server
+    :lp=pr@faroff
+    :auth_forward=pgp
+    :pgp_id=lpr@wayoff.com
+    :pgp_path=/usr/bin/pgp
+    :pgp_forward_id=lpr@faroff.com
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>pgp_path</CODE> value is the path to the PGP program.
+The progam must be executable by all users.
+<P>The <CODE>pgp_id</CODE> value is the id used by PGP to look extract keys from
+key rings.
+When doing a client to server transfer this will be supplied as the id
+to be used for the destination,
+and the user's public keyring will be checked for a key corresponding to
+this id.
+When a request arrives at the server,
+the server will use this value as the id of a key in its private key ring.
+Finally,
+when a server is forwarding a request to a remote server,
+it will use this value
+as the id of the key in its private key ring to be used to sign
+or encode the destination information.
+<P>The <CODE>pgp_forward_id</CODE> value is used by the <CODE>lpd</CODE> server as the id
+to use to find a key for the destination.
+<P>The <CODE>pgp_server_key</CODE> is the path to the file containing the server passphrase.
+This file will be read by <CODE>lpd</CODE> to get the passphrase to unlock the server's
+keyring.
+<H3>User Files and Environment Variables</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>PGPPASSFILE=</CODE><EM>File to read PGP passphrase from</EM></LI>
+<LI><CODE>PGPPASSFD=</CODE><EM>File descriptor to read PGP passphrase from</EM></LI>
+<LI><CODE>PGPPASS=</CODE><EM>PGP passphrase</EM></LI>
+</UL>
+<P>One problem with using PGP is the need to have users input their
+passphrases.
+The following methods can be used.
+<UL>
+<LI>Put the passphrase in a file,
+say <CODE>$(HOME)/.pgp/.hidden</CODE>,
+and set the <CODE>PGPPASSFILE</CODE> environment variable to the file name.
+This file will be opened and read by PGP to get the passphrase.
+This file should be owned by the user and have <CODE>0600</CODE> or read/write
+only by user permissions.</LI>
+<LI>A more subtle solution is to use the <CODE>PGPPASSFD</CODE> environment variable
+facility.
+This causes PGP to read the passphrase from a file descriptor.
+If the user puts his passphrase in a file,  say
+<CODE>$(HOME)/.pgp/.hidden</CODE>,
+then the following shell script can be used:
+<BLOCKQUOTE><CODE>
+<PRE>
+#!/bin/sh
+#  /usr/local/bin/pgplpr script - passphrase in $(HOME)/.pgp/.hidden
+#
+PGPASSFD=3 3&lt;$(HOME)/.pgp/.hidden lpr "$@"
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>The least desirable method is to put the passphrase in the
+<CODE>PGPPASS</CODE> environment variable.
+Since the <CODE>ps</CODE> command can be used to list the environment variables
+of processes,
+this is highly undesireable and should not be used under any circumstances.</LI>
+</UL>
+<H2><A NAME="ss14.14">14.14 Using Kerberos 5 for Authentication</A>
+</H2>
+
+<P>LPRng Kerberos 5 authentication is
+based on the
+Kerberos5-1.1.1 release as of December 28, 1999.  This was obtained
+from MIT from the
+<CODE>
+<A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A></CODE>
+Website.
+<P>The following sections briefly describes
+how to set up and test the Kerberos software
+and then how to configure LPRng to use Kerberos.
+<H3>LPRng Configuration</H3>
+
+<P>By default,
+LPRng will search for the <CODE>krb5.h</CODE> file and the <CODE>krb5</CODE> libraries.
+If it finds these,
+then Kerberos authentication will be included.
+If it also finds the <CODE>krb.h</CODE> file then MIT Kerberos 4 compatibility will
+also be enabled.
+<P>
+<H3><A NAME="kerberosforwardprincipal"></A> <A NAME="kerberosserverprincipal"></A> <A NAME="kerberosservice"></A> <A NAME="kerberosrenew"></A> <A NAME="kerberoslife"></A> <A NAME="kerberoskeytab"></A> Kerberos Installation Procedure</H3>
+
+<P>
+<OL>
+<LI> Get the Kerberos 5 distribution.</LI>
+<LI> Compile and install the distribution.</LI>
+<LI> Create the
+<CODE>/etc/krb5.conf</CODE> and
+<CODE>/usr/local/var/krb5kdc/kdc.conf</CODE>,
+files using templates from the files in the
+Kerberos distribution's
+<CODE>src/config-files</CODE> directory.
+See the Installation notes and the System Administrators Guide for
+details.</LI>
+<LI> Start up the KDC and KADMIN servers - you might want to put
+the following in your
+<CODE>rc.local</CODE>
+or equivalent system startup files:
+<BLOCKQUOTE><CODE>
+<PRE>
+if [ -f /etc/krb5.conf -a -f /usr/local/var/krb5kdc/kdc.conf  ]; then
+    echo -n ' krb5kdc ';    /usr/local/sbin/krb5kdc;
+    echo -n ' kadmind ';    /usr/local/sbin/kadmind;
+fi
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI> Use kadmin (or kadmin.local) to create principals for your users.</LI>
+<LI> Use kadmin (or kadmin.local) to create principals for the
+<CODE>lpd</CODE> servers.  I have been using
+<CODE>lpr/hostname.REALM</CODE>
+as a template-
+i.e.
+<CODE>lpr/astart1.astart.com@ASTART.COM</CODE>
+for an example.
+You should use fully qualified domain names for the principals.
+Since it will never be used by an individual,
+you do not have to give it a password.
+<BLOCKQUOTE><CODE>
+<PRE>
+Example:
+
+kadmin ...
+addprinc -randkey lpr/wayoff.astart.com@ASTART.COM
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI> Extract the keytab for each server:
+<BLOCKQUOTE><CODE>
+<PRE>
+kadmin ...
+ktadd -k keytab  lpr/hostname.REALM
+
+Example:
+ktadd -k /tmp/lpr.wayoff.astart.com  lpr/wayoff.astart.com@ASTART.COM
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>The <CODE>keytab</CODE> file contains the keytab information, which is the
+equivalent information for the server.</LI>
+<LI> Copy each <CODE>keytab</CODE> file  to the
+appropriate server (you might want to encrypt
+or use a secure transfer for this).
+Put it in the <CODE>/etc/lpd.keytab</CODE> file on the server.
+This file should have <CODE>0400</CODE> permissions and owned by
+<CODE>daemon</CODE> or the user that <CODE>lpd</CODE> will run as.
+<BLOCKQUOTE><CODE>
+<PRE>
+#> ls -l /etc/lpd.keytab
+-rw-------  1 daemon  wheel  128 Jan 16 11:06 /etc/lpd.keytab
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>If you want to have MIT Kerberos4 printing compatibility,
+then you will need to set up Kerberos 4 <CODE>servertabs</CODE>
+instead of Kerberos 5 keytabs.
+Assuming that you have put the Kerberos 5 keytab in <CODE>/etc/lpd.keytab</CODE>,
+then you extract the Kerberos 4 srvtab version of the Kerberos 5 keytab using
+the following commands.
+You must put the key in the <CODE>/etc/srvtab</CODE> file
+in order to be compatible with the Kerberos 4 support.
+<BLOCKQUOTE><CODE>
+<PRE>
+%&gt; su
+#&gt; ktuil
+rkt /etc/lpd.keytab
+wst /etc/srvtab
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+</OL>
+<H3>LPRng Configuration</H3>
+
+<P>The LPRng  software needs to be configured so that it can find the
+Kerberos libraries and include files.
+By default,
+the include files are installed in
+<CODE>/usr/local/include</CODE>
+and the libraries in
+<CODE>/usr/local/lib</CODE>.
+Use the following steps to configure LPRng so that it uses these
+directories during configuration and installation:
+<BLOCKQUOTE><CODE>
+<PRE>
+cd .../LPRng
+rm -f config.cache
+CPPFLAGS="-I/usr/local/include -I/usr/include/kerberosIV" \
+  LDFLAGS="-L/usr/local/lib -L/usr/lib/kerberosIV" \
+  ./configure
+make clean all
+su
+make install
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>Printcap Entries</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>auth=kerberos5=</CODE><EM>use Kerberos5 authentication</EM></LI>
+<LI><CODE>kerberos_id=</CODE><EM>destination server key used by clients</EM></LI>
+<LI><CODE>kerberos_server_principal=</CODE><EM>alias for kerberos_id</EM></LI>
+<LI><CODE>kerberos_forward_id=</CODE><EM>destination server used by server</EM></LI>
+<LI><CODE>kerberos_forward_principal=</CODE><EM>alias for kerberos_forward_id</EM></LI>
+<LI><CODE>kerberos_keytab=</CODE><EM>location of the lpd server keytab file</EM></LI>
+<LI><CODE>kerberos_service=</CODE><EM>service to be used</EM></LI>
+<LI><CODE>kerberos_life=</CODE><EM>lpd server ticket lifetime</EM></LI>
+<LI><CODE>kerberos_renew=</CODE><EM>lpd server ticket renew</EM></LI>
+</UL>
+<P>Example printcap entry:
+<BLOCKQUOTE><CODE>
+<PRE>
+pr:
+    :lp=pr@wayoff
+    :auth=kerberos5
+    :kerberos_id=lpr/wayoff.astart.com@ASTART.COM
+pr:server
+    :lp=pr@faroff.private
+    :auth_forward=kerberos5
+    :kerberos_id=lpr@wayoff.astart.com@ASTART.COM
+    :kerberos_forward_id=lpr/faroff.astart.com@ASTART.COM
+
+OR If you want to use Kerberos 4 authentication to the server
+pr:
+    :lp=pr@wayoff
+    :auth=kerberos4
+    :kerberos_id=lpr/wayoff.astart.com@ASTART.COM
+# support both Kerberos 4 and 5 on server
+pr:server
+    :lp=pr@faroff.private
+    :auth_forward=kerberos5
+    :kerberos_id=lpr@wayoff.astart.com@ASTART.COM
+    :kerberos_forward_id=lpr/faroff.astart.com@ASTART.COM
+    :kerberos_keytab=/etc/lpd.keytab
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The printcap configuration for Kerberos authentication is very simple.
+<P>The <CODE>kerberos_id</CODE> is the principal name of the lpd server
+that clients will connect to.
+For backwards compatibility,
+<CODE>kerberos_server_principal</CODE> can also be used.
+This values is used to obtain a ticket for the <CODE>lpd</CODE> server,
+and is the only entry required for client to server authentication.
+<P>The other entries are used by the <CODE>lpd</CODE> server.
+<CODE>kerberos_keytab</CODE>
+entry is the location of the keytab file to be used by the server.
+This contains the passphrase used by the server to authenticate itself
+and get a ticket from the ticket server.
+<P>The <CODE>kerberos_id</CODE> value is also used by the server during the
+authentication process to make sure that the correct principal name
+was used by the request originator.
+This check has saved many hours of pain in trying to determine why
+authentication is failing.
+<P>The
+<CODE>kerberos_life</CODE> and <CODE>kerberos_renew</CODE>
+set the lifetime and renewability
+of the lpd server Kerberos tickets.
+These values should not be modified unless you are familiar with the
+Kerberos system.
+There are extensive notes in the LPRng source code concerning these values.
+The <CODE>kerberos_service</CODE> value supplies the name of the service
+to be used when generating a ticket.
+It is stronly recommended that the <CODE>kerberos_id</CODE> entry
+be used instead.
+<H3>User Environment Variables and Files</H3>
+
+<P>In order to use kerberos authentication,
+the user will need to obtain a ticket from the Kerberos ticket server.
+This is done using <CODE>kinit</CODE>.
+<P>No other actions are required by the user.
+<H2><A NAME="ss14.15">14.15 Using Kerberos 4 for Authentication</A>
+</H2>
+
+<P>LPRng has built-in support for the Project Athena extensions to the
+RFC1179 protocol.
+These provide an extremely simple authentication protocol
+using an initial credential exchange.
+After the initial exchange the usual RFC1179 protocol is used.
+<P>During configuration,
+if the <CODE>krb.h</CODE> (Kerberos 4) include file is found,
+then this is enabled by default.
+<H3>Printcap Entries</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>auth=kerberos4</CODE><EM>use Kerberos4 authentication</EM></LI>
+<LI><CODE>kerberos_id=</CODE><EM>destination server key used by clients</EM></LI>
+<LI><CODE>kerberos_server_principal=</CODE><EM>alias for kerberos_id</EM></LI>
+</UL>
+<P>Example printcap entry:
+<BLOCKQUOTE><CODE>
+<PRE>
+pr:
+    :lp=pr@wayoff
+    :auth=kerberos4
+    :kerberos_id=lpr/wayoff.astart.com@ASTART.COM
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The configuration information for Kerberos4 and Kerberos5 is identical
+and differ only in the authentication type.
+Note that only client to server authentication is supported.
+<H2><A NAME="ss14.16">14.16 Using MD5 for Authentication</A>
+</H2>
+
+<P>LPRng has built-in support for using MD5 digests as an
+authentication method.
+The implementation is provided as an example of how to
+add user level authentication into the LPRng system.
+<P>The method used to do authentication is very simple.
+Each user has a file containing a set of keys that are used to salt an
+md5 hash.
+The information being transferred has its md5 checksum calculated using
+this salt,
+and is then transferred to the destination,
+along with the md5 hash result.
+At the destination the server will get the user id,
+obtain the salt value from a key file,
+and then calculate the md5 hash value.
+If the two are in agreement,
+authentication is successful.
+<P>The keyfile used for md5 authentication contains an id followed by
+a text string whose binary value is used as a hash key:
+<BLOCKQUOTE><CODE>
+<PRE>
+id1=key
+id2=key
+
+Example:
+
+lpr@h2=tadf79asd%^1asdf
+lpr@h1=fdfa%$^&amp;^%$
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<H3>Printcap Entries</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>auth=md5</CODE><EM>use MD5 authentication</EM></LI>
+<LI><CODE>auth_forward=md5</CODE><EM>forward using MD5 authentication</EM></LI>
+<LI><CODE>md5_id=</CODE><EM>id for server</EM></LI>
+<LI><CODE>md5_forward_id=</CODE><EM>id for server</EM></LI>
+<LI><CODE>md5_server_keyfile=</CODE><EM>server keyfile</EM></LI>
+</UL>
+<P>Example printcap entry:
+<BLOCKQUOTE><CODE>
+<PRE>
+pr:
+    :lp=pr@wayoff
+    :auth=md5
+    :md5_id=lpr@wayoff.com
+pr:server
+    :auth_forward=md5
+    :md5_id=lpr@wayoff.com
+    :md5_server_keyfile
+    :md5_forward_id=lpr@faroff.com
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The <CODE>md5_id</CODE> value is used by the client to obtain
+a hash key that is used to salt the md5 calculation for client to server
+transfers.
+The <CODE>md5_forward_id</CODE> value is used by the server to obtain
+a hash key that is used to salt the md5 calculation for server to server transfers.
+<P>The <CODE>md5_server_keyfile</CODE> contains the keys of users;
+the id sent as the connection information is used to obtain the key from the file.
+<P>To set up md5 authentication,
+all that is needed is the following.
+<UL>
+<LI>For each user generate a key and place it in the server keyfile.
+This file should have the form:
+<BLOCKQUOTE><CODE>
+<PRE>
+user1@host1=asdfasdfadf
+user2@host2=a8789087asddasdf
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>Assign a key to the server, and set its printcap entry to this key.
+<BLOCKQUOTE><CODE>
+<PRE>
+pr:
+    :lp=pr@wayoff
+    :auth=md5
+    :md5_id=lpr@wayoff.com
+</PRE>
+</CODE></BLOCKQUOTE>
+</LI>
+<LI>For each user, create a user key file with the following format:
+<BLOCKQUOTE><CODE>
+<PRE>
+lpr@wayoff = user1@host1 asdfasdfadf
+</PRE>
+</CODE></BLOCKQUOTE>
+
+The first entry corresponds to the <CODE>md5_id</CODE> value in the printcap.
+The second field is the <CODE>AUTHUSER</CODE> value supplied to the server
+and which will be used to look up the key in the servers key file.
+Finally,
+the last field is the salt value for the md5 calculation.</LI>
+</UL>
+<H3>User Environment Variables and Files</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>MD5KEYFILE=5</CODE><EM>location of user keyfile</EM></LI>
+</UL>
+<P>The <CODE>MD5KEYFILE</CODE> environment variable contains the path to the
+user keytab file.
+<H2><A NAME="ss14.17">14.17 Adding Authentication Support</A>
+</H2>
+
+<P>Additional types of authentication support can be added very easily to
+LPRng by using the following conventions and guidelines.
+<P>First,
+the authentication method can be connection based or transfer based.
+Connection based authentication involves the LPRng client or server
+opening a connection to the remote server,
+having the authentication protocol provide authentication information,
+and then having no further interaction with the system.
+This is the easiest to implement and understand method.
+Code needs to be provided to do a simple authentication exchange
+between the two ends of the connection,
+after which no other action needs to be taken.
+<P>Transfer based authentication is more complex,
+but allows encrypted transfers of information between the two systems.
+A connection is established between client and server (or server and server),
+and an initial protocol exchange is performed.
+Then the authentication module transfers the command or job information
+to the destination,
+where is it unpacked and/or decrypted.
+The internal LPD server facilities are then invoked by the authentication
+module,
+which also provides a destination for any error message or information
+destined for the client.
+The authentication module will encrpt or encode this information and then
+send it to the client program.
+This type of authentication is more complex,
+but provides a higher degree of security and reliability than the
+simple connection based system.
+<H3>Printcap Support</H3>
+
+<P>By convention,
+printcap entries
+<CODE>auth=XXX</CODE>
+and
+<CODE>auth_forward=XXX</CODE>
+specifies that authentication protocol <CODE>XXX</CODE>
+is to be used for client to server
+and for server to server transfers respectively.
+<P>Similarly,
+the server receiving an authentication request must have a
+<CODE>XXX_id=name</CODE> entry in the printcap or configuration information.
+This allows several different authentication protocols to be accepted
+by a server.
+<P>By convention,
+printcap and configuration entries of the form
+<CODE>XXX_key</CODE>
+contain configuration information for the <CODE>XXX</CODE> authentication protocol.
+As part of the authentication support process the <CODE>XXX_key</CODE> values
+are extracted from the printcap and configuration files
+and placed in a simple database for the authentication support module.
+<P>If you are using a routing filter,
+then you can also place
+<CODE>XXX_key</CODE>
+information in the routing entry for each file,
+and this will be used for sending the job to the specified destination.
+<H3>Code Support</H3>
+
+<P>The <CODE>LPRng/src/common/sendauth.c</CODE>
+file has the following entries at the end.
+<BLOCKQUOTE><CODE>
+<PRE>
+#define SENDING
+#include "user_auth.stub"
+
+struct security SendSecuritySupported[] = {
+  /* name,       config_tag, connect,    send,   receive */
+  { "kerberos4", "kerberos", Send_krb4_auth, 0, 0 },
+  { "kerberos*", "kerberos", 0,           Krb5_send },
+  { "pgp",       "pgp",      0,           Pgp_send },
+#if defined(USER_SEND)
+ USER_SEND
+#endif
+  {0}
+};
+</PRE>
+</CODE></BLOCKQUOTE>
+
+This is an example of how to add user level authentication support.
+The <CODE>user_auth.stub</CODE>
+file contains the source code for the various modules authentication
+modules.
+You can replace this file with your own version
+if desired.
+The following fields are used.
+<DL>
+<DT><B> name </B><DD><P>The authentication name.
+The <CODE>auth=XXX</CODE> printcap or configuration value will cause the
+<CODE>name</CODE> fields to be searched using a
+glob match.
+<DT><B> config_tag</B><DD><P>When a match is found,
+the <CODE>config_tag</CODE> value is used to search
+the printcap and configuration entries for information.
+If the <CODE>config_tag</CODE> field has value <CODE>XXX</CODE>,
+then entries with keys <CODE>XXX_key</CODE> will be extracted for use
+by the authentication code.
+<DT><B>connect</B><DD><P>Routine to call to support <CODE>connection</CODE>
+level authentication.
+This routine is responsible for connection establishment and
+protocol handshake.
+If the value is 0,
+then the <CODE>send</CODE> field value will be used.
+<DT><B>send</B><DD><P>Routine to call to support <CODE>transfer</CODE>
+level authentication.
+The <CODE>send</CODE>
+routine is provided a file and a connection to the remote server,
+and is responsible for the transferring files.
+</DL>
+<P>The
+<CODE>LPRng/src/common/lpd_secure.c</CODE>
+file has the following information at the end:
+<BLOCKQUOTE><CODE>
+<PRE>
+#define RECEIVE 1
+#include "user_auth.stub"
+
+ struct security ReceiveSecuritySupported[] = {
+    /* name, config_tag, connect, send, receive */
+#if defined(HAVE_KRB_H) &amp;&amp; defined(MIT_KERBEROS4)
+    { "kerberos4", "kerberos",  0, 0, 0 },
+#endif
+#if defined(HAVE_KRB5_H)
+    { "kerberos*", "kerberos",   0, 0, Krb5_receive },
+#endif
+    { "pgp",       "pgp",   0, 0, Pgp_receive, },
+#if defined(USER_RECEIVE)
+/* this should have the form of the entries above */
+ USER_RECEIVE
+#endif
+    {0}
+};
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This information matches the same information in the <CODE>sendauth.c</CODE>
+file.
+When the authentication request arrives at the server,
+the <CODE>name</CODE> field values are searched for a match,
+and then the <CODE>config_tag</CODE> value is used to get extract configuration
+information from the database for the protocol.
+<P>The <CODE>receive</CODE>
+routine is then called and is expected to handle the remaining
+steps of the authentication protocol.
+If the routine exits with a 0 value then the lpd server expects
+<CODE>connection</CODE> level authentication has been done and proceeds to
+simply transfer information using the standard RFC1179 protocol steps.
+A non-zero return value indicates an error and an error is reported
+to the other end of the connection.
+<P>If the <CODE>receive</CODE> module is to perform <CODE>transfer</CODE> level authentication,
+then the module carries out the necessary steps to transfer the command and/or
+job information.
+It then calls the necessary internal LPRng routine to implement the desired
+services.
+After finishing the requested work,
+these routines return to the calling authentication module,
+which then will transfer data, close the connection to the
+remote system,
+and return to the calling system.
+The combination of 0 return value and closed connection
+indicates successful transfer level authentication to the server.
+<P>The <CODE>user_auth.stub</CODE> file contains the following code that sets the
+<CODE>USER_SEND</CODE> variable:
+<BLOCKQUOTE><CODE>
+<PRE>
+#if defined(SENDING)
+extern int md5_send();
+#  define USER_SEND \
+  { "md5", "md5", md5_send, 0, md5_receive },
+#endif
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If the <CODE>SENDING</CODE> value has been defined,
+this causes the prototype for <CODE>md5_send()</CODE> to be place in the file
+and the <CODE>USER_SEND</CODE> value to be defined.
+This will cause the <CODE>md5</CODE> authentication information to be placed in the
+correct table.
+<H3>Connection and Transfer Authentication</H3>
+
+<P>Rather than go into a detailed description of the code,
+the <CODE>user_auth.stub</CODE> file contains extremely detailed examples
+as well as several working versions of authentication information.
+It is recommended that the user start with one of these and then
+modify it to suit themselves.
+<HR>
+<A HREF="LPRng-HOWTO-15.html">Next</A>
+<A HREF="LPRng-HOWTO-13.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc14">Contents</A>
+</BODY>
+</HTML>

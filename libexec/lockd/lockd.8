@@ -1,0 +1,118 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI lockd.8,v 1.2 1998/11/25 22:49:47 don Exp
+.\"
+.Dd March 17, 1998
+.Dt LOCKD 8
+.Os
+.Sh NAME
+.Nm lockd
+.Nd NFS lock daemon
+.Sh SYNOPSIS
+.Nm lockd
+.Op Fl d Ar debug-level
+.Op Fl g Ar minutes
+.Sh DESCRIPTION
+.Nm Lockd
+is a daemon which provides record-level locking services in an NFS
+environment.
+It should be run at boot time by /etc/rc (see rc(8)), just
+before mountd.
+.Pp
+The options are as follows:
+.Pp
+.Bl -tag -width indent
+.It Fl d
+Specify the debug level:
+.Bl -tag -width Ds -compact 
+.It Cm a
+log arguments
+.It Cm c
+log cached host connection behavior
+.It Cm r
+log rpc calls
+.It Cm b
+log background activity
+.It Cm A
+turn on all debug flags
+.El
+.El
+.Pp
+.Bl -tag -width indent
+.It Fl g
+Specify the number of minutes of grace period on startup.
+During this time period no new locks may be obtained,
+only reclaimed locks will be granted.
+The default is 2 minutes,
+and anything greater than 10 is treated as an error.
+.El
+.Pp
+Versions 1, 3 and 4 of the Network Lock Manager (NLM) protocol are supported.
+.Pp
+Two processes are created to implement the NLM lock protocol: 
+One manages the NFS client side
+and performs local file locking operations based 
+on requests forwarded from lock managers running on NFS client machines.
+The other manages the NFS server side,
+and forwards local lock requests on files in NFS mounted filesystems to their
+respective NFS servers.
+.Pp
+Both processes are single threaded,
+but extensive use of non-blocking RPC calls are used to
+maximize the overlapping of operations.
+They maintain a parent child relationship, with the parent
+recording its pid in /var/run/lockd.pid. The parent
+will forward SIGINT and SIGHUP to the child, which will cause
+both of them to drop all local locks held for NFS clients,
+and to generally cleanup and then exit.
+Whenever 
+.Nm lockd
+is not running,
+local locking operations on NFS mounted filesystems will return EOPNOTSUPP.
+.Pp
+When 
+.Nm lockd 
+is started, NFS clients and servers which were involved in
+prior locking operations will be notified (via statd(8)), and
+during the grace period locks, will be reestablished (if possible).
+.Pp
+Error conditions are logged to syslog,
+using log level LOG_ERR and facility LOG_DAEMON.
+.Pp
+The
+.Nm statd
+daemon must be invoked before the
+.Nm lockd
+daemon is run.
+.Sh FILES
+.Bl -tag -width XXXXX -compact
+.It Pa /usr/include/rpcsvc/nlm_prot.x
+RPC protocol specification for the network lock manager (NLM) protocol.
+.El
+.Bl -tag -width XXXXX -compact
+.It Pa /var/run/lockd.pid
+The process  id (PID) of the parent lockd process.
+.El
+.Bl -tag -width XXXXX -compact
+.It Pa /var/run/lock
+The fifo used by the client side 
+.Nm lockd
+process to read local locking requests from the kernel.
+.El
+.Sh SEE ALSO
+.Xr fcntl 2 ,
+.Xr flock 2 ,
+.Xr statd 8
+.Sh BUGS
+.Pp
+Locks are not reestablished from the NFS client side when the NFS server 
+has rebooted.
+.Pp
+If a remote host will not be coming back on-line,
+there is no way to inform lockd that it should quit re-trying to the host.
+.Sh STANDARDS
+The implementation is based on the X/Open CAE Specification,
+Document number C525, "Protocols for X/Open Interworking: XNFS, Version 3".

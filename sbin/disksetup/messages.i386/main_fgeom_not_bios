@@ -1,0 +1,3 @@
+The geometry used by the FDISK table does not match the geometry
+defined by the BIOS.  This will typically make it impossible for
+the system to boot.

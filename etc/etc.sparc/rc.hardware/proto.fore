@@ -1,0 +1,29 @@
+#
+# Copyright (c) 1998 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI proto.fore,v 1.2 1999/02/18 01:51:03 jch Exp
+#
+
+firmwaredir="/usr/libdata/fore"
+
+#
+# fore setup script to download firmware into a Fore ATM adaptor
+#
+# Add the -b flag for firmware with a name ending in .bin*.  Leave it off for
+# firmware ending in .objd*.
+flags=-v
+unit=
+IFS=.
+for i in $0
+do
+    unit=$i
+done
+IFS=
+
+echo -n " hfa$unit"
+
+fore_dnld -i hfa${unit} -d ${firmwaredir}
+
+exit 0

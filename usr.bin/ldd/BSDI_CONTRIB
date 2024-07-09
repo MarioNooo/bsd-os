@@ -1,0 +1,180 @@
+Software Package:       
+        ldd
+
+Release/Version:
+        from NetBSD-current some time after NetBSD 1.5.2
+
+Retrieved from:
+	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/usr.bin/ldd
+
+Bug reports:
+	This software package is maintained by BSDI.  Please report
+	bugs to support@bsdi.com.
+
+Comments:
+
+This is the NetBSD version of ldd, adapted for BSD/OS.  We modified a
+few of the source files and makefiles.
+
+The top-level makefile needs to know about OBJECT_FMT:
+
+diff -c -r1.1.1.1 -r1.2
+*** Makefile	2001/11/28 03:18:37	1.1.1.1
+--- Makefile	2001/11/28 05:18:48	1.2
+***************
+*** 1,9 ****
+--- 1,16 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2002/01/29 23:23:05 donn Exp
+  #	$NetBSD: Makefile,v 1.7 1998/12/15 22:07:11 pk Exp $
+  #
+  # ldd(1) is toolchain dependent
+  #
+  
++ __bsdi__= 1
++ 
++ .ifndef __bsdi__
+  .include <bsd.own.mk>			# get OBJECT_FMT definition
++ .else
++ OBJECT_FMT= ELF
++ .endif
+  
+  .if (${OBJECT_FMT} == "ELF")
+  SUBDIR+= ldd_elf
+
+The ELF makefile needs to know about MACHINE_ARCH and a few
+NetBSD defines:
+
+diff -c -r1.1.1.1 -r1.2
+*** ldd_elf/Makefile	2001/11/28 03:18:38	1.1.1.1
+--- ldd_elf/Makefile	2001/11/28 05:16:17	1.2
+***************
+*** 1,5 ****
+--- 1,8 ----
++ #	BSDI BSDI_CONTRIB,v 1.2 2002/01/29 23:23:05 donn Exp
+  #	$NetBSD: Makefile,v 1.12 2001/07/13 17:00:35 matt Exp $
+  
++ __bsdi__= 1
++ 
+  PROG=	ldd
+  SRCS=	ldd.c \
+  	xmalloc.c debug.c map_object.c load.c search.c headers.c paths.c
+***************
+*** 7,12 ****
+--- 10,19 ----
+  
+  .PATH:	${.CURDIR}/..
+  
++ .ifdef __bsdi__
++ MACHINE_ARCH= ${MACHINE}
++ .endif
++ 
+  .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
+  CPPFLAGS+= -DELFSIZE=64
+  .else
+***************
+*** 20,25 ****
+--- 27,37 ----
+  LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
+  CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
+  CPPFLAGS+= -D_RTLD_SOURCE
++ .ifdef __bsdi__
++ CPPFLAGS+= -I${LDELFSO}/arch/${MACHINE_ARCH} -I${.CURDIR}
++ CPPFLAGS+= -DDDBCTL_MAXID=0
++ CFLAGS+= ${CPPFLAGS}
++ .endif
+  .PATH: ${LDELFSO}
+  
+  LDSTATIC?= -static
+
+The ldd.c source file doesn't support a.out (BSD/OS has never
+supported dynamically linked a.out executables) and fixes a bug
+that can lead to infinite recursion when two libraries list each
+other as needed:
+
+diff -c -r1.1.1.1 -r1.2
+*** ldd_elf/ldd.c	2001/11/28 03:18:38	1.1.1.1
+--- ldd_elf/ldd.c	2001/11/28 04:44:26	1.2
+***************
+*** 1,3 ****
+--- 1,4 ----
++ /*	BSDI BSDI_CONTRIB,v 1.2 2002/01/29 23:23:05 donn Exp	*/
+  /*	$NetBSD: ldd.c,v 1.11 2000/12/12 11:16:02 simonb Exp $	*/
+  
+  /*-
+***************
+*** 201,206 ****
+--- 202,212 ----
+  {
+      const Needed_Entry *needed;
+  
++     /* Hack: don't revisit nodes.  */
++     if (obj->dl_refcount > 0)
++ 	return;
++     obj->dl_refcount = 1;
++ 
+      for (needed = obj->needed; needed != NULL; needed = needed->next) {
+  	char libnamebuf[200];
+  	const char *libname = obj->strtab + needed->name, *cp;
+***************
+*** 227,232 ****
+--- 233,239 ----
+  static int
+  ldd_aout(char *file, int fd)
+  {
++ #ifndef __bsdi__
+  	struct exec hdr;
+  	int status, rval;
+  
+***************
+*** 271,274 ****
+--- 278,284 ----
+  		_exit(1);
+  	}
+  	return rval;
++ #else
++ 	return -1;
++ #endif
+  }
+
+Ldd must be dynamically linked.
+
+diff -c -r1.2 -r1.4
+*** Makefile	2001/11/28 05:16:17	1.2
+--- Makefile	2002/01/29 18:28:55	1.4
+***************
+*** 25,40 ****
+  .endif
+  
+  LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
+  CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
+  CPPFLAGS+= -D_RTLD_SOURCE
+  .ifdef __bsdi__
+- CPPFLAGS+= -I${LDELFSO}/arch/${MACHINE_ARCH} -I${.CURDIR}
+- CPPFLAGS+= -DDDBCTL_MAXID=0
+  CFLAGS+= ${CPPFLAGS}
+  .endif
+  .PATH: ${LDELFSO}
+  
+  LDSTATIC?= -static
+- 
+  
+  .include <bsd.prog.mk>
+--- 25,42 ----
+  .endif
+  
+  LDELFSO=${.CURDIR}/../../../libexec/ld.elf_so
++ .ifdef __bsdi__
++ CPPFLAGS+= -I${.CURDIR} -I${LDELFSO}/arch/${MACHINE_ARCH}
++ CPPFLAGS+= -DDDBCTL_MAXID=0
++ .endif
+  CPPFLAGS+= -I${LDELFSO} -DLIBDIR=\"${LIBDIR}\"	# -DDEBUG
+  CPPFLAGS+= -D_RTLD_SOURCE
+  .ifdef __bsdi__
+  CFLAGS+= ${CPPFLAGS}
++ LDCC=	cc
+  .endif
+  .PATH: ${LDELFSO}
+  
+  LDSTATIC?= -static
+  
+  .include <bsd.prog.mk>

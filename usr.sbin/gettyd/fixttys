@@ -1,0 +1,153 @@
+#!/bin/sh
+
+# Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#	BSDI fixttys,v 1.2 1996/06/05 19:47:03 prb Exp
+
+case $# in
+0)
+	FILE=/etc/ttys
+	;;
+1)
+	FILE=$1
+	;;
+*)
+	echo "Usage: fixttys [ttysfile]" 2>&1
+	exit 1
+	;;
+esac
+if [ ! -r $FILE ] ; then
+	echo "$FILE: cannot read" 2>&1
+	exit 1
+fi
+if awk < $FILE > $FILE.new '
+BEGIN {
+	getty="\"/usr/libexec/getty "
+    	OC="# name	getty				type	status		comments"
+}
+function isflag(f)
+{
+	return f == "on" || f == "off" || f == "dialin" || f == "dialout" || f == "bidir" || f == "secure" || match(f, "window=") == 1 || match(f, "auth=") == 1
+}
+function isknown(f)
+{
+	return system("grep -q \"^" f "[:|]\" /etc/ttys.conf /etc/ttys.conf.local") == 0;
+}
+NF == 2 && $2 == "none" {
+	printf($1 "\n")
+	next
+}
+NF == 3 && $2 == "none" && $3 == "network" {
+	printf($1 "	network\n")
+	next
+}
+NF == 4 && $2 == "none" && $3 == "network" && match($4, "auth=") == 1 {
+	printf($1 " "	$4 " network\n")
+	next
+}
+$0 == OC {
+	printf("# New ttys file format entries are of the form:\n")
+	printf("#\n")
+	printf("# name [variable=value ...] tag [tag..]\n")
+	printf("#\n")
+	printf("# tags refer to entires in the /etc/ttys.conf[.local] files\n")
+	printf("# tags may have a preceeding * or + to indicate that duplicate\n")
+	printf("# entries should be merged by intersection or union, respectively,\n")
+	printf("# rather than be ignored\n")
+	printf("#\n")
+	printf("# Old format entries are of the form:\n")
+	printf("# name	getty				type	status	# comments\n")
+	next
+}
+{
+	LEN=length($0)
+
+	car = ""
+	field = 1
+	for (i = 1; i <= LEN; ++i) {
+		ch = substr($0, i, 1)
+		if (ch == " " || ch == "\t") {
+			printf(ch)
+		} else
+			break
+	}
+	if (substr($0, i, 1) == "#") {
+		printf(substr($0, i) "\n")
+		next
+	}
+
+	comments = "";
+	fieldsp[field] = "";
+	ok=0
+	for (; i <= LEN; ++i) {
+		if (substr($0, i, 1) == "#") {
+			comments = substr($0, i);
+			break;
+		}
+		ch = substr($0, i, 1)
+		if (ch == "\"") {
+			cdr = substr($0, i+1)
+			cdr = substr(cdr, 0, index(cdr, "\""))
+			car = car ch cdr
+			i += length(cdr)
+		} else if (ch == " " || ch == "\t") {
+			fieldsp[field] = fieldsp[field] ch
+			if (length(car) == 0) {
+				;
+			} else if (field == 2) {
+				if (substr(car, 0, length(getty)) == getty) {
+					cdr = substr(car, length(getty)+1)
+					cdr = substr(cdr, 0, length(cdr)-1)
+					if (ok = isknown(cdr))
+						fields[field] = cdr
+					else
+						fields[field] = car
+				} else {
+					fields[field] = car
+				}
+				++field
+				fieldsp[field] = "";
+			} else if (field < 4 || isflag(car)) {
+				fields[field] = car
+				++field
+				fieldsp[field] = ""
+			} else {
+				comments = "# " car substr($0, i);
+				car = ""
+				break;
+			}
+			car = ""
+		} else {
+			car = car ch
+		}
+	}
+	if (length(car) == 0) {
+		;
+	} else if (field < 4 || isflag(car)) {
+		fields[field] = car
+		++field
+		fieldsp[field] = "";
+	} else {
+		comments = "# " car substr($0, i);
+	}
+	printf("%s%s", fields[1],fieldsp[1]);
+	if (ok) {
+		printf("term=%s%s%s%s", fields[3], fieldsp[3], fields[2], fieldsp[2]);
+		i = 4;
+	} else
+		i = 2;
+	for (;i < field;++i)  {
+		if (ok && fields[i] == "on")
+			fields[i] = "in";
+		printf("%s%s", fields[i],fieldsp[i]);
+	}
+	printf("%s\n", comments);
+}' ; then
+	mv $FILE $FILE.orig &&
+	mv $FILE.new $FILE &&
+	echo "$FILE has been converted.  The original file is called $FILE.orig" &&
+	exit 0
+fi
+exit 1

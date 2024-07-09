@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+# The Berkeley Software Design Inc. software License Agreement specifies
+# the terms and conditions for redistribution.
+#
+#       BSDI checkttys,v 1.1 1996/06/05 19:47:01 prb Exp
+
+FILE=/etc/ttys
+if [ ! -r $FILE ] ; then echo "$FILE: cannot read" 2>&1 ; exit 1 ; fi
+awk < $FILE '
+BEGIN { getty="\"/usr/libexec/getty "
+    message="Nothing unusual found in /etc/ttys." }
+function isflag(f) { return f == "on" || f == "off" || f == "dialin" ||
+    f == "dialout" || f == "bidir" || f == "secure" ||
+    match(f, "window=") == 1 || match(f, "auth=") == 1 }
+function isknown(f) { return f == "pccons" ||
+    f == "bidir.1200" || f == "bidir.1200-hf" || f == "bidir.2400" ||
+    f == "bidir.2400-hf" || f == "bidir.4800" || f == "bidir.4800-hf" ||
+    f == "bidir.9600" || f == "bidir.9600-hf" || f == "bidir.19200" ||
+    f == "bidir.19200-hf" || f == "bidir.38400" || f == "bidir.38400-hf" ||
+    f == "bidir.57600" || f == "bidir.57600-hf" || f == "bidir.115200" ||
+    f == "bidir.115200-hf" ||
+    f == "hf.1200" || f == "hf.2400" || f == "hf.4800" || f == "hf.9600" ||
+    f == "hf.19200" || f == "hf.38400" || f == "hf.57600" ||
+    f == "hf.76800" || f == "hf.115200" ||
+    f == "hw.1200" || f == "hw.2400" || f == "hw.4800" || f == "hw.9600" ||
+    f == "hw.19200" || f == "hw.38400" || f == "hw.57600" ||
+    f == "hw.76800" || f == "hw.115200" ||
+    f == "std.110" || f == "std.134" || f == "std.150" || f == "std.300" ||
+    f == "std.600" || f == "std.1200" || f == "std.9600" || f == "std.2400" ||
+    f == "std.4800" || f == "std.19200" || f == "std.38400" ||
+    f == "std.57600" || f == "std.76800" || f == "std.115200" ||
+    f == "t57600" || f == "t57600-hf"
+}
+NF == 2 && $2 == "none" { next }
+NF == 3 && $2 == "none" && $3 == "network" { next }
+NF == 4 && $2 == "none" && $3 == "network" && match($4, "auth=") == 1 { next }
+{   LEN=length($0); car = ""; field = 1
+    for (i = 1; i <= LEN; ++i) {
+	ch = substr($0, i, 1)
+	if (ch != " " && ch != "\t") break
+    }
+    if (substr($0, i, 1) == "#") next
+    for (ok = 0; i <= LEN; ++i) {
+	if (substr($0, i, 1) == "#") break
+	ch = substr($0, i, 1)
+	if (ch == "\"") {
+	    cdr = substr($0, i+1)
+	    cdr = substr(cdr, 0, index(cdr, "\""))
+	    car = car ch cdr
+	    i += length(cdr)
+	} else if (ch == " " || ch == "\t") {
+	    if (length(car) == 0) { ;
+	    } else if (field == 2) {
+		if (substr(car, 0, length(getty)) == getty) {
+		    cdr = substr(car, length(getty)+1)
+		    cdr = substr(cdr, 0, length(cdr)-1)
+		    ok = isknown(cdr);
+		}
+		++field
+	    } else if (field < 4 || isflag(car)) ++field
+	    else break
+	    car = ""
+	} else car = car ch
+    }
+    if (field > 1 && !ok) { print
+    message="\nPlease email the above information to prb@bsdi.com." }
+}
+END { printf(message "\nThank you for your participation.\n") }'

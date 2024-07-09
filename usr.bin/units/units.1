@@ -1,0 +1,63 @@
+.\" Copyright (c) 1993, 1994 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI units.1,v 2.1 1995/02/03 13:15:01 polk Exp
+.Dd March 8, 1993
+.Dt UNITS 1
+.Os
+.Sh NAME
+.Nm units
+.Nd convert among units
+.Sh SYNOPSIS
+.Nm units
+.Sh DESCRIPTION
+The
+.Nm units
+program prints conversion factors between two sets of units.  It reads
+two input lines and then prints the result:
+.Bd -literal -compact -offset indent
+you have: \fByard\fP
+you want: \fBmeter\fP
+        * 9.144000e-01
+        / 1.093613e+00
+.Ed
+The first output line displays the constant to multiply the `have'
+quantity by to obtain the `want quantity; the second shows the
+constant by which to divide.
+.Pp
+The
+.Nm units
+program knows about a number of units, including compound units:
+.Bd -literal -compact -offset indent
+you have: \fB3600 rpm\fP
+you want: \fBradian/sec\fP
+        * 3.769911e+02
+        / 2.652582e-03
+you have: \fB65 mph\fP
+you want: \fBfurlongs/fortnight\fP
+        * 1.747200e+05
+        / 5.723443e-06
+.Ed
+It also understands currency conversions, though they are only updated
+occasionally.  Currencies are specified by the name of the country
+followed by an underscore followed by the name of the currency:
+.Bd -literal -compact -offset indent
+you have: \fB100 dollars\fP
+you want: \fBzaire_zaire\fP
+        * 2.652000e+08
+        / 3.770739e-09
+.Ed
+.Pp
+See a complete list of all units and conversions by reading the
+program itself, which is a perl script.
+.Sh COPYRIGHT
+Copyright (c) 1993,1995 BSDI
+.br
+All rights reserved.
+.Sh BUGS
+The program's conversion data has not been thoroughly tested.
+.Pp
+While some conversion factors are relatively constant (e.g., the speed
+of light), the currency conversion factors change on a daily basis.

@@ -1,0 +1,15 @@
+#!/bin/sh
+#	BSDI	uptime,v 1.1 1998/11/20 23:01:20 tks Exp
+
+UPTIME=/usr/bin/uptime
+
+echo Content-type: text/plain
+echo
+
+if [ -x $UPTIME ];  then
+	$UPTIME
+else 
+	echo Cannot find uptime command on this system.
+fi
+
+

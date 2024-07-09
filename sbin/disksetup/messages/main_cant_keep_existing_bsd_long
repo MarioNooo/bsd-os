@@ -1,0 +1,6 @@
+Your disk appears to have a valid BSD partition table.
+It appears that you have altered (or added to) the FDISK table, and
+hence this partition table may no longer be valid; if so, you
+should start with a clean table.  Note that starting with a clean
+table will cause all data on the disk to be lost.
+

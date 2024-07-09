@@ -1,0 +1,8 @@
+Makefile
+gettext
+msgcmp
+msgfmt
+msgmerge
+msgunfmt
+xgettext
+msgcomm

@@ -1,0 +1,141 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI mexpect.8,v 1.5 1997/09/11 16:27:56 prb Exp
+.Dd March 6th, 1995
+.Os
+.Dt MEXPECT 8
+.Sh NAME
+.Nm mexpect
+.Nd "send a string to a device/modem and expect a response"
+.Sh SYNOPSIS
+.Nm
+.Op Fl dsz
+.Op Fl b Ar baud
+.Op Fl c Ar count
+.Op Fl f Ar device
+.Op Fl r Ar rstring
+.Op Fl t Ar timeout
+.Ar string
+.Op Ar expect Op ...
+.Sh DESCRIPTION
+The
+.Nm
+program sends
+.Ar string
+and optionally waits for one of several
+.Ar expect
+strings in response.  The
+.Ar expect
+strings are regular expressions as defined by
+.Xr regex 3 .
+.Pp
+The optional arguments to
+.Nm
+are:
+.Bl -tag -width indent
+.It Fl b
+Do not send characters any faster than would be sent if the line
+was set to the baud rate
+.Ar baud .
+This allows leaving the line at higher speeds when talking to a modem
+that can't keep up while in command mode.
+.It Fl c Ar count
+Try sending
+.Ar string
+up to
+.Ar count
+times.
+.It Fl d
+Turn on debug mode.
+This will cause
+.Nm
+to print out each string sent and received from the device.
+.It Fl f Ar device
+Instead of assuming standard input and standard output, open
+.Ar device
+and send all requests and expect all responses from it.
+It is quite useful when
+.Ar device
+is of the form
+.Li /dev/fd/ Ns Ar xx .
+.It Fl r Ar rstring
+Before resending
+.Ar string
+after a timeout (as indicated by
+.Fl c Ns No ),
+send
+.Ar rstring .
+.It Fl s
+Cause
+.Nm
+to print on exit, to standard output, two lines of the form:
+.Bd -literal -offset indent
+.br
+.Ev MINDEX=' Ns Ar index Ns No '
+.Ev MSTRING=' Ns Ar match Ns No '
+.Ed
+.Pp
+The value of
+.Ar index
+will either be the index (starting with 0) to the
+.Ar expect
+string that was matched.  The value of
+.Ar match
+will be the string that actually matched the
+.Ar expect
+string.
+On error,
+.Ar index
+will be set to -1 and
+.Ar match
+will indicate the error.
+.Pp
+If there are no
+.Ar expect
+strings, then
+.Ar index
+will be 0 and
+.Ar match
+will be empty.
+.It Fl t Ar timeout
+If no
+.Ar expect
+string is received within
+.Ar timeout
+seconds, either resend
+.Ar string (see
+.Fl c Ns No )
+or exit with a failure.
+.It Fl z
+Cause
+.Nm
+to expect
+.Ar string
+to be echoed.
+.Nm Expect
+will wait for
+.Ar string
+to be echoed before looking for one of the
+.Ar expect
+strings.
+.El
+.Pp
+When there are no
+.Ar expect
+strings defined,
+.Nm
+does not wait for any response, including the echoing of
+.Ar string ,
+even if
+.Fl z
+is given.
+.\" This next request is for sections 1, 6, 7 & 8 only
+.Sh SEE ALSO
+.Xr regex 3
+.Sh HISTORY
+This command first appeared in BSD/OS 3.0.
+.Sh AUTHORS
+Paul Borman, Berkeley Software Design, Inc.
+.\" .Sh BUGS

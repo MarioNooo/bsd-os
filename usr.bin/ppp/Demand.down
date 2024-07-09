@@ -1,0 +1,28 @@
+#!/bin/sh
+#	BSDI Demand.down,v 2.2 1997/01/16 18:12:53 prb Exp
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+while [ $# -gt 0 ] ; do
+	case $1 in
+	-debug)	shift; echo $(date): $0 $* ; set -x ;;
+        --)	shift; break ;;
+        -*|+*)	shift ;;
+        *)	break ;;
+        esac
+done
+
+
+SYSTEM=$1	# System
+INTERFACE=$2	# Interface
+LOCAL=$3	# Local address
+REMOTE=$4	# Remote address
+
+#
+# If the default route points to this interface, delete it.
+# If you do not want to delete the default route, comment out the next 3 lines
+#
+if route -n get default | grep -q "interface: $INTERFACE\$" ; then
+	route -n delete default
+fi
+ifconfig $INTERFACE inet -remove down -link0 -link1 -link2 > /dev/null 2>&1
+exit 0

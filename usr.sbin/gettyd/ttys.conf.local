@@ -1,0 +1,26 @@
+# This file is for local modifications to the /etc/ttys.conf file.
+# There should be no changes made to the /etc/ttys.conf file directly.
+# All local modifications should be made here.
+
+# Please read the notes in /etc/ttys.conf about modifications to the
+# default entry.  Please also read cgetent(3) to understand the scope
+# of the :tc=...: operator.
+
+# Add destination entries here, such as:
+#
+# myisp:\
+#	:number=+12025551234|+12025552345:\
+#	:speed=28800|14400:\
+#	:dte-speeds=115200|57600:
+
+# Add new modem defitions here, such as:
+#
+# example:\
+#	:modemtype=ACME W. Coyote 28.8 Modem:\
+#	:hcondition=ATE0&Q6&K3&D3&C1S0=1S2=255:\
+#	:hdial=ATDT$1:\
+#	:hhangup=ATH:\
+#	:hinit=AT&Q6S0=0S2=255:\
+#	:hquiet=ATQ1:\
+#	:hreset=AT&F:\
+#	:tc=Generic288:

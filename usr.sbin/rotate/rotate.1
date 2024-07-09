@@ -1,0 +1,97 @@
+.\"	BSDI rotate.1,v 1.1 1996/11/12 21:28:36 sanders Exp
+.Dd November 5, 1996
+.Dt ROTATE 1
+.Os
+.Sh NAME
+.Nm rotate
+.Nd rotate log files into a number of archives
+.Sh SYNOPSIS
+.Nm rotate
+.Op Fl c | Fl z
+.Op Fl m Ar mode
+.Op Fl o Ar owner
+.Op Fl r Ar rot
+.Op Fl s
+.Pa file
+.Op Ar suffix ...
+.Sh DESCRIPTION
+The
+.Nm rotate
+program is used to rotate log files for archival purposes.
+The suffix arguments are arbitrary, you can use any valid
+file characters or you can use the
+.Fl r
+argument.
+Logs are rotated right-to-left so the current
+log file is rotated into the last file.suffix argument.
+The
+.Xr jot 1
+program may be used to generate more complex lists of suffixes.
+.Pp
+The following options are available:
+.Bl -tag -width Fl
+.It Fl c
+Compress the archive with
+.Pa compress .
+.It Fl m Ar mode
+Set the file modes to
+.Ar mode .
+Mode can be any valid
+.Xr Chmod 1
+mode argument.  Defaults to 0644.
+.It Fl o Ar owner
+Set the file owner and/or group, the argument is passed to
+.Xr chown 8 .
+.It Fl r Ar rot
+Rotate into archives
+numbered 0 through
+.Ar rot .
+.Ar Rot
+must be greater than or equal to 0.
+.It Fl s
+Enable running a
+.Pa file.scan
+program after log rotation but before
+compression.  The
+.Pa file.scan
+program is passed the most recent archive and the actual log file
+as arguments:
+.Ic "file.scan file.suffix file"
+.Pp
+This feature can be used to process log data and set file permissions.
+However, you must be careful not to allow users to write
+.Pa file.scan
+files that are being run as root.
+.It Fl z
+Compress the archive with
+.Pa gzip .
+.El
+.Sh EXAMPLES
+Save 10 archives (0-9) specifying the suffixes manually:
+.Bd -literal -offset indent
+% rotate /path/file 9 8 7 6 5 4 3 2 1 0
+.Ed
+.Pp
+Save 10 archives (0-9):
+.Bd -literal -offset indent
+% rotate -r 9 /path/file
+.Ed
+.Pp
+Compress archives with
+.Pa gzip :
+.Bd -literal -offset indent
+% rotate -r 9 -z /path/file
+.Ed
+.Pp
+Set owner, group, and file modes on the newly created archive file:
+.Bd -literal -offset indent
+% rotate -m 0600 -o root:wheel -r 9 /path/file
+.Ed
+.Sh SEE ALSO
+.Xr chmod 1 ,
+.Xr chown 8 ,
+.Xr jot 1
+.Sh HISTORY
+This
+.Nm rotate
+command was written for BSD/OS 3.0.

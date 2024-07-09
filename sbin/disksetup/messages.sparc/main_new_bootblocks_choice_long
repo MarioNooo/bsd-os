@@ -1,0 +1,5 @@
+The following types of boot blocks are available:
+
+    boot1       Boot from any PROM device on pre-V9 SPARC
+    boot1.v9    Boot from any PROM device on V9 UltraSPARC
+

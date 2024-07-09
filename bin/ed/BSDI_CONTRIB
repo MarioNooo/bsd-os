@@ -1,0 +1,21 @@
+Software Package:       
+	ed
+
+Release/Version:
+	3.4
+
+Retrieved from:
+	http://www.bond.net/~rodney/ed.html
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and rodney@bond.net
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Added makefile to build things our way (derived from Makefile)
+

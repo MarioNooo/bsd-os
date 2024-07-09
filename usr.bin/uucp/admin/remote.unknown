@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# BSDI remote.unknown,v 2.2 1996/06/11 19:26:43 vixie Exp
+
+#/bin/echo $@ `/bin/date` | /usr/ucb/Mail -s "Unknown host $*" root
+/bin/echo $@ `/bin/date` >>/var/log/uucp/Foreign

@@ -1,0 +1,114 @@
+.\" Copyright (c) 2001 Wind River Systems, Inc.  All rights reserved.
+.\"
+.\"	BSDI sched_get_priority_max.2,v 1.2 2001/10/03 17:30:41 polk Exp
+.\"
+.\" Copyright (c) 1997, 2001 Berkeley Software Design Inc.  All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd November 21, 1997
+.Dt SCHED_GET_PRIORITY_MAX 2
+.Os BSD 4
+.Sh NAME
+.Nm sched_get_priority_max ,
+.Nm sched_get_priority_min ,
+.Nm sched_rr_get_interval
+.Nd get realtime scheduling priority maximum and minimum values and
+the round-robin scheduling time interval
+.Sh SYNOPSIS
+.Fd #include <sched.h>
+.Ft int
+.Fn sched_get_priority_max "int policy"
+.Ft int
+.Fn sched_get_priority_min "int policy"
+.Ft int
+.Fn sched_rr_get_interval "pid_t pid" "struct timespec *interval"
+.Sh DESCRIPTION
+The
+.Fn sched_get_priority_max
+and
+.Fn sched_set_priority_min
+functions return the maximum and minimum values, repsectively, for the
+scheduling policy specified by
+.Fa policy .
+The
+.Fn sched_rr_get_interval
+function returns the time interval used by the
+.Dv SCHED_RR
+scheduling policy in the
+.Fa timespec
+structure pointed to be
+.Fa interval .
+.Pp
+Values returned are for the process identified by
+.Fa pid .
+If
+.Fa pid
+is zero, the scheduling policy for the calling process shall be returned.
+If the value of
+.Fa pid
+is negative, the behavior of the
+.Fn sched_get_priority_max ,
+.Fn sched_set_priority_min ,
+and
+.Fn sched_rr_get_interval
+functions is unspecified.
+.Pp
+The value for
+.Fa policy
+shall be one of scheduling policy values defined in the header file
+.Pq Aq Pa sched.h .
+.Sh RETURN VALUES
+If successful, the
+.Fn sched_get_priority_max
+and
+.Fn sched_get_priority_min
+functions shall return the appropriate maximum and minmum values, respectively.
+If unsuccessful, they shall return a value of -1 and set
+.Fa errno
+to an appropriate value.
+.Pp
+If successful, the
+.Fn sched_rr_get_interval
+function shall return zero.
+If unsuccessful, the
+.Fn sched_rr_get_interval
+function shall return a value of -1 and set
+.Fa errno
+to an appropriate value.
+.Sh ERRORS
+.Fn Sched_get_priority_max ,
+.Fn sched_get_priority_min ,
+and
+.Fn sched_rr_get_interval
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of
+.Fa policy
+does not represent a defined scheduling policy.
+.It Bq Er ENOSYS
+The functions
+.Fn sched_get_priority_max ,
+.Fn sched_get_priority_min ,
+and
+.Fn sched_rr_get_interval
+are not supported by this implementation.
+.It Bq Er ESRCH
+No process was located using the 
+.Fa pid
+value specified.
+.El
+.Sh SEE ALSO
+.Xr sched_setparam 2 ,
+.Xr sched_setscheduler 2 ,
+.Xr getpriority 2 ,
+.Sh STANDARDS
+The
+.Fn sched_get_priority_max ,
+.Fn sched_get_priority_min ,
+and
+.Fn sched_rr_get_interval
+function calls are expected to
+conform to IEEE Std 1003.1-1996
+.Pq Dq Tn POSIX .

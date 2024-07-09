@@ -1,0 +1,141 @@
+.\"
+.\" Copyright (c) 1999 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\" BSDI pthread_cancel.3,v 1.1 1999/10/04 18:16:10 jch Exp
+.\" 
+.Dd Oct 1, 1999
+.Dt PTHREAD_CANCEL 3
+.Os BSD 4
+.Sh NAME
+.Nm pthread_cancel
+.Nd request that the specified thread be canceled
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_cancel "pthread_t thread"
+.Sh DESCRIPTION
+.Pp
+Request that
+.Fa thread
+be canceled.
+When the cancellation takes effect is controlled by the cancelability
+state and type of the target thread, see
+.Xr pthread_setcancelstate 3
+and
+.Xr pthread_setcanceltype 3 .
+.Pp
+The actions taken when cancellation is acted on are equivalent to the
+actions taken if 
+.Fa thread
+had called
+.Xr pthread_exit 3 Ns .
+The cancellation processing in the target thread runs asynchronously
+with respect to the calling thread returning from
+.Fn pthread_cancel Ns .
+.Pp
+Thread cancelation is enabled and disabled the
+.Xr thread_setcancelstate 3
+function; thread cancellation is enabled by default.
+.Pp
+There are two types of thread cancellation, controlled by the
+.Xr thread_setcanceltype 3
+function.
+The default is
+.Dq deferred
+cancellation which will only take effect at a specified cancellation point
+.Pq see below Ns .
+The use of the
+.Xr thread_cleanup_push 3 Ns ,
+.Xr thread_cleanup_pop 3
+and
+.Xr thread_setcancelstate 3
+functions make it possible to insure that no resources are lost when
+deferred cancellation is used.
+.Pp
+A thread may also be configured for 
+.Dq asynchronous
+cancellation which will take effect when the thread scheduler
+dispatches the canceled thread to run again.
+It is not possible to insure the reclamation of resources when a
+thread is configured for asynchronous cancellation.
+.Sh CANCELLATION POINTS
+Deferred cancellation will only occur at a cancellation point.
+Cancellation points are acted on when 
+.Fa thread
+may block in any of the following functions:
+.sp
+.Xr accept 2 ,
+.Xr close 2 ,
+.Xr connect 2 ,
+.Xr create 2 ,
+.Xr fsync 2 ,
+.Xr pause 3 ,
+.Xr pthread_cond_timedwait 3 ,
+.Xr pthread_cond_wait 3 ,
+.Xr pthread_join 3 ,
+.Xr sigwait 2 ,
+.Xr sleep 3 ,
+.Xr system 3 ,
+.Xr msync 2 ,
+.Xr open 2 ,
+.Xr fcntl 2
+.Pq when cmd argument is Dv F_SETLKW Ns ,
+.Xr flockfile 2 ,
+.Xr read 2 ,
+.Xr readv 2 ,
+.Xr recv 2 ,
+.Xr recvfrom 2 ,
+.Xr recvmsg 2 ,
+.Xr send 2 ,
+.Xr sendmsg 2 ,
+.Xr sendto 2 ,
+.Xr sigsuspend 2 ,
+.Xr tcdrain 3 ,
+.Xr usleep 3 ,
+.Xr wait 2 ,
+.Xr waitpid 2 ,
+.Xr wait4 2 ,
+.Xr write 2 ,
+.Xr writev 2 .
+.Pp
+When a cancellation is pending, cancellation will always occur
+in
+.Xr pthread_testcancel 3 ,
+.Pp
+Note that other library routines may call these functions and thereby
+behave as a cancellation point.
+.Pp
+
+.Sh RETURN VALUES
+If successful, the
+.Fn pthread_cancel
+function will return zero.
+Otherwise an error number will be returned to indicate the error.
+.Sh ERRORS
+For each of the following conditions, if the condition is detected, the
+.Fn pthread_cancel
+function shall return the corresponding error number:
+.Bl -tag -width Er
+.It Bq Er ESRCH
+No thread could be found corresponding to the specified thread ID.
+.El
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr pthread_cond_timedwait 3 ,
+.Xr pthread_cond_wait 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_join 3 ,
+.Xr pthread_setcancelstate 3 ,
+.Xr pthread_setcanceltype 3 ,
+.Xr pthread_testcancel 3
+.Sh STANDARDS
+The
+.Fn pthread_cancel
+function conforms to
+.St -p1003.1c .
+.Sh HISTORY
+The
+.Fn pthread_cancel
+function first appeared in BSD/OS 4.1.

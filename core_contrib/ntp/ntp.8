@@ -1,0 +1,121 @@
+.\"	BSDI ntp.8,v 1.3 2001/04/11 13:11:42 geertj Exp
+.\"
+.Dd October 20, 1999
+.Dt ntp 8
+.Os
+.Sh NAME
+.Nm ntpd, ntpdate, ntpdc, ntpq, ntptimeset, ntptrace, tickadj
+.Nd Network Time Protocol
+.Sh DESCRIPTION
+The complete documentation for the
+.Nm ntpd ,
+.Nm ntpdate ,
+.Nm ntpdc ,
+.Nm ntpq ,
+.Nm ntptimeset ,
+.Nm ntptrace ,
+and
+.Nm tickadj
+commands from the NTP distribution is only available in
+.Tn HTML
+form:
+.Pp
+.Bl -tag -width "ntptrace\0\0\0" -compact -offset indent
+.It Xr ntpd :
+.Pa file:///usr/share/doc/ntp/ntpd.htm
+.It Xr ntpdate :
+.Pa file:///usr/share/doc/ntp/ntpdate.htm
+.It Xr ntpdc :
+.Pa file:///usr/share/doc/ntp/ntpdc.htm 
+.It Xr ntpq :
+.Pa file:///usr/share/doc/ntp/ntpq.htm
+.It Xr ntptimeset :
+.Pa file:///usr/share/doc/ntp/ntptime.htm
+.It Xr ntptrace :
+.Pa file:///usr/share/doc/ntp/ntptrace.htm
+.It Xr tickadj :
+.Pa file:///usr/share/doc/ntp/tickadj.htm
+.It general :
+.Pa file:///usr/share/doc/ntp/index.htm
+.El
+.Pp
+Use
+.Xr lynx 1
+or
+.Xr netscape 1
+to view these documents.
+.Sh SEE ALSO
+.Xr date 1 ,
+.Xr adjtime 2 ,
+.Xr getttimeofday 2 .
+.Sh BUGS
+For security reasons,
+the system will not permit
+.Nm ntpdate
+to step the time to an earlier time
+than the current time if the security level is greater than zero.
+If the
+.Fl b
+flag to
+.Nm ntpdate
+is not specified, it will always use
+.Xr adjtime 2
+to correct the time gradually.
+When the security level is zero
+.Pq "for example, when in single user mode
+the
+.Fl b
+flag may be used to force
+.Nm ntpdate
+to step the time backwards if necessary.
+.Nm Ntpd
+is aware of this limitation and will only slew the time
+.Pq see Xr adjtime 2 .
+.Pp
+When booting,
+if the file
+.Pa /etc/ntp.conf
+exists,
+.Xr rc 8
+scans it for
+.Dq broadcastclient ,
+.Dq multicastclient ,
+.Dq peer ,
+and
+.Dq server
+keywords.  If any are found, it runs
+.Nm ntpdate
+with the
+.Fl b
+flag to sync time with the listed time servers.
+This will step the clock close to the current time in single-user mode,
+which will allow
+.Nm ntpd
+to tune it more finely when the system is in multi-user mode.
+.Pp
+.Nm Ntpd
+is only able to compensate for a system clock that has an error of
+less than 100PPM (about .01%).  For clocks with an error greater than
+this, the kernel
+.Va tick
+variable will need to be adjusted from
+.Pa /etc/rc
+using the
+.Nm tickadj
+command.
+The procedure for doing this is documented in the
+.Do
+Dealing with Frequency Tolerance Violations
+.Dc
+section of
+.Do
+"Notes on Configuring NTP and Setting up a NTP Subnet"
+.Dc
+in the 
+.Tn HTML
+documentation referred to above.
+Note that the
+.Nm tickadj
+command should not be used to set the
+.Va tickadj
+kernel variable.

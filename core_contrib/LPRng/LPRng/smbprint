@@ -1,0 +1,39 @@
+#!/bin/sh
+# This script is an input filter for printcap printing on a unix machine. It
+# uses the smbclient program to print the file to the specified smb-based
+# server and service.
+# The 'smb' printcap entry below shows how to configure LPRng
+# for printing
+#
+# smb:
+#  :sh:lp=|/usr/local/samba/smbprint
+#  :sd=/usr/spool/smb:
+#  :if= ... filter ...
+#
+# The /usr/spool/smb/.config file should contain:
+#   server="PC_SERVER"
+#   service="PR_SHARENAME"
+#   password="PASSWORD"
+#
+# Set PC_SERVER to the server, PR_SHARENAME to the printer,
+# and PASSWORD to the password for this service.
+#
+# E.g.
+#   server=PAULS_PC
+#   service=CJET_371
+#   password=""
+#
+#
+config_file=.config
+if [ -f $config_file ] ; then
+        eval `/bin/cat $config_file`
+fi
+#
+# NOTE You may wish to add the line `echo translate' if you want automatic
+# CR/LF translation when printing.
+(
+#   echo translate
+    echo "print -"
+    /bin/cat
+) | /usr/contrib/bin/smbclient "\\\\$server\\$service" \
+  "$password" -U "$server" -N -P 1>&2

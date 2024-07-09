@@ -1,0 +1,35 @@
+#	BSDI addr-map.sample,v 2.5 2001/11/08 17:25:42 patm Exp
+# This file contains mappings to IP addresses from
+#
+# The LOCAL IP address of this machine for dialin/out sessions
+# PPP accounts (i.e. Psidewinder)
+# PPP interfaces (i.e. ppp0)
+# tty names (i.e. /dev/tty01)
+#
+# The first column is the key, the second column is the IP address
+# and subsequent columns are options to ifconfig.
+#
+# This information is used by the Default.login script for any dialin
+# session
+#
+# Examples:
+# NOTICE THAT COMMENTS MUST START AT THE BEGINNING OF A LINE!!!
+# You MUST have the '#' in column 1 for it to be seen as a comment.
+#
+# IP address for this machine
+# LOCAL		199.198.197.50
+#
+# PPP name for skeeter
+# Pskeeter	199.198.197.51
+#
+# ppp0		199.198.197.100
+# ppp1		199.198.197.101
+# ppp2		199.198.197.102
+#
+# /dev/tty00	199.198.197.129 netmask 255.255.255.128
+# /dev/tty01	199.198.197.130 netmask 255.255.255.128
+# /dev/tty02	199.198.197.131 netmask 255.255.255.128
+#
+# (ttys do not require a netmask, the were just used to show how a
+#  netmask would be added if required.)
+#

@@ -1,0 +1,410 @@
+ Last updated: 12 March 2003
+
+   Copyright 2003 QUALCOMM Incorporated.  All rights reserved.
+
+
+This document contains the changes since the last release.
+
+
+Changes from 4.0.4 to 4.0.5:
+----------------------------
+ 1.  Add debug trace call with OpenSSL library version.
+ 2.  Added 'tls-options' configuration file option.
+ 3.  Added 'tls-workarounds' boolean option. 
+ 4.  STLS errors (except for timeout) no longer fatal.
+ 5.  Added sample xinetd configuration file.
+ 6.  Additional checks for networking libraries.
+ 7.  Pick up LDFLAGS from environment, if set.
+ 8.  Added '--enable-32-bit' and '--enable-64-bit'
+ 9.  Applied patch from Jeremy Chadwick to fix pathname trimming in
+     standalone mode.
+10.  Fixed (non-root) buffer overflow.
+11.  Fixed '-no-mime' appended to user name (reported by Florian
+     Heinz).
+12.  Fixed response message when identical MDEFs defined multiple
+     times (reported by Florian Heinz).
+
+
+Changes from 4.0.3 to 4.0.4:
+----------------------------
+ 1.  Fixed DOS attack seen on some systems.
+ 2.  Fixed standalone mode on OpenBSD.
+ 3.  Fixed "noop has null function" log entry.
+ 4.  Fixed 'make install' error on systems w/o group 'root'.
+ 5.  Allow '-p' to be used when APOP not defined (noted by Daniel Senie).
+ 6.  Enforce ClearTextPassword even without APOP (noted by Daniel Senie).
+ 7.  Restrict clear-text-password=never to APOP.
+ 8.  Restrict clear-text-password=tls to QPOP_SSL.
+ 9.  Fixed qpopper hanging on I/O error on some platforms.
+
+
+Changes from 4.0.2 to 4.0.3:
+----------------------------
+ 1.  Don't call SSL_shutdown unless we tried to negotiate an
+     SSL session.  (As suggested by Kenneth Porter.)
+ 2.  Fix buffer overflow in USER command (reported by Gustavo
+     Viscaino).
+ 3.  Fixed empty password treated as empty command (patch
+     submitted by Michael Smith and others).
+ 4.  Added patch by Carles Xavier Munyoz to fix erroneous
+     scanning for \n in getline().
+ 5.  Fix from Arvin Schnell for warnings on 64-bit systems.
+ 6.  Added patch by Clifton Royston to change error message
+     for nonauthfile and authfile tests.
+ 7.  Added 'uw-kludge' as synonym for 'uw-kluge'.
+
+
+Changes from 4.0.1 to 4.0.2:
+----------------------------
+ 1.  Added fix for XTND XMIT (sent in by Jacques Distler and
+     others).
+ 2.  Fixed makefile problems with poppassd compile and install
+     (sent in by Steven Champeon).
+ 3.  Increased maximum spool path length from 64 to 256.
+ 4.  Added more debug code when genpath() runs out of room.
+ 5.  Changed C++ style comments to C style in poppassd.c
+ 6.  Changed poppassd's UID check to be the same as Qpopper's
+     (which is that if BLOCK_UID is defined we use that value,
+     otherwise it defaults to 10).
+ 7.  Added poppassd expect strings for DEC True 64 (sent in by
+     Andres Henckens).
+
+
+Changes from 4.0.1b1 to 4.0.1 (final):
+--------------------------------------
+ 1.  Fixed typo in popper/pop_init.c if DONT_CHECK_HASH_SPOOL_DIR
+     defined.
+
+
+Changes from 4.0 to 4.0.1b1:
+----------------------------
+ 1.  Messages with lines longer than 512 characters are no longer
+     garbled when sent to the client.
+ 2.  Added patches from Michael C Tiernan to fix makefile problems.
+
+
+Changes from 4.0b22 to 4.0 (final):
+-----------------------------------
+ 1.  Fixed error messages in stand-alone mode.
+ 2.  Integrated poppassd into build.
+ 3.  Changed name from "Qpopper LX" to "Qpopper".
+ 4.  Updated License.txt to the one used in the free product.
+ 5.  Updated samples/qpopper.config to reflect only one product.
+ 6.  Updated man pages.
+ 7.  Added PDF version of Administrator's Guide as GUIDE.pdf.
+ 8.  Updated INSTALL.
+ 9.  Added source for Administrator's Guide in doc/guide/.
+10.  Fixed double-slash in path when hash-spool=1.
+11.  Don't log "OpenSSL Error during shutdown" unless compiled
+     with debug or run with debug or trace options.
+12.  Changed STACKSIZE macro to QPSTACKSIZE to avoid conflicts.
+13.  Be a little nicer with "-v".
+14.  Now compiles cleanly on Darwin/Mac OS X.
+15.  Fixed case where mail lock was usurped in error.  Thanks to
+     Michael Smith for finding this.
+
+
+Changes from 4.0b21 to 4.0b22:
+------------------------------
+ 1.  Fix errors in non-debug builds.
+
+
+Changes from 4.0b20 to 4.0b21:
+------------------------------
+ 1.  Now including continuation of UIDL headers in UIDL hash.
+ 2.  Don't include random component of extra headers in UIDL
+     hash if old-style-uid is set.
+ 3.  Fix typo in pop_send.c.
+
+
+Changes from 4.0b19 to 4.0b20:
+------------------------------
+ 1.  Don't regard non-existent cache file as an error.
+ 2.  Debug octet checking only done if TRACE_MSG_BODY defined.
+ 3.  Fixed errors with SSL Plus.
+ 4.  Fixed lost group permissions with fast-update mode.
+
+
+Changes from 4.0b18 to 4.0b19:
+------------------------------
+ 1.  Don't insist on libkrb4 if '--with-kerberos5' specified.
+ 2.  Updated copyright to 2001 on remaining files.
+
+
+Changes from 4.0b17 to 4.0b18:
+------------------------------
+ 1.  Fixed problems compiling with Kerberos 5.
+ 2.  Slight improvement when /dev/urandom not installed.
+
+
+Changes from 4.0b16 to 4.0b17:
+------------------------------
+ 1.  Added 'max-bulletins' integer option.
+ 2.  Added new 'samples' directory to distribution.  Put sample
+     configuration file there, which lists all run-time options
+     with a description of each.
+ 3.  Checking for lk5crypto/lcrrypto when using Kerberos 5.
+ 4.  Tracefile records now include year.
+ 5.  HUP now closes and reopens trace file in standalone mode.
+ 6.  Standalone mode no longer aborts on weird accept() errors.
+
+
+Changes from 4.0b15 to 4.0b16:
+------------------------------
+ 1.  Fix typo with fast_update.
+
+
+Changes from 4.0b14 to 4.0b15:
+------------------------------
+ 1.  Boolean options set to 'true' (instead of '1') now working again.
+ 2.  Can now change trace file.
+ 3.  Reduced debug tracing when _DEBUG not defined.
+ 4.  Fixed XTND XMIT.
+ 5.  Now closing trace file if opened when 'debug' reset.
+ 6.  Added 'chunky-writes' config file option; mnemonics: 'default',
+     'always' (same as 'default'), 'never', 'tls', and 'ssl' (same as
+     'tls').
+ 7.  Added 'no-atomic-open'.  When set, Qpopper uses a method of
+     opening lock files that may work over NFS.
+ 8.  Fixed retry count in maillock trace record.
+ 9.  Added 'log-facility' configuration file option (-y command-line
+     flag) to specify log facility to use.  Values are "mail", and
+     "local0" through "local7".  Note that standalone daemon entries are
+     not affected by this setting (they still use the compile-time
+     value.) Also, popauth does not use this value (it uses the compile-
+     time value).
+10.  Added 'log-login' configuration file option.  Value is a string
+     which is written to the log when a user logs in.  An occurrence of
+     '%0' is replaced with the Qpopper version, '%1' with the user name,
+     '%2' with the user's host name, and '%3' with the IP address.
+
+
+Changes from 4.0b13 to 4.0b14:
+------------------------------
+ 1.  Fixed synatx error when AUTO_DELETE set.
+ 2.  Added check for "-no-mime" when APOP used.
+ 3.  "-no-mime" now adds "x-mangle(text=plain)" to TOP and RETR.
+ 4.  Converted NO_AUTOMIC_OPEN define into no_atomic_open run-time
+     variable.
+ 5.  Finished conversion of various compile-time defines into run-time
+     variables.
+ 6.  No longer hiding messages deleted in prior aborted session when
+     '--disable-update-abort' set.
+ 7.  Fixed syntax error in pop_user.c when APOP not set.
+ 8.  Save original group ID and use it instead of modified group
+     (which is normally set to group MAIL) to avoid errors in
+     determining group bulletin target.
+ 9.  Added new configuration file options: announce-login-delay,
+     announce-expire, bulldir, bulldb-nonfatal, bulldb-max-tries,
+     clear-text-password, config-file, debug, downcase-user, drac-host,
+     kerberos, kerberos-service, mail-lock-check, reverse-lookup,
+     server-mode, statistics, timeout, tracefile, user-options,
+     spool-options, fast-update, trim-domain, tls-support,
+     tls-cipher-list, tls-version, tls-identity-file, tls-passphrase,
+     tls-server-cert-file, tls-private-key-file, timing,
+     check-old-spool-loc, check-hash-dir, check-password-expired,
+     update-status-headers, update-on-abort, auto-delete,
+     group-bulletins, hash-spool, home-dir-mail, old-style-uid,
+     UW-kluge, keep-temp-drop, group-server-mode, group-no-server-mode,
+     auth-file, nonauth-file, shy, mail-command, spool-dir, temp-dir,
+     temp-name, cache-dir, cache-name.
+
+
+Changes from 4.0b12 to 4.0b13:
+------------------------------
+ 1.  Fixed APOP bug introduced in b12.
+
+
+Changes from 4.0b11 to 4.0b12:
+------------------------------
+
+ 1.  Added checks for dbm errors in popauth.
+ 2.  Fix setting of SPEC_POP_AUTH.
+ 3.  Fix check for -lsec on HPUX.
+ 4.  Added Qstrlen, a safe strlen.
+ 5.  Fixed crash in popauth on BSDi with -user or -list.
+ 6.  Updated License.txt file.
+ 7.  Moved some globals inside -p- structure.
+ 8.  Made BOOL char instead of int to save some memory.
+ 9.  Rewrote genpath() to collapse code and handle hash_spool and
+     homedirmail being run-time options.
+10.  New run-time variables (initialized from compile-time defaults):
+     bDo_timing, bCheck_old_spool_loc, bCheck_hash_dir, bCheck_pw_max,
+     bUpdate_status_hdrs, bUpdate_on_abort, bAuto_delete, bGroup_bulls,
+     hash_spool, bHome_dir_mail, bOld_style_uid, bUW_kluge, bKeep_temp_drop,
+     grp_serv_mode, grp_no_serv_mode, authfile, nonauthfile, bShy,
+     pMail_command, pCfg_spool_dir, pCfg_temp_dir, pCfg_temp_name,
+     pCfg_cache_dir, pCfg_cache_name.
+11.  Moved genpath.[ch] from common/ to popper/ (since it takes POP*
+     parameter now).
+12.  Now generating "<blockquote type=cite>" instead of "<blockquote>"
+     when mangling f=f to html.
+13.  Rewrote config file option handling to make it easier to add new
+     options.
+14.  When DEBUG set, trace elapsed time and verify octet and line counts.
+15.  Implemented chunky_writes run-time option.
+16.  Added error checking when sending TLS/SSL data to client.
+17.  Eliminated redundant calls on pop_write with no data.
+18.  Added '--enable-chunky-writes=0|1|2' to specify when nw writes
+     should be pooled.  Default is 0 (always); 1=TLS only; 2=never.
+19.  Fixed warnings/errors on BSDI and Linux.
+
+
+Changes from 4.0b10 to 4.0b11:
+-----------------------------
+
+ 1.  No longer hiding first msg when using cache from empty spool. 
+
+
+Changes from 4.0a9 to 4.0b10:
+-----------------------------
+
+ 1.  Added '-safe' flag to 'popauth -init'.
+ 2.  Updated popper and popauth man pages.
+ 3.  'make install' now initializes the popauth db if apop in use
+     and the db doesn't already exist.
+ 4.  Added '-v' option (-version and --version also work) to report
+     current version.
+ 5.  Replaced INSTALL file with pointer to Administrator's Guide.
+ 6.  Updated doc/Release.Notes.
+ 7.  Updated README.
+ 8.  Replaced License.txt file.
+ 9.  Distribution file (and directories) now include "LX" for
+     Qpopper LX.
+
+
+Changes from 4.0a8 to 4.0a9:
+----------------------------
+
+ 1.  Added '--without-gdbm' to force GDBM to not be used.
+ 2.  Added '--disable-hash-dir-check' to not check for or
+     create hash spool directories if they don't exist.
+ 3.  '--enable-specialauth' now defaults to TRUE when getspnam()
+     exists.
+ 4.  Deleted '-a' / 'alt-port-tls' run-time options.
+ 5.  Changed '-l' to be integer: 0 | 1 | 2.
+ 6.  Deleted 'enable-stls' run-time option.
+ 7.  Added 'tls-support' run-time option.  Values: 
+     'default ' / 'none' / 'stls' / 'alternate-port'.
+ 8.  Ignore additional accept() errors, per Stevens 5.11 (thanks
+     to Carles Munyoz for reporting this).
+ 9.  Ensure non-blocking socket passed to Qpopper in stand-alone mode.
+10.  Configure error if we don't have both header and library for a dbm.
+11.  Now processing home directory config files before spool directory
+     files, to allow admin to override user settings.
+12.  With '--enable-group-bulls', bulletins whose group is 'ALL' are
+     sent to all users.  Bulletins with invalid groups are sent to
+     no users.
+13.  Ensure LIBS line in Makefile doesn't end with empty continuation
+     line when SSL not in use.
+
+
+Changes from 4.0a7 to 4.0a8:
+----------------------------
+
+ 1.  Ensure daemon terminates on signal, by making listen file 
+     descriptor non-blocking and calling select() before accept(),
+     since accept() does not return on signals on some platforms.
+ 2.  Clean up some trace calls.
+
+
+Changes from 4.0a6 to 4.0a7:
+----------------------------
+
+ 1.  Fixed typo (ClearTextSSL vs ClearTextTLS).
+
+
+Changes from 4.0a5 to 4.0a6:
+----------------------------
+
+ 1.  Extra debug tracing in getline().
+ 2.  Qvsnprintf() now recognizes '%p'.
+ 3.  Moved TLS prototypes to popper.h.
+ 4.  Fixed lots of warnings.
+ 5.  getline() now limits returned string to caller's max size.
+ 6.  getline() now discards bytes when buffer fills up.
+ 7.  An STLS timeout now aborts session, same as client read.
+ 8.  Qsnprintf() now recognizes '%p' format.
+ 9.  Fixed various format mismatch warnings.
+10.  Identify sprintf()-like functions to gcc when supported. 
+11.  Added 'make install', based on patch by Nick Burrett.  (Only
+     copies files, does not edit inetd.conf, etc.)
+12.  If private key file not specified, assume private key is in
+     certificate file.
+
+
+Changes from 4.0a4 to 4.0a5:
+----------------------------
+
+ 1.  Added 'tls-version' option.
+ 2.  Recognize 'clear-text-password = tls' for TLS/SSL.
+ 3.  Added 'trim-domain' option.
+ 4.  Added mnemonic options.
+
+
+Changes from 4.0a3 to 4.0a4:
+----------------------------
+
+ 1.  Ensure that string_copy() null-terminates.
+ 2.  Fix 'STLS' CAPA response tag.
+ 3.  Send dummy 'X-NONE-SO-USE-APOP-OR-STLS' when no AUTH mechanisms.
+ 4.  show_result() includes line where actually set.
+ 5.  More trace calls during OpenSSL initialization and handshake.
+ 6.  Now logging SSL/TLS version and cipher after handshake.
+ 7.  Added 'tls-cipher-list' to control ciphers used.
+ 8.  Now freeing OpenSSL resources.
+ 9.  OpenSSL handshake now times out.
+10.  Fixed prototypes.
+11.  Added check if gcc supports __attribute__ (format).
+12.  Now using the gcc '__attribute__ (format)' mechanism to check for
+     format mismatches when compiling with --enable-warnings.
+
+
+Changes from 4.0a2 to 4.0a3
+-----------------------------
+
+ 1.  More tweaking of configure script to use SSL Plus files.
+ 2.  Added 'tls-identity-file' and 'tls-passphrase' options.
+ 3.  Added '--with-openssl' for use with OpenSSL.
+ 4.  Added check for /dev/urandom.
+ 5.  Changed '--enable-drac' to '--with-drac'.
+ 6.  Changed '--with-new-bulls' to '--enable-new-bulls'.
+ 7.  Changed '--with-popuid=pop' to '--enable-popuid=pop'.
+ 8.  Changed '--with-log-facility' to '--enable-log-facility'
+ 9.  Added run-time option 'tls-server-cert-file' (OpenSSL only).
+10.  Added run-time option 'tls-private-key-file' (OpenSSL only).
+11.  Now handling quoted strings as run-time option values.
+12.  Added run-time option 'tls-identity-file' (SSL Plus only).
+13.  Added run-time option'tls-passphrase' (SSL Plus only).
+14.  Added '-U' / 'spool-opts' to process .user.qpopper-options
+     in the spool directory.
+15.  Banner now says "Qpopper LX" instead of "QPOP".
+16.  More configure changes for OpenSSL.
+17.  Split pop_tls.c into pop_tls.c (for generic TLS/SSL stuff),
+     and pop_tls_openssl.c / pop_tls_sslplus.c (for code specific
+     to one SSL/TLS library).
+
+
+Changes from 4.0a1 to 4.0a2
+-----------------------------
+
+ 1.  Minor changes to TLS code to ease compilation.
+ 2.  Added '--with-sslplus' to use SSL Plus from Certicom.
+ 3.  Added '--with-sslplus-crypto' also for use with SSL Plus.
+ 4.  Added '-a' / 'alt-port-tls' to start SSL/TLS
+     negotiation when client connects.
+ 5.  Added '-l' / 'enable-stls' to enable the STLS verb to
+     initiate a TLS handshake.
+
+
+Changes from 4.0d to 4.0a1
+-----------------------------
+
+ 1.  Preliminary code to avoid hanging in accept() in
+     stabd-alone mode.
+ 2.  Now using cache file for fast start-up in server mode.
+ 3.  Added '-F' / 'enable-fast-update' to use renamefile
+     instead of copying spool.  This may break programs such as
+     biff or the shell's mail check feature.  Only enable if such
+     programs are not used.
+ 4.  Fitted lgl's TLS patches.

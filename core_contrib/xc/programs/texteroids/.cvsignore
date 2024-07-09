@@ -1,0 +1,7 @@
+Makefile
+twraps.h
+twraps.c
+.depend
+texteroids
+texteroids._man
+texteroids.0

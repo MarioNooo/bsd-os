@@ -1,0 +1,54 @@
+.\"
+.\"     ioprod.8,v 1.1 1995/07/28 10:42:18 rjd Exp
+.\"
+.Dd 28 Jul 95
+.Dt IOPROD 8
+.Os BSD/OS
+.Sh NAME
+.Nm ioprod
+.Nd Chase Research IOPRO/IOLITE download and configuration daemon
+.Sh SYNOPSIS
+.Nm ioprod card
+.Sh DESCRIPTION
+.Nm Ioprod
+is a simple daemon responsible for monitoring the power status on
+IOPRO and IOLITE units. At system startup an instance of the daemon
+is started to each IOPRO of IOLITE host card in the system, the one
+argument being the card number to monitor.
+.Pp
+When power is detected the number of units available is determined
+and the units downloaded. Once download is complete ioprod will
+carry out a configuration dialogue with each unit determining the
+number of ports available and matching them with devices in /dev.
+.Pp
+Until a device in /dev has been matched with a physical line on an
+IOPRO or IOLITE unit any attempt to access the line will either
+block waiting for the device to be made available or fail with the
+error code EAGAIN.
+.Pp
+If power is lost at any time ioprod will inform the device driver
+to abort any existing operations and will resume the waiting for
+power to be applied.
+.Pp
+Some applications do not understand the idea of serial devices being
+temporarily unavailable and get confused by the EAGAIN response
+from a non-blocking open. The support utility iopro_wait(8) provides
+a partial solution to this problem.
+.Sh FILES
+/var/log/ioprod_#	Operation log file
+/usr/libdata/iopro.dl	Unit download image
+/dev/iopro/*	Card control files
+/dev/tty[4-Z][a-p]	Data ports
+.Sh SEE ALSO
+.Xr iopro_dload 8
+.Xr iopro_wait 8
+.Sh DIAGNOSTICS
+Console message should be self explanatory.
+.Pp
+If the file /var/log/ioprod_# exists ( where # is the card number ) and is
+writable then ioprod will append operational logging information to this
+file.
+.Sh BUGS
+Since IOLITE cards are powered from the host and can't be powered
+down independently, ioprod should terminate once the download and
+configuration sequence has been completed.

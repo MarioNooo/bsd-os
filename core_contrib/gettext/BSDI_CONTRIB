@@ -1,0 +1,166 @@
+Software Package:       
+	gettext -- GNU internationalization libs and support program
+
+Release/Version:
+	gettext version 0.10.35
+
+Retrieved from:
+	ftp://prep.ai.mit.edu/pub/gnu
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and to bug-gnu-gettext@prep.ai.mit.edu
+
+Comments:
+	The diff to configure makes no sense, but without it, LINGUAS
+	periodically got set to two or three copies of ALL_LINGUAS, with
+	an "or" between them, and this caused trouble.  Happened with two
+	different shells, so we really don't know why.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+Added makefile to call Makefile for our configuration
+Index: dist/ltconfig
+===================================================================
+RCS file: /master/contrib/gettext/dist/ltconfig,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 ltconfig
+*** dist/ltconfig	2000/04/13 18:34:40	1.1.1.1
+--- dist/ltconfig	2000/07/05 22:09:25
+***************
+*** 1130,1135 ****
+--- 1130,1153 ----
+    shlibpath_var=LD_LIBRARY_PATH
+    ;;
+  
++ bsdi4*)
++   version_type=linux
++   library_names_spec='${libname}.so$major ${libname}.so'
++   soname_spec='${libname}.so'
++   finish_cmds='PATH="\$PATH:/sbin" ldconfig $libdir'
++   shlibpath_var=LD_LIBRARY_PATH
++   deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (shared object|dyn
++ amic lib)'
++   file_magic_cmd=/usr/bin/file
++   file_magic_test_file=/shlib/libc.so
++   sys_lib_search_path_spec="/shlib /usr/lib /usr/X11/lib /usr/contrib/lib /lib /
++ usr/local/lib"
++   sys_lib_dlsearch_path_spec="/shlib /usr/lib /usr/local/lib"
++   # the default ld.so.conf also contains /usr/contrib/lib and
++   # /usr/X11R6/lib (/usr/X11 is a link to /usr/X11R6), but let us allow
++   # libtool to hard-code these into programs
++   ;;
++ 
+  gnu*)
+    version_type=sunos
+    library_names_spec='${libname}${release}.so.$versuffix'
+Index: dist/intl/Makefile.in
+===================================================================
+RCS file: /master/contrib/gettext/dist/intl/Makefile.in,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 Makefile.in
+*** dist/intl/Makefile.in	2000/04/13 18:34:43	1.1.1.1
+--- dist/intl/Makefile.in	2000/07/05 22:44:07
+***************
+*** 62,72 ****
+  COMSRCS = bindtextdom.c dcgettext.c dgettext.c gettext.c \
+  finddomain.c loadmsgcat.c localealias.c textdomain.c l10nflist.c \
+  explodename.c
+! OBJECTS = @INTLOBJS@ bindtextdom.$lo dcgettext.$lo dgettext.$lo gettext.$lo \
+! finddomain.$lo loadmsgcat.$lo localealias.$lo textdomain.$lo l10nflist.$lo \
+! explodename.$lo
+! CATOBJS = cat-compat.$lo ../po/cat-id-tbl.$lo
+! GETTOBJS = intl-compat.$lo
+  DISTFILES.common = ChangeLog Makefile.in linux-msg.sed po2tbl.sed.in \
+  xopen-msg.sed $(HEADERS) $(SOURCES)
+  DISTFILES.normal = VERSION
+--- 62,72 ----
+  COMSRCS = bindtextdom.c dcgettext.c dgettext.c gettext.c \
+  finddomain.c loadmsgcat.c localealias.c textdomain.c l10nflist.c \
+  explodename.c
+! OBJECTS = @INTLOBJS@ bindtextdom.lo dcgettext.lo dgettext.lo gettext.lo \
+! finddomain.lo loadmsgcat.lo localealias.lo textdomain.lo l10nflist.lo \
+! explodename.lo
+! CATOBJS = cat-compat.lo ../po/cat-id-tbl.lo
+! GETTOBJS = intl-compat.lo
+  DISTFILES.common = ChangeLog Makefile.in linux-msg.sed po2tbl.sed.in \
+  xopen-msg.sed $(HEADERS) $(SOURCES)
+  DISTFILES.normal = VERSION
+***************
+*** 95,102 ****
+  	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ $(OBJECTS) \
+  		   -version-info 1:0 -rpath $(libdir)
+  
+! ../po/cat-id-tbl.$lo: ../po/cat-id-tbl.c $(top_srcdir)/po/$(PACKAGE).pot
+! 	cd ../po && $(MAKE) cat-id-tbl.$lo
+  
+  check: all
+  
+--- 95,102 ----
+  	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ $(OBJECTS) \
+  		   -version-info 1:0 -rpath $(libdir)
+  
+! ../po/cat-id-tbl.lo: ../po/cat-id-tbl.c $(top_srcdir)/po/$(PACKAGE).pot
+! 	cd ../po && $(MAKE) cat-id-tbl.lo
+  
+  check: all
+  
+***************
+*** 151,158 ****
+  info dvi:
+  
+  $(OBJECTS): ../config.h libgettext.h
+! bindtextdom.$lo finddomain.$lo loadmsgcat.$lo: gettextP.h gettext.h loadinfo.h
+! dcgettext.$lo: gettextP.h gettext.h hash-string.h loadinfo.h
+  
+  tags: TAGS
+  
+--- 151,158 ----
+  info dvi:
+  
+  $(OBJECTS): ../config.h libgettext.h
+! bindtextdom.lo finddomain.lo loadmsgcat.lo: gettextP.h gettext.h loadinfo.h
+! dcgettext.lo: gettextP.h gettext.h hash-string.h loadinfo.h
+  
+  tags: TAGS
+  
+Index: dist/configure
+===================================================================
+RCS file: /master/contrib/gettext/dist/configure,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 configure
+*** dist/configure	2000/04/13 18:34:40	1.1.1.1
+--- dist/configure	2002/04/02 17:36:09
+***************
+*** 3874,3890 ****
+       else
+         echo $ac_n "checking for catalogs to be installed""... $ac_c" 1>&6
+  echo "configure:3877: checking for catalogs to be installed" >&5
+!        NEW_LINGUAS=
+!        for lang in ${LINGUAS=$ALL_LINGUAS}; do
+!          case "$ALL_LINGUAS" in
+!           *$lang*) NEW_LINGUAS="$NEW_LINGUAS $lang" ;;
+!          esac
+!        done
+         LINGUAS=$NEW_LINGUAS
+         echo "$ac_t""$LINGUAS" 1>&6
+       fi
+  
+!           if test -n "$LINGUAS"; then
+         for lang in $LINGUAS; do CATALOGS="$CATALOGS $lang$CATOBJEXT"; done
+       fi
+     fi
+--- 3874,3885 ----
+       else
+         echo $ac_n "checking for catalogs to be installed""... $ac_c" 1>&6
+  echo "configure:3877: checking for catalogs to be installed" >&5
+!        NEW_LINGUAS=${ALL_LINGUAS}
+         LINGUAS=$NEW_LINGUAS
+         echo "$ac_t""$LINGUAS" 1>&6
+       fi
+  
+!      if test -n "$LINGUAS"; then
+         for lang in $LINGUAS; do CATALOGS="$CATALOGS $lang$CATOBJEXT"; done
+       fi
+     fi

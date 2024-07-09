@@ -1,0 +1,35 @@
+.\" Copyright (c) 1995 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI installfloppy.8,v 1.1 1996/09/21 17:39:40 prb Exp
+.\"
+.Dd January 22, 1995
+.Os
+.Dt INSTALLFLOPPY 8
+.Sh NAME
+.Nm installfloppy
+.Nd "install packages from a floppy"
+.Sh SYNOPSIS
+.Nm installfloppy
+.Op Fl d Ar dir
+.Sh DESCRIPTION
+The
+.Nm installfloppy
+program mounts a package format floppy and runs 
+.Xr installsw 8
+for you.   Once 
+installation is complete, it unmounts the floppy.
+If the optional 
+.Fl d 
+flag and 
+.Ar dir
+argument are provided, the floppy is mounted on the specified 
+directory instead of the default directory (/a).
+.Sh SEE ALSO
+.Xr installsw 8
+.Sh HISTORY
+The 
+.Nm installfloppy
+command first appeared in BSD/OS and is currently under development.

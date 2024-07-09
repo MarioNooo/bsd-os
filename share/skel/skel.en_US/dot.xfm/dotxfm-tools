@@ -1,0 +1,13 @@
+#
+# xfm applications file
+# written by xfm  Tue Aug 20 11:44:15 1996
+#
+##########################################
+
+Main Apps::.xfm/xfm-apps:xfm_appmgr.xpm:LOAD:
+make:::make.xpm::make -f $1 %Target\:%; echo "*** make done ***"
+grep:::grep.xpm::grep '%Regular expression\:%' $*
+find:::find.xpm:find %Directory\:% %Find expression\:%:find $* %Find expression\:%
+gzip:::compress.xpm::exec xterm -e gzip $*
+tar cfv:::tar.xpm::exec xterm -e tar cfv %Archive name\:% $*
+zip:::zip.xpm::exec xterm -e zip -r %ZIP filename\:% $*

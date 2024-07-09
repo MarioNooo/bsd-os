@@ -1,0 +1,63 @@
+.\"
+.\"     iopro_wait.8,v 1.3 1995/07/28 10:42:25 rjd Exp
+.\"
+.Dd 28 Jul 95
+.Dt IOPRO_WAIT 8
+.Os BSD/OS
+.Sh NAME
+.Nm iopro_wait
+.Nd Wait for an IOPRO data port to be configured
+.Sh SYNOPSIS
+.Nm /usr/libexec/iopro_wait [-v] [device]
+.Sh DESCRIPTION
+The external units used in the Chase Research IOPRO system may be powered
+independently from the host system. When they are powered up ( or at
+system startup time ) they need to be downloaded and configured by the
+support daemon
+.Xr ioprod 8
+before the data ports are used.
+.Pp
+To prevent use before the ports have been configured the data driver will
+block
+.Xr open 2
+calls on the ports in a similar way to waiting for carrier.
+.Pp
+If a non-blocking open is performed then the driver will cancel the open
+attempt and return the error code EAGAIN to indicate that the port
+is temporarily unavailable.
+.Pp
+Most system daemons and programs work well with the above scheme but a few 
+take the EAGAIN error from a non-blocking open to indicate that the resource
+is permanently unavailable and fail.
+.Pp The
+.Nm iopro_wait
+program is a simple fix for these daemons.
+Called before the daemon in question with the name of the device that it is
+going to use
+.Nm iopro_wait
+will block until the port has been configured. The daemon will then be able
+to access the device without seeing the error return.
+.Sh EXAMPLES
+For a daemon
+.Nm foobar
+that uses the port
+.Pa /dev/tty7d
+the following would replace
+.Nm foobar &
+in the system startup scripts.
+.Pp
+.Dl ( /usr/libexec/iopro_wait /dev/tty7d && foobar ) &
+.Sh DIAGNOSTICS
+Should be self explanatory.
+.Pp
+You can add warm and fuzzys with the -v flag.
+.Sh BUGS
+Do not place
+.Nm iopro_wait
+in the system startup scripts in a position where it could block the
+starting of
+.Nm ioprod
+or the system will wait forever.
+.Sh SEE ALSO
+.Xr ioprod 8
+.Xr open 2

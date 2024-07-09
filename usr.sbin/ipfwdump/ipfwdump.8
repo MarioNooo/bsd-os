@@ -1,0 +1,27 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI ipfwdump.8,v 1.2 1999/06/04 21:05:36 prb Exp
+.Dd June 16, 1997
+.Dt IPFWDUMP 8
+.Sh NAME
+.Nm ipfwdump
+.Nd display BSD IP Filters
+.Sh SYNOPSIS
+.Nm ipfwdump
+.Op Ar filename
+.Sh DESCRIPTION
+The
+.Nm ipfwdump
+displays to standard output a BSD IP Filter read from 
+.Ar filename
+or standard input.
+BPF based filters are disassembled for display.  Circuit caches
+have their entries displayed.  Cisco style filters have the rules
+displayed.
+.Sh SEE ALSO
+.Xr ipfw 8 ,
+.Xr ipfwasm 8 ,
+.Xr ipfwcisco 8

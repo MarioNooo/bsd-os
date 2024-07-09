@@ -1,0 +1,47 @@
+Software Package:       
+	am-utils
+
+Release/Version:
+	6.0.1 (actually 6.0.2s1)
+
+Retrieved from:
+	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/am-utils-6.0.1.tar.gz
+	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/snapshots/am-utils-6.0.2s1.tar.gz
+
+Bug reports:
+	This software package is maintained by the software contributor,
+	not BSDI.  Please send any bug reports to both support@BSDI.COM
+	and amd-dev@majordomo.cs.columbia.edu.
+
+Comments:
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Modifications to this version made by BSDI:
+
+Moved aux to auy (aux++) and make link in makefile
+
+irs_gen_acc now takes a config file name as argument -- NULL gives the default
+Index: libamu/wire.c
+===================================================================
+RCS file: /master/contrib/am-utils-6.0.1/libamu/wire.c,v
+retrieving revision 1.1.1.1
+diff -c -r1.1.1.1 wire.c
+*** libamu/wire.c	1999/09/15 03:25:06	1.1.1.1
+--- libamu/wire.c	1999/09/22 20:38:00
+***************
+*** 169,175 ****
+      u_char addr[4];
+  
+      if (irs_gen == NULL)
+!       irs_gen = irs_gen_acc("");
+      if (irs_gen && irs_nw == NULL)
+        irs_nw = (*irs_gen->nw_map)(irs_gen);
+      net = ntohl(address) & (mask = ntohl(netmask));
+--- 169,175 ----
+      u_char addr[4];
+  
+      if (irs_gen == NULL)
+!       irs_gen = irs_gen_acc("", NULL);
+      if (irs_gen && irs_nw == NULL)
+        irs_nw = (*irs_gen->nw_map)(irs_gen);
+      net = ntohl(address) & (mask = ntohl(netmask));

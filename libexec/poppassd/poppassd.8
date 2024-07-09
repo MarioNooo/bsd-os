@@ -1,0 +1,107 @@
+.\"
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"     BSDI poppassd.8,v 1.2 1996/08/12 23:09:53 bostic Exp
+.\"
+.Dd February 20, 1996
+.Dt POPPASSD 8
+.Os
+.Sh NAME
+.Nm poppassd
+.Nd POP password protocol daemon
+.Sh SYNOPSIS
+.Nm /usr/libexec/poppassd
+.Op Fl r Ar attribute
+.Op Fl t Ar wait
+.Op Fl w Ar wait
+.Sh DESCRIPTION
+The
+.Nm poppassd
+command is a server which supports the
+non-standard
+.Tn POPPASSD
+password changing protocol as implemented in
+.Tn Eudora ,
+.Tn NUPOP
+and other
+.Tn POP
+clients.
+.Nm Poppassd
+is normally invoked by the internet server (see
+.Xr inetd 8 )
+for requests to connect to the
+.Tn POPPASSD
+port as indicated by the
+.Pa /etc/services
+file (see
+.Xr services 5 ) .
+.Pp
+.Nm Poppassd
+gathers user and password information via the
+.Tn POPPASSD
+protocol and attempts to change the
+specified user's password by invoking the
+.Xr passwd 8
+command.
+.Bl -tag -width flag
+.It Fl r Ar attribute
+Requires that 
+.Nm poppassd
+may only change passwords for users whose login class contains the specified
+.Ar attribute 
+(see
+.Xr login.conf 5 ).
+By default, 
+.Nm
+poppassd
+may be used to change any user's password.
+.It Fl t Ar wait
+Specifies the timeout (in seconds) for terminating a session with the
+.Tn POPPASSD
+client.
+.Nm Poppassd
+times out after the specified number of seconds when waiting for a
+command to arrive from the client.  The default is 60 seconds.
+.It Fl w Ar wait
+Specifies the timeout (in seconds) for terminating a session with the
+.Xr passwd 8
+command.
+.Nm Poppassd
+times out after the specified number of seconds when waiting for a
+response from the 
+.Xr passwd 8
+program.  The default is 60 seconds.
+.El
+.Sh DIAGNOSTICS
+The
+.Nm poppassd
+program logs successful attempts, protocol, and system errors via
+.Xr syslog 2
+in the
+.Dv LOG_AUTHPRIV
+class.  The host name (or Internet address) and port of the host
+initiating the connection as well as the target user (if available) is
+included in all log messages.
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr setusercontext 3 ,
+.Xr login.conf 5 ,
+.Xr passwd 5 ,
+.Xr syslog.conf 5 ,
+.Xr inetd 8 ,
+.Xr login 8 ,
+.Xr tcpd 8 ,
+.Xr vipw 8
+.Sh BUGS
+The
+.Nm poppassd
+command is very insecure as it sends the user's old and new passwords
+over the network UN encrypted.  Avoid enabling it if at all possible,
+restrict its use to POP users via
+.Xr login.conf 5 ,
+or restrict the hosts that can access the
+.Tn POPPASSD
+port via
+.Xr tcpd 8 .

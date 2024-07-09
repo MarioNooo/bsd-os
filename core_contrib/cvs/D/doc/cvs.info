@@ -1,0 +1,225 @@
+This is cvs.info, produced by makeinfo version 4.2 from cvs.texinfo.
+
+START-INFO-DIR-ENTRY
+* CVS: (cvs).          Concurrent Versions System
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
+Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
+
+
+Indirect:
+cvs.info-1: 943
+cvs.info-2: 49514
+cvs.info-3: 98612
+cvs.info-4: 148491
+cvs.info-5: 198383
+cvs.info-6: 247912
+cvs.info-7: 297409
+cvs.info-8: 346907
+cvs.info-9: 396737
+
+Tag Table:
+(Indirect)
+Node: Top943
+Node: Overview2748
+Node: What is CVS?3312
+Node: What is CVS not?5905
+Node: A sample session11461
+Node: Getting the source12283
+Node: Committing your changes13160
+Node: Cleaning up15318
+Node: Viewing differences17022
+Node: Repository17918
+Node: Specifying a repository20630
+Node: Repository storage21964
+Node: Repository files23180
+Node: File permissions26019
+Node: Windows permissions29874
+Node: Attic30818
+Node: CVS in repository31864
+Node: Locks34950
+Node: CVSROOT storage38087
+Node: Working directory storage39885
+Node: Intro administrative files49514
+Node: Multiple repositories51222
+Node: Creating a repository52711
+Node: Backing up54650
+Node: Moving a repository56573
+Node: Remote repositories57648
+Node: Server requirements59284
+Node: Connecting via rsh61707
+Node: Password authenticated64265
+Node: Password authentication server65018
+Node: Password authentication client72525
+Node: Password authentication security75715
+Node: GSSAPI authenticated77562
+Node: Kerberos authenticated79402
+Node: Connecting via fork81221
+Node: Read-only access82324
+Node: Server temporary directory85323
+Node: Starting a new project86610
+Node: Setting up the files87354
+Node: From files87978
+Node: From other version control systems89956
+Node: From scratch92524
+Node: Defining the module93260
+Node: Revisions94241
+Node: Revision numbers95448
+Node: Versions revisions releases96484
+Node: Assigning revisions97066
+Node: Tags98612
+Node: Tagging the working directory103969
+Node: Tagging by date/tag105357
+Node: Modifying tags106722
+Node: Tagging add/remove109914
+Node: Sticky tags111548
+Node: Branching and merging114623
+Node: Branches motivation115920
+Node: Creating a branch116930
+Node: Accessing branches118490
+Node: Branches and revisions121741
+Node: Magic branch numbers124455
+Node: Merging a branch125948
+Node: Merging more than once128257
+Node: Merging two revisions130733
+Node: Merging adds and removals132058
+Node: Merging and keywords133333
+Node: Recursive behavior136109
+Node: Adding and removing137936
+Node: Adding files138830
+Node: Removing files141499
+Node: Removing directories144919
+Node: Moving files146081
+Node: Outside146728
+Node: Inside147643
+Node: Rename by copying148491
+Node: Moving directories149494
+Node: History browsing150897
+Node: log messages151449
+Node: history database151770
+Node: user-defined logging152249
+Node: annotate154049
+Node: Binary files155200
+Node: Binary why155836
+Node: Binary howto158070
+Node: Multiple developers160932
+Node: File status163089
+Node: Updating a file166177
+Node: Conflicts example167475
+Node: Informing others171534
+Node: Concurrency172074
+Node: Watches173819
+Node: Setting a watch175209
+Node: Getting Notified176506
+Node: Editing files180201
+Node: Watch information182716
+Node: Watches Compatibility183556
+Node: Choosing a model184426
+Node: Revision management187101
+Node: When to commit187704
+Node: Keyword substitution188811
+Node: Keyword list189794
+Node: Using keywords192121
+Node: Avoiding substitution193763
+Node: Substitution modes194658
+Node: Log keyword197243
+Node: Tracking sources198383
+Node: First import199902
+Node: Update imports201239
+Node: Reverting local changes203017
+Node: Binary files in imports203709
+Node: Keywords in imports204018
+Node: Multiple vendor branches205156
+Node: Builds206850
+Node: Special Files209531
+Node: CVS commands210177
+Node: Structure211620
+Node: Exit status212891
+Node: ~/.cvsrc213883
+Node: Global options215921
+Node: Common options220751
+Node: admin228369
+Node: admin options229366
+Node: checkout240532
+Node: checkout options243290
+Node: checkout examples247635
+Node: commit247912
+Node: commit options249776
+Node: commit examples251132
+Node: diff253486
+Node: diff options254381
+Node: Line group formats262215
+Node: Line formats267929
+Node: diff examples271140
+Node: export272100
+Node: export options273398
+Node: history274470
+Node: history options275250
+Node: import278748
+Node: import options281353
+Node: import output282607
+Node: import examples283682
+Node: log283850
+Node: log options284997
+Node: log examples288514
+Node: rdiff288660
+Node: rdiff options289968
+Node: rdiff examples291625
+Node: release292591
+Node: release options293887
+Node: release output294565
+Node: release examples296078
+Node: update296549
+Node: update options297409
+Node: update output301518
+Node: Invoking CVS304372
+Node: Administrative files326359
+Node: modules327610
+Node: Alias modules328960
+Node: Regular modules330014
+Node: Ampersand modules331404
+Node: Excluding directories332640
+Node: Module options333183
+Node: Module program options334754
+Node: Wrappers335527
+Node: commit files337231
+Node: syntax339231
+Node: commitinfo340130
+Node: verifymsg342288
+Node: editinfo346907
+Node: editinfo example349183
+Node: loginfo350477
+Node: loginfo example353054
+Node: Keeping a checked out copy353889
+Node: rcsinfo354906
+Node: cvsignore356218
+Node: checkoutlist359484
+Node: history file360812
+Node: Variables361465
+Node: config365011
+Node: Environment variables369079
+Node: Compatibility374092
+Node: Troubleshooting375095
+Node: Error messages375718
+Node: Connection391787
+Node: Other problems396737
+Node: Credits397671
+Node: BUGS399060
+Node: Index402674
+
+End Tag Table

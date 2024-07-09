@@ -1,0 +1,5 @@
+Makefile
+unshared
+.depend
+libXpm.so.4.11
+libXpm_s

@@ -1,0 +1,16 @@
+Memtest86
+=============
+
+This is an offline (standalone) memory tester. It is run by writing the
+test binary to a floppy and then booting the floppy.
+
+To write/run the memory test:
+	1. Format a 1.4M floppy
+	2. # dd if=memtest.image of=/dev/rfd0 bs=512
+	3. Boot from the resulting floppy
+
+On some systems it may be neccesary to do a hard reset before botting 
+to allow the test to run without errors. 
+
+This test has particular value on systems without parity RAM or parity
+detection logic.

@@ -1,0 +1,35 @@
+The BSD Partitioning screen is used to define filesystems to be mounted
+by BSD/OS.  To install BSD/OS you must have at least a root filesystem (/),
+a swap partition, and a /usr filesystem.  Typically the root filesystem
+is at least 8MB, swap is at least the size of memory, and /usr is the
+remainder of the space allocated to BSD/OS.  If you plan to have /tmp
+mounted in memory, you should make the swap partition at least 16 MB,
+preferably more.  For more information on determining sizes, please
+refer to the installation guide for help in determining how much disk
+space you will need to install BSD/OS.
+
+At this point you may either go on to the next phase, alter a filesystem
+displayed in the filesystem table, define a filesystem, delete the
+description of a filesystem, or exit this phase without making any
+changes.
+
+You may use one of the following commands:
+
+A   Use 'A' to add a new partition.  Disksetup will default the new
+    partition to the next needed partition.
+
+D   Use 'D' to delete the definition of a partition.  You will need to
+    do this if your disk has old data on it that you no longer want.
+    Deleting a partition will cause you to lose all the data contained
+    in that partition.
+
+E   Use 'E' to change any of the parameters of a partition.  Generally
+    you will only need to delete and add partitions.
+
+N   Use 'N' to record the changes you have made and go on to the next
+    phase of disksetup.  The changes will not actually be applied until
+    you finish setting up your disk.
+
+X   Discard all changes to the partition table and exit this phase of
+    the program.  No changes to the partition table will be written to
+    the disk.

@@ -1,0 +1,42 @@
+BSDI CHANGES-2.0,v 2.2 1996/06/11 19:26:09 vixie Exp
+
+16. added uuq, uupoll, and muucp to new contrib/ directory.
+
+15. /etc/uucp/daily will now call uusnap by its full path name.
+
+14. uuto was echoing rather than executing its derived uucp command.
+
+13. close_dev() now sets clocal in case the chat script had P_CLOCAL_OFF.
+
+12. Special release notes for BSD/OS 2.0:
+	a. 2.0's getty uses 8N1, 1.1's used 7E1.  your neighbors may have to
+	   set "no parity" when they call you after you upgrade to BSD/OS 2.0.
+	b. "make install" doesn't overwrite files in /etc/uucp, so if you are
+	   installing from source you will need to move admin/weekly.sh to
+	   /etc/uucp/weekly, by hand.
+	c. more changes are coming.
+
+11. there is now a "HALFWAY" status, meaning some files transferred, then 
+    the connection failed.
+
+10. exponential backoff now is, semi.
+
+9. status files will now be world readable, so uusnap -av can run.
+
+8. weekly has been straightened out wrt nonexisting directories or files.
+
+7. uusnap no longer reads rotated status files.  output format has improved.
+
+6. regularized debugging output in uucico/Connect.c.
+
+5. libc/strstr.c removed in favor of system's version.
+
+4. lib/SysFile.c:time_cmp() signature made compatible with system's bsearch().
+
+3. ErrnoStr() removed in favour of system's strerror().  some code reformatted.
+
+2. "make install" will now make the log directories.
+
+1. cleaned up libc/ and i/.  cleaned up Makefile.inc.  cleaned up Makefiles.
+
+0. started from 1.1-Rel plus various interrim patches by eng

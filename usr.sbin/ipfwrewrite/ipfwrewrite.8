@@ -1,0 +1,78 @@
+.\"	BSDI	ipfwrewrite.8,v 1.2 2002/07/16 15:05:53 prb Exp
+.\"
+.\" Copyright (c) 2000 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.Dd Feb 1, 2000
+.Dt IPFWREWRITE 8
+.Sh NAME
+.Nm ipfwrewrite
+.Nd Rewrite or Reassemble IP packet
+.Sh SYNOPSIS
+.Nm ipfwrewrite
+.Op Fl T Ar tag
+.Sh DESCRIPTION
+The
+.Nm ipfwrewrite
+utility is used to cause packet reassembly (only from pre-input chain)
+or re-write TCP/IP packets for rejection.
+If the IPFW filter specific value is set to 1 reassembly will be done,
+if not, any TCP packet sent to this filter will be re-written
+as a reset packet and sent back to the source address, or, if the IPFW
+filter specific value is set to 2, the destination address.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl T Ar tag
+Specify the
+.Ar tag
+to be used.  If this is not specified then the tag "rewrite" will be used.
+.El
+.Sh HOW TO USE
+Typically only a single rewrite filter is installed on a system, there is
+little advantage in installing more than one.  It is always installed on the
+CALL filter chain.  A pre-input -output filter is then installed.
+.Pp
+The pre-input filter should determine what session request should be
+reset and then write:
+.Bd -literal -offset indent
+tcp && determine_this_is_a_bad_request {
+	call("rewrite");
+	accept;
+}
+.Ed
+.Pp
+It is important to accept the re-written packet so it is actually sent!
+.Pp
+When the data used for filtering a stream is within the data stream
+itself it is often desirable to turn the data packet going to the
+server into a reset packet so that the server terminates the session
+quickly and quietly.  This can be done with the code fragment:
+.Bd -literal -offset indent
+tcp && determine_this_is_a_bad_stream {
+	call("rewrite" : 2);
+	accept;
+}
+.Ed
+.Pp
+You can also use this to do packet reassembly at pre-input time on all
+packets (normally forwarded packets are not reassembled).  This should
+not be done lightly, it can have a significant performance hit on a
+machine forwarding packets as well as consume resources from the forwarding
+machine.  The packet will be "rejected" if it was not the final fragment
+of a packet.  It will return "accepted" if it is the final fragment (or
+the packet was not fragmented).  Since BPF filters do not currently cope
+very well with packets changing out from under them, it is best to have
+packet reassembly be the only element of the filter.  Other filters should
+be later in the chain.  The filter can then be called as:
+.Bd -literal -offset indent
+ipfrag {
+	call("rewrite" : 1);
+}
+next;
+.Ed
+.Sh SEE ALSO
+.Xr ipfw 8,
+.Xr ipfwcmp 8

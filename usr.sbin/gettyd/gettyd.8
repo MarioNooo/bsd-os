@@ -1,0 +1,242 @@
+.\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI gettyd.8,v 1.9 1997/08/08 19:03:50 prb Exp
+.Dd April 29, 1996
+.Dt GETTYD 8
+.Os
+.Sh NAME
+.Nm gettyd
+.Nd manage serial devices
+.Sh SYNOPSIS
+.Nm gettyd
+.Op Fl a Ar acct-file
+.Op Fl b Ar backlog
+.Op Fl d 
+.Op Fl l Ar log-file
+.Op Fl r Ar rule-file
+.Op Fl s
+.Op Fl v
+.Sh DESCRIPTION
+The
+.Nm gettyd
+daemon manages a pool of serial devices (lines).
+It selects the lines to manage by reading the
+.Pa /etc/ttys
+file and searching for entries which have
+.Li manager
+set to
+.Li gettyd
+(see
+.Xr ttys 5
+and
+.Xr ttys.conf 5 ) .
+.Pp
+Any line which has the
+.Li dialin
+entry set will be conditioned by the script defined by either
+.Li condition
+or
+.Li watcher .
+(Exactly one of these two entries must be defined.)
+Any line which has the
+.Li dialout
+entry set will be made available for outgoing requests.
+Any line which has the
+.Li dialout
+entry but not the
+.Li dialin
+entry will be conditioned by the script defined by
+.Li hangup .
+.Pp
+The following options are available:
+.Bl -tag -width rule-filexxxxx
+.It Fl b Ar backlog
+By default
+.Nm gettyd
+will allow up to 64 outstanding requests
+(see
+.Xr listen 2 ).
+With the
+.Fl b
+option use
+.Ar backlog
+instead of 64.
+.sp
+.It Fl a Ar acct-file
+Normally accounting records are written to
+.Pa /var/account/gettyd
+but can be overridden by specifying
+.Ar acct-file .
+.sp
+.It Fl d
+Run in debug mode.  Do not automatically detach from the controlling
+terminal.  All messages are written to standard output rather than
+being written to the account file, the logging file, or
+.Xr syslog 8 .
+.sp
+.It Fl l Ar log-file
+Normally verbose and debug messages are written to
+.Pa /var/log/gettyd.log
+but can be overridden by specifying
+.Ar log-file .
+.sp
+.It Fl r Ar rule-file
+By default the dialing rules are read from
+.Pa /etc/dialer.rules
+but can be overridden by specifying
+.Ar rule-file .
+.sp
+.It Fl s
+Start in single user mode.  Do not allow logins, but do allow
+dialout requests.  Lines which use watcher scripts are not
+available for dialout when running in single user mode.
+.sp
+.It Fl v
+Enable verbose mode.
+Detailed state change diagnostics are entered into the log-file
+(or displayed on standard output when the
+.Fl d
+flag is specified).
+.El
+.Pp
+The
+.Nm gettyd
+daemon makes the local domain socket
+.Pa /var/run/dialer
+available for dialing requests.
+A request is a single line of ASCII which contains a
+.Xr cgetent 3
+like entry, followed by a newline.  A typical entry for a dialing
+request might be:
+.sp
+.Li request:number=+1612555121|+16125552323:dte-speeds=115200:speed=28800|14400:
+.sp
+When it receives a request, it first determines what type of request
+it is.  If the request starts with
+.Dq request:
+then
+.Nm gettyd
+searches for a line that is available
+and that the requestor has proper permissions to place the call.
+If a line is found, the requested number is dialed.  Once a connection
+is established with the remote side,
+.Nm gettyd
+passes back the file descriptor associated with the attached line.
+If the client which requested the connection closes its connection with
+.Nm ,
+its access to the line will be revoked, the connection dropped, and the
+line re-initialized.
+.Pp
+The
+.Nm gettyd
+daemon can qualify a number (over even remap it) via a set of rules
+defined the
+.Pa /etc/dialer.rules
+file (see
+.Xr dialer.rules 5 ) .
+Phone numbers may also be provided in the format
+.Li @ Ns Ar name
+in which case
+.Ar name
+is looked up in the
+.Pa /etc/phones file (see
+.Xr phones 5 ) .
+.Pp
+The
+.Nm gettyd
+daemon currently understands two other types of requests.
+If the request starts with
+.Dq status:
+then status about the serial lines is returned on the socket.
+(The
+.Xr gettystat 8
+program issues
+.Dq status
+commands by default.)
+Normally status information is only returned for the lines managed
+by
+.Nm gettyd .
+If the field
+.Dq :doall:
+is in the request, all lines will be reported on.
+The request can be limited to specific lines by listing the
+lines desired as field, for example:
+.sp
+.Li status:tty01:tty02:
+.Pp
+If the request starts with
+.Dq reset:
+then
+.Nm gettyd
+is reset depending on the fields supplied.
+(The
+.Fl r
+option to the
+.Xr gettystat
+command causes it to issue a
+.Dq reset
+command.)
+Currently the only useful
+requests are:
+.Bl -tag -width reset:shutdownxx
+.It Li reset:verbose:
+Enable verbose messages (same as
+.Fl v ) .
+.It Li reset:verbose=off:
+.It Li reset:verbose@:
+Disable verbose messages (default)
+.It Li reset:debug:
+Enable debug messages (same as
+.Fl d ,
+except the debug messages go to the logfile).
+.It Li reset:debug=off:
+.It Li reset:debug@:
+Disable debug messages (default)
+.It Li reset:multiuser:
+Enable logins (and reread
+.Pa /etc/ttys ) .
+.sp
+.It Li reset:reread:
+Cause
+.Nm gettyd
+to rescan
+.Pa /etc/ttys
+.It Li reset:shutdown:
+Prevents
+.Nm gettyd
+from starting any new sessions.
+.It Li reset:die:
+Cause
+.Nm gettyd
+to exit.
+.El
+.sp
+Normally these requests are made by
+.Xr init 8 .
+When
+.Xr init 8
+receives a
+.Li SIGHUP
+it sends the
+.Dq reread
+command to
+.Nm gettyd
+and a
+.Li SIGTERM
+to init causes it to send
+.Dq shutdown
+and then
+.Dq die
+to
+.Nm gettyd .
+.Pp
+.Sh SEE ALSO
+.Xr dialer.rules 5 ,
+.Xr phones 5 ,
+.Xr ttys 5 ,
+.Xr ttys.conf 5 ,
+.Xr gettystat 8 ,
+.Xr init 8 ,
+.Xr login 8

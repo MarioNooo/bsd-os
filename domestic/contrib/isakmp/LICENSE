@@ -1,0 +1,31 @@
+All software in this package is provided under the following license:
+
+"In no event shall Cisco's or its suppliers' liability to Licensee, whether
+in contract, tort (including negligence), or otherwise, exceed the price
+paid by Licensee.
+ 
+This License is effective until terminated. Licensee may terminate this
+License at any time by destroying all copies of software including any
+documentation. This License will terminate immediately without notice from
+Cisco if Licensee fails to comply with any provision of this License. Upon
+termination, Licensee must destroy all copies of software.
+  
+This License shall be governed by and construed in accordance with the laws
+of the State of California, United States of America, as if performed
+wholly within the state and without giving effect to the principles of
+conflict of law. If any portion hereof is found to be void or
+unenforceable, the remaining provisions of this License shall remain in
+full force and effect. This License constitutes the entire License between
+the parties with respect to the use of the software."
+
+If licensee is the U.S. Government, then the following restrictions apply:
+Restricted Rights - Cisco's software is provided to non-DOD agencies with
+RESTRICTED RIGHTS and its supporting documentation is provided with LIMITED
+RIGHTS. Use, duplication, or disclosure by the Government is subject to the
+restrictions as set forth in subparagraph "C" of the Commercial Computer
+Software - Restricted Rights clause at FAR 52.227-19. In the event the sale
+is to a DOD agency, the government's rights in software, supporting 
+documentation, and technical data are governed by the restrictions in the
+Technical Data Commercial Items clause at DFARS 252.227-7015 and DFARS
+227.7202.
+

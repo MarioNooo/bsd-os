@@ -1,0 +1,51 @@
+Edit the starting offset of the partition.  The starting offset will be
+automatically adjusted according to the rules associated with the type
+of partition.  You may enter numbers in megabytes or cylinders by
+pressing m or c after typing in the number.  This will convert you
+number to the correct number of sectors.  Pressing the upper case letter
+M can convert to the appropriate number of sectors such that the
+partition will start on a cylinder boundary.  You may alter the current
+offset by a relative amount by preceding the number with a + or -.
+
+ESC    Cancel all changes to this partition.
+ENTER  Apply changes to this partition.
+TAB    Go on to editing the type of the partition
+
+[0-9.] Use the number keys to enter the offset of the partition.  When
+       entering in megabytes or cylinders you may use a floating point
+       number.
+
++ or - Start entering a value which will be relative to the current
+       offset displayed.
+
+^H     Delete the last character typed.
+DEL    Delete the last character typed.
+
+^U     Clear the field.
+^W     Clear the field.
+
+U      Undo the current changes to the partition offset and redisplay
+       the value that was displayed upon entering this field.
+
+X      Set partition offset to the value which will increase the size
+       of the partition to the maximum space available.  This is done
+       by decreasing the the starting offset of the partition to start
+       just after the previous partition, if possible.
+
+    The following modifiers are always entered after a number has been
+    entered.  When the modifier is entered whatever number that is
+    currently displayed is converted to sectors.
+
+S or = Apply the current, possibly relative, number to the offset of the
+       partition.  Treat the current value displayed in sectors.
+
+T      Apply the current, possibly relative, number to the offset of the
+       partition.  Treat the current value displayed in tracks.
+
+C      Apply the current, possibly relative, number to the offset of the
+       partition.  Treat the current value displayed in cylinders.
+
+m      Apply the current, possibly relative, number to the offset of the
+       partition.  Treat the current value displayed in megabytes.
+M      ... and adjust the offset such that the partition will start on a
+       cylinder boundary.

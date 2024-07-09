@@ -1,0 +1,54 @@
+.\"     BSDI    sockatmark.3,v 2.2 1997/09/22 20:11:33 prb Exp
+.\"
+.\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.Dd July 29, 1997
+.Dt SOCKATMARK 3
+.Sh NAME
+.Nm sockatmark
+.Nd determine whether a socket is at out-of-band data mark
+.Sh SYNOPSIS
+.Fd #include <sys/socket.h>
+.Ft int
+.Fn sockatmark "int s"
+.Sh DESCRIPTION
+The
+.Fn sockatmark
+call determines whether the socket associated with
+.Fa s
+is at the out-of-band data mark.
+If the protocol for the socket marks the data stream at a point
+associated with out-of-band or urgent data,
+this function returns true when all data prior to the mark have been
+read.
+Reading additional data after the mark causes the mark to be cleared.
+The
+.Fn sockatmark
+function provides a standard interface to the
+.Fa SIOCATMARK
+command to
+.Xr ioctl 2 .
+.Sh DIAGNOSTICS
+The function returns 1 if the socket is at the out-of-band data mark,
+and a 0 if the socket is not at an out-of-band data mark.
+It returns -1 if an error is detected.
+.Sh ERRORS
+The call succeeds unless:
+.Bl -tag -width ENOTTYAA
+.It Bq Er EBADF
+.Fa S
+is not a valid descriptor.
+.It Bq Er ENOTTY
+.Fa S
+does not specify a socket.
+.El
+.Sh SEE ALSO
+.Xr recv 2 ,
+.Xr send 2
+.Sh STANDARDS
+The
+.Fn sockatmark
+function conforms to draft 6.6 of
+.\".St P1003.1g .
+IEEE Std 1003.1g.

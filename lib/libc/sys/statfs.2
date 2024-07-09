@@ -1,0 +1,291 @@
+.\"	BSDI statfs.2,v 2.7 1999/11/16 02:00:03 donn Exp
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
+.\"
+.Dd November 15, 1999
+.Dt STATFS 2
+.Os
+.Sh NAME
+.Nm statfs
+.Nd get file system statistics
+.Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/mount.h>
+.Ft int
+.Fn statfs "const char *path" "struct statfs *buf"
+.Ft int
+.Fn fstatfs "int fd" "struct statfs *buf"
+.Ft int
+.Fn getfsstat "struct statfs *buf" "long bufsize" "int flags"
+.Sh DESCRIPTION
+.Fn Statfs
+returns information about a mounted file system.
+.Fa Path
+is the path name of any file within the mounted filesystem.
+.Fa Buf
+is a pointer to a
+.Va statfs
+structure defined as follows:
+.Bd -literal
+typedef quad_t fsid_t;
+
+#define	MFSNAMELEN	16 /* length of fs type name, including null */
+#define	MNAMELEN	90 /* length of buffer for returned name */
+
+struct statfs {
+	short	f_type;		/* XXX: deprecated filesystem type. */
+	short	f_oflags;	/* old mount flags (compat use only) */
+	long	f_bsize;	/* fundamental file system block size */
+	long	f_iosize;	/* optimal transfer block size */
+	long	f_blocks;	/* total data blocks in file system */
+	long	f_bfree;	/* free blocks in fs */
+	long	f_bavail;	/* free blocks avail to non-superuser */
+	long	f_files;	/* total file nodes in file system */
+	long	f_ffree;	/* free file nodes in fs */
+	fsid_t	f_fsid;		/* file system id */
+	uid_t	f_owner;	/* user that mounted the filesystem */
+	long	f_flags;	/* copy of mount flags */
+	long	f_syncwrites;	/* count of sync writes since mount */
+	long	f_asyncwrites;	/* count of async writes since mount */
+	long	f_spare[1];	/* spare for later */
+	char	f_fstypename[MFSNAMELEN]; /* fs type name */
+	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
+	char	f_mntfromname[MNAMELEN];  /* mounted filesystem */
+};
+.Ed
+.Pp
+The flags that may be returned include the input/output
+flags described in
+.Xr mount 2 ,
+along with the following additional output flags:
+.Pp
+.Bl -tag -indent -compact -width MNT_EXPORTABLE_
+.It Dv MNT_EXPORTABLE
+The filesystem may be exported through NFS (see
+.Xr exports 5 ).
+.It Dv MNT_LOCAL
+The filesystem resides locally.
+.It Dv MNT_QUOTA
+The filesystem has quotas enabled on it (see
+.Xr quota 1 ).
+.It Dv MNT_ROOTFS
+Identifies the root filesystem.
+.It Dv MNT_UNIONDIR
+The filesystem stack may contain a union filesystem (see
+.Xr mount_union 8 ).
+.It Dv MNT_SOFTDEP
+The filesystem has soft updates enabled on it (see
+.Xr tunefs 8 ).
+.El
+.Pp
+The filesystem type can be determined from the
+.Va f_fstypename
+field by comparing it against the following strings:
+.Pp
+.Bl -tag -indent -compact -width MNT_UNIONDIR_
+.It Dv Dq adosfs
+AmigaDOS Filesystem
+.It Dv Dq andrewfs
+Andrew Filesystem
+.It Dv Dq cd9660
+ISO9660 (also known as CDROM) Filesystem
+.It Dv Dq fdesc
+File Descriptor Filesystem
+.It Dv Dq kernfs
+Kernel Information Filesystem
+.It Dv Dq lfs
+Log-based Filesystem
+.It Dv Dq loopback
+Loopback (Minimal) Filesystem Layer
+.It Dv Dq mfs
+Memory-based Filesystem
+.It Dv Dq msdos
+MSDOS Filesystem
+.It Dv Dq nfs
+Sun-compatible Network Filesystem
+.It Dv Dq portal
+Portal Filesystem
+.It Dv Dq procfs
+/proc Filesystem
+.It Dv Dq romfs
+ROM Filesystem
+.It Dv Dq ufs
+Fast Filesystem
+.It Dv Dq umap
+User/Group Identifer Remapping Filesystem
+.It Dv Dq union
+Union (translucent) Filesystem
+.El
+.Pp
+Fields that are undefined for a particular file system are set to \-1.
+.Pp
+.Fn Fstatfs
+returns the same information about the filesystem where the file referenced
+by descriptor
+.Fa fd
+resides.
+.Pp
+.Fn Getfsstat
+returns information about all mounted filesystems.
+The
+.Fa buf
+argument is a pointer to a
+.Fa bufsize
+element array of
+.Va statfs
+structures.
+One
+.Va statfs
+structure for each mounted filesystem is stored into this array,
+up to the size specified by
+.Fa bufsize .
+If
+.Fa buf
+is
+.Dv NULL ,
+.Fn getfsstat
+returns the number of mounted filesystems and does nothing further.
+.Pp
+Normally,
+.Fa flags
+should be specified as
+.Dv MNT_WAIT .
+If
+.Fa flags
+is set to
+.Dv MNT_NOWAIT ,
+.Fn getfsstat
+will return the information it has available without requesting
+an update from each filesystem.       
+Thus, some of the information may be out of date, but
+.Fn getfsstat
+will not block waiting for information from a filesystem that is
+unable to respond.
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn statfs
+and
+.Fn fstatfs
+return a value of 0.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Pp
+Upon successful completion,
+.Fn getfsstat
+returns the number of
+.Va statfs
+structures stored into
+.Fa buf ,
+or if
+.Fa buf
+is
+.Dv NULL ,
+the total number of mounted filesystems.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Sh ERRORS
+.Fn Statfs
+fails if one or more of the following are true:
+.Bl -tag -width ENAMETOOLONGA
+.It Bq Er ENOTDIR
+A component of the path prefix of
+.Fa path
+is not a directory.
+.It Bq Er EINVAL
+.Fa Path
+contains a character with the high-order bit set.
+.It Bq Er ENAMETOOLONG
+The length of a component of
+.Fa path
+exceeds 255 characters,
+or the length of
+.Fa path
+exceeds 1023 characters.
+.It Bq Er ENOENT
+The file referred to by
+.Fa path
+does not exist.
+.It Bq Er EACCES
+Search permission is denied for a component of the path prefix of
+.Fa path .
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating
+.Fa path .
+.It Bq Er EFAULT
+.Fa Buf
+or
+.Fa path
+points to an invalid address.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while reading from or writing to the file system.
+.El
+.Pp
+.Fn Fstatfs
+fails if one or more of the following are true:
+.Bl -tag -width ENAMETOOLONGA
+.It Bq Er EBADF
+.Fa Fd
+is not a valid open file descriptor.
+.It Bq Er EFAULT
+.Fa Buf
+points to an invalid address.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while reading from or writing to the file system.
+.El
+.Pp
+.Fn Getfsstat
+fails if one or more of the following are true:
+.Bl -tag -width ENAMETOOLONGA
+.It Bq Er EFAULT
+.Fa Buf
+points to an invalid address.
+.It Bq Er EIO
+An
+.Tn I/O
+error occurred while reading from or writing to the filesystem.
+.El
+.Sh "SEE ALSO
+.Xr mount 2 ,
+.Xr pathconf 2 ,
+.Xr stat 2
+.Sh HISTORY
+The
+.Nm statfs
+functions first appeared in 4.4BSD.

@@ -1,0 +1,68 @@
+! font selections
+#if WIDTH > 640
+# if WIDTH > 800
+#  define STD_FONT       10x20
+# else
+#  define STD_FONT       8x13
+# endif
+#else
+# define STD_FONT        6x10
+#endif
+
+#define UNREADABLE_FONT  nil2
+#define TINY_FONT        6x10
+#define SMALL_FONT       8x13
+#define MEDIUM_FONT      9x15
+#define LARGE_FONT       10x20
+#define HUGE_FONT        12x24
+
+! good font sizes 8 10 11 12 14 16 18 20 24 34
+
+#if WIDTH > 640
+# if WIDTH > 800
+!  1024x768 or bigger
+#  define NETSCAPE_PROP    adobe-times-120-noscale
+#  define NETSCAPE_FIXED   adobe-times-100-noscale
+#  define FIXED_FONT       -*-courier-medium-r-normal-*-12-*-*-*-*-*-iso8859-1
+#  define LABEL_FONT       -*-lucidatypewriter-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+#  define NORML_FONT       -*-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
+#  define ITAL_FONT        -*-helvetica-bold-o-normal-*-14-*-*-*-*-*-iso8859-1
+#  define BOLD_FONT        -*-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
+#  define H6_FONT          -*-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
+#  define H5_FONT          -*-helvetica-bold-r-normal-*-16-*-*-*-*-*-iso8859-1
+#  define H4_FONT          -*-helvetica-bold-r-normal-*-18-*-*-*-*-*-iso8859-1
+#  define H3_FONT          -*-helvetica-bold-r-normal-*-20-*-*-*-*-*-iso8859-1
+#  define H2_FONT          -*-helvetica-bold-r-normal-*-24-*-*-*-*-*-iso8859-1
+#  define H1_FONT          -*-helvetica-bold-r-normal-*-26-*-*-*-*-*-iso8859-1
+# else
+! 800x600
+#  define NETSCAPE_PROP    adobe-times-100-noscale
+#  define NETSCAPE_FIXED   adobe-times-100-noscale
+#  define FIXED_FONT       -*-courier-medium-r-normal-*-10-*-*-*-*-*-iso8859-1
+#  define LABEL_FONT       -*-lucidatypewriter-medium-r-normal-*-10-*-*-*-*-*-iso8859-1
+#  define NORML_FONT       -*-helvetica-medium-r-normal-*-10-*-*-*-*-*-iso8859-1
+#  define ITAL_FONT        -*-helvetica-bold-o-normal-*-10-*-*-*-*-*-iso8859-1
+#  define BOLD_FONT        -*-helvetica-bold-r-normal-*-10-*-*-*-*-*-iso8859-1
+#  define H6_FONT          -*-helvetica-bold-r-normal-*-10-*-*-*-*-*-iso8859-1
+#  define H5_FONT          -*-helvetica-bold-r-normal-*-12-*-*-*-*-*-iso8859-1
+#  define H4_FONT          -*-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
+#  define H3_FONT          -*-helvetica-bold-r-normal-*-16-*-*-*-*-*-iso8859-1
+#  define H2_FONT          -*-helvetica-bold-r-normal-*-18-*-*-*-*-*-iso8859-1
+#  define H1_FONT          -*-helvetica-bold-r-normal-*-20-*-*-*-*-*-iso8859-1
+# endif
+#else
+! 640x480
+# define NETSCAPE_PROP     adobe-times-80-noscale
+# define NETSCAPE_FIXED    adobe-times-80-noscale
+# define FIXED_FONT       -*-courier-medium-r-normal-*-8-*-*-*-*-*-iso8859-1
+# define LABEL_FONT       -*-lucidatypewriter-medium-r-normal-*-8-*-*-*-*-*-iso8859-1
+# define NORML_FONT       -*-helvetica-medium-r-normal-*-8-*-*-*-*-*-iso8859-1
+# define ITAL_FONT        -*-helvetica-bold-o-normal-*-8-*-*-*-*-*-iso8859-1
+# define BOLD_FONT        -*-helvetica-bold-r-normal-*-8-*-*-*-*-*-iso8859-1
+# define H6_FONT          -*-helvetica-bold-r-normal-*-8-*-*-*-*-*-iso8859-1
+# define H5_FONT          -*-helvetica-bold-r-normal-*-10-*-*-*-*-*-iso8859-1
+# define H4_FONT          -*-helvetica-bold-r-normal-*-12-*-*-*-*-*-iso8859-1
+# define H3_FONT          -*-helvetica-bold-r-normal-*-14-*-*-*-*-*-iso8859-1
+# define H2_FONT          -*-helvetica-bold-r-normal-*-16-*-*-*-*-*-iso8859-1
+# define H1_FONT          -*-helvetica-bold-r-normal-*-18-*-*-*-*-*-iso8859-1
+#endif

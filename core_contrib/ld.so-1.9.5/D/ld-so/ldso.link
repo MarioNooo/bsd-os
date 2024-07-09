@@ -1,0 +1,19 @@
+ENTRY(_start)
+SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib);
+SECTIONS
+{
+  .text : { *(.text) } =0x9090
+  _etext = .;
+  PROVIDE (etext = .);
+  .rodata : { *(.rodata) }
+  .data : { *(.data) }
+  _edata = .;
+  PROVIDE (edata = .);
+  __bss_start = .;
+  .bss : { *(.bss) }
+  _end = . ;
+  PROVIDE (end = .);
+  .stab 0 : { *(.stab) }
+  .stabstr 0 : { *(.stabstr) }
+  .comment 0 : { *(.comment) }
+}

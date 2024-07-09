@@ -1,0 +1,7 @@
+#undef bsdi
+#ifndef X11VER
+#       define X11VER    6
+#endif
+#ifndef XBITMAPS
+#       define XBITMAPS  /usr/X11/include/X11/bitmaps
+#endif

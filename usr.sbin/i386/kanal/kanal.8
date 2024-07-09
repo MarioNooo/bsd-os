@@ -1,0 +1,47 @@
+.\" Copyright (c) 1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\" The Berkeley Software Design Inc. software License Agreement specifies
+.\" the terms and conditions for redistribution.
+.\"
+.\"	BSDI kanal.8,v 1.1 1997/12/10 06:29:16 ewv Exp
+.\"
+.Dd December 9, 1997
+.Os
+.Dt KANAL 8
+.Sh NAME
+.Nm kanal
+.Nd "preprocess crash dump and gather debug information"
+.Sh SYNOPSIS
+.Nm
+.Ar dumpno
+.Sh DESCRIPTION
+The
+.Nm
+program can be run to extract potentially useful information from a crash
+dump (written by
+.Xr savecore 8
+) and the system that crashed.
+.Pp
+.Nm
+should be run from the directory containing the crash dump file (
+.Pa bsdcore.N )
+and the saved kernel image (
+.Pa bsd.N ).
+.Ar Dumpno
+is the dump number (the N in bsdcore.N).
+.Pp
+When run,
+.Nm
+will ask numerous questions regarding the circumstances of the crash, then
+attempt to gather information from various areas of the system (mostly
+configuration files in
+.Pa /etc
+). When the information gathering is complete a single shar file will be
+produced that can be upload to the support organization for analysis.
+
+.Sh SEE ALSO
+.Xr gdb 1
+.Sh HISTORY
+The 
+.Nm
+first appeared in BSD/OS 2.1.

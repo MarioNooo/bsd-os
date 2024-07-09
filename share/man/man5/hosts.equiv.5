@@ -1,0 +1,194 @@
+.\"	BSDI	hosts.equiv.5,v 2.5 1998/07/08 14:15:29 prb Exp
+.\"
+.Dd January 3, 1994
+.Dt HOSTS.EQUIV 5
+.Sh NAME
+.Nm hosts.equiv ,
+.Nm .rhosts
+.Nd files listing trusted remote hosts and users
+.Sh DESCRIPTION
+The
+.Pa /etc/hosts.equiv
+and 
+.Pa .rhosts
+files list authorized hosts and users for the 
+.Xr rsh 1 ,
+.Xr rcp 1 ,
+and 
+.Xr rlogin 1
+commands,
+and the 
+.Xr rcmd 3
+library routine.
+These commands and functions use either the 
+.Xr iruserok 3
+or 
+.Xr ruserok 3
+functions to implement
+.Dq authentication .
+.Pp
+The
+.Pa /etc/hosts.equiv
+and
+.Pa .rhosts
+files specify
+remote hosts and users that are 
+.Sy trusted 
+(i.e., which may bypass the standard password authentication mechanism).
+.Pp
+Care should be taken when setting up these files to maintain 
+system security.
+Specifically:
+.Pp
+.Bl -enum -compact
+.It
+The
+.Pa /etc/hosts.equiv
+file
+should be owned by the super-user.
+.It
+The
+.Pa .rhosts
+files should be owned by each individual user.
+.It
+Both the
+.Pa /etc/hosts.equiv
+and the
+.Pa .rhosts
+files should be mode 600 (-rw-------),
+i.e. readable and writable by the owner only.
+.It
+No entries from untrusted machines should be included in either file.
+.El
+.Pp
+The rest of this manual page will refer to the host from which the
+access request is coming as the
+.Dq "remote host" ,
+and the user name on the remote host as the
+.Dq "remote user" .
+Similarly, the host responding to the access request is the
+.Dq "local host" ,
+and the user name on the local host for which access is requested is the
+.Dq "local user" .
+Generally,
+the command interfaces which provide network access,
+(e.g.,
+.Xr rlogin 1 ),
+automatically use the local user's login name as the remote user name,
+unless another remote user name is explicitly specified.
+.Pp
+The format for entries in both the
+.Pa /etc/hosts.equiv
+and the
+.Pa .rhosts
+files is as follows:
+.Pp
+.D1 Ar hostname Op Ar username
+.Pp
+If the remote user is
+.Sy NOT
+the super-user,
+the
+.Pa /etc/hosts.equiv
+file is checked before the
+.Pa .rhosts
+file is checked.
+.Pp
+An entry in the
+.Pa /etc/hosts.equiv
+file of the form
+.Pp
+.D1 Ar hostname
+.Pp
+indicates that remote users from the specified remote host may access the
+local host using the same login name as they use on the remote host.
+.Pp
+An entry in the
+.Pa /etc/hosts.equiv
+file of the form
+.Pp
+.D1 Ar hostname Ar username
+.Pp
+indicates that the specified remote user from the specified remote host
+may access the local host
+.Sy "as any user" .
+For obvious reasons,
+the latter syntax is extremely dangerous,
+and should almost never be used.
+.Pp
+If the
+.Pa /etc/hosts.equiv
+lookup is not done or is unsuccessful,
+the
+.Pa .rhosts
+file in the local user's home directory is checked.
+If the user's
+.Pa .rhosts
+file:
+.Bd -literal -offset indent
+does not exist
+is not a regular file
+is not owned by the local user or the super-user
+is writable by anyone other than the file owner
+.Ed
+.Pp
+\&... access will not be granted.
+.Pp
+An entry in the
+.Pa .rhosts
+file of the form
+.Pp
+.D1 Ar hostname
+.Pp
+indicates that the remote user on the specified remote host with the
+same login name as the local user can access the local host.  
+.Pp
+An entry in the
+.Pa .rhosts
+file of the form
+.Pp
+.D1 Ar hostname Ar username
+.Pp
+indicates that the specified remote user on the specified remote host
+can access the local host as the local user (i.e., possibly using a
+different login name).
+.Pp
+Any line starting with a '#' is considered a comment and is ignored in
+both the
+.Nm hosts.equiv
+and
+.Pa .rhosts
+files.
+.Pp
+As noted above,
+the
+.Nm hosts.equiv
+file is
+.Sy not
+used to authenticate root access; only the 
+.Pa .rhosts
+file in root's home directory is used for root.
+.Pp
+The
+.Nm hosts.equiv
+file, as well as the user's
+.Pa .rhosts
+file, is only consulted for traditional
+.Nm r Ns No -command
+.Dq authentication
+and is not used with Kerberos or other forms of authentication.
+.Sh FILES
+.Bl -tag -width /etc/hosts.equiv -compact
+.It Pa /etc/hosts.equiv
+The
+.Nm hosts.equiv
+file.
+.It Pa $HOME/.rhosts
+User specific access file.
+.El
+.Sh SEE ALSO
+.Xr rcp 1 ,
+.Xr rlogin 1 ,
+.Xr rsh 1 ,
+.Xr rcmd 3 ,
+.Xr ruserok 3

@@ -1,0 +1,21 @@
+; Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
+; The Berkeley Software Design Inc. software License Agreement specifies
+; the terms and conditions for redistribution.
+;
+;	BSDI dialer.rules.local,v 1.1 1996/06/05 19:47:02 prb Exp
+
+; Make all local changes here, including local rules sets
+
+; Adjust these values as needed
+
+INTL_ACCESS_CODE=	011		; US standard access code
+LOCAL_COUNTRY_CODE=	1		; North America
+LOCAL_CITY_CODE=	612		; Central Minnesota
+
+LPREFIX=		1		; Default long distance calling prefix
+
+
+; The RULE variable must be set to the name of the ruleset to use to parse
+; the phone number.  The Default-Rules set is very permissive
+
+RULE=			Default-Rules	; Default rule to process number with

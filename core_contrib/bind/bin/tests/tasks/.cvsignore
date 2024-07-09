@@ -1,0 +1,4 @@
+Makefile
+t_tasks
+.libs
+t_tasks.lo
